@@ -1,0 +1,26 @@
+language: node_js
+
+node_js:
+  - '10'
+
+dist: trusty
+
+cache: yarn
+
+before_script:
+  - rm -rf ./node_modules package-lock.json
+  - npm install
+  - npm -g install snyk
+  - npm -g install codecov
+
+script:
+  - snyk test
+  - npm run test-coverage
+after_script:
+  - codecov
+
+after_success:
+  - snyk monitor
+
+notifications:
+  email: false
