@@ -2,6 +2,12 @@
   "name": "projects",
   "version": "0.1.0",
   "main": "app.js",
+  "jest": {
+    "collectCoverageFrom": [
+      "src/*/*/*.js",
+      "!src/config/*.js"
+    ]
+  },
   "scripts": {
     "start": "nodemon --exec babel-node src/server.js",
     "test": "npx jest",
@@ -28,6 +34,7 @@
     "jest": "^24.9.0",
     "nodemon": "^1.19.1",
     "prettier": "^1.18.2",
+    "sinon": "^7.4.2",
     "superagent": "^5.1.0",
     "supertest": "^4.0.2"
   }
