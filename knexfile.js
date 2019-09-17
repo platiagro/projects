@@ -1,14 +1,16 @@
-const user = process.env.DB_USER;
-const password = process.env.DB_PASSWORD;
-const database = process.env.DB_DATABASE;
-const host = process.env.DB_HOST;
-const port = process.env.DB_PORT;
+import 'dotenv/config';
 
-const testUser = process.env.DB_TEST_USER;
-const testPassword = process.env.DB_TEST_PASSWORD;
-const testDatabase = process.env.DB_TEST_DATABASE;
-const testHost = process.env.DB_TEST_HOST;
-const testPort = process.env.DB_TEST_PORT;
+const user = process.env.DB_USER || 'user';
+const password = process.env.DB_PASSWORD || 'secret';
+const database = process.env.DB_DATABASE || 'projects';
+const host = process.env.DB_HOST || 'mysql';
+const port = process.env.DB_PORT || 3306;
+
+const testUser = process.env.DB_TEST_USER || 'user';
+const testPassword = process.env.DB_TEST_PASSWORD || 'secret';
+const testDatabase = process.env.DB_TEST_DATABASE || 'projects';
+const testHost = process.env.DB_TEST_HOST || 'mysql';
+const testPort = process.env.DB_TEST_PORT || 3306;
 
 const config = {
   client: 'mysql',
