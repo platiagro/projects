@@ -7,7 +7,7 @@ const create = async (req, res) => {
   const uuid = uuidv4();
   const createdAt = new Date();
 
-  model
+  await model
     .create(uuid, projectName, createdAt)
     .then((result) => {
       res
@@ -18,6 +18,7 @@ const create = async (req, res) => {
       console.error(err);
       res.sendStatus(500);
     });
+  return res;
 };
 
 module.exports = {
