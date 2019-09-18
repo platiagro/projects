@@ -14,9 +14,13 @@ services:
     command: npm run start
 
   db:
+    container_name: '${DB_HOST:-mysql}'
     build: ./database-service
+    restart: always
     volumes:
-      - data:/var/lib/mysql
-
-volumes:
-  data:
+      - ./data:/var/lib/mysql
+    environment:
+      - MYSQL_USER=${DB_USER:-user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-secret}
+      - MYSQL_DATABASE=${DB_DATABASE:-projects}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-supersecret}
