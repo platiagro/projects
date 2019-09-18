@@ -4,6 +4,53 @@ import { Knex } from '../../../config';
 import { ProjectModel as Project } from '../../../components/project';
 
 describe('Test Project Model methods', () => {
+  describe('Test getAll Projects methdos', () => {
+    const stubKnex = sinon.stub(Knex, 'select');
+
+    const projectGetAllVerify = () => {
+      Project.getAll()
+        .then((result) => {
+          expect(result).not.toBeNull();
+          expect(result).toEqual([
+            {
+              uuid: '70382be9-be20-4042-a351-31512376957b',
+              name: 'ML Example',
+              createdAt: '2019-09-17 13:41:18',
+            },
+          ]);
+        })
+        .catch((err) => {
+          expect(err).toStrictEqual(Error('Forced error'));
+        });
+    };
+
+    it('Resolves db query', () => {
+      stubKnex.callsFake(() => {
+        return {
+          from: sinon.stub().resolves([
+            {
+              uuid: '70382be9-be20-4042-a351-31512376957b',
+              name: 'ML Example',
+              createdAt: '2019-09-17 13:41:18',
+            },
+          ]),
+        };
+      });
+
+      projectGetAllVerify();
+    });
+
+    it('Rejects db query', () => {
+      stubKnex.callsFake(() => {
+        return {
+          from: sinon.stub().rejects(Error('Forced error')),
+        };
+      });
+
+      projectGetAllVerify();
+    });
+  });
+
   describe('Test Create Project method', () => {
     const stubKnex = sinon.stub(Knex, 'insert');
 

@@ -11,12 +11,28 @@ class Project {
     return new this(record.uuid, record.name, record.createdAt);
   }
 
+  static async getAll() {
+    return new Promise((resolve, reject) => {
+      Knex.select('*')
+        .from('projects')
+        .then((rows) => {
+          const projects = rows.map((r) => {
+            return this.fromDBRecord(r);
+          });
+          resolve(projects);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  }
+
   static async create(uuid, name, createdAt) {
     return new Promise((resolve, reject) => {
       Knex.insert({
-        UUID: uuid,
-        Name: name,
-        CreatedAt: createdAt,
+        uuid,
+        name,
+        createdAt,
       })
         .into('projects')
         .then(() => {
