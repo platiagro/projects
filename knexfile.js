@@ -1,4 +1,4 @@
-import 'dotenv/config';
+require('dotenv').config();
 
 const user = process.env.DB_USER || 'user';
 const password = process.env.DB_PASSWORD || 'secret';
