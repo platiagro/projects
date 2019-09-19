@@ -1,6 +1,25 @@
 import uuidv4 from 'uuid/v4';
 import Project from './model';
 
+const getById = async (req, res) => {
+  const { projectId } = req.params;
+
+  await Project.getById(projectId)
+    .then((project) => {
+      res.status(200).json({ payload: project });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.message === 'Invalid UUID.') {
+        res.status(400).json({ message: `Project UUID doesn't exists.` });
+      } else {
+        res.sendStatus(500);
+      }
+    });
+
+  return res;
+};
+
 const getAll = async (req, res) => {
   await Project.getAll()
     .then((projects) => {
@@ -33,6 +52,7 @@ const create = async (req, res) => {
 };
 
 module.exports = {
+  getById,
   getAll,
   create,
 };
