@@ -32,6 +32,31 @@ const getAll = async (req, res) => {
   return res;
 };
 
+const update = async (req, res) => {
+  const { projectId, projectNewName } = req.body;
+
+  await Project.getById(projectId)
+    .then((project) => {
+      project
+        .update(projectNewName)
+        .then(() => {
+          res.status(200).json({ message: 'Updated successfully.' });
+        })
+        .catch((err) => {
+          console.error(err);
+          res.sendStatus(500);
+        });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.message === 'Invalid UUID.') {
+        res.status(400).json({ message: `Project UUID doesn't exists.` });
+      } else {
+        res.sendStatus(500);
+      }
+    });
+};
+
 const create = async (req, res) => {
   const { projectName } = req.body;
 
@@ -54,5 +79,6 @@ const create = async (req, res) => {
 module.exports = {
   getById,
   getAll,
+  update,
   create,
 };

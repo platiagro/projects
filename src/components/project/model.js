@@ -61,6 +61,21 @@ class Project {
         });
     });
   }
+
+  async update(newName) {
+    return new Promise((resolve, reject) => {
+      Knex.update({ name: newName })
+        .from('projects')
+        .where('uuid', '=', this.uuid)
+        .then(() => {
+          this.name = newName;
+          resolve();
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  }
 }
 
 export default Project;
