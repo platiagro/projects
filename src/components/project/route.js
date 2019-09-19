@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import Project from './controller';
+import { ExperimentRoutes } from '../experiment';
 
 const router = Router();
+
+router.use('/:projectId/experiments', ExperimentRoutes);
 
 router.get('/:projectId', Project.getById);
 
