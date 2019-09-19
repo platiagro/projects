@@ -22,7 +22,7 @@ describe('Test Project Model methods', () => {
         });
     };
 
-    it('', () => {
+    it('Resolves db query', () => {
       stubKnex.returns({
         from: sinon.stub().returnsThis(),
         where: sinon.stub().returnsThis(),
@@ -36,7 +36,7 @@ describe('Test Project Model methods', () => {
       projectGetByIdVerify(null);
     });
 
-    it('', () => {
+    it('Resolves db query for invalid uuid', () => {
       stubKnex.returns({
         from: sinon.stub().returnsThis(),
         where: sinon.stub().returnsThis(),
@@ -46,7 +46,7 @@ describe('Test Project Model methods', () => {
       projectGetByIdVerify('Invalid UUID.');
     });
 
-    it('', () => {
+    it('Rejects db query', () => {
       stubKnex.returns({
         from: sinon.stub().returnsThis(),
         where: sinon.stub().returnsThis(),
