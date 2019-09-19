@@ -7,9 +7,9 @@ import {
 } from '../../../components/project';
 
 describe('Test Project Controller methods', () => {
-  describe('Test getById Project controller', () => {
-    const stubProjectGetById = sinon.stub(Model, 'getById');
+  const stubProjectGetById = sinon.stub(Model, 'getById');
 
+  describe('Test getById Project controller', () => {
     const projectGetByIdVerify = async (expectedCode) => {
       const req = httpMocks.createRequest({
         method: 'GET',
@@ -114,6 +114,60 @@ describe('Test Project Controller methods', () => {
       stubProjectCreate.rejects(Error('Forced error'));
 
       projectCreateVerify(500);
+    });
+  });
+
+  describe('Test Update Project controller', () => {
+    const ProjectMocked = new Model(
+      '70382be9-be20-4042-a351-31512376957b',
+      'ML Example',
+      '2019-09-17 13:41:18'
+    );
+
+    const stubProjectUpdate = sinon.stub(ProjectMocked, 'update');
+
+    const projectUpdateVerify = async (expectedCode) => {
+      const req = httpMocks.createRequest({
+        method: 'PATCH',
+        url: '/projects',
+        body: {
+          projectId: '70382be9-be20-4042-a351-31512376957b',
+          projectName: 'Auto featuring',
+        },
+      });
+      const res = httpMocks.createResponse();
+
+      const result = await Controller.update(req, res);
+
+      expect(result.statusCode).toBe(expectedCode);
+    };
+
+    it('Resolves create model', () => {
+      stubProjectUpdate.resolves(ProjectMocked);
+
+      stubProjectGetById.resolves(ProjectMocked);
+
+      projectUpdateVerify(200);
+    });
+
+    it('Resolves create model', () => {
+      stubProjectUpdate.rejects(Error('Forced error'));
+
+      stubProjectGetById.resolves(ProjectMocked);
+
+      projectUpdateVerify(500);
+    });
+
+    it('Resolves create model', () => {
+      stubProjectGetById.rejects(Error('Forced error'));
+
+      projectUpdateVerify(500);
+    });
+
+    it('Resolves create model', () => {
+      stubProjectGetById.rejects(Error('Invalid UUID.'));
+
+      projectUpdateVerify(400);
     });
   });
 });

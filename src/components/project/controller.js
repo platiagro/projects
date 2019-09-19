@@ -55,6 +55,7 @@ const update = async (req, res) => {
         res.sendStatus(500);
       }
     });
+  return res;
 };
 
 const create = async (req, res) => {
