@@ -11,6 +11,24 @@ class Project {
     return new this(record.uuid, record.name, record.createdAt);
   }
 
+  static async getById(uuid) {
+    return new Promise((resolve, reject) => {
+      Knex.select('*')
+        .from('projects')
+        .where('uuid', '=', uuid)
+        .first()
+        .then((row) => {
+          if (row) {
+            resolve(this.fromDBRecord(row));
+          }
+          reject(Error('Invalid UUID.'));
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  }
+
   static async getAll() {
     return new Promise((resolve, reject) => {
       Knex.select('*')
