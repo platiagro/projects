@@ -63,13 +63,15 @@ class Project {
   }
 
   async update(newName) {
+    const projectName = newName || this.name;
+
     return new Promise((resolve, reject) => {
-      Knex.update({ name: newName })
+      Knex.update({ name: projectName })
         .from('projects')
         .where('uuid', '=', this.uuid)
         .then(() => {
-          this.name = newName;
-          resolve();
+          this.name = projectName;
+          resolve(this);
         })
         .catch((err) => {
           reject(err);
