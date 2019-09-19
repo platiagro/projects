@@ -7,6 +7,47 @@ import {
 } from '../../../components/project';
 
 describe('Test Project Controller methods', () => {
+  describe('Test getById Project controller', () => {
+    const stubProjectGetById = sinon.stub(Model, 'getById');
+
+    const projectGetByIdVerify = async (expectedCode) => {
+      const req = httpMocks.createRequest({
+        method: 'GET',
+        url: '/projects',
+        params: {
+          projectId: '70382be9-be20-4042-a351-31512376957b',
+        },
+      });
+      const res = httpMocks.createResponse();
+
+      const result = await Controller.getById(req, res);
+
+      expect(result.statusCode).toBe(expectedCode);
+    };
+
+    it('Resolves getById model', () => {
+      stubProjectGetById.resolves({
+        uuid: '70382be9-be20-4042-a351-31512376957b',
+        name: 'ML Example',
+        createdAt: '2019-09-17 13:41:18',
+      });
+
+      projectGetByIdVerify(200);
+    });
+
+    it('Rejects getById model, invalid uuid', () => {
+      stubProjectGetById.rejects(Error('Invalid UUID.'));
+
+      projectGetByIdVerify(400);
+    });
+
+    it('Rejects getById model, forced internal server error', () => {
+      stubProjectGetById.rejects(Error('Forced error'));
+
+      projectGetByIdVerify(500);
+    });
+  });
+
   describe('Test getAll Projects controller', () => {
     const stubProjectGetAll = sinon.stub(Model, 'getAll');
 
