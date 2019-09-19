@@ -144,4 +144,46 @@ describe('Test Project Model methods', () => {
       projectCreateVerify();
     });
   });
+
+  describe('Test Update Project method', () => {
+    const stubKnexUpdate = sinon.stub(Knex, 'update');
+
+    const projectUpdateVerify = () => {
+      const projectMocked = new Project(
+        '70382be9-be20-4042-a351-31512376957b',
+        'ML Example',
+        '2019-09-17 13:41:18'
+      );
+
+      projectMocked
+        .update('Auto featuring example')
+        .then((result) => {
+          expect(result.name).toBe('Auto featuring example');
+          projectMocked.update().then((result_) => {
+            expect(result_.name).toBe('Auto featuring example');
+          });
+        })
+        .catch((err) => {
+          expect(err).toStrictEqual(Error('Forced error'));
+        });
+    };
+
+    it('Resolves db query', () => {
+      stubKnexUpdate.returns({
+        from: sinon.stub().returnsThis(),
+        where: sinon.stub().resolves(),
+      });
+
+      projectUpdateVerify();
+    });
+
+    it('Rejects db query', () => {
+      stubKnexUpdate.returns({
+        from: sinon.stub().returnsThis(),
+        where: sinon.stub().rejects(Error('Forced error')),
+      });
+
+      projectUpdateVerify();
+    });
+  });
 });

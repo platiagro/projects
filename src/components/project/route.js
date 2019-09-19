@@ -7,6 +7,8 @@ router.get('/:projectId', Project.getById);
 
 router.get('/', Project.getAll);
 
+router.patch('/', Project.update);
+
 router.post('/', Project.create);
 
 export default router;
