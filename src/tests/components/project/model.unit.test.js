@@ -1,7 +1,7 @@
 import sinon from 'sinon';
 import { Knex } from '../../../config';
 
-import { ProjectModel as Project } from '../../../components/project';
+import { ProjectModel as Project } from '../../../components/projects';
 
 describe('Test Project Model methods', () => {
   const stubKnex = sinon.stub(Knex, 'select');

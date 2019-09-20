@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import Project from './controller';
-import { ExperimentRoutes } from '../experiment';
+import { ExperimentRoutes } from '../experiments';
 
 const router = Router();
 

@@ -4,7 +4,7 @@ import httpMocks from 'node-mocks-http';
 import {
   ProjectModel as Model,
   ProjectController as Controller,
-} from '../../../components/project';
+} from '../../../components/projects';
 
 describe('Test Project Controller methods', () => {
   const stubProjectGetById = sinon.stub(Model, 'getById');
