@@ -1,6 +1,6 @@
 import cors from 'cors';
 import express from 'express';
-import { ProjectRoutes } from './components/project';
+import { ProjectRoutes } from './components/projects';
 
 const app = express();
 

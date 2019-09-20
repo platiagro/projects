@@ -34,6 +34,23 @@ class Experiment {
     );
   }
 
+  static async getAllByProjectId(projectId) {
+    return new Promise((resolve, reject) => {
+      Knex.select('*')
+        .from('experiments')
+        .where('projectId', '=', projectId)
+        .then((rows) => {
+          const experiments = rows.map((r) => {
+            return this.fromDBRecord(r);
+          });
+          resolve(experiments);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  }
+
   static async create(uuid, name, projectId, createdAt) {
     return new Promise((resolve, reject) => {
       Knex.insert({

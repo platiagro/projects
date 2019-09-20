@@ -1,8 +1,21 @@
 import uuidv4 from 'uuid/v4';
 import Experiment from './model';
 
+const getAllByProjectId = async (req, res) => {
+  const { projectId } = req.params;
+
+  await Experiment.getAllByProjectId(projectId)
+    .then((experiments) => {
+      res.status(200).json({ payload: experiments });
+    })
+    .catch((err) => {
+      console.error(err);
+      res.sendStatus(500);
+    });
+  return res;
+};
+
 const create = async (req, res) => {
-  console.log(req.params);
   const { projectId } = req.params;
   const { experimentName } = req.body;
 
@@ -23,5 +36,6 @@ const create = async (req, res) => {
 };
 
 module.exports = {
+  getAllByProjectId,
   create,
 };
