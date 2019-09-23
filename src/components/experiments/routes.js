@@ -3,7 +3,7 @@ import Experiment from './controller';
 
 const router = Router({ mergeParams: true });
 
-router.get('/:projectId', Experiment.getById);
+router.get('/:experimentId', Experiment.getById);
 
 router.get('/', Experiment.getAllByProjectId);
 
