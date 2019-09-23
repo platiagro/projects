@@ -10,7 +10,7 @@ router.get('/:projectId', Project.getById);
 
 router.get('/', Project.getAll);
 
-router.patch('/', Project.update);
+router.patch('/:projectId', Project.update);
 
 router.post('/', Project.create);
 

@@ -130,8 +130,10 @@ describe('Test Project Controller methods', () => {
       const req = httpMocks.createRequest({
         method: 'PATCH',
         url: '/projects',
-        body: {
+        params: {
           projectId: '70382be9-be20-4042-a351-31512376957b',
+        },
+        body: {
           projectName: 'Auto featuring',
         },
       });
