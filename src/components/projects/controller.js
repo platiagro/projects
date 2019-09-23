@@ -32,12 +32,13 @@ const getAll = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const { projectId, projectNewName } = req.body;
+  const { projectId } = req.params;
+  const { newName } = req.body;
 
   await Project.getById(projectId)
     .then((project) => {
       project
-        .update(projectNewName)
+        .update(newName)
         .then(() => {
           res.status(200).json({ message: 'Updated successfully.' });
         })
