@@ -86,6 +86,37 @@ class Experiment {
         });
     });
   }
+
+  async update(
+    newName,
+    newPipelineId,
+    newDatasetId,
+    newTargetColumnId,
+    newParameters
+  ) {
+    const name = newName || this.name;
+    const pipelineId = newPipelineId || this.pipelineId;
+    const datasetId = newDatasetId || this.datasetId;
+    const targetColumnId = newTargetColumnId || this.targetColumnId;
+    const parameters = newParameters || this.parameters;
+
+    return new Promise((resolve, reject) => {
+      Knex.update({ name, pipelineId, datasetId, targetColumnId, parameters })
+        .from('experiments')
+        .where('uuid', '=', this.uuid)
+        .then(() => {
+          this.name = name;
+          this.pipelineId = pipelineId;
+          this.datasetId = datasetId;
+          this.targetColumnId = targetColumnId;
+          this.parameters = parameters;
+          resolve(this);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  }
 }
 
 export default Experiment;

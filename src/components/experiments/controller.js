@@ -33,6 +33,46 @@ const getAllByProjectId = async (req, res) => {
   return res;
 };
 
+const update = async (req, res) => {
+  const { experimentId } = req.params;
+
+  const {
+    newName,
+    newPipelineId,
+    newDatasedId,
+    newTargetColumnId,
+    newParameters,
+  } = req.body;
+
+  await Experiment.getById(experimentId)
+    .then((experiment) => {
+      experiment
+        .update(
+          newName,
+          newPipelineId,
+          newDatasedId,
+          newTargetColumnId,
+          newParameters
+        )
+        .then(() => {
+          res.status(200).json({ message: 'Updated successfully.' });
+        })
+        .catch((err) => {
+          console.error(err);
+          res.sendStatus(500);
+        });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.message === 'Invalid UUID.') {
+        res.status(400).json({ message: `Experiment UUID doesn't exists.` });
+      } else {
+        res.sendStatus(500);
+      }
+    });
+  return res;
+};
+
 const create = async (req, res) => {
   const { projectId } = req.params;
   const { experimentName } = req.body;
@@ -56,5 +96,6 @@ const create = async (req, res) => {
 module.exports = {
   getById,
   getAllByProjectId,
+  update,
   create,
 };
