@@ -7,8 +7,54 @@ import {
 } from '../../../components/experiments';
 
 describe('Test Experiment Controller methods', () => {
+  const stubExperimentGetById = sinon.stub(Model, 'getById');
   const stubExperimentGetAll = sinon.stub(Model, 'getAllByProjectId');
   const stubExperimentCreate = sinon.stub(Model, 'create');
+
+  describe('Test getById Experiment controller', () => {
+    const experimentGetByIdVerify = async (expectedCode) => {
+      const req = httpMocks.createRequest({
+        method: 'GET',
+        url: '/projects/:projectId/experiments/:experimentId',
+        params: {
+          projectId: '70382be9-be20-4042-a351-31512376957b',
+          experimentId: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
+        },
+      });
+      const res = httpMocks.createResponse();
+
+      const result = await Controller.getById(req, res);
+
+      expect(result.statusCode).toBe(expectedCode);
+    };
+
+    it('Resolves getById model', () => {
+      stubExperimentGetById.resolves({
+        uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
+        name: 'AutoFeat Experiment',
+        projectId: '70382be9-be20-4042-a351-31512376957b',
+        pipelineId: null,
+        datasetId: null,
+        targetColumnId: null,
+        parameters: null,
+        createdAt: '2019-09-19T18:01:49.000Z',
+      });
+
+      experimentGetByIdVerify(200);
+    });
+
+    it('Rejects getById model, invalid uuid', () => {
+      stubExperimentGetById.rejects(Error('Invalid UUID.'));
+
+      experimentGetByIdVerify(400);
+    });
+
+    it('Rejects getById model, forced internal server error', () => {
+      stubExperimentGetById.rejects(Error('Forced error'));
+
+      experimentGetByIdVerify(500);
+    });
+  });
 
   describe('Test getAll Experiments controller', () => {
     const experimentGetAllVerify = async (expectedCode) => {

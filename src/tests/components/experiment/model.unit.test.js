@@ -7,6 +7,67 @@ describe('Test Experiment Model methods', () => {
   const stubKnexSelect = sinon.stub(Knex, 'select');
   const stubKnexInsert = sinon.stub(Knex, 'insert');
 
+  describe('Test getById Experiment method', () => {
+    const experimentGetByIdVerify = (expectedError) => {
+      Experiment.getById('33f56c0f-12f9-4cf0-889f-29b3b424fd4e')
+        .then((result) => {
+          expect(result).not.toBeNull();
+          expect(result).toEqual({
+            uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
+            name: 'AutoFeat Experiment',
+            projectId: '70382be9-be20-4042-a351-31512376957b',
+            pipelineId: null,
+            datasetId: null,
+            targetColumnId: null,
+            parameters: null,
+            createdAt: '2019-09-19T18:01:49.000Z',
+          });
+        })
+        .catch((err) => {
+          expect(err).toStrictEqual(Error(expectedError));
+        });
+    };
+
+    it('Resolves db query', () => {
+      stubKnexSelect.returns({
+        from: sinon.stub().returnsThis(),
+        where: sinon.stub().returnsThis(),
+        first: sinon.stub().resolves({
+          uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
+          name: 'AutoFeat Experiment',
+          projectId: '70382be9-be20-4042-a351-31512376957b',
+          pipelineId: null,
+          datasetId: null,
+          targetColumnId: null,
+          parameters: null,
+          createdAt: '2019-09-19T18:01:49.000Z',
+        }),
+      });
+
+      experimentGetByIdVerify(null);
+    });
+
+    it('Resolves db query for invalid uuid', () => {
+      stubKnexSelect.returns({
+        from: sinon.stub().returnsThis(),
+        where: sinon.stub().returnsThis(),
+        first: sinon.stub().resolves(undefined),
+      });
+
+      experimentGetByIdVerify('Invalid UUID.');
+    });
+
+    it('Rejects db query', () => {
+      stubKnexSelect.returns({
+        from: sinon.stub().returnsThis(),
+        where: sinon.stub().returnsThis(),
+        first: sinon.stub().rejects(Error('Forced error.')),
+      });
+
+      experimentGetByIdVerify('Forced error.');
+    });
+  });
+
   describe('Test getAll Experiments method', () => {
     const experiemntGetAllVerify = () => {
       Experiment.getAllByProjectId()

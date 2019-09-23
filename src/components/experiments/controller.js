@@ -1,6 +1,24 @@
 import uuidv4 from 'uuid/v4';
 import Experiment from './model';
 
+const getById = async (req, res) => {
+  const { experimentId } = req.params;
+
+  await Experiment.getById(experimentId)
+    .then((experiment) => {
+      res.status(200).json({ payload: experiment });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.message === 'Invalid UUID.') {
+        res.status(400).json({ message: `Experiment UUID doesn't exists.` });
+      } else {
+        res.sendStatus(500);
+      }
+    });
+  return res;
+};
+
 const getAllByProjectId = async (req, res) => {
   const { projectId } = req.params;
 
@@ -36,6 +54,7 @@ const create = async (req, res) => {
 };
 
 module.exports = {
+  getById,
   getAllByProjectId,
   create,
 };
