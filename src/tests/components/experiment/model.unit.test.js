@@ -6,6 +6,7 @@ import { ExperimentModel as Experiment } from '../../../components/experiments';
 describe('Test Experiment Model methods', () => {
   const stubKnexSelect = sinon.stub(Knex, 'select');
   const stubKnexInsert = sinon.stub(Knex, 'insert');
+  const stubKnexUpdate = sinon.stub(Knex, 'update');
 
   describe('Test getById Experiment method', () => {
     const experimentGetByIdVerify = (expectedError) => {
@@ -163,6 +164,78 @@ describe('Test Experiment Model methods', () => {
       });
 
       experimentCreateVerify();
+    });
+  });
+
+  describe('Test update Experiment method', () => {
+    const experimentUpdateVerify = () => {
+      const experimentMocked = new Experiment(
+        '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
+        'Auto featuring experiment',
+        'a214d8fc-639f-4088-a9fb-c30ba2a69146',
+        '23266cfd-4ed6-43d6-b8a0-ca8440d251c6',
+        '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
+        '3191a035-97a6-4e29-90d4-034cb1f87237',
+        '{ price: 2, auto-featuring: true }',
+        '2019-09-19T18:01:49.000Z'
+      );
+
+      experimentMocked
+        .update(
+          'Auto-featuring Example',
+          '67a9ac84-f444-4400-8c2b-c50d7d503b12',
+          'baaabb83-3ce1-44b3-b2e6-e33182e7cd4b',
+          'fda0cfd0-d708-4fd5-84a0-70a7530b4a69',
+          '{ price: 6, auto-featuring: true }'
+        )
+        .then((result) => {
+          expect(result.name).toBe('Auto-featuring Example');
+          expect(result.pipelineId).toBe(
+            '67a9ac84-f444-4400-8c2b-c50d7d503b12'
+          );
+          expect(result.datasetId).toBe('baaabb83-3ce1-44b3-b2e6-e33182e7cd4b');
+          expect(result.targetColumnId).toBe(
+            'fda0cfd0-d708-4fd5-84a0-70a7530b4a69'
+          );
+          expect(result.parameters).toBe('{ price: 6, auto-featuring: true }');
+
+          experimentMocked.update().then((result_) => {
+            expect(result_.name).toBe('Auto-featuring Example');
+            expect(result_.pipelineId).toBe(
+              '67a9ac84-f444-4400-8c2b-c50d7d503b12'
+            );
+            expect(result_.datasetId).toBe(
+              'baaabb83-3ce1-44b3-b2e6-e33182e7cd4b'
+            );
+            expect(result_.targetColumnId).toBe(
+              'fda0cfd0-d708-4fd5-84a0-70a7530b4a69'
+            );
+            expect(result_.parameters).toBe(
+              '{ price: 6, auto-featuring: true }'
+            );
+          });
+        })
+        .catch((err) => {
+          expect(err).toStrictEqual(Error('Forced error'));
+        });
+    };
+
+    it('Resolves db query', () => {
+      stubKnexUpdate.returns({
+        from: sinon.stub().returnsThis(),
+        where: sinon.stub().resolves(),
+      });
+
+      experimentUpdateVerify();
+    });
+
+    it('Rejects db query', () => {
+      stubKnexUpdate.returns({
+        from: sinon.stub().returnsThis(),
+        where: sinon.stub().rejects(Error('Forced error')),
+      });
+
+      experimentUpdateVerify();
     });
   });
 });
