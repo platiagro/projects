@@ -13,10 +13,10 @@
 ## Introduction
 
 [![Build Status](https://travis-ci.com/platiagro/projects.svg?branch=master)](https://travis-ci.com/platiagro/projects)
-[![codecov](https://codecov.io/gh/miguelfferraz/projects/branch/master/graph/badge.svg)](https://codecov.io/gh/miguelfferraz/projects)
+[![codecov](https://codecov.io/gh/platiagro/projects/branch/master/graph/badge.svg)](https://codecov.io/gh/platiagro/projects)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Gitter](https://badges.gitter.im/platiagro/community.svg)](https://gitter.im/platiagro/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Known Vulnerabilities](https://snyk.io//test/github/miguelfferraz/projects/badge.svg?targetFile=package.json)](https://snyk.io//test/github/miguelfferraz/projects?targetFile=package.json)
+[![Known Vulnerabilities](https://snyk.io//test/github/platiagro/projects/badge.svg?targetFile=package.json)](https://snyk.io//test/github/platiagro/projects?targetFile=package.json)
 
 PlatIAgro Projects management microservice.
 
