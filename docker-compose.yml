@@ -4,14 +4,14 @@ services:
   app:
     container_name: projects
     build: .
+    working_dir: /home/node/app
     volumes:
-      - ./:/app
-    working_dir: /app
+      - ./:/home/node/app
     depends_on:
       - db
     ports:
       - ${CONTAINER_PORT:-3000}:${HOST_PORT:-3000}
-    command: ["-c", "/opt/wait-for.sh ${DB_HOST:-mysql}:${DB_PORT:-3306} && knex migrate:latest && npm run start"]
+    command: ["-c", "npm install && /opt/wait-for.sh ${DB_HOST:-mysql}:${DB_PORT:-3306} && knex migrate:latest && npm run start"]
     entrypoint: ["/bin/sh"]
 
   db:
