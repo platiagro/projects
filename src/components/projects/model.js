@@ -37,6 +37,7 @@ class Project {
     return new Promise((resolve, reject) => {
       Knex.select('*')
         .from('projects')
+        .orderBy('createdAt', 'desc')
         .then((rows) => {
           const projects = rows.map((r) => {
             return this.fromDBRecord(r);

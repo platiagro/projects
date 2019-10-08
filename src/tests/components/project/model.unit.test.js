@@ -93,27 +93,25 @@ describe('Test Project Model methods', () => {
     };
 
     it('Resolves db query', () => {
-      stubKnex.callsFake(() => {
-        return {
-          from: sinon.stub().resolves([
-            {
-              uuid: '70382be9-be20-4042-a351-31512376957b',
-              name: 'ML Example',
-              createdAt: '2019-09-17 13:41:18',
-              experimentsList: mockedExperimentsList,
-            },
-          ]),
-        };
+      stubKnex.returns({
+        from: sinon.stub().returnsThis(),
+        orderBy: sinon.stub().resolves([
+          {
+            uuid: '70382be9-be20-4042-a351-31512376957b',
+            name: 'ML Example',
+            createdAt: '2019-09-17 13:41:18',
+            experimentsList: mockedExperimentsList,
+          },
+        ]),
       });
 
       projectGetAllVerify();
     });
 
     it('Rejects db query', () => {
-      stubKnex.callsFake(() => {
-        return {
-          from: sinon.stub().rejects(Error('Forced error')),
-        };
+      stubKnex.returns({
+        from: sinon.stub().returnsThis(),
+        orderBy: sinon.stub().rejects(Error('Forced error')),
       });
 
       projectGetAllVerify();
