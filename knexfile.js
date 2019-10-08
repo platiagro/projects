@@ -1,13 +1,11 @@
 require('dotenv').config();
 
-const user = process.env.DB_USER || 'user';
-const password = process.env.DB_PASSWORD || 'secret';
+const password = process.env.DB_ROOT_PASSWORD || 'secret';
 const database = process.env.DB_DATABASE || 'projects';
 const host = process.env.DB_HOST || 'mysql';
 const port = process.env.DB_PORT || 3306;
 
-const testUser = process.env.DB_TEST_USER || 'user';
-const testPassword = process.env.DB_TEST_PASSWORD || 'secret';
+const testPassword = process.env.DB_TEST_ROOT_PASSWORD || 'secret';
 const testDatabase = process.env.DB_TEST_DATABASE || 'projects';
 const testHost = process.env.DB_TEST_HOST || 'mysql';
 const testPort = process.env.DB_TEST_PORT || 3306;
@@ -15,7 +13,7 @@ const testPort = process.env.DB_TEST_PORT || 3306;
 const config = {
   client: 'mysql',
   connection: {
-    user,
+    user: 'root',
     password,
     host,
     port,
@@ -26,7 +24,7 @@ const config = {
 const testConfig = {
   client: 'mysql',
   connection: {
-    user: testUser,
+    user: 'root',
     password: testPassword,
     database: testDatabase,
     host: testHost,
