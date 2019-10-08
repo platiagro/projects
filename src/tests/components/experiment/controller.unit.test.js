@@ -117,7 +117,7 @@ describe('Test Experiment Controller methods', () => {
           projectId: '70382be9-be20-4042-a351-31512376957b',
         },
         body: {
-          experimentName: 'Auto featuring experiment',
+          name: 'Auto featuring experiment',
         },
       });
       const res = httpMocks.createResponse();
@@ -154,11 +154,11 @@ describe('Test Experiment Controller methods', () => {
           experimentId: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
         },
         body: {
-          newName: 'Auto-featuring Experiment',
-          newPipelineId: '23266cfd-4ed6-43d6-b8a0-ca8440d251c6',
-          newDatasedId: '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
-          newTargetColumnId: '3191a035-97a6-4e29-90d4-034cb1f87237',
-          newParameters: '{ price: 2, auto-featuring: true }',
+          name: 'Auto-featuring Experiment',
+          pipelineId: '23266cfd-4ed6-43d6-b8a0-ca8440d251c6',
+          datasetId: '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
+          targetColumnId: '3191a035-97a6-4e29-90d4-034cb1f87237',
+          parameters: '{ price: 2, auto-featuring: true }',
         },
       });
       const res = httpMocks.createResponse();
