@@ -33,12 +33,12 @@ const getAll = async (req, res) => {
 
 const update = async (req, res) => {
   const { projectId } = req.params;
-  const { newName } = req.body;
+  const { name } = req.body;
 
   await Project.getById(projectId)
     .then((project) => {
       project
-        .update(newName)
+        .update(name)
         .then(() => {
           res.status(200).json({ message: 'Updated successfully.' });
         })
@@ -59,12 +59,12 @@ const update = async (req, res) => {
 };
 
 const create = async (req, res) => {
-  const { projectName } = req.body;
+  const { name } = req.body;
 
   const uuid = uuidv4();
   const createdAt = new Date();
 
-  await Project.create(uuid, projectName, createdAt)
+  await Project.create(uuid, name, createdAt)
     .then((result) => {
       res
         .status(200)
