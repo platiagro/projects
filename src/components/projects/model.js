@@ -1,14 +1,18 @@
 import { Knex } from '../../config';
+import { ExperimentModel } from '../experiments';
 
 class Project {
   constructor(uuid, name, createdAt) {
     this.uuid = uuid;
     this.name = name;
     this.createdAt = createdAt;
+    this.experimentsList = [];
   }
 
-  static fromDBRecord(record) {
-    return new this(record.uuid, record.name, record.createdAt);
+  static async fromDBRecord(record) {
+    const project = new this(record.uuid, record.name, record.createdAt);
+    await project.experiments();
+    return project;
   }
 
   static async getById(uuid) {
@@ -37,11 +41,19 @@ class Project {
           const projects = rows.map((r) => {
             return this.fromDBRecord(r);
           });
-          resolve(projects);
+          Promise.all(projects).then((result) => {
+            resolve(result);
+          });
         })
         .catch((err) => {
           reject(err);
         });
+    });
+  }
+
+  async experiments() {
+    await ExperimentModel.getAllByProjectId(this.uuid).then((experiments) => {
+      this.experimentsList = experiments;
     });
   }
 
