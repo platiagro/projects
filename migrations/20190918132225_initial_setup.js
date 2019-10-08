@@ -11,7 +11,7 @@ exports.up = function(knex) {
         });
       }
     }),
-    knex.schema.hasTable('projects').then((exists) => {
+    knex.schema.hasTable('experiments').then((exists) => {
       if (!exists) {
         return knex.schema.createTable('experiments', function(t) {
           t.string('uuid', 255).primary();
