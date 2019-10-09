@@ -36,12 +36,29 @@ const getAllByProjectId = async (req, res) => {
 const update = async (req, res) => {
   const { experimentId } = req.params;
 
-  const { name, pipelineId, datasetId, targetColumnId, parameters } = req.body;
+  const {
+    name,
+    pipelineId,
+    datasetId,
+    targetColumnId,
+    parameters,
+    position,
+  } = req.body;
 
   await Experiment.getById(experimentId)
-    .then((experiment) => {
+    .then(async (experiment) => {
+      if (position !== undefined && position !== null) {
+        await experiment.reorder(position);
+      }
       experiment
-        .update(name, pipelineId, datasetId, targetColumnId, parameters)
+        .update(
+          name,
+          pipelineId,
+          datasetId,
+          targetColumnId,
+          parameters,
+          position
+        )
         .then(() => {
           res.status(200).json({ message: 'Updated successfully.' });
         })
