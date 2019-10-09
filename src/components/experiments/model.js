@@ -66,7 +66,7 @@ class Experiment {
           const experiments = rows.map((r) => {
             return this.fromDBRecord(r);
           });
-          resolve(experiments);
+          resolve(Promise.all(experiments));
         })
         .catch((err) => {
           reject(err);
