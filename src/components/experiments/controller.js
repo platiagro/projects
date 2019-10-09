@@ -38,7 +38,8 @@ const update = async (req, res) => {
 
   const {
     name,
-    pipelineId,
+    pipelineIdTrain,
+    pipelineIdDeploy,
     datasetId,
     targetColumnId,
     parameters,
@@ -53,7 +54,8 @@ const update = async (req, res) => {
       experiment
         .update(
           name,
-          pipelineId,
+          pipelineIdTrain,
+          pipelineIdDeploy,
           datasetId,
           targetColumnId,
           parameters,

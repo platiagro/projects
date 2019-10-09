@@ -17,7 +17,8 @@ describe('Test Experiment Model methods', () => {
             uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
             name: 'AutoFeat Experiment',
             projectId: '70382be9-be20-4042-a351-31512376957b',
-            pipelineId: null,
+            pipelineIdTrain: null,
+            pipelineIdDeploy: null,
             datasetId: null,
             targetColumnId: null,
             parameters: null,
@@ -37,7 +38,8 @@ describe('Test Experiment Model methods', () => {
           uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
           name: 'AutoFeat Experiment',
           projectId: '70382be9-be20-4042-a351-31512376957b',
-          pipelineId: null,
+          pipelineIdTrain: null,
+          pipelineIdDeploy: null,
           datasetId: null,
           targetColumnId: null,
           parameters: null,
@@ -79,7 +81,8 @@ describe('Test Experiment Model methods', () => {
               uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
               name: 'AutoFeat Experiment',
               projectId: '70382be9-be20-4042-a351-31512376957b',
-              pipelineId: null,
+              pipelineIdTrain: null,
+              pipelineIdDeploy: null,
               datasetId: null,
               targetColumnId: null,
               parameters: null,
@@ -100,7 +103,8 @@ describe('Test Experiment Model methods', () => {
             uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
             name: 'AutoFeat Experiment',
             projectId: '70382be9-be20-4042-a351-31512376957b',
-            pipelineId: null,
+            pipelineIdTrain: null,
+            pipelineIdDeploy: null,
             datasetId: null,
             targetColumnId: null,
             parameters: null,
@@ -174,6 +178,7 @@ describe('Test Experiment Model methods', () => {
         'Auto featuring experiment',
         'a214d8fc-639f-4088-a9fb-c30ba2a69146',
         '23266cfd-4ed6-43d6-b8a0-ca8440d251c6',
+        '1042cbad-e021-4777-ac25-7b096d6023aa',
         '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
         '3191a035-97a6-4e29-90d4-034cb1f87237',
         '{ price: 2, auto-featuring: true }',
@@ -184,14 +189,18 @@ describe('Test Experiment Model methods', () => {
         .update(
           'Auto-featuring Example',
           '67a9ac84-f444-4400-8c2b-c50d7d503b12',
+          'fe5205f5-7f76-4f57-84ca-ea6dd62670e8',
           'baaabb83-3ce1-44b3-b2e6-e33182e7cd4b',
           'fda0cfd0-d708-4fd5-84a0-70a7530b4a69',
           '{ price: 6, auto-featuring: true }'
         )
         .then((result) => {
           expect(result.name).toBe('Auto-featuring Example');
-          expect(result.pipelineId).toBe(
+          expect(result.pipelineIdTrain).toBe(
             '67a9ac84-f444-4400-8c2b-c50d7d503b12'
+          );
+          expect(result.pipelineIdDeploy).toBe(
+            'fe5205f5-7f76-4f57-84ca-ea6dd62670e8'
           );
           expect(result.datasetId).toBe('baaabb83-3ce1-44b3-b2e6-e33182e7cd4b');
           expect(result.targetColumnId).toBe(
@@ -201,8 +210,11 @@ describe('Test Experiment Model methods', () => {
 
           experimentMocked.update().then((result_) => {
             expect(result_.name).toBe('Auto-featuring Example');
-            expect(result_.pipelineId).toBe(
+            expect(result_.pipelineIdTrain).toBe(
               '67a9ac84-f444-4400-8c2b-c50d7d503b12'
+            );
+            expect(result_.pipelineIdDeploy).toBe(
+              'fe5205f5-7f76-4f57-84ca-ea6dd62670e8'
             );
             expect(result_.datasetId).toBe(
               'baaabb83-3ce1-44b3-b2e6-e33182e7cd4b'

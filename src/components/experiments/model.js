@@ -5,7 +5,8 @@ class Experiment {
     uuid,
     name,
     projectId,
-    pipelineId,
+    pipelineIdTrain,
+    pipelineIdDeploy,
     datasetId,
     targetColumnId,
     parameters,
@@ -15,7 +16,8 @@ class Experiment {
     this.uuid = uuid;
     this.name = name;
     this.projectId = projectId;
-    this.pipelineId = pipelineId;
+    this.pipelineIdTrain = pipelineIdTrain;
+    this.pipelineIdDeploy = pipelineIdDeploy;
     this.datasetId = datasetId;
     this.targetColumnId = targetColumnId;
     this.parameters = parameters;
@@ -28,7 +30,8 @@ class Experiment {
       record.uuid,
       record.name,
       record.projectId,
-      record.pipelineId,
+      record.pipelineIdTrain,
+      record.pipelineIdDeploy,
       record.datasetId,
       record.targetColumnId,
       record.parameters,
@@ -119,14 +122,16 @@ class Experiment {
 
   async update(
     newName,
-    newPipelineId,
+    newPipelineIdTrain,
+    newPipelineIdDeploy,
     newDatasetId,
     newTargetColumnId,
     newParameters,
     newPosition
   ) {
     const name = newName || this.name;
-    const pipelineId = newPipelineId || this.pipelineId;
+    const pipelineIdTrain = newPipelineIdTrain || this.pipelineIdTrain;
+    const pipelineIdDeploy = newPipelineIdDeploy || this.pipelineIdDeploy;
     const datasetId = newDatasetId || this.datasetId;
     const targetColumnId = newTargetColumnId || this.targetColumnId;
     const parameters = newParameters || this.parameters;
@@ -140,7 +145,8 @@ class Experiment {
     return new Promise((resolve, reject) => {
       Knex.update({
         name,
-        pipelineId,
+        pipelineIdTrain,
+        pipelineIdDeploy,
         datasetId,
         targetColumnId,
         parameters,
@@ -150,7 +156,8 @@ class Experiment {
         .where('uuid', '=', this.uuid)
         .then(() => {
           this.name = name;
-          this.pipelineId = pipelineId;
+          this.pipelineIdTrain = pipelineIdTrain;
+          this.pipelineIdDeploy = pipelineIdDeploy;
           this.datasetId = datasetId;
           this.targetColumnId = targetColumnId;
           this.parameters = parameters;
