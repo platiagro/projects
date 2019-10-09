@@ -9,7 +9,8 @@ class Experiment {
     datasetId,
     targetColumnId,
     parameters,
-    createdAt
+    createdAt,
+    position
   ) {
     this.uuid = uuid;
     this.name = name;
@@ -19,6 +20,7 @@ class Experiment {
     this.targetColumnId = targetColumnId;
     this.parameters = parameters;
     this.createdAt = createdAt;
+    this.position = position;
   }
 
   static fromDBRecord(record) {
@@ -30,7 +32,8 @@ class Experiment {
       record.datasetId,
       record.targetColumnId,
       record.parameters,
-      record.createdAt
+      record.createdAt,
+      record.position
     );
   }
 
@@ -56,16 +59,35 @@ class Experiment {
     return new Promise((resolve, reject) => {
       Knex.select('*')
         .from('experiments')
-        .where('projectId', '=', projectId)
+        .whereNotNull('position')
+        .andWhere('projectId', '=', projectId)
+        .orderBy('position')
         .then((rows) => {
           const experiments = rows.map((r) => {
             return this.fromDBRecord(r);
           });
-          resolve(experiments);
+          resolve(Promise.all(experiments));
         })
         .catch((err) => {
           reject(err);
         });
+    });
+  }
+
+  async reorder(newPosition) {
+    return new Promise((resolve) => {
+      Experiment.getAllByProjectId(this.projectId).then((experiments) => {
+        const experimentsFiltered = experiments.filter((e) => {
+          return e.uuid !== this.uuid;
+        });
+        experimentsFiltered.splice(newPosition, 0, this);
+        const result = experimentsFiltered.map((experiment, index) => {
+          return experiment.update(null, null, null, null, null, index);
+        });
+        Promise.all(result).then(() => {
+          resolve();
+        });
+      });
     });
   }
 
@@ -78,8 +100,16 @@ class Experiment {
         createdAt,
       })
         .into('experiments')
-        .then(() => {
-          resolve(this.fromDBRecord({ uuid, name, projectId, createdAt }));
+        .then(async () => {
+          const experiment = this.fromDBRecord({
+            uuid,
+            name,
+            projectId,
+            createdAt,
+            position: 0,
+          });
+          await experiment.reorder(0);
+          resolve(experiment);
         })
         .catch((err) => {
           reject(err);
@@ -92,16 +122,30 @@ class Experiment {
     newPipelineId,
     newDatasetId,
     newTargetColumnId,
-    newParameters
+    newParameters,
+    newPosition
   ) {
     const name = newName || this.name;
     const pipelineId = newPipelineId || this.pipelineId;
     const datasetId = newDatasetId || this.datasetId;
     const targetColumnId = newTargetColumnId || this.targetColumnId;
     const parameters = newParameters || this.parameters;
+    let position;
+    if (newPosition === undefined || newPosition === null) {
+      position = this.position;
+    } else {
+      position = newPosition;
+    }
 
     return new Promise((resolve, reject) => {
-      Knex.update({ name, pipelineId, datasetId, targetColumnId, parameters })
+      Knex.update({
+        name,
+        pipelineId,
+        datasetId,
+        targetColumnId,
+        parameters,
+        position,
+      })
         .from('experiments')
         .where('uuid', '=', this.uuid)
         .then(() => {
@@ -110,6 +154,7 @@ class Experiment {
           this.datasetId = datasetId;
           this.targetColumnId = targetColumnId;
           this.parameters = parameters;
+          this.position = position;
           resolve(this);
         })
         .catch((err) => {
