@@ -25,6 +25,7 @@ exports.up = function(knex) {
           t.string('targetColumnId', 255).nullable();
           t.text('parameters', 'longtext').nullable();
           t.dateTime('createdAt').notNull();
+          t.integer('position', '3').nullable();
         });
       }
     }),
