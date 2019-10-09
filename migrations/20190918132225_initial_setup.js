@@ -20,7 +20,8 @@ exports.up = function(knex) {
             .references('uuid')
             .inTable('projects')
             .notNull();
-          t.string('pipelineId', 255).nullable();
+          t.string('pipelineIdTrain', 255).nullable();
+          t.string('pipelineIdDeploy', 255).nullable();
           t.string('datasetId', 255).nullable();
           t.string('targetColumnId', 255).nullable();
           t.text('parameters', 'longtext').nullable();
