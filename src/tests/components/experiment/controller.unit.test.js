@@ -22,6 +22,8 @@ describe('Test Experiment Controller methods', () => {
   const stubExperimentGetAll = sinon.stub(Model, 'getAllByProjectId');
   const stubExperimentCreate = sinon.stub(Model, 'create');
   const stubExperimentUpdate = sinon.stub(ExperimentMocked, 'update');
+  const stubExperimentReorder = sinon.stub(ExperimentMocked, 'reorder');
+  stubExperimentReorder.returns(true);
 
   describe('Test getById Experiment controller', () => {
     const experimentGetByIdVerify = async (expectedCode) => {
@@ -146,7 +148,7 @@ describe('Test Experiment Controller methods', () => {
   });
 
   describe('Test Update Project controller', () => {
-    const projectUpdateVerify = async (expectedCode) => {
+    const projectUpdateVerify = async (expectedCode, position) => {
       const req = httpMocks.createRequest({
         method: 'PATCH',
         url: '/projects/:projectId/experiments/:experimentId',
@@ -159,6 +161,7 @@ describe('Test Experiment Controller methods', () => {
           datasetId: '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
           targetColumnId: '3191a035-97a6-4e29-90d4-034cb1f87237',
           parameters: '{ price: 2, auto-featuring: true }',
+          position,
         },
       });
       const res = httpMocks.createResponse();
@@ -168,12 +171,20 @@ describe('Test Experiment Controller methods', () => {
       expect(result.statusCode).toBe(expectedCode);
     };
 
+    it('Resolves update model, passing new position', () => {
+      stubExperimentUpdate.resolves(ExperimentMocked);
+
+      stubExperimentGetById.resolves(ExperimentMocked);
+
+      projectUpdateVerify(200, 0);
+    });
+
     it('Resolves update model', () => {
       stubExperimentUpdate.resolves(ExperimentMocked);
 
       stubExperimentGetById.resolves(ExperimentMocked);
 
-      projectUpdateVerify(200);
+      projectUpdateVerify(200, null);
     });
 
     it('Rejects update model', () => {
