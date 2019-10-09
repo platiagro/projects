@@ -133,7 +133,6 @@ describe('Test Project Model methods', () => {
             uuid: '70382be9-be20-4042-a351-31512376957b',
             name: 'ML Example',
             createdAt: '2019-09-17 13:41:18',
-            experimentsList: mockedExperimentsList,
           });
         })
         .catch((err) => {

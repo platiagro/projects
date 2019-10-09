@@ -103,16 +103,16 @@ class Experiment {
         createdAt,
       })
         .into('experiments')
-        .then(async () => {
-          const experiment = this.fromDBRecord({
-            uuid,
-            name,
-            projectId,
-            createdAt,
-            position: 0,
-          });
-          await experiment.reorder(0);
-          resolve(experiment);
+        .then(() => {
+          resolve(
+            this.fromDBRecord({
+              uuid,
+              name,
+              projectId,
+              createdAt,
+              position: 0,
+            })
+          );
         })
         .catch((err) => {
           reject(err);

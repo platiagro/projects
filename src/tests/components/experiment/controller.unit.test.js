@@ -133,12 +133,7 @@ describe('Test Experiment Controller methods', () => {
     };
 
     it('Resolves create model', () => {
-      stubExperimentCreate.resolves({
-        uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
-        name: 'AutoFeat Experiment',
-        projectId: '70382be9-be20-4042-a351-31512376957b',
-        createdAt: '2019-09-19 18:01:49',
-      });
+      stubExperimentCreate.resolves(ExperimentMocked);
 
       experimentCreateVerify(200);
     });

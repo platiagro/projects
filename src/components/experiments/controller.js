@@ -88,10 +88,12 @@ const create = async (req, res) => {
   const createdAt = new Date();
 
   await Experiment.create(uuid, name, projectId, createdAt)
-    .then((result) => {
-      res
-        .status(200)
-        .json({ message: 'Experiment created successfully.', payload: result });
+    .then(async (experiment) => {
+      await experiment.reorder(0);
+      res.status(200).json({
+        message: 'Experiment created successfully.',
+        payload: experiment,
+      });
     })
     .catch((err) => {
       console.error(err);
