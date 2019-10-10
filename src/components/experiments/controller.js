@@ -41,6 +41,7 @@ const update = async (req, res) => {
     pipelineIdTrain,
     pipelineIdDeploy,
     datasetId,
+    headerId,
     targetColumnId,
     parameters,
     position,
@@ -57,6 +58,7 @@ const update = async (req, res) => {
           pipelineIdTrain,
           pipelineIdDeploy,
           datasetId,
+          headerId,
           targetColumnId,
           parameters,
           position

@@ -8,6 +8,7 @@ class Experiment {
     pipelineIdTrain,
     pipelineIdDeploy,
     datasetId,
+    headerId,
     targetColumnId,
     parameters,
     createdAt,
@@ -19,6 +20,7 @@ class Experiment {
     this.pipelineIdTrain = pipelineIdTrain;
     this.pipelineIdDeploy = pipelineIdDeploy;
     this.datasetId = datasetId;
+    this.headerId = headerId;
     this.targetColumnId = targetColumnId;
     this.parameters = parameters;
     this.createdAt = createdAt;
@@ -33,6 +35,7 @@ class Experiment {
       record.pipelineIdTrain,
       record.pipelineIdDeploy,
       record.datasetId,
+      record.headerId,
       record.targetColumnId,
       record.parameters,
       record.createdAt,
@@ -125,6 +128,7 @@ class Experiment {
     newPipelineIdTrain,
     newPipelineIdDeploy,
     newDatasetId,
+    newHeaderId,
     newTargetColumnId,
     newParameters,
     newPosition
@@ -133,6 +137,7 @@ class Experiment {
     const pipelineIdTrain = newPipelineIdTrain || this.pipelineIdTrain;
     const pipelineIdDeploy = newPipelineIdDeploy || this.pipelineIdDeploy;
     const datasetId = newDatasetId || this.datasetId;
+    const headerId = newHeaderId || this.headerId;
     const targetColumnId = newTargetColumnId || this.targetColumnId;
     const parameters = newParameters || this.parameters;
     let position;
@@ -148,6 +153,7 @@ class Experiment {
         pipelineIdTrain,
         pipelineIdDeploy,
         datasetId,
+        headerId,
         targetColumnId,
         parameters,
         position,
@@ -159,6 +165,7 @@ class Experiment {
           this.pipelineIdTrain = pipelineIdTrain;
           this.pipelineIdDeploy = pipelineIdDeploy;
           this.datasetId = datasetId;
+          this.headerId = headerId;
           this.targetColumnId = targetColumnId;
           this.parameters = parameters;
           this.position = position;

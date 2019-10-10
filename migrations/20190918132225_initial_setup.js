@@ -23,6 +23,7 @@ exports.up = function(knex) {
           t.string('pipelineIdTrain', 255).nullable();
           t.string('pipelineIdDeploy', 255).nullable();
           t.string('datasetId', 255).nullable();
+          t.string('headerId', 255).nullable();
           t.string('targetColumnId', 255).nullable();
           t.text('parameters', 'longtext').nullable();
           t.dateTime('createdAt').notNull();

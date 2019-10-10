@@ -11,6 +11,7 @@ describe('Test Experiment Model methods', () => {
     '23266cfd-4ed6-43d6-b8a0-ca8440d251c6',
     '1042cbad-e021-4777-ac25-7b096d6023aa',
     '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
+    '482b603f-23c1-4a10-9b79-8c5b91c6c0cb',
     '3191a035-97a6-4e29-90d4-034cb1f87237',
     '{ price: 2, auto-featuring: true }',
     '2019-09-19T18:01:49.000Z',
@@ -34,6 +35,7 @@ describe('Test Experiment Model methods', () => {
             pipelineIdTrain: null,
             pipelineIdDeploy: null,
             datasetId: null,
+            headerId: null,
             targetColumnId: null,
             parameters: null,
             createdAt: '2019-09-19T18:01:49.000Z',
@@ -56,6 +58,7 @@ describe('Test Experiment Model methods', () => {
           pipelineIdTrain: null,
           pipelineIdDeploy: null,
           datasetId: null,
+          headerId: null,
           targetColumnId: null,
           parameters: null,
           createdAt: '2019-09-19T18:01:49.000Z',
@@ -100,6 +103,7 @@ describe('Test Experiment Model methods', () => {
               pipelineIdTrain: null,
               pipelineIdDeploy: null,
               datasetId: null,
+              headerId: null,
               targetColumnId: null,
               parameters: null,
               createdAt: '2019-09-19T18:01:49.000Z',
@@ -125,6 +129,7 @@ describe('Test Experiment Model methods', () => {
             pipelineIdTrain: null,
             pipelineIdDeploy: null,
             datasetId: null,
+            headerId: null,
             targetColumnId: null,
             parameters: null,
             createdAt: '2019-09-19T18:01:49.000Z',
@@ -206,6 +211,7 @@ describe('Test Experiment Model methods', () => {
           '67a9ac84-f444-4400-8c2b-c50d7d503b12',
           'fe5205f5-7f76-4f57-84ca-ea6dd62670e8',
           'baaabb83-3ce1-44b3-b2e6-e33182e7cd4b',
+          '482b603f-23c1-4a10-9b79-8c5b91c6c0cb',
           'fda0cfd0-d708-4fd5-84a0-70a7530b4a69',
           '{ price: 6, auto-featuring: true }',
           1
@@ -219,6 +225,8 @@ describe('Test Experiment Model methods', () => {
             'fe5205f5-7f76-4f57-84ca-ea6dd62670e8'
           );
           expect(result.datasetId).toBe('baaabb83-3ce1-44b3-b2e6-e33182e7cd4b');
+          expect(result.headerId).toBe('482b603f-23c1-4a10-9b79-8c5b91c6c0cb');
+
           expect(result.targetColumnId).toBe(
             'fda0cfd0-d708-4fd5-84a0-70a7530b4a69'
           );
@@ -235,6 +243,9 @@ describe('Test Experiment Model methods', () => {
             );
             expect(result_.datasetId).toBe(
               'baaabb83-3ce1-44b3-b2e6-e33182e7cd4b'
+            );
+            expect(result_.headerId).toBe(
+              '482b603f-23c1-4a10-9b79-8c5b91c6c0cb'
             );
             expect(result_.targetColumnId).toBe(
               'fda0cfd0-d708-4fd5-84a0-70a7530b4a69'
@@ -278,6 +289,7 @@ describe('Test reorder Experiment method', () => {
     '23266cfd-4ed6-43d6-b8a0-ca8440d251c6',
     '1042cbad-e021-4777-ac25-7b096d6023aa',
     '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
+    '482b603f-23c1-4a10-9b79-8c5b91c6c0cb',
     '3191a035-97a6-4e29-90d4-034cb1f87237',
     '{ price: 2, auto-featuring: true }',
     '2019-09-19T18:01:49.000Z',

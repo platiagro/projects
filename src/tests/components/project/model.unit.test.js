@@ -14,6 +14,7 @@ describe('Test Project Model methods', () => {
       projectId: '70382be9-be20-4042-a351-31512376957b',
       pipelineId: null,
       datasetId: null,
+      headerId: null,
       targetColumnId: null,
       parameters: null,
       createdAt: '2019-09-19T18:01:49.000Z',

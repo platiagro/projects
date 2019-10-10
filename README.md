@@ -172,6 +172,7 @@ curl --location --request PATCH "localhost:3000/projects/a214d8fc-639f-4088-a9fb
     \"pipelineIdTrain\": \"23266cfd-4ed6-43d6-b8a0-ca8440d251c6\",
     \"pipelineIdDeploy\": \"fe5205f5-7f76-4f57-84ca-ea6dd62670e8\",
     \"datasetId\": \"0a10c0ac-ff3b-42df-ab7a-dc2962a1750c\",
+    \"headerId\": \"482b603f-23c1-4a10-9b79-8c5b91c6c0cb\",
     \"targetColumnId\": \"3191a035-97a6-4e29-90d4-034cb1f87237\",
     \"parameters\": \"{ price: 8, auto-featuring: true }\",
     \"position\": 1
