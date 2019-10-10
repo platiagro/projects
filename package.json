@@ -10,7 +10,8 @@
     ]
   },
   "scripts": {
-    "start": "nodemon --exec babel-node src/server.js",
+    "start": "babel-node src/server.js",
+    "start-dev": "nodemon --exec babel-node src/server.js",
     "test": "npx jest",
     "test-coverage": "npx jest --coverage --silent"
   },
