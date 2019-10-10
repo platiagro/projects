@@ -1,4 +1,4 @@
-FROM node:9-alpine
+FROM node:lts-alpine
 
 WORKDIR /home/node/app
 
@@ -6,6 +6,7 @@ WORKDIR /home/node/app
 COPY ./package* ./
 
 RUN npm install && \
+    npm install -g knex && \
     npm cache clean --force
 
 COPY . .
@@ -14,4 +15,10 @@ COPY . .
 EXPOSE 3000
 
 # Start the app
-CMD npm start
+RUN chmod +x ./wait-for.sh;
+
+RUN apk add netcat-openbsd;
+
+CMD ./wait-for.sh ${MYSQL_HOST:-mysql}:${MYSQL_PORT:-3306} && \
+    knex migrate:latest && \
+    npm run start
