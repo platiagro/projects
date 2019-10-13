@@ -44,6 +44,8 @@ const update = async (req, res) => {
     headerId,
     targetColumnId,
     parameters,
+    runId,
+    template,
     position,
   } = req.body;
 
@@ -61,6 +63,8 @@ const update = async (req, res) => {
           headerId,
           targetColumnId,
           parameters,
+          runId,
+          template,
           position
         )
         .then(() => {

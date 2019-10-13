@@ -12,6 +12,8 @@ class Experiment {
     targetColumnId,
     parameters,
     createdAt,
+    runId,
+    template,
     position
   ) {
     this.uuid = uuid;
@@ -24,6 +26,8 @@ class Experiment {
     this.targetColumnId = targetColumnId;
     this.parameters = parameters;
     this.createdAt = createdAt;
+    this.runId = runId;
+    this.template = template;
     this.position = position;
   }
 
@@ -39,6 +43,8 @@ class Experiment {
       record.targetColumnId,
       record.parameters,
       record.createdAt,
+      record.runId,
+      record.template,
       record.position
     );
   }
@@ -88,7 +94,18 @@ class Experiment {
         });
         experimentsFiltered.splice(newPosition, 0, this);
         const result = experimentsFiltered.map((experiment, index) => {
-          return experiment.update(null, null, null, null, null, index);
+          return experiment.update(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            index
+          );
         });
         Promise.all(result).then(() => {
           resolve();
@@ -131,6 +148,8 @@ class Experiment {
     newHeaderId,
     newTargetColumnId,
     newParameters,
+    newRunId,
+    newTemplate,
     newPosition
   ) {
     const name = newName || this.name;
@@ -140,6 +159,8 @@ class Experiment {
     const headerId = newHeaderId || this.headerId;
     const targetColumnId = newTargetColumnId || this.targetColumnId;
     const parameters = newParameters || this.parameters;
+    const runId = newRunId || this.runId;
+    const template = newTemplate || this.template;
     let position;
     if (newPosition === undefined || newPosition === null) {
       position = this.position;
@@ -156,6 +177,8 @@ class Experiment {
         headerId,
         targetColumnId,
         parameters,
+        runId,
+        template,
         position,
       })
         .from('experiments')
@@ -168,6 +191,8 @@ class Experiment {
           this.headerId = headerId;
           this.targetColumnId = targetColumnId;
           this.parameters = parameters;
+          this.runId = runId;
+          this.template = template;
           this.position = position;
           resolve(this);
         })
