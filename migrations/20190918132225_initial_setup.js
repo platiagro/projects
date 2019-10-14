@@ -27,6 +27,7 @@ exports.up = function(knex) {
           t.string('targetColumnId', 255).nullable();
           t.text('parameters', 'longtext').nullable();
           t.string('runId', 255).nullable();
+          t.string('runStatus', 'longtext').nullable();
           t.string('template', 255).nullable();
           t.dateTime('createdAt').notNull();
           t.integer('position', '3').nullable();

@@ -13,6 +13,7 @@ class Experiment {
     parameters,
     createdAt,
     runId,
+    runStatus,
     template,
     position
   ) {
@@ -27,6 +28,7 @@ class Experiment {
     this.parameters = parameters;
     this.createdAt = createdAt;
     this.runId = runId;
+    this.runStatus = runStatus;
     this.template = template;
     this.position = position;
   }
@@ -44,6 +46,7 @@ class Experiment {
       record.parameters,
       record.createdAt,
       record.runId,
+      record.runStatus,
       record.template,
       record.position
     );
@@ -104,6 +107,7 @@ class Experiment {
             null,
             null,
             null,
+            null,
             index
           );
         });
@@ -149,6 +153,7 @@ class Experiment {
     newTargetColumnId,
     newParameters,
     newRunId,
+    newRunStatus,
     newTemplate,
     newPosition
   ) {
@@ -160,6 +165,7 @@ class Experiment {
     const targetColumnId = newTargetColumnId || this.targetColumnId;
     const parameters = newParameters || this.parameters;
     const runId = newRunId || this.runId;
+    const runStatus = newRunStatus || this.runStatus;
     const template = newTemplate || this.template;
     let position;
     if (newPosition === undefined || newPosition === null) {
@@ -178,6 +184,7 @@ class Experiment {
         targetColumnId,
         parameters,
         runId,
+        runStatus,
         template,
         position,
       })
@@ -192,6 +199,7 @@ class Experiment {
           this.targetColumnId = targetColumnId;
           this.parameters = parameters;
           this.runId = runId;
+          this.runStatus = runStatus;
           this.template = template;
           this.position = position;
           resolve(this);
