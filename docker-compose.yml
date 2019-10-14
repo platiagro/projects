@@ -22,4 +22,4 @@ services:
       - ./data:/var/lib/mysql
     environment:
       - MYSQL_DATABASE=${DB_DATABASE:-projects}
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-secret}
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
