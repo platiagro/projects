@@ -19,6 +19,6 @@ RUN chmod +x ./wait-for.sh;
 
 RUN apk add netcat-openbsd;
 
-CMD ./wait-for.sh ${MYSQL_HOST:-mysql}:${MYSQL_PORT:-3306} && \
+CMD ./wait-for.sh mysql:3306 && \
     knex migrate:latest && \
     npm run start

@@ -214,6 +214,9 @@ describe('Test Experiment Model methods', () => {
           '482b603f-23c1-4a10-9b79-8c5b91c6c0cb',
           'fda0cfd0-d708-4fd5-84a0-70a7530b4a69',
           '{ price: 6, auto-featuring: true }',
+          1,
+          1,
+          1,
           1
         )
         .then((result) => {
@@ -231,6 +234,9 @@ describe('Test Experiment Model methods', () => {
             'fda0cfd0-d708-4fd5-84a0-70a7530b4a69'
           );
           expect(result.parameters).toBe('{ price: 6, auto-featuring: true }');
+          expect(result.runId).toBe(1);
+          expect(result.runStatus).toBe(1);
+          expect(result.template).toBe(1);
           expect(result.position).toBe(1);
 
           experimentMocked.update().then((result_) => {
@@ -253,6 +259,9 @@ describe('Test Experiment Model methods', () => {
             expect(result_.parameters).toBe(
               '{ price: 6, auto-featuring: true }'
             );
+            expect(result_.runId).toBe(1);
+            expect(result_.runStatus).toBe(1);
+            expect(result_.template).toBe(1);
             expect(result_.position).toBe(1);
           });
         })
