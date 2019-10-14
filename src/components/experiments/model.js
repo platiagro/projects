@@ -98,16 +98,16 @@ class Experiment {
         experimentsFiltered.splice(newPosition, 0, this);
         const result = experimentsFiltered.map((experiment, index) => {
           return experiment.update(
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
             index
           );
         });
@@ -158,15 +158,26 @@ class Experiment {
     newPosition
   ) {
     const name = newName || this.name;
-    const pipelineIdTrain = newPipelineIdTrain || this.pipelineIdTrain;
-    const pipelineIdDeploy = newPipelineIdDeploy || this.pipelineIdDeploy;
-    const datasetId = newDatasetId || this.datasetId;
-    const headerId = newHeaderId || this.headerId;
-    const targetColumnId = newTargetColumnId || this.targetColumnId;
-    const parameters = newParameters || this.parameters;
-    const runId = newRunId || this.runId;
-    const runStatus = newRunStatus || this.runStatus;
-    const template = newTemplate || this.template;
+    const pipelineIdTrain =
+      newPipelineIdTrain !== undefined
+        ? newPipelineIdTrain
+        : this.pipelineIdTrain;
+    const pipelineIdDeploy =
+      newPipelineIdDeploy !== undefined
+        ? newPipelineIdDeploy
+        : this.pipelineIdDeploy;
+    const datasetId =
+      newDatasetId !== undefined ? newDatasetId : this.datasetId;
+    const headerId = newHeaderId !== undefined ? newHeaderId : this.headerId;
+    const targetColumnId =
+      newTargetColumnId !== undefined ? newTargetColumnId : this.targetColumnId;
+    const parameters =
+      newParameters !== undefined ? newParameters : this.parameters;
+    const runId = newRunId !== undefined ? newRunId : this.runId;
+    const runStatus =
+      newRunStatus !== undefined ? newRunStatus : this.runStatus;
+    const template = newTemplate !== undefined ? newTemplate : this.template;
+
     let position;
     if (newPosition === undefined || newPosition === null) {
       position = this.position;
