@@ -49,6 +49,7 @@ exports.up = function(knex) {
           t.string('uuid', 255).primary();
           t.string('bucketName', 255).notNull();
           t.string('originalName', 255).notNull();
+          t.string('path', 255).notNull();
         });
       }
     }),
@@ -59,6 +60,7 @@ exports.up = function(knex) {
           t.string('uuid', 255).primary();
           t.string('bucketName', 255).notNull();
           t.string('originalName', 255).notNull();
+          t.string('path', 255).notNull();
         });
       }
     }),
