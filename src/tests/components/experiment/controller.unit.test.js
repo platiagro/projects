@@ -12,7 +12,9 @@ describe('Test Experiment Controller methods', () => {
     'Auto featuring experiment',
     'a214d8fc-639f-4088-a9fb-c30ba2a69146',
     '23266cfd-4ed6-43d6-b8a0-ca8440d251c6',
+    '1042cbad-e021-4777-ac25-7b096d6023aa',
     '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
+    '482b603f-23c1-4a10-9b79-8c5b91c6c0cb',
     '3191a035-97a6-4e29-90d4-034cb1f87237',
     '{ price: 2, auto-featuring: true }',
     '2019-09-19T18:01:49.000Z'
@@ -22,6 +24,8 @@ describe('Test Experiment Controller methods', () => {
   const stubExperimentGetAll = sinon.stub(Model, 'getAllByProjectId');
   const stubExperimentCreate = sinon.stub(Model, 'create');
   const stubExperimentUpdate = sinon.stub(ExperimentMocked, 'update');
+  const stubExperimentReorder = sinon.stub(ExperimentMocked, 'reorder');
+  stubExperimentReorder.returns(true);
 
   describe('Test getById Experiment controller', () => {
     const experimentGetByIdVerify = async (expectedCode) => {
@@ -45,8 +49,10 @@ describe('Test Experiment Controller methods', () => {
         uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
         name: 'AutoFeat Experiment',
         projectId: '70382be9-be20-4042-a351-31512376957b',
-        pipelineId: null,
+        pipelineIdTrain: null,
+        pipelineIdDeploy: null,
         datasetId: null,
+        headerId: null,
         targetColumnId: null,
         parameters: null,
         createdAt: '2019-09-19T18:01:49.000Z',
@@ -90,8 +96,10 @@ describe('Test Experiment Controller methods', () => {
           uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
           name: 'AutoFeat Experiment',
           projectId: '70382be9-be20-4042-a351-31512376957b',
-          pipelineId: null,
+          pipelineIdTrain: null,
+          pipelineIdDeploy: null,
           datasetId: null,
+          headerId: null,
           targetColumnId: null,
           parameters: null,
           createdAt: '2019-09-19T18:01:49.000Z',
@@ -117,7 +125,7 @@ describe('Test Experiment Controller methods', () => {
           projectId: '70382be9-be20-4042-a351-31512376957b',
         },
         body: {
-          experimentName: 'Auto featuring experiment',
+          name: 'Auto featuring experiment',
         },
       });
       const res = httpMocks.createResponse();
@@ -128,12 +136,7 @@ describe('Test Experiment Controller methods', () => {
     };
 
     it('Resolves create model', () => {
-      stubExperimentCreate.resolves({
-        uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
-        name: 'AutoFeat Experiment',
-        projectId: '70382be9-be20-4042-a351-31512376957b',
-        createdAt: '2019-09-19 18:01:49',
-      });
+      stubExperimentCreate.resolves(ExperimentMocked);
 
       experimentCreateVerify(200);
     });
@@ -146,7 +149,7 @@ describe('Test Experiment Controller methods', () => {
   });
 
   describe('Test Update Project controller', () => {
-    const projectUpdateVerify = async (expectedCode) => {
+    const projectUpdateVerify = async (expectedCode, position) => {
       const req = httpMocks.createRequest({
         method: 'PATCH',
         url: '/projects/:projectId/experiments/:experimentId',
@@ -154,11 +157,14 @@ describe('Test Experiment Controller methods', () => {
           experimentId: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
         },
         body: {
-          newName: 'Auto-featuring Experiment',
-          newPipelineId: '23266cfd-4ed6-43d6-b8a0-ca8440d251c6',
-          newDatasedId: '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
-          newTargetColumnId: '3191a035-97a6-4e29-90d4-034cb1f87237',
-          newParameters: '{ price: 2, auto-featuring: true }',
+          name: 'Auto-featuring Experiment',
+          pipelineIdTrain: '23266cfd-4ed6-43d6-b8a0-ca8440d251c6',
+          pipelineIdDeploy: '1042cbad-e021-4777-ac25-7b096d6023aa',
+          datasetId: '0a10c0ac-ff3b-42df-ab7a-dc2962a1750c',
+          headerId: '482b603f-23c1-4a10-9b79-8c5b91c6c0cb',
+          targetColumnId: '3191a035-97a6-4e29-90d4-034cb1f87237',
+          parameters: '{ price: 2, auto-featuring: true }',
+          position,
         },
       });
       const res = httpMocks.createResponse();
@@ -168,12 +174,20 @@ describe('Test Experiment Controller methods', () => {
       expect(result.statusCode).toBe(expectedCode);
     };
 
+    it('Resolves update model, passing new position', () => {
+      stubExperimentUpdate.resolves(ExperimentMocked);
+
+      stubExperimentGetById.resolves(ExperimentMocked);
+
+      projectUpdateVerify(200, 0);
+    });
+
     it('Resolves update model', () => {
       stubExperimentUpdate.resolves(ExperimentMocked);
 
       stubExperimentGetById.resolves(ExperimentMocked);
 
-      projectUpdateVerify(200);
+      projectUpdateVerify(200, null);
     });
 
     it('Rejects update model', () => {

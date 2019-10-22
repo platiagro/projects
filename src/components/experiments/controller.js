@@ -37,22 +37,37 @@ const update = async (req, res) => {
   const { experimentId } = req.params;
 
   const {
-    newName,
-    newPipelineId,
-    newDatasedId,
-    newTargetColumnId,
-    newParameters,
+    name,
+    pipelineIdTrain,
+    pipelineIdDeploy,
+    datasetId,
+    headerId,
+    targetColumnId,
+    parameters,
+    runStatus,
+    runId,
+    template,
+    position,
   } = req.body;
 
   await Experiment.getById(experimentId)
-    .then((experiment) => {
+    .then(async (experiment) => {
+      if (position !== undefined && position !== null) {
+        await experiment.reorder(position);
+      }
       experiment
         .update(
-          newName,
-          newPipelineId,
-          newDatasedId,
-          newTargetColumnId,
-          newParameters
+          name,
+          pipelineIdTrain,
+          pipelineIdDeploy,
+          datasetId,
+          headerId,
+          targetColumnId,
+          parameters,
+          runId,
+          runStatus,
+          template,
+          position
         )
         .then(() => {
           res.status(200).json({ message: 'Updated successfully.' });
@@ -75,16 +90,18 @@ const update = async (req, res) => {
 
 const create = async (req, res) => {
   const { projectId } = req.params;
-  const { experimentName } = req.body;
+  const { name } = req.body;
 
   const uuid = uuidv4();
   const createdAt = new Date();
 
-  await Experiment.create(uuid, experimentName, projectId, createdAt)
-    .then((result) => {
-      res
-        .status(200)
-        .json({ message: 'Experiment created successfully.', payload: result });
+  await Experiment.create(uuid, name, projectId, createdAt)
+    .then(async (experiment) => {
+      await experiment.reorder(0);
+      res.status(200).json({
+        message: 'Experiment created successfully.',
+        payload: experiment,
+      });
     })
     .catch((err) => {
       console.error(err);

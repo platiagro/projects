@@ -90,7 +90,7 @@ describe('Test Project Controller methods', () => {
         method: 'POST',
         url: '/projects',
         body: {
-          projectName: 'ML Example',
+          name: 'ML Example',
         },
       });
       const res = httpMocks.createResponse();
@@ -134,7 +134,7 @@ describe('Test Project Controller methods', () => {
           projectId: '70382be9-be20-4042-a351-31512376957b',
         },
         body: {
-          projectName: 'Auto featuring',
+          name: 'Auto featuring',
         },
       });
       const res = httpMocks.createResponse();

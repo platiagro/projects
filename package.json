@@ -1,5 +1,6 @@
 {
   "name": "projects",
+  "description": "PlatIAgro Projects management microservice. ",
   "version": "0.1.0",
   "main": "app.js",
   "jest": {
@@ -9,10 +10,16 @@
     ]
   },
   "scripts": {
-    "start": "nodemon --exec babel-node src/server.js",
+    "start": "babel-node src/server.js",
+    "start-dev": "nodemon --exec babel-node src/server.js",
     "test": "npx jest",
     "test-coverage": "npx jest --coverage --silent"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/platiagro/projects"
+  },
+  "license": "Apache-2.0",
   "dependencies": {
     "core-js": "^3.2.1",
     "cors": "^2.8.5",

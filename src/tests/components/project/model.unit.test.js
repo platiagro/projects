@@ -2,9 +2,25 @@ import sinon from 'sinon';
 import { Knex } from '../../../config';
 
 import { ProjectModel as Project } from '../../../components/projects';
+import { ExperimentModel as Experiment } from '../../../components/experiments';
 
 describe('Test Project Model methods', () => {
   const stubKnex = sinon.stub(Knex, 'select');
+  const stubExperiments = sinon.stub(Experiment, 'getAllByProjectId');
+  const mockedExperimentsList = [
+    {
+      uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e',
+      name: 'AutoFeat Experiment',
+      projectId: '70382be9-be20-4042-a351-31512376957b',
+      pipelineId: null,
+      datasetId: null,
+      headerId: null,
+      targetColumnId: null,
+      parameters: null,
+      createdAt: '2019-09-19T18:01:49.000Z',
+    },
+  ];
+  stubExperiments.resolves(mockedExperimentsList);
 
   describe('Test getById Project method', () => {
     const projectGetByIdVerify = (expectedError) => {
@@ -15,6 +31,7 @@ describe('Test Project Model methods', () => {
             uuid: '70382be9-be20-4042-a351-31512376957b',
             name: 'ML Example',
             createdAt: '2019-09-17 13:41:18',
+            experimentsList: mockedExperimentsList,
           });
         })
         .catch((err) => {
@@ -67,6 +84,7 @@ describe('Test Project Model methods', () => {
               uuid: '70382be9-be20-4042-a351-31512376957b',
               name: 'ML Example',
               createdAt: '2019-09-17 13:41:18',
+              experimentsList: mockedExperimentsList,
             },
           ]);
         })
@@ -76,26 +94,25 @@ describe('Test Project Model methods', () => {
     };
 
     it('Resolves db query', () => {
-      stubKnex.callsFake(() => {
-        return {
-          from: sinon.stub().resolves([
-            {
-              uuid: '70382be9-be20-4042-a351-31512376957b',
-              name: 'ML Example',
-              createdAt: '2019-09-17 13:41:18',
-            },
-          ]),
-        };
+      stubKnex.returns({
+        from: sinon.stub().returnsThis(),
+        orderBy: sinon.stub().resolves([
+          {
+            uuid: '70382be9-be20-4042-a351-31512376957b',
+            name: 'ML Example',
+            createdAt: '2019-09-17 13:41:18',
+            experimentsList: mockedExperimentsList,
+          },
+        ]),
       });
 
       projectGetAllVerify();
     });
 
     it('Rejects db query', () => {
-      stubKnex.callsFake(() => {
-        return {
-          from: sinon.stub().rejects(Error('Forced error')),
-        };
+      stubKnex.returns({
+        from: sinon.stub().returnsThis(),
+        orderBy: sinon.stub().rejects(Error('Forced error')),
       });
 
       projectGetAllVerify();

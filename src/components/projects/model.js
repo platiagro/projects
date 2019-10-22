@@ -1,14 +1,21 @@
 import { Knex } from '../../config';
+import { ExperimentModel } from '../experiments';
 
 class Project {
-  constructor(uuid, name, createdAt) {
+  constructor(uuid, name, createdAt, experimentsList) {
     this.uuid = uuid;
     this.name = name;
     this.createdAt = createdAt;
+    this.experimentsList = experimentsList;
   }
 
   static fromDBRecord(record) {
-    return new this(record.uuid, record.name, record.createdAt);
+    return new this(
+      record.uuid,
+      record.name,
+      record.createdAt,
+      record.experimentsList
+    );
   }
 
   static async getById(uuid) {
@@ -17,9 +24,13 @@ class Project {
         .from('projects')
         .where('uuid', '=', uuid)
         .first()
-        .then((row) => {
+        .then(async (row) => {
           if (row) {
-            resolve(this.fromDBRecord(row));
+            const record = row;
+            record.experimentsList = await ExperimentModel.getAllByProjectId(
+              uuid
+            );
+            resolve(this.fromDBRecord(record));
           }
           reject(Error('Invalid UUID.'));
         })
@@ -33,11 +44,14 @@ class Project {
     return new Promise((resolve, reject) => {
       Knex.select('*')
         .from('projects')
+        .orderBy('createdAt', 'desc')
         .then((rows) => {
           const projects = rows.map((r) => {
             return this.fromDBRecord(r);
           });
-          resolve(projects);
+          Promise.all(projects).then((result) => {
+            resolve(result);
+          });
         })
         .catch((err) => {
           reject(err);

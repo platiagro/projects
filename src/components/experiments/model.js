@@ -5,20 +5,32 @@ class Experiment {
     uuid,
     name,
     projectId,
-    pipelineId,
+    pipelineIdTrain,
+    pipelineIdDeploy,
     datasetId,
+    headerId,
     targetColumnId,
     parameters,
-    createdAt
+    createdAt,
+    runId,
+    runStatus,
+    template,
+    position
   ) {
     this.uuid = uuid;
     this.name = name;
     this.projectId = projectId;
-    this.pipelineId = pipelineId;
+    this.pipelineIdTrain = pipelineIdTrain;
+    this.pipelineIdDeploy = pipelineIdDeploy;
     this.datasetId = datasetId;
+    this.headerId = headerId;
     this.targetColumnId = targetColumnId;
     this.parameters = parameters;
     this.createdAt = createdAt;
+    this.runId = runId;
+    this.runStatus = runStatus;
+    this.template = template;
+    this.position = position;
   }
 
   static fromDBRecord(record) {
@@ -26,11 +38,17 @@ class Experiment {
       record.uuid,
       record.name,
       record.projectId,
-      record.pipelineId,
+      record.pipelineIdTrain,
+      record.pipelineIdDeploy,
       record.datasetId,
+      record.headerId,
       record.targetColumnId,
       record.parameters,
-      record.createdAt
+      record.createdAt,
+      record.runId,
+      record.runStatus,
+      record.template,
+      record.position
     );
   }
 
@@ -56,16 +74,47 @@ class Experiment {
     return new Promise((resolve, reject) => {
       Knex.select('*')
         .from('experiments')
-        .where('projectId', '=', projectId)
+        .whereNotNull('position')
+        .andWhere('projectId', '=', projectId)
+        .orderBy('position')
         .then((rows) => {
           const experiments = rows.map((r) => {
             return this.fromDBRecord(r);
           });
-          resolve(experiments);
+          resolve(Promise.all(experiments));
         })
         .catch((err) => {
           reject(err);
         });
+    });
+  }
+
+  async reorder(newPosition) {
+    return new Promise((resolve) => {
+      Experiment.getAllByProjectId(this.projectId).then((experiments) => {
+        const experimentsFiltered = experiments.filter((e) => {
+          return e.uuid !== this.uuid;
+        });
+        experimentsFiltered.splice(newPosition, 0, this);
+        const result = experimentsFiltered.map((experiment, index) => {
+          return experiment.update(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            index
+          );
+        });
+        Promise.all(result).then(() => {
+          resolve();
+        });
+      });
     });
   }
 
@@ -79,7 +128,15 @@ class Experiment {
       })
         .into('experiments')
         .then(() => {
-          resolve(this.fromDBRecord({ uuid, name, projectId, createdAt }));
+          resolve(
+            this.fromDBRecord({
+              uuid,
+              name,
+              projectId,
+              createdAt,
+              position: 0,
+            })
+          );
         })
         .catch((err) => {
           reject(err);
@@ -89,27 +146,73 @@ class Experiment {
 
   async update(
     newName,
-    newPipelineId,
+    newPipelineIdTrain,
+    newPipelineIdDeploy,
     newDatasetId,
+    newHeaderId,
     newTargetColumnId,
-    newParameters
+    newParameters,
+    newRunId,
+    newRunStatus,
+    newTemplate,
+    newPosition
   ) {
     const name = newName || this.name;
-    const pipelineId = newPipelineId || this.pipelineId;
-    const datasetId = newDatasetId || this.datasetId;
-    const targetColumnId = newTargetColumnId || this.targetColumnId;
-    const parameters = newParameters || this.parameters;
+    const pipelineIdTrain =
+      newPipelineIdTrain !== undefined
+        ? newPipelineIdTrain
+        : this.pipelineIdTrain;
+    const pipelineIdDeploy =
+      newPipelineIdDeploy !== undefined
+        ? newPipelineIdDeploy
+        : this.pipelineIdDeploy;
+    const datasetId =
+      newDatasetId !== undefined ? newDatasetId : this.datasetId;
+    const headerId = newHeaderId !== undefined ? newHeaderId : this.headerId;
+    const targetColumnId =
+      newTargetColumnId !== undefined ? newTargetColumnId : this.targetColumnId;
+    const parameters =
+      newParameters !== undefined ? newParameters : this.parameters;
+    const runId = newRunId !== undefined ? newRunId : this.runId;
+    const runStatus =
+      newRunStatus !== undefined ? newRunStatus : this.runStatus;
+    const template = newTemplate !== undefined ? newTemplate : this.template;
+
+    let position;
+    if (newPosition === undefined || newPosition === null) {
+      position = this.position;
+    } else {
+      position = newPosition;
+    }
 
     return new Promise((resolve, reject) => {
-      Knex.update({ name, pipelineId, datasetId, targetColumnId, parameters })
+      Knex.update({
+        name,
+        pipelineIdTrain,
+        pipelineIdDeploy,
+        datasetId,
+        headerId,
+        targetColumnId,
+        parameters,
+        runId,
+        runStatus,
+        template,
+        position,
+      })
         .from('experiments')
         .where('uuid', '=', this.uuid)
         .then(() => {
           this.name = name;
-          this.pipelineId = pipelineId;
+          this.pipelineIdTrain = pipelineIdTrain;
+          this.pipelineIdDeploy = pipelineIdDeploy;
           this.datasetId = datasetId;
+          this.headerId = headerId;
           this.targetColumnId = targetColumnId;
           this.parameters = parameters;
+          this.runId = runId;
+          this.runStatus = runStatus;
+          this.template = template;
+          this.position = position;
           resolve(this);
         })
         .catch((err) => {
