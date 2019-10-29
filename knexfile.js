@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const database = process.env.DB_DATABASE || 'projects';
-const host = process.env.DB_HOST || '127.0.0.1';
+const host = process.env.DB_HOST || 'mysql';
 const port = process.env.DB_PORT || 3306;
 
 const testDatabase = process.env.DB_TEST_DATABASE || 'projects';
