@@ -176,6 +176,37 @@ const upload = async (req, res) => {
     });
 };
 
+const download = async (req, res) => {
+  const { uuid } = req.params;
+  const { fileName } = req.body;
+
+  await MinioModel.downloadStream(
+    config.MINIO_BUCKET,
+    `components/${uuid}/${fileName}`
+  )
+    .then((stream) => {
+      res.set('Content-disposition', `attachment; filename=${fileName}`);
+      stream.on('data', (chunk) => {
+        res.write(chunk);
+      });
+      stream.on('end', () => {
+        res.end();
+      });
+      stream.on('error', (err) => {
+        console.error(err);
+        res.sendStatus(500);
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.code === 'NoSuchKey') {
+        res.status(400).json({ message: `File not exist.` });
+      } else {
+        res.sendStatus(500);
+      }
+    });
+};
+
 module.exports = {
   create,
   update,
@@ -183,4 +214,5 @@ module.exports = {
   getAll,
   getById,
   upload,
+  download,
 };
