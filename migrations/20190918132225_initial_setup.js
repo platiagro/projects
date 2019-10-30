@@ -87,6 +87,7 @@ exports.up = function(knex) {
           t.dateTime('createdAt').notNull();
           t.dateTime('updatedAt');
           t.string('name', 255).notNull();
+          t.text('parameters', 'longtext').nullable();
         });
       }
     }),

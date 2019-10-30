@@ -23,4 +23,6 @@ router.get('/download/:uuid', Component.download);
 
 router.get('/getFiles/:uuid', MinioController.getFiles);
 
+router.delete('/deleteFiles/:uuid', MinioController.deleteFiles);
+
 export default router;

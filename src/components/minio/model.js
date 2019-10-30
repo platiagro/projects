@@ -52,13 +52,12 @@ class Minio {
         resolve(files);
       });
       stream.on('error', (err) => {
-        console.log(err);
         reject(err);
       });
     });
   }
 
-  static deleteFiles(bucketName, prefix) {
+  static deleteFolder(bucketName, prefix) {
     return new Promise((resolve, reject) => {
       const files = [];
       const stream = minioClient.listObjects(bucketName, prefix, true);
@@ -74,8 +73,18 @@ class Minio {
         });
       });
       stream.on('error', (err) => {
-        console.log(err);
         reject(err);
+      });
+    });
+  }
+
+  static deleteFile(bucketName, prefix) {
+    return new Promise((resolve, reject) => {
+      minioClient.removeObject(bucketName, prefix, (err) => {
+        if (err) {
+          reject(err);
+        }
+        resolve('Removed the object successfully');
       });
     });
   }
