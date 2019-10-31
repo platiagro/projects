@@ -1,4 +1,5 @@
 import { Knex } from '../../config';
+import { ComponentModel } from '../components';
 
 class Experiment {
   constructor(
@@ -15,7 +16,8 @@ class Experiment {
     runId,
     runStatus,
     template,
-    position
+    position,
+    componentsList
   ) {
     this.uuid = uuid;
     this.name = name;
@@ -31,6 +33,7 @@ class Experiment {
     this.runStatus = runStatus;
     this.template = template;
     this.position = position;
+    this.componentsList = componentsList;
   }
 
   static fromDBRecord(record) {
@@ -48,7 +51,8 @@ class Experiment {
       record.runId,
       record.runStatus,
       record.template,
-      record.position
+      record.position,
+      record.componentsList
     );
   }
 
@@ -86,6 +90,25 @@ class Experiment {
         .catch((err) => {
           reject(err);
         });
+    });
+  }
+
+  static async getAllComponents(uuid) {
+    return new Promise((resolve, reject) => {
+      Knex.select('*')
+      .from('experiments')
+      .where('uuid', '=', uuid)
+      .then(async (row) => {
+        if(row) {
+          const record = row;
+          record.componentsList = await ComponentModel.getComponents(uuid);
+          resolve(this.fromDBRecord(record));
+        }
+        reject(Error('Invalid UUID.'));
+      })
+      .catch((err) => {
+        reject(err);
+      });
     });
   }
 
