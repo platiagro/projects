@@ -52,9 +52,15 @@ class Component {
   }
 
   async update(updatedAt, name, parameters) {
+
+    let stringParamenters;
+    if (this.parameters) {
+      stringParamenters = JSON.stringify(this.parameters);
+    }
+
     const componentUpdatedAt = updatedAt || this.updatedAt;
     const componentName = name || this.name;
-    const componentParameters = parameters || this.parameters;
+    const componentParameters = parameters || stringParamenters;
 
     return new Promise((resolve, reject) => {
       Knex.update({
@@ -67,7 +73,9 @@ class Component {
         .then(() => {
           this.updatedAt = componentUpdatedAt;
           this.name = componentName;
-          this.parameters = JSON.parse(componentParameters);
+          this.parameters = componentParameters
+            ? JSON.parse(componentParameters)
+            : componentParameters;
           resolve(this);
         })
         .catch((err) => {

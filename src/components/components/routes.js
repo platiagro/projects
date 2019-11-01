@@ -19,10 +19,10 @@ router.get('/:uuid', Component.getById);
 
 router.post('/upload/:uuid', Component.upload);
 
-router.get('/download/:uuid', Component.download);
+router.get('/download/:uuid/:file', Component.download);
 
 router.get('/getFiles/:uuid', MinioController.getFiles);
 
-router.delete('/deleteFiles/:uuid', MinioController.deleteFiles);
+router.post('/deleteFiles/:uuid', MinioController.deleteFiles);
 
 export default router;

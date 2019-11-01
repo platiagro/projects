@@ -201,15 +201,14 @@ const upload = async (req, res) => {
 };
 
 const download = async (req, res) => {
-  const { uuid } = req.params;
-  const { fileName } = req.body;
+  const { uuid, file } = req.params;
 
   await MinioModel.downloadStream(
     config.MINIO_BUCKET,
-    `components/${uuid}/${fileName}`
+    `components/${uuid}/${file}`
   )
     .then((stream) => {
-      res.set('Content-disposition', `attachment; filename=${fileName}`);
+      res.set('Content-disposition', `attachment; filename=${file}`);
       stream.on('data', (chunk) => {
         res.write(chunk);
       });
