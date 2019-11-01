@@ -5,7 +5,7 @@ const getById = async (req, res) => {
   const { experimentId } = req.params;
 
   await Experiment.getById(experimentId)
-    .then((experiment) => {
+    .then(async (experiment) => {
       res.status(200).json({ payload: experiment });
     })
     .catch((err) => {
@@ -18,23 +18,6 @@ const getById = async (req, res) => {
     });
   return res;
 };
-
-const getAllComponents = async (req, res) => {
-  const { experimentId } = req.params;
-
-  await Experiment.getAllComponents(experimentId)
-  .then((component) => {
-    res.status(200).json({payload: component});
-  })
-  .catch((err) => {
-    if(err.message === 'Invalied UUID.') {
-      res.status(400).json({ message: `Experiment UUID doesn't exists.`});
-    } else {
-      res.sendStatus(500);
-    }
-  });
-  return res;
-}
 
 const getAllByProjectId = async (req, res) => {
   const { projectId } = req.params;
@@ -132,5 +115,4 @@ module.exports = {
   getAllByProjectId,
   update,
   create,
-  getAllComponents,
 };

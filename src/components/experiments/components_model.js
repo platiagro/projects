@@ -27,7 +27,7 @@ class Components {
 
     static async getComponents(uuid) {
         return new Promise((resolve, reject) => {
-          Knex.select('componentId', 'position')
+          Knex.select('uuid', 'position')
           .from('experiment_components')
           .where('experimentId', '=', uuid)
           .then((rows) => {

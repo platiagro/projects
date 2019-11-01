@@ -5,13 +5,16 @@ exports.up = function(knex) {
             if(!exists) {
                 return knex.schema.createTable('experiment_components', function(table) {
                     table.string('uuid', 255).primary();
-                    table.dateTime('dateTime');
+                    table.dateTime('dateTime')
+                    .notNull();
                     table.string('experimentId', 255)
-                    .reference('uuid')
+                    .references('uuid')
                     .inTable('experiments')
                     .notNull();
-                    table.string('componentId', 255);
-                    table.integer('position', 3);
+                    table.string('componentId', 255)
+                    .notNull();
+                    table.integer('position', 3)
+                    .notNull();
                 });
             }
         })
