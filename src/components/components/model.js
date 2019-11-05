@@ -52,7 +52,6 @@ class Component {
   }
 
   async update(updatedAt, name, parameters) {
-
     let stringParamenters;
     if (this.parameters) {
       stringParamenters = JSON.stringify(this.parameters);
