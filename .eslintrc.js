@@ -15,6 +15,7 @@ module.exports = {
   },
   rules: {
     "prettier/prettier": ["error"],
-    "no-console": "off"
+    "no-console": "off",
+    "no-param-reassign": 0
   }
 };

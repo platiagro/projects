@@ -79,6 +79,18 @@ exports.up = function(knex) {
         });
       }
     }),
+
+    knex.schema.hasTable('components').then((exists) => {
+      if (!exists) {
+        return knex.schema.createTable('components', function(t) {
+          t.string('uuid', 255).primary();
+          t.dateTime('createdAt').notNull();
+          t.dateTime('updatedAt');
+          t.string('name', 255).notNull();
+          t.text('parameters', 'longtext').nullable();
+        });
+      }
+    }),
   ]);
 };
 
@@ -90,5 +102,6 @@ exports.down = function(knex) {
     knex.schema.dropTable('pipelines'),
     knex.schema.dropTable('experiments'),
     knex.schema.dropTable('projects'),
+    knex.schema.dropTable('components'),
   ]);
 };
