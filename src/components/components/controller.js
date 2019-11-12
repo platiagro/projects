@@ -230,6 +230,56 @@ const download = async (req, res) => {
     });
 };
 
+const downloadBase64 = async (req, res) => {
+  const { uuid, file } = req.params;
+
+  const dirDownlods = `./downloads`;
+  if (!fs.existsSync(dirDownlods)) {
+    fs.mkdirSync(dirDownlods);
+  }
+
+  const dirComponent = `${dirDownlods}/${uuid}`;
+  if (!fs.existsSync(dirComponent)) {
+    fs.mkdirSync(dirComponent);
+  }
+
+  const filePath = `${dirComponent}/${file}`;
+  const fileStream = fs.createWriteStream(filePath);
+
+  await MinioModel.downloadStream(
+    config.MINIO_BUCKET,
+    `components/${uuid}/${file}`
+  )
+    .then((stream) => {
+      stream.on('data', (chunk) => {
+        fileStream.write(chunk);
+      });
+      stream.on('end', () => {
+        fileStream.end();
+        const bitmap = fs.readFileSync(filePath);
+        const fileBase64 = Buffer.from(bitmap).toString('base64');
+        res.status(200).json({ payload: fileBase64 });
+        rimraf(dirComponent, (error) => {
+          if (error) {
+            console.log(error);
+          }
+        });
+      });
+      stream.on('error', (err) => {
+        console.error(err);
+        res.sendStatus(500);
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.code === 'NoSuchKey') {
+        res.status(400).json({ message: `File not exist.` });
+      } else {
+        res.sendStatus(500);
+      }
+    });
+};
+
 module.exports = {
   create,
   update,
@@ -238,4 +288,5 @@ module.exports = {
   getById,
   upload,
   download,
+  downloadBase64,
 };

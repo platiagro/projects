@@ -24,4 +24,6 @@ yarn-error.log*
 
 /components
 /data-minio
+/downloads
 /repositories
+/uploads
