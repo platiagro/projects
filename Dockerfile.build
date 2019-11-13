@@ -21,4 +21,5 @@ RUN apk add netcat-openbsd;
 
 CMD ./wait-for.sh mysql:3306 && \
     knex migrate:latest && \
+    knex seed:run && \
     npm run start
