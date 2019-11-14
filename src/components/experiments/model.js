@@ -1,5 +1,5 @@
 import { Knex } from '../../config';
-import { ComponentModel } from './index';
+import { ExperimentComponentsModel } from '../experiment-components';
 
 class Experiment {
   constructor(
@@ -65,7 +65,9 @@ class Experiment {
         .then(async (row) => {
           if (row) {
             const record = row;
-            record.componentsList = await ComponentModel.getComponents(uuid);
+            record.componentsList = await ExperimentComponentsModel.getAll(
+              uuid
+            );
             resolve(this.fromDBRecord(row));
           }
           reject(Error('Invalid UUID.'));
