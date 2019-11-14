@@ -65,23 +65,28 @@ const update = async (req, res) => {
 
   const { experimentId, componentId, position } = req.body;
 
-  await ExperimentComponents.getById(uuid).then(async (component) => {
-    await component
-      .update(experimentId, componentId, position)
-      .then(() => {
-        res.status(200).json({ message: 'Updated successfully.' });
-      })
-      .catch((err) => {
-        console.error(err);
-        if (err.message === 'Invalid UUID.') {
-          res
-            .status(400)
-            .json({ message: `Experiment Component UUID doesn't exists.` });
-        } else {
+  await ExperimentComponents.getById(uuid)
+    .then(async (component) => {
+      await component
+        .update(experimentId, componentId, position)
+        .then(() => {
+          res.status(200).json({ message: 'Updated successfully.' });
+        })
+        .catch((err) => {
+          console.error(err);
           res.sendStatus(500);
-        }
-      });
-  });
+        });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.message === 'Invalid UUID.') {
+        res
+          .status(400)
+          .json({ message: `Experiment Component UUID doesn't exists.` });
+      } else {
+        res.sendStatus(500);
+      }
+    });
   return res;
 };
 
@@ -110,6 +115,8 @@ const deleteComponent = async (req, res) => {
         res.sendStatus(500);
       }
     });
+
+  return res;
 };
 
 module.exports = {
