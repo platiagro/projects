@@ -111,11 +111,11 @@ class ExperimentComponents {
 
   async delete() {
     return new Promise((resolve, reject) => {
-      Knex.from('experiment_components')
+      Knex.delete()
+        .from('experiment_components')
         .where('uuid', '=', this.uuid)
-        .del()
         .then(() => {
-          resolve();
+          resolve(true);
         })
         .catch((err) => {
           reject(err);
