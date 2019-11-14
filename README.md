@@ -178,3 +178,51 @@ curl --location --request PATCH "localhost:3000/projects/a214d8fc-639f-4088-a9fb
     \"position\": 1
 }"
 ```
+
+### Experiment Components
+
+**Get ExperimentComponents By Id:** <br>
+url: /projects/:projectId/experiments/:experimentId/components/:componentId
+
+```
+curl --location --request GET "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components/0446b77c-7c5a-45b5-b05b-a253c95c18f0"
+```
+
+**Get All Components from experiment:** <br>
+url: /projects/:projectId/experiments/:experimentId/components
+
+```
+curl --location --request GET "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components"
+```
+
+**Create Experiment Component:** <br>
+url: /projects/:projectId/experiments/:experimentId/components
+
+```
+curl --location --request POST "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components" \
+  --header "Content-Type: application/json" \
+  --data "{
+	\"componentId\": \"3d3c0b5b-81f3-473f-a0d5-ed9d92303036\",
+	\"position\": 1
+}"
+```
+
+**Update Experiment Component:** <br>
+url: /projects/:projectId/experiments/:experimentId/components/:componentId
+
+```
+curl --location --request PATCH "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components/0446b77c-7c5a-45b5-b05b-a253c95c18f0" \
+  --header "Content-Type: application/json" \
+  --data "{
+    \"experimentId\": \"c120ed68-e264-4a33-9bc3-929fac1104f0\",
+    \"componentId\": \"fdba95ad-836b-4482-80ac-a358448b226a\",
+    \"position\": 1
+}"
+```
+
+**Delete Experiment Component:** <br>
+url: /projects/:projectId/experiments/:experimentId/components/:componentId
+
+```
+curl --location --request DELETE "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components/0446b77c-7c5a-45b5-b05b-a253c95c18f0" \
+```

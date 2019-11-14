@@ -2,6 +2,7 @@ import sinon from 'sinon';
 
 import { Knex } from '../../../config';
 import { ExperimentModel as Experiment } from '../../../components/experiments';
+import ExperimentComponents from '../../../components/experiment-components/model';
 
 describe('Test Experiment Model methods', () => {
   const experimentMocked = new Experiment(
@@ -15,13 +16,19 @@ describe('Test Experiment Model methods', () => {
     '3191a035-97a6-4e29-90d4-034cb1f87237',
     '{ price: 2, auto-featuring: true }',
     '2019-09-19T18:01:49.000Z',
-    0
+    0,
+    [{ uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e', position: 0 }]
   );
 
   const stubKnexSelect = sinon.stub(Knex, 'select');
   const stubKnexInsert = sinon.stub(Knex, 'insert');
   const stubKnexUpdate = sinon.stub(Knex, 'update');
   const stubExperimentReorder = sinon.stub(experimentMocked, 'reorder');
+  const stubExperimentComponents = sinon.stub(ExperimentComponents, 'getAll');
+
+  stubExperimentComponents.resolves([
+    { uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e', position: 0 },
+  ]);
 
   describe('Test getById Experiment method', () => {
     const experimentGetByIdVerify = (expectedError) => {
@@ -40,6 +47,9 @@ describe('Test Experiment Model methods', () => {
             parameters: null,
             createdAt: '2019-09-19T18:01:49.000Z',
             position: 0,
+            componentsList: [
+              { uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e', position: 0 },
+            ],
           });
         })
         .catch((err) => {
@@ -63,6 +73,9 @@ describe('Test Experiment Model methods', () => {
           parameters: null,
           createdAt: '2019-09-19T18:01:49.000Z',
           position: 0,
+          componentsList: [
+            { uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e', position: 0 },
+          ],
         }),
       });
 
@@ -108,6 +121,9 @@ describe('Test Experiment Model methods', () => {
               parameters: null,
               createdAt: '2019-09-19T18:01:49.000Z',
               position: 0,
+              componentsList: [
+                { uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e', position: 0 },
+              ],
             },
           ]);
         })
@@ -134,6 +150,9 @@ describe('Test Experiment Model methods', () => {
             parameters: null,
             createdAt: '2019-09-19T18:01:49.000Z',
             position: 0,
+            componentsList: [
+              { uuid: '33f56c0f-12f9-4cf0-889f-29b3b424fd4e', position: 0 },
+            ],
           },
         ]),
       });
@@ -302,7 +321,8 @@ describe('Test reorder Experiment method', () => {
     '3191a035-97a6-4e29-90d4-034cb1f87237',
     '{ price: 2, auto-featuring: true }',
     '2019-09-19T18:01:49.000Z',
-    0
+    0,
+    []
   );
 
   it('', () => {
