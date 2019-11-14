@@ -42,6 +42,7 @@ class ExperimentComponents {
       Knex.select('uuid', 'position')
         .from('experiment_components')
         .where('experimentId', '=', experimentId)
+        .orderBy('position')
         .then((rows) => {
           const components = rows.map((r) => {
             return this.fromDBRecord(r);
