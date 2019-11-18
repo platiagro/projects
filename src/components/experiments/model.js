@@ -1,5 +1,6 @@
 import { Knex } from '../../config';
 import { ExperimentComponentsModel } from '../experiment-components';
+import ExperimentComponents from '../experiment-components/model';
 
 class Experiment {
   constructor(
@@ -86,7 +87,8 @@ class Experiment {
         .andWhere('projectId', '=', projectId)
         .orderBy('position')
         .then((rows) => {
-          const experiments = rows.map((r) => {
+          const experiments = rows.map(async (r) => {
+            r.componentsList = await ExperimentComponents.getAll(r.uuid);
             return this.fromDBRecord(r);
           });
           resolve(Promise.all(experiments));

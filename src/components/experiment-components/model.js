@@ -39,7 +39,7 @@ class ExperimentComponents {
 
   static async getAll(experimentId) {
     return new Promise((resolve, reject) => {
-      Knex.select('uuid', 'position')
+      Knex.select('uuid', 'position', 'componentId')
         .from('experiment_components')
         .where('experimentId', '=', experimentId)
         .orderBy('position')
