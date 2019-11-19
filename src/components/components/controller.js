@@ -232,38 +232,19 @@ const download = async (req, res) => {
 
 const downloadBase64 = async (req, res) => {
   const { uuid, file } = req.params;
-
-  const dirDownlods = `./downloads`;
-  if (!fs.existsSync(dirDownlods)) {
-    fs.mkdirSync(dirDownlods);
-  }
-
-  const dirComponent = `${dirDownlods}/${uuid}`;
-  if (!fs.existsSync(dirComponent)) {
-    fs.mkdirSync(dirComponent);
-  }
-
-  const filePath = `${dirComponent}/${file}`;
-  const fileStream = fs.createWriteStream(filePath);
-
+  const buffers = [];
   await MinioModel.downloadStream(
     config.MINIO_BUCKET,
     `components/${uuid}/${file}`
   )
     .then((stream) => {
       stream.on('data', (chunk) => {
-        fileStream.write(chunk);
+        buffers.push(chunk);
       });
       stream.on('end', () => {
-        fileStream.end();
-        const bitmap = fs.readFileSync(filePath);
-        const fileBase64 = Buffer.from(bitmap).toString('base64');
+        const fileBuffer = Buffer.concat(buffers);
+        const fileBase64 = Buffer.from(fileBuffer).toString('base64');
         res.status(200).json({ payload: fileBase64 });
-        rimraf(dirComponent, (error) => {
-          if (error) {
-            console.log(error);
-          }
-        });
       });
       stream.on('error', (err) => {
         console.error(err);
