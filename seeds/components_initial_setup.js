@@ -14,7 +14,7 @@ exports.seed = function(knex) {
       return knex('components').insert([
         {
           uuid: 'b2935ec1-2146-41e4-a2c9-bbdc1400d267',
-          createdAt: '2019-11-13',
+          createdAt: new Date(),
           name: 'AutoML',
           parameters:
             '[' +
@@ -23,7 +23,7 @@ exports.seed = function(knex) {
         },
         {
           uuid: 'cc6cd9ff-26c0-434e-a44e-531d510d695e',
-          createdAt: '2019-11-13',
+          createdAt: new Date(),
           name: 'FeatureTemporal',
           parameters:
             '[' +
@@ -33,7 +33,7 @@ exports.seed = function(knex) {
         },
         {
           uuid: '6a891e65-3547-4bd6-8681-1d04a514d8fd',
-          createdAt: '2019-11-13',
+          createdAt: new Date(),
           name: 'FeatureTools',
           parameters:
             '[' +
@@ -42,7 +42,7 @@ exports.seed = function(knex) {
         },
         {
           uuid: 'cd6faa74-5773-4d18-825b-986f011dd287',
-          createdAt: '2019-11-13',
+          createdAt: new Date(),
           name: 'Filter',
           parameters:
             '[' +
@@ -51,7 +51,7 @@ exports.seed = function(knex) {
         },
         {
           uuid: '8349b4a2-4d83-491a-a84d-9966e4558f1c',
-          createdAt: '2019-11-13',
+          createdAt: new Date(),
           name: 'PreSelec',
           parameters:
             '[' +
@@ -63,7 +63,7 @@ exports.seed = function(knex) {
         },
         {
           uuid: 'ea0c33fe-bca1-4b25-a0fa-1dc13bec6c22',
-          createdAt: '2019-11-13',
+          createdAt: new Date(),
           name: 'Regression',
         },
       ]);
