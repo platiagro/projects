@@ -5,7 +5,7 @@ const getById = async (req, res) => {
   const { experimentId } = req.params;
 
   await Experiment.getById(experimentId)
-    .then((experiment) => {
+    .then(async (experiment) => {
       res.status(200).json({ payload: experiment });
     })
     .catch((err) => {
