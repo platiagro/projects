@@ -230,6 +230,37 @@ const download = async (req, res) => {
     });
 };
 
+const downloadBase64 = async (req, res) => {
+  const { uuid, file } = req.params;
+  const buffers = [];
+  await MinioModel.downloadStream(
+    config.MINIO_BUCKET,
+    `components/${uuid}/${file}`
+  )
+    .then((stream) => {
+      stream.on('data', (chunk) => {
+        buffers.push(chunk);
+      });
+      stream.on('end', () => {
+        const fileBuffer = Buffer.concat(buffers);
+        const fileBase64 = Buffer.from(fileBuffer).toString('base64');
+        res.status(200).json({ payload: fileBase64 });
+      });
+      stream.on('error', (err) => {
+        console.error(err);
+        res.sendStatus(500);
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.code === 'NoSuchKey') {
+        res.status(400).json({ message: `File not exist.` });
+      } else {
+        res.sendStatus(500);
+      }
+    });
+};
+
 module.exports = {
   create,
   update,
@@ -238,4 +269,5 @@ module.exports = {
   getById,
   upload,
   download,
+  downloadBase64,
 };

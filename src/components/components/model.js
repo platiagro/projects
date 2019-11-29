@@ -146,7 +146,7 @@ class Component {
     );
 
     if (files && files.length > 0) {
-      return files[0].name;
+      return `s3://${config.MINIO_BUCKET}/${files[0].name}`;
     }
     return '';
   }

@@ -12,7 +12,7 @@ services:
       - minio
     ports:
       - ${CONTAINER_PORT:-3000}:${HOST_PORT:-3000}
-    command: ["-c", "npm install && /opt/wait-for.sh ${DB_HOST:-mysql}:${DB_PORT:-3306} && knex migrate:latest && npm run start-dev"]
+    command: ["-c", "npm install && /opt/wait-for.sh ${DB_HOST:-mysql}:${DB_PORT:-3306} && knex migrate:latest && knex seed:run && npm run start-dev"]
     entrypoint: ["/bin/sh"]
 
   db:
