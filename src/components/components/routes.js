@@ -21,7 +21,7 @@ router.post('/upload/:uuid', Component.upload);
 
 router.get('/download/:uuid/:file', Component.download);
 
-router.get('/downloadBase64/:uuid/:file', Component.downloadBase64);
+router.post('/downloadBase64', Component.downloadBase64);
 
 router.get('/getFiles/:uuid', MinioController.getFiles);
 

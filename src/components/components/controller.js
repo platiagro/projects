@@ -231,12 +231,9 @@ const download = async (req, res) => {
 };
 
 const downloadBase64 = async (req, res) => {
-  const { uuid, file } = req.params;
+  const { path } = req.body;
   const buffers = [];
-  await MinioModel.downloadStream(
-    config.MINIO_BUCKET,
-    `components/${uuid}/${file}`
-  )
+  await MinioModel.downloadStream(config.MINIO_BUCKET, `${path}`)
     .then((stream) => {
       stream.on('data', (chunk) => {
         buffers.push(chunk);
