@@ -1,228 +1,378 @@
 # PlatIAgro Projects
 
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Requirements](#requirements)
-- [Quick Start](#quick-start)
-  - [Run Docker](#run-docker)
-  - [Run Local](#run-local)
-- [Testing](#testing)
-- [API](#api)
-
-## Introduction
-
-[![Build Status](https://travis-ci.com/platiagro/projects.svg?branch=master)](https://travis-ci.com/platiagro/projects)
+[![Build Status](https://travis-ci.org/platiagro/projects.svg)](https://travis-ci.org/platiagro/projects)
 [![codecov](https://codecov.io/gh/platiagro/projects/branch/master/graph/badge.svg)](https://codecov.io/gh/platiagro/projects)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Gitter](https://badges.gitter.im/platiagro/community.svg)](https://gitter.im/platiagro/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Known Vulnerabilities](https://snyk.io//test/github/platiagro/projects/badge.svg?targetFile=package.json)](https://snyk.io//test/github/platiagro/projects?targetFile=package.json)
-
-PlatIAgro Projects management microservice.
+[![Known Vulnerabilities](https://snyk.io/test/github/platiagro/projects/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/platiagro/projects?targetFile=requirements.txt)
 
 ## Requirements
 
-The application can be run locally or in a docker container, the requirements for each setup are listed below.
+You may start the server locally or using a docker container, the requirements for each setup are listed below.
 
 ### Local
 
-- [Node.js](https://nodejs.org/)
+- [Python 3.6](https://www.python.org/downloads/)
 
 ### Docker
 
 - [Docker CE](https://www.docker.com/get-docker)
-- [Docker-Compose](https://docs.docker.com/compose/install/)
 
 ## Quick Start
 
-Make sure you have all requirements installed on your computer, then you can run the server in a [docker container](#run-docker) or in your [local machine](#run-local).<br>
-**Firstly you need to create a .env file, see the .env.example.**
+Make sure you have all requirements installed on your computer. Then, you may start the server using either a [Docker container](#run-using-docker) or in your [local machine](#run-local).
 
-### Run Docker
+### Run using Docker
 
-Run it :
+Export these environment variables:
 
 ```bash
-$ docker-compose up
+export MINIO_ENDPOINT=play.min.io
+export MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F
+export MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+export MYSQL_DB_HOST=localhost
+export MYSQL_DB_NAME=platiagro
+export MYSQL_DB_USER=root
+export MYSQL_DB_PASSWORD=
 ```
 
-_The default container port is 4000, you can change on docker-compose.yml_
+(Optional) Start a MySQL server instance:
+
+```bash
+docker run -d -p 3306:3306 \
+  --name mysql \
+  --env "MYSQL_DATABASE=$MYSQL_DB_NAME" \
+  --env "MYSQL_ROOT_PASSWORD=$MYSQL_DB_PASSWORD" \
+  --env "MYSQL_ALLOW_EMPTY_PASSWORD=yes" \
+  mysql:8
+```
+
+Then, build a docker image that launches the API server:
+
+```bash
+docker build -t platiagro/projects:0.0.2 .
+```
+
+Finally, start the API server:
+
+```bash
+docker run -it -p 8080:8080 \
+  --name projects \
+  --env "MINIO_ENDPOINT=$MINIO_ENDPOINT" \
+  --env "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
+  --env "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+  --env "MYSQL_DB_HOST=$MYSQL_DB_HOST" \
+  --env "MYSQL_DB_NAME=$MYSQL_DB_NAME" \
+  --env "MYSQL_DB_USER=$MYSQL_DB_USER" \
+  --env "MYSQL_DB_PASSWORD=$MYSQL_DB_PASSWORD" \
+  platiagro/projects:0.0.2
+```
 
 ### Run Local:
 
-Run it :
+Export these environment variables:
 
 ```bash
-$ npm install
-$ npm run start
+export MINIO_ENDPOINT=play.min.io
+export MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F
+export MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+export MYSQL_DB_HOST=localhost
+export MYSQL_DB_NAME=platiagro
+export MYSQL_DB_USER=root
+export MYSQL_DB_PASSWORD=
 ```
 
-Or:
+(Optional) Create a virtualenv:
 
 ```bash
-$ yarn
-$ yarn start
+virtualenv -p python3 venv
+. venv/bin/activate
+```
+
+Install Python modules:
+
+```bash
+pip install .
+```
+
+(Optional) Initialize database:
+
+```bash
+platiagro-init-db
+```
+
+Then, start the API server:
+
+```bash
+python -m projects.api.main
 ```
 
 ## Testing
 
-You can run the following command to test the project:
+Install the testing requirements:
 
 ```bash
-$ npm install
-$ npm test
+pip install .[testing]
 ```
 
-Or:
+Export these environment variables:
 
 ```bash
-$ yarn
-$ yarn test
+export MINIO_ENDPOINT=play.min.io
+export MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F
+export MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+export MYSQL_DB_HOST=localhost
+export MYSQL_DB_NAME=platiagro
+export MYSQL_DB_USER=root
+export MYSQL_DB_PASSWORD=
 ```
 
-To run tests with code coverage:
+Use the following command to run all tests:
 
 ```bash
-$ npm run test-coverage
-```
-
-Or:
-
-```bash
-$ yarn test-coverage
+pytest
 ```
 
 ## API
 
 API Reference with examples.
 
+### Components
+
+**Lists components:** <br>
+method: GET <br>
+url: /components
+
+```bash
+curl -X GET \
+  http://localhost:8080/components
+```
+
+Expected Output:
+
+```json
+["6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"]
+```
+
+**Creates a component:** <br>
+method: POST <br>
+url: /components
+
+```bash
+curl -X POST \
+  http://localhost:8080/components \
+  -d '{"name":"foo"}'
+```
+
+Expected Output:
+
+```json
+{"createdAt":"2000-01-01T00:00:00","inferenceNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Bar.ipynb","isDefault":false,"name":"foo","trainingNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Foo.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+```
+
+**Details a component** <br>
+method: GET <br>
+url: /components/:uuid
+
+```bash
+curl -X GET \
+  http://localhost:8080/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4
+```
+
+Expected Output:
+
+```json
+{"createdAt":"2000-01-01T00:00:00","inferenceNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Bar.ipynb","isDefault":false,"name":"foo","trainingNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Foo.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+```
+
+**Updates a component:** <br>
+method: PATCH <br>
+url: /components/:uuid
+
+```bash
+curl -X PATCH \
+  http://localhost:8080/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4 \
+  -d '{"name":"bar"}'
+```
+
+Expected Output:
+
+```json
+{"createdAt":"2000-01-01T00:00:00","inferenceNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Bar.ipynb","isDefault":false,"name":"bar","trainingNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Foo.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+```
+
 ### Projects
 
-**Get Project By Id:** <br>
-url: /projects/:projectId
-
-```
-curl --location --request GET "localhost:3000/projects/a214d8fc-639f-4088-a9fb-c30ba2a69146"
-```
-
-**Get All Projects:** <br>
+**Lists projects:** <br>
+method: GET <br>
 url: /projects
 
-```
-curl --location --request GET "localhost:3000/projects"
+```bash
+curl -X GET \
+  http://localhost:8080/projects
 ```
 
-**Create Project:** <br>
+Expected Output:
+
+```json
+["cc07c929-85d5-4939-b59c-790e540f207f"]
+```
+
+**Creates a project:** <br>
+method: POST <br>
 url: /projects
 
-```
-curl --location --request POST "localhost:3000/projects" \
-  --header "Content-Type: application/json" \
-  --data "{
-	\"name\": \"ML Example\"
-}"
+```bash
+curl -X POST \
+  http://localhost:8080/projects \
+  -d '{"name":"foo"}'
 ```
 
-**Update Project:** <br>
-url: /projects/:projectId
+Expected Output:
 
+```json
+{"createdAt":"2000-01-01T00:00:00","experiments":[],"name":"foo","updatedAt":"2000-01-01T00:00:00","uuid":"cc07c929-85d5-4939-b59c-790e540f207f"}
 ```
-curl --location --request PATCH "localhost:3000/projects/a214d8fc-639f-4088-a9fb-c30ba2a69146" \
-  --header "Content-Type: application/json" \
-  --data "{
-	\"name\": \"Machine Learning Example\"
-}"
+
+**Details a project** <br>
+method: GET <br>
+url: /projects/:uuid
+
+```bash
+curl -X GET \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f
+```
+
+Expected Output:
+
+```json
+{"createdAt":"2000-01-01T00:00:00","experiments":[],"name":"foo","updatedAt":"2000-01-01T00:00:00","uuid":"cc07c929-85d5-4939-b59c-790e540f207f"}
+```
+
+**Updates a project:** <br>
+method: PATCH <br>
+url: /projects/:uuid
+
+```bash
+curl -X PATCH \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f \
+  -d '{"name":"bar"}'
+```
+
+Expected Output:
+
+```json
+{"createdAt":"2000-01-01T00:00:00","experiments":[],"name":"bar","updatedAt":"2000-01-01T00:00:00","uuid":"cc07c929-85d5-4939-b59c-790e540f207f"}
 ```
 
 ### Experiments
 
-**Get Experiment By Id:** <br>
-url: /projects/:projectId/experiments/:experimentId
+**Lists experiments:** <br>
+method: GET <br>
+url: /projects/:project_id/experiments
 
-```
-curl --location --request GET "localhost:3000/projects/a214d8fc-639f-4088-a9fb-c30ba2a69146/experiments/33f56c0f-12f9-4cf0-889f-29b3b424fd4e"
-```
-
-**Get All Experiment:** <br>
-url: /projects/:projectId/experiments/
-
-```
-curl --location --request GET "localhost:3000/projects/a214d8fc-639f-4088-a9fb-c30ba2a69146/experiments"
+```bash
+curl -X GET \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments
 ```
 
-**Create Experiment:** <br>
-url: /projects/:projectId/experiments/
+Expected Output:
 
-```
-curl --location --request POST "localhost:3000/projects/a214d8fc-639f-4088-a9fb-c30ba2a69146/experiments" \
-  --header "Content-Type: application/json" \
-  --data "{
-	\"name\": \"ML Experiment\"
-}"
+```json
+["2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"]
 ```
 
-**Update Experiment:** <br>
-url: /projects/:projectId/experiments/:experimentId
+**Creates an experiment:** <br>
+method: POST <br>
+url: /projects/:project_id/experiments
 
-```
-curl --location --request PATCH "localhost:3000/projects/a214d8fc-639f-4088-a9fb-c30ba2a69146/experiments/33f56c0f-12f9-4cf0-889f-29b3b424fd4e" \
-  --header "Content-Type: application/json" \
-  --data "{
-    \"name\": \"Auto-featuring Experiment\",
-    \"pipelineIdTrain\": \"23266cfd-4ed6-43d6-b8a0-ca8440d251c6\",
-    \"pipelineIdDeploy\": \"fe5205f5-7f76-4f57-84ca-ea6dd62670e8\",
-    \"datasetId\": \"0a10c0ac-ff3b-42df-ab7a-dc2962a1750c\",
-    \"headerId\": \"482b603f-23c1-4a10-9b79-8c5b91c6c0cb\",
-    \"targetColumnId\": \"3191a035-97a6-4e29-90d4-034cb1f87237\",
-    \"parameters\": \"{ price: 8, auto-featuring: true }\",
-    \"position\": 1
-}"
+```bash
+curl -X POST \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments \
+  -d '{"dataset":"iris","name":"foo","position":0,"target":"col4"}'
 ```
 
-### Experiment Components
+Expected Output:
 
-**Get ExperimentComponents By Id:** <br>
-url: /projects/:projectId/experiments/:experimentId/components/:componentId
-
-```
-curl --location --request GET "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components/0446b77c-7c5a-45b5-b05b-a253c95c18f0"
+```json
+{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
 ```
 
-**Get All Components from experiment:** <br>
-url: /projects/:projectId/experiments/:experimentId/components
+**Details an experiment** <br>
+method: GET <br>
+url: /projects/:project_id/experiments/:uuid
 
-```
-curl --location --request GET "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components"
-```
-
-**Create Experiment Component:** <br>
-url: /projects/:projectId/experiments/:experimentId/components
-
-```
-curl --location --request POST "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components" \
-  --header "Content-Type: application/json" \
-  --data "{
-	\"componentId\": \"3d3c0b5b-81f3-473f-a0d5-ed9d92303036\",
-	\"position\": 1
-}"
+```bash
+curl -X GET \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf
 ```
 
-**Update Experiment Component:** <br>
-url: /projects/:projectId/experiments/:experimentId/components/:componentId
+Expected Output:
 
-```
-curl --location --request PATCH "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components/0446b77c-7c5a-45b5-b05b-a253c95c18f0" \
-  --header "Content-Type: application/json" \
-  --data "{
-    \"experimentId\": \"c120ed68-e264-4a33-9bc3-929fac1104f0\",
-    \"componentId\": \"fdba95ad-836b-4482-80ac-a358448b226a\",
-    \"position\": 1
-}"
+```json
+{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
 ```
 
-**Delete Experiment Component:** <br>
-url: /projects/:projectId/experiments/:experimentId/components/:componentId
+**Updates an experiment:** <br>
+method: PATCH <br>
+url: /projects/:project_id/experiments/:uuid
 
+```bash
+curl -X PATCH \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf \
+  -d '{"name":"bar"}'
 ```
-curl --location --request DELETE "http://localhost:3000/projects/600c5a35-0cac-434c-8993-8a943c131de6/experiments/600c5a35-0cac-434c-8993-8a943c131de6/components/0446b77c-7c5a-45b5-b05b-a253c95c18f0" \
+
+Expected Output:
+
+```json
+{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"bar","position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
+```
+
+### Experiment-Components
+
+**Lists experiment-components:** <br>
+method: GET <br>
+url: /projects/:project_id/experiments/:experiment_id/components
+
+```bash
+curl -X GET \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/components
+```
+
+Expected Output:
+
+```json
+["e2b1870f-d699-4c7d-bcc4-5828728d1235"]
+```
+
+**Creates an experiment-component:** <br>
+method: POST <br>
+url: /projects/:project_id/experiments/:experiment_id/components
+
+```bash
+curl -X POST \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/components \
+  -d '{"componentId":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4","position":0}'
+```
+
+Expected Output:
+
+```json
+{"componentId":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4","createdAt":"2000-01-01T00:00:00","experimentId":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf","position":0,"updatedAt":"2000-01-01T00:00:00","uuid":"e2b1870f-d699-4c7d-bcc4-5828728d1235"}
+```
+
+**Deletes an experiment-component:** <br>
+method: DELETE <br>
+url: /projects/:project_id/experiments/:experiment_id/components/:uuid
+
+```bash
+curl -X DELETE \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4
+```
+
+Expected Output:
+
+```json
+{"message":"Component deleted"}
 ```
