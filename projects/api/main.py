@@ -14,6 +14,7 @@ from .experiments import bp as experiments_blueprint
 from .experiments_components import bp as experiments_components_blueprint
 from .json import CustomJSONEncoder
 from .projects import bp as projects_blueprint
+from ..samples import init_components
 
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
@@ -59,6 +60,9 @@ def parse_args(args):
     parser.add_argument(
         "--init-db", action="count", help="Create database and tables before the HTTP server starts"
     )
+    parser.add_argument(
+        "--samples-config", help="Path to sample components config file."
+    )
     return parser.parse_args(args)
 
 
@@ -72,5 +76,9 @@ if __name__ == "__main__":
     # Initializes DB if required
     if args.init_db:
         init_db()
+
+    # Install sample components if required
+    if args.samples_config:
+        init_components(args.samples_config)
 
     app.run(host="0.0.0.0", port=args.port, debug=args.debug)

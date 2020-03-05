@@ -11,9 +11,11 @@ COPY ./setup.py /app/setup.py
 
 RUN pip install /app/
 
+COPY ./samples /samples
+
 WORKDIR /app/
 
 EXPOSE 8080
 
 ENTRYPOINT ["python", "-m", "projects.api.main"]
-CMD ["--init-db"]
+CMD ["--init-db", "--samples-config", "/samples/config.json"]
