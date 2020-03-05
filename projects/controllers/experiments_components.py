@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Experiments components controller."""
-from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Components controller."""
 from datetime import datetime
+from pkgutil import get_data
 from uuid import uuid4
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
@@ -8,6 +9,10 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
 from ..models import Component
+from ..object_storage import BUCKET_NAME, put_object
+
+PREFIX = "components"
+EMPTY_NOTEBOOK = get_data("projects", "config/Untitled.ipynb")
 
 
 def list_components():
@@ -20,14 +25,11 @@ def list_components():
     return [component.uuid for component in components]
 
 
-def create_component(name=None, training_notebook=None, inference_notebook=None,
-                     is_default=False, **kwargs):
+def create_component(name=None, is_default=False, **kwargs):
     """Creates a new component in our database.
 
     Args:
         name (str): the component name.
-        training_notebook (str, optional): the path to the jupyter notebook.
-        inference_notebook (str, optional): the path to the jupyter notebook.
         is_default (bool, optional): whether it is a builtin component.
 
     Returns:
@@ -36,7 +38,20 @@ def create_component(name=None, training_notebook=None, inference_notebook=None,
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
-    component = Component(uuid=str(uuid4()),
+    component_id = str(uuid4())
+    training_notebook = "{}/{}/Training.ipynb".format(PREFIX, component_id)
+    inference_notebook = "{}/{}/Inference.ipynb".format(PREFIX, component_id)
+
+    # Adds empty notebooks to object_storage
+    put_object(training_notebook, EMPTY_NOTEBOOK)
+    put_object(inference_notebook, EMPTY_NOTEBOOK)
+
+    # prepends 'minio://BUCKET_NAME/' to the str saved to database
+    training_notebook = "minio://{}/{}".format(BUCKET_NAME, training_notebook)
+    inference_notebook = "minio://{}/{}".format(BUCKET_NAME, inference_notebook)
+
+    # Saves component info to the database
+    component = Component(uuid=component_id,
                           name=name,
                           training_notebook=training_notebook,
                           inference_notebook=inference_notebook,

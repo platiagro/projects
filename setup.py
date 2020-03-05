@@ -21,6 +21,9 @@ setup(
     license="Apache",
     url="https://github.com/platiagro/projects",
     packages=find_packages(),
+    package_data={
+        "projects": ["config/*.ipynb"],
+    },
     install_requires=requirements,
     extras_require=extras,
     python_requires=">=3.6.0",

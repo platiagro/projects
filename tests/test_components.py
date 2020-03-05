@@ -6,8 +6,8 @@ from projects.database import engine
 
 UUID = "6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"
 NAME = "foo"
-TRAINING_NOTEBOOK = "minio://mlpipeline/components/{}/Foo.ipynb".format(UUID)
-INFERENCE_NOTEBOOK = "minio://mlpipeline/components/{}/Bar.ipynb".format(UUID)
+TRAINING_NOTEBOOK = "minio://anonymous/components/{}/Training.ipynb".format(UUID)
+INFERENCE_NOTEBOOK = "minio://anonymous/components/{}/Inference.ipynb".format(UUID)
 IS_DEFAULT = False
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
@@ -44,19 +44,16 @@ class TestComponents(unittest.TestCase):
 
             rv = c.post("/components", json={
                 "name": "test",
-                "trainingNotebook": TRAINING_NOTEBOOK,
-                "inferenceNotebook": INFERENCE_NOTEBOOK,
             })
             result = rv.get_json()
             expected = {
                 "name": "test",
-                "trainingNotebook": TRAINING_NOTEBOOK,
-                "inferenceNotebook": INFERENCE_NOTEBOOK,
                 "isDefault": IS_DEFAULT,
             }
-            # uuid, created_at, updated_at are machine-generated
-            # we assert they exist, but we don't assert their values
-            machine_generated = ["uuid", "createdAt", "updatedAt"]
+            # uuid, training_notebook, inference_notebook, created_at, updated_at
+            # are machine-generated we assert they exist, but we don't assert their values
+            machine_generated = ["uuid", "trainingNotebook", "inferenceNotebook",
+                                 "createdAt", "updatedAt"]
             for attr in machine_generated:
                 self.assertIn(attr, result)
                 del result[attr]

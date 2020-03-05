@@ -167,7 +167,7 @@ curl -X POST \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","inferenceNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Bar.ipynb","isDefault":false,"name":"foo","trainingNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Foo.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+{"createdAt":"2000-01-01T00:00:00","inferenceNotebook":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebook":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
 ```
 
 **Details a component** <br>
@@ -182,7 +182,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","inferenceNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Bar.ipynb","isDefault":false,"name":"foo","trainingNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Foo.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+{"createdAt":"2000-01-01T00:00:00","inferenceNotebook":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebook":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
 ```
 
 **Updates a component:** <br>
@@ -198,7 +198,7 @@ curl -X PATCH \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","inferenceNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Bar.ipynb","isDefault":false,"name":"bar","trainingNotebook":"minio://mlpipeline/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Foo.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+{"createdAt":"2000-01-01T00:00:00","inferenceNotebook":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"bar","trainingNotebook":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
 ```
 
 ### Projects

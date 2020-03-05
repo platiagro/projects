@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
     InternalServerError
@@ -19,7 +19,8 @@ from ..samples import init_components
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 app.register_blueprint(projects_blueprint, url_prefix="/projects")
-app.register_blueprint(experiments_blueprint, url_prefix="/projects/<project_id>/experiments")
+app.register_blueprint(experiments_blueprint,
+    url_prefix="/projects/<project_id>/experiments")
 app.register_blueprint(components_blueprint, url_prefix="/components")
 app.register_blueprint(experiments_components_blueprint,
     url_prefix="/projects/<project_id>/experiments/<experiment_id>/components")
