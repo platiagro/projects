@@ -12,7 +12,7 @@ from .components import bp as components_blueprint
 from ..database import db_session, init_db
 from .experiments import bp as experiments_blueprint
 from .experiments_components import bp as experiments_components_blueprint
-from .json import CustomJSONEncoder
+from .json_encoder import CustomJSONEncoder
 from .projects import bp as projects_blueprint
 from ..samples import init_components
 
