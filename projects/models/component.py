@@ -13,8 +13,8 @@ class Component(Base):
     __tablename__ = "components"
     uuid = Column(String(255), primary_key=True)
     name = Column(Text, nullable=False)
-    training_notebook = Column(String(255))
-    inference_notebook = Column(String(255))
+    training_notebook_path = Column(String(255))
+    inference_notebook_path = Column(String(255))
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)

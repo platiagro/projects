@@ -9,10 +9,11 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
 from ..models import Component
-from ..object_storage import BUCKET_NAME, put_object
+from ..object_storage import BUCKET_NAME, put_object, duplicate_object
 
 PREFIX = "components"
-EMPTY_NOTEBOOK = get_data("projects", "config/Untitled.ipynb")
+TRAINING_NOTEBOOK = get_data("projects", "config/Training.ipynb")
+INFERENCE_NOTEBOOK = get_data("projects", "config/Inference.ipynb")
 
 
 def list_components():
@@ -25,12 +26,16 @@ def list_components():
     return [component.uuid for component in components]
 
 
-def create_component(name=None, is_default=False, **kwargs):
-    """Creates a new component in our database.
+def create_component(name=None, training_notebook=None, inference_notebook=None,
+                     is_default=False, copy_from=None, **kwargs):
+    """Creates a new component in our database/object storage.
 
     Args:
         name (str): the component name.
-        is_default (bool, optional): whether it is a builtin component.
+        training_notebook (str, optional): the notebook content.
+        inference_notebook (str, optional): the notebook content.
+        is_default (bool, optional): whether it is a built-in component.
+        copy_from (str, optional): the component to copy the notebooks from.
 
     Returns:
         The component info.
@@ -38,23 +43,39 @@ def create_component(name=None, is_default=False, **kwargs):
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
+    if copy_from and (training_notebook or inference_notebook):
+        raise BadRequest("Either provide notebooks or a component to copy from")
+
+    # creates a component with specified name,
+    # but copies notebooks from a source component
+    if copy_from:
+        return copy_component(name, copy_from)
+
     component_id = str(uuid4())
-    training_notebook = "{}/{}/Training.ipynb".format(PREFIX, component_id)
-    inference_notebook = "{}/{}/Inference.ipynb".format(PREFIX, component_id)
 
-    # Adds empty notebooks to object_storage
-    put_object(training_notebook, EMPTY_NOTEBOOK)
-    put_object(inference_notebook, EMPTY_NOTEBOOK)
+    # loads a sample notebook if none was sent
+    if training_notebook is None:
+        training_notebook = TRAINING_NOTEBOOK
 
-    # prepends 'minio://BUCKET_NAME/' to the str saved to database
-    training_notebook = "minio://{}/{}".format(BUCKET_NAME, training_notebook)
-    inference_notebook = "minio://{}/{}".format(BUCKET_NAME, inference_notebook)
+    # adds notebook to object storage
+    obj_name = "{}/{}/Training.ipynb".format(PREFIX, component_id)
+    put_object(obj_name, training_notebook)
 
-    # Saves component info to the database
+    # formats the notebook path (will save the path to database)
+    training_notebook_path = "minio://{}/{}".format(BUCKET_NAME, obj_name)
+
+    # repeat the steps above for the inference notebook
+    if inference_notebook is None:
+        inference_notebook = INFERENCE_NOTEBOOK
+    obj_name = "{}/{}/Inference.ipynb".format(PREFIX, component_id)
+    put_object(obj_name, inference_notebook)
+    inference_notebook_path = "minio://{}/{}".format(BUCKET_NAME, obj_name)
+
+    # saves component info to the database
     component = Component(uuid=component_id,
                           name=name,
-                          training_notebook=training_notebook,
-                          inference_notebook=inference_notebook,
+                          training_notebook_path=training_notebook_path,
+                          inference_notebook_path=inference_notebook_path,
                           is_default=is_default)
     db_session.add(component)
     db_session.commit()
@@ -79,7 +100,7 @@ def get_component(uuid):
 
 
 def update_component(uuid, **kwargs):
-    """Updates a component in our database.
+    """Updates a component in our database/object storage.
 
     Args:
         uuid (str): the component uuid to look for in our database.
@@ -102,4 +123,43 @@ def update_component(uuid, **kwargs):
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
 
+    return component.as_dict()
+
+
+def copy_component(name, copy_from):
+    """Makes a copy of a component in our database/object storage.
+
+    Args:
+        name (str): the component name.
+        copy_from (str, optional): the component_id from which the notebooks are copied.
+
+    Returns:
+        The component info.
+    """
+    component = Component.query.get(copy_from)
+
+    if component is None:
+        raise BadRequest("Source component does not exist")
+
+    component_id = str(uuid4())
+
+    # adds notebooks to object storage
+    source_name = "{}/{}/Training.ipynb".format(PREFIX, copy_from)
+    destination_name = "{}/{}/Training.ipynb".format(PREFIX, component_id)
+    duplicate_object(source_name, destination_name)
+    training_notebook_path = "minio://{}/{}".format(BUCKET_NAME, destination_name)
+
+    source_name = "{}/{}/Inference.ipynb".format(PREFIX, copy_from)
+    destination_name = "{}/{}/Inference.ipynb".format(PREFIX, component_id)
+    duplicate_object(source_name, destination_name)
+    inference_notebook_path = "minio://{}/{}".format(BUCKET_NAME, destination_name)
+
+    # saves component info to the database
+    component = Component(uuid=component_id,
+                          name=name,
+                          training_notebook_path=training_notebook_path,
+                          inference_notebook_path=inference_notebook_path,
+                          is_default=False)
+    db_session.add(component)
+    db_session.commit()
     return component.as_dict()
