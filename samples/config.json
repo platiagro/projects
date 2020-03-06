@@ -1,7 +1,17 @@
 [
     {
         "name": "AutoML",
-        "trainingNotebook": "/samples/automl/Inference.ipynb",
-        "inferenceNotebook": "/samples/automl/Training.ipynb"
+        "trainingNotebook": "/samples/automl/Training.ipynb",
+        "inferenceNotebook": "/samples/automl/Inference.ipynb"
+    },
+    {
+        "name": "SVR",
+        "trainingNotebook": "/samples/svr/Training.ipynb",
+        "inferenceNotebook": "/samples/svr/Inference.ipynb"
+    },
+    {
+        "name": "Random Forest Regressor",
+        "trainingNotebook": "/samples/random-forest-regressor/Training.ipynb",
+        "inferenceNotebook": "/samples/random-forest-regressor/Inference.ipynb"
     }
 ]
