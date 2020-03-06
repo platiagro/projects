@@ -1,26 +1,20 @@
-language: node_js
+language: python
+services:
+  - mysql
+python:
+  - "3.6"
 
-node_js:
-  - '10'
+# command to install dependencies
+install:
+  - pip install .[testing]
+  - platiagro-init-db
 
-dist: trusty
-
-cache: yarn
-
-before_script:
-  - rm -rf ./node_modules package-lock.json
-  - npm install
-  - npm -g install snyk
-  - npm -g install codecov
-
+# command to run tests
 script:
-  - snyk test
-  - npm run test-coverage
+  - pytest --cov=projects --cov-report=xml
+
 after_script:
   - codecov
-
-after_success:
-  - snyk monitor
 
 notifications:
   email: false

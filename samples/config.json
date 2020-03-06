@@ -1,0 +1,7 @@
+[
+    {
+        "name": "AutoML",
+        "trainingNotebook": "/samples/automl/Inference.ipynb",
+        "inferenceNotebook": "/samples/automl/Training.ipynb"
+    }
+]
