@@ -5,9 +5,19 @@
         "inferenceNotebook": "/samples/automl/Inference.ipynb"
     },
     {
+        "name": "SVC",
+        "trainingNotebook": "/samples/svc/Training.ipynb",
+        "inferenceNotebook": "/samples/svc/Inference.ipynb"
+    },
+    {
         "name": "SVR",
         "trainingNotebook": "/samples/svr/Training.ipynb",
         "inferenceNotebook": "/samples/svr/Inference.ipynb"
+    },
+    {
+        "name": "Random Forest Classifier",
+        "trainingNotebook": "/samples/random-forest-classifier/Training.ipynb",
+        "inferenceNotebook": "/samples/random-forest-classifier/Inference.ipynb"
     },
     {
         "name": "Random Forest Regressor",
