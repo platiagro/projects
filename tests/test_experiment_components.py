@@ -12,8 +12,8 @@ COMPONENT_ID = "7caaee98-ac93-46c6-9e98-f4709fc65593"
 DATASET = "iris"
 TARGET = "col4"
 POSITION = 0
-TRAINING_NOTEBOOK = "minio://mlpipeline/components/{}/Foo.ipynb".format(UUID)
-INFERENCE_NOTEBOOK = "minio://mlpipeline/components/{}/Bar.ipynb".format(UUID)
+TRAINING_NOTEBOOK_PATH = "minio://anonymous/components/{}/Training.ipynb".format(UUID)
+INFERENCE_NOTEBOOK_PATH = "minio://anonymous/components/{}/Inference.ipynb".format(UUID)
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -29,7 +29,7 @@ class TestExperimentComponents(unittest.TestCase):
         text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO components (uuid, name, training_notebook, inference_notebook, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, TRAINING_NOTEBOOK, INFERENCE_NOTEBOOK, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO components (uuid, name, training_notebook_path, inference_notebook_path, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
         text = "INSERT INTO experiment_components (uuid, experiment_id, component_id, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, EXPERIMENT_ID, COMPONENT_ID, POSITION, CREATED_AT, UPDATED_AT)
