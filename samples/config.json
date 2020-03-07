@@ -1,18 +1,33 @@
 [
     {
-        "name": "AutoML",
-        "trainingNotebook": "/samples/automl/Training.ipynb",
-        "inferenceNotebook": "/samples/automl/Inference.ipynb"
+        "name": "AutoML Classifier",
+        "trainingNotebook": "/samples/automl-classifier/Training.ipynb",
+        "inferenceNotebook": "/samples/automl-classifier/Inference.ipynb"
     },
     {
-        "name": "SVC",
-        "trainingNotebook": "/samples/svc/Training.ipynb",
-        "inferenceNotebook": "/samples/svc/Inference.ipynb"
+        "name": "AutoML Regressor",
+        "trainingNotebook": "/samples/automl-regressor/Training.ipynb",
+        "inferenceNotebook": "/samples/automl-regressor/Inference.ipynb"
     },
     {
-        "name": "SVR",
-        "trainingNotebook": "/samples/svr/Training.ipynb",
-        "inferenceNotebook": "/samples/svr/Inference.ipynb"
+        "name": "Linear Regression",
+        "trainingNotebook": "/samples/linear-regression/Training.ipynb",
+        "inferenceNotebook": "/samples/linear-regression/Inference.ipynb"
+    },
+    {
+        "name": "Logistic Regression",
+        "trainingNotebook": "/samples/logistic-regression/Training.ipynb",
+        "inferenceNotebook": "/samples/logistic-regression/Inference.ipynb"
+    },
+    {
+        "name": "MLP Classifier",
+        "trainingNotebook": "/samples/mlp-classifier/Training.ipynb",
+        "inferenceNotebook": "/samples/mlp-classifier/Inference.ipynb"
+    },
+    {
+        "name": "MLP Regressor",
+        "trainingNotebook": "/samples/mlp-regressor/Training.ipynb",
+        "inferenceNotebook": "/samples/mlp-regressor/Inference.ipynb"
     },
     {
         "name": "Random Forest Classifier",
@@ -23,5 +38,15 @@
         "name": "Random Forest Regressor",
         "trainingNotebook": "/samples/random-forest-regressor/Training.ipynb",
         "inferenceNotebook": "/samples/random-forest-regressor/Inference.ipynb"
+    },
+    {
+        "name": "SVC",
+        "trainingNotebook": "/samples/svc/Training.ipynb",
+        "inferenceNotebook": "/samples/svc/Inference.ipynb"
+    },
+    {
+        "name": "SVR",
+        "trainingNotebook": "/samples/svr/Training.ipynb",
+        "inferenceNotebook": "/samples/svr/Inference.ipynb"
     }
 ]
