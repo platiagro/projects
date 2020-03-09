@@ -7,9 +7,11 @@ from uuid import uuid4
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
+from .jupyter import create_new_file, set_workspace
+
 from ..database import db_session
 from ..models import Component
-from ..object_storage import BUCKET_NAME, put_object, duplicate_object
+from ..object_storage import BUCKET_NAME, get_object, put_object, duplicate_object
 
 PREFIX = "components"
 TRAINING_NOTEBOOK = get_data("projects", "config/Training.ipynb")
@@ -27,7 +29,7 @@ def list_components():
 
 
 def create_component(name=None, training_notebook=None, inference_notebook=None,
-                     is_default=False, copy_from=None, **kwargs):
+                     is_default=False, copy_from=None, jupyter_endpoint=None, **kwargs):
     """Creates a new component in our database/object storage.
 
     Args:
@@ -49,7 +51,7 @@ def create_component(name=None, training_notebook=None, inference_notebook=None,
     # creates a component with specified name,
     # but copies notebooks from a source component
     if copy_from:
-        return copy_component(name, copy_from)
+        return copy_component(name, copy_from, jupyter_endpoint)
 
     component_id = str(uuid4())
 
@@ -70,6 +72,14 @@ def create_component(name=None, training_notebook=None, inference_notebook=None,
     obj_name = "{}/{}/Inference.ipynb".format(PREFIX, component_id)
     put_object(obj_name, inference_notebook)
     inference_notebook_path = "minio://{}/{}".format(BUCKET_NAME, obj_name)
+
+    # create inference notebook and training_notebook on jupyter
+    create_jupyter_files(
+        jupyter_endpoint, 
+        component_id, 
+        inference_notebook, 
+        training_notebook
+    )
 
     # saves component info to the database
     component = Component(uuid=component_id,
@@ -126,7 +136,7 @@ def update_component(uuid, **kwargs):
     return component.as_dict()
 
 
-def copy_component(name, copy_from):
+def copy_component(name, copy_from, jupyter_endpoint):
     """Makes a copy of a component in our database/object storage.
 
     Args:
@@ -148,11 +158,21 @@ def copy_component(name, copy_from):
     destination_name = "{}/{}/Training.ipynb".format(PREFIX, component_id)
     duplicate_object(source_name, destination_name)
     training_notebook_path = "minio://{}/{}".format(BUCKET_NAME, destination_name)
+    training_notebook = get_object(source_name)
 
     source_name = "{}/{}/Inference.ipynb".format(PREFIX, copy_from)
     destination_name = "{}/{}/Inference.ipynb".format(PREFIX, component_id)
     duplicate_object(source_name, destination_name)
     inference_notebook_path = "minio://{}/{}".format(BUCKET_NAME, destination_name)
+    inference_notebook = get_object(source_name)
+
+    # create inference notebook and training_notebook on jupyter
+    create_jupyter_files(
+        jupyter_endpoint, 
+        component_id, 
+        inference_notebook, 
+        training_notebook
+    )
 
     # saves component info to the database
     component = Component(uuid=component_id,
@@ -163,3 +183,14 @@ def copy_component(name, copy_from):
     db_session.add(component)
     db_session.commit()
     return component.as_dict()
+
+
+def create_jupyter_files(endpoint, component_id, inference_notebook, training_notebook):
+    # always try to create components folder to guarantee his existence
+    create_new_file(endpoint, "", PREFIX, True)
+
+    path = "{}/{}".format(PREFIX, component_id)
+    create_new_file(endpoint, PREFIX, component_id, True)
+    create_new_file(endpoint, path, "Inference.ipynb", False, inference_notebook)
+    create_new_file(endpoint, path, "Training.ipynb", False, training_notebook)
+    set_workspace(endpoint, path, "Inference.ipynb", "Training.ipynb")

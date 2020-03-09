@@ -28,6 +28,25 @@ def make_bucket(name):
         pass
 
 
+def get_object(source):
+    """Get an object in MinIO.
+
+    Args:
+        source (str): the path to source object.
+    """
+    data = MINIO_CLIENT.get_object(
+        bucket_name=BUCKET_NAME,
+        object_name=source,
+    )
+
+    buffer = BytesIO()
+    for d in data.stream(32*1024):
+        buffer.write(d)
+    buffer.seek(0, SEEK_SET)
+
+    return buffer.read()
+
+
 def put_object(name, data):
     """Puts an object into MinIO.
 
@@ -55,20 +74,8 @@ def duplicate_object(source, destination):
         source (str): the path to source object.
         destination (str): the destination path.
     """
-    data = MINIO_CLIENT.get_object(
-        bucket_name=BUCKET_NAME,
-        object_name=source,
-    )
-
-    buffer = BytesIO()
-    for d in data.stream(32*1024):
-        buffer.write(d)
-    length = buffer.tell()
-    buffer.seek(0, SEEK_SET)
-
-    MINIO_CLIENT.put_object(
+    MINIO_CLIENT.copy_object(
         bucket_name=BUCKET_NAME,
         object_name=destination,
-        data=buffer,
-        length=length,
+        object_source="{}/{}".format(BUCKET_NAME, source),
     )
