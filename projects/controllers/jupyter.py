@@ -1,9 +1,12 @@
+from os import getenv
 import json
 import requests
 
-URL_CONTENTS = "{}/api/contents/{}"
+ENDPOINT = getenv("JUPYTER_ENDPOINT", "server.anonymous:80/notebook/anonymous/server")
 
-URL_WORKSPACES = "{}/lab/api/workspaces/lab"
+URL_CONTENTS = ENDPOINT + "/api/contents/{}"
+
+URL_WORKSPACES = ENDPOINT + "/lab/api/workspaces/lab"
 
 COOKIES = dict(_xsrf='token')
 
@@ -17,17 +20,17 @@ def get_full_file_path(folderPath, fileName):
 
     return fullFilePath
 
-def get_file(endpoint, folderPath, name):
+def get_file(folderPath, name):
     fullFilePath = get_full_file_path(folderPath, name)
 
-    r = requests.get(url = URL_CONTENTS.format(endpoint, fullFilePath))
+    r = requests.get(url = URL_CONTENTS.format(fullFilePath))
 
     if r.status_code != requests.codes.ok:
         return
         
     return r.json()
 
-def create_new_file(endpoint, folderPath, name, isFolder, content=None):
+def create_new_file(folderPath, name, isFolder, content=None):
 
     if content is not None:
         content = json.loads(content.decode("utf-8"))
@@ -39,7 +42,7 @@ def create_new_file(endpoint, folderPath, name, isFolder, content=None):
     payload = {'type': fileType, 'content': content}
 
     r = requests.put(
-        url = URL_CONTENTS.format(endpoint, fullFilePath), 
+        url = URL_CONTENTS.format(fullFilePath), 
         cookies=COOKIES, 
         headers=HEADERS, 
         data=json.dumps(payload)
@@ -51,8 +54,8 @@ def create_new_file(endpoint, folderPath, name, isFolder, content=None):
     return r.json()
 
 
-def set_workspace(endpoint, path, inferenceFileName, trainingFileName):
-    r = requests.get(url = URL_WORKSPACES.format(endpoint))
+def set_workspace(path, inferenceFileName, trainingFileName):
+    r = requests.get(url = URL_WORKSPACES)
 
     if r.status_code != requests.codes.ok:
         return
@@ -85,7 +88,7 @@ def set_workspace(endpoint, path, inferenceFileName, trainingFileName):
     dock["widgets"] = [inference, training]
 
     r = requests.put(
-        url = URL_WORKSPACES.format(endpoint), 
+        url = URL_WORKSPACES, 
         cookies=COOKIES, 
         headers=HEADERS, 
         data=json.dumps(resp)

@@ -25,11 +25,11 @@ def list_components():
         A list of all components ids.
     """
     components = Component.query.all()
-    return [component.uuid for component in components]
+    return components
 
 
 def create_component(name=None, training_notebook=None, inference_notebook=None,
-                     is_default=False, copy_from=None, jupyter_endpoint=None, **kwargs):
+                     is_default=False, copy_from=None, **kwargs):
     """Creates a new component in our database/object storage.
 
     Args:
@@ -51,7 +51,7 @@ def create_component(name=None, training_notebook=None, inference_notebook=None,
     # creates a component with specified name,
     # but copies notebooks from a source component
     if copy_from:
-        return copy_component(name, copy_from, jupyter_endpoint)
+        return copy_component(name, copy_from)
 
     component_id = str(uuid4())
 
@@ -74,12 +74,7 @@ def create_component(name=None, training_notebook=None, inference_notebook=None,
     inference_notebook_path = "minio://{}/{}".format(BUCKET_NAME, obj_name)
 
     # create inference notebook and training_notebook on jupyter
-    create_jupyter_files(
-        jupyter_endpoint, 
-        component_id, 
-        inference_notebook, 
-        training_notebook
-    )
+    create_jupyter_files(component_id, inference_notebook, training_notebook)
 
     # saves component info to the database
     component = Component(uuid=component_id,
@@ -136,7 +131,7 @@ def update_component(uuid, **kwargs):
     return component.as_dict()
 
 
-def copy_component(name, copy_from, jupyter_endpoint):
+def copy_component(name, copy_from):
     """Makes a copy of a component in our database/object storage.
 
     Args:
@@ -167,12 +162,7 @@ def copy_component(name, copy_from, jupyter_endpoint):
     inference_notebook = get_object(source_name)
 
     # create inference notebook and training_notebook on jupyter
-    create_jupyter_files(
-        jupyter_endpoint, 
-        component_id, 
-        inference_notebook, 
-        training_notebook
-    )
+    create_jupyter_files(component_id, inference_notebook, training_notebook)
 
     # saves component info to the database
     component = Component(uuid=component_id,
@@ -185,12 +175,12 @@ def copy_component(name, copy_from, jupyter_endpoint):
     return component.as_dict()
 
 
-def create_jupyter_files(endpoint, component_id, inference_notebook, training_notebook):
+def create_jupyter_files(component_id, inference_notebook, training_notebook):
     # always try to create components folder to guarantee his existence
-    create_new_file(endpoint, "", PREFIX, True)
+    create_new_file("", PREFIX, True)
 
     path = "{}/{}".format(PREFIX, component_id)
-    create_new_file(endpoint, PREFIX, component_id, True)
-    create_new_file(endpoint, path, "Inference.ipynb", False, inference_notebook)
-    create_new_file(endpoint, path, "Training.ipynb", False, training_notebook)
-    set_workspace(endpoint, path, "Inference.ipynb", "Training.ipynb")
+    create_new_file(PREFIX, component_id, True)
+    create_new_file(path, "Inference.ipynb", False, inference_notebook)
+    create_new_file(path, "Training.ipynb", False, training_notebook)
+    set_workspace(path, "Inference.ipynb", "Training.ipynb")
