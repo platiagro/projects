@@ -65,6 +65,20 @@ def set_workspace(path, inferenceFileName, trainingFileName):
 
     resp = r.json()
     data = resp["data"]
+    data["layout-restorer:data"] = {
+        "main": {
+            "dock": {
+                "type": "tab-area",
+                "currentIndex": 0,
+                "widgets": [inference, training]
+            },
+            "mode": "multiple-document",
+            "current": inference
+        }
+    }
+    data["file-browser-filebrowser:cwd"] = {
+        "path": path
+    }
     data[inference] = {
         "data": {
             "path": "{}/{}".format(path, inferenceFileName),
@@ -77,15 +91,6 @@ def set_workspace(path, inferenceFileName, trainingFileName):
             "factory": "Notebook"
         }
     }
-
-    file_browser_filebrowser = data["file-browser-filebrowser:cwd"]
-    file_browser_filebrowser["path"] = path
-
-    layout_restorer = data["layout-restorer:data"]
-    main = layout_restorer["main"]
-    main["current"] = inference
-    dock = main["dock"]
-    dock["widgets"] = [inference, training]
 
     r = requests.put(
         url = URL_WORKSPACES, 
