@@ -13,6 +13,7 @@ class Component(Base):
     __tablename__ = "components"
     uuid = Column(String(255), primary_key=True)
     name = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
     training_notebook_path = Column(String(255))
     inference_notebook_path = Column(String(255))
     is_default = Column(Boolean, nullable=False, server_default=expression.false())

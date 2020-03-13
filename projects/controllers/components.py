@@ -28,7 +28,7 @@ def list_components():
     return components
 
 
-def create_component(name=None, training_notebook=None, inference_notebook=None,
+def create_component(name=None, description=None, training_notebook=None, inference_notebook=None,
                      is_default=False, copy_from=None, **kwargs):
     """Creates a new component in our database/object storage.
 
@@ -51,7 +51,7 @@ def create_component(name=None, training_notebook=None, inference_notebook=None,
     # creates a component with specified name,
     # but copies notebooks from a source component
     if copy_from:
-        return copy_component(name, copy_from)
+        return copy_component(name, description, copy_from)
 
     component_id = str(uuid4())
 
@@ -79,6 +79,7 @@ def create_component(name=None, training_notebook=None, inference_notebook=None,
     # saves component info to the database
     component = Component(uuid=component_id,
                           name=name,
+                          description=description,
                           training_notebook_path=training_notebook_path,
                           inference_notebook_path=inference_notebook_path,
                           is_default=is_default)
@@ -131,7 +132,30 @@ def update_component(uuid, **kwargs):
     return component.as_dict()
 
 
-def copy_component(name, copy_from):
+def delete_component(uuid):
+    """Delete a component in our database/object storage.
+
+    Args:
+        uuid (str): the component uuid to look for in our database.
+
+    Returns:
+        The component info.
+    """
+    component = Component.query.get(uuid)
+
+    if component is None:
+        raise NotFound("The specified component does not exist")
+
+    try:
+        db_session.query(Component).filter_by(uuid=uuid).delete()
+        db_session.commit()
+    except (InvalidRequestError, ProgrammingError) as e:
+        raise BadRequest(str(e))
+
+    return component.as_dict()
+
+
+def copy_component(name, description, copy_from):
     """Makes a copy of a component in our database/object storage.
 
     Args:
@@ -167,6 +191,7 @@ def copy_component(name, copy_from):
     # saves component info to the database
     component = Component(uuid=component_id,
                           name=name,
+                          description=description,
                           training_notebook_path=training_notebook_path,
                           inference_notebook_path=inference_notebook_path,
                           is_default=False)
