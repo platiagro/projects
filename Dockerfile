@@ -1,8 +1,19 @@
-FROM node:lts-alpine
+FROM python:3.6-buster
 
-RUN npm install -g knex && \
-    apk add netcat-openbsd;
+COPY ./requirements.txt /app/requirements.txt
 
-COPY wait-for.sh /opt/wait-for.sh
+RUN pip install -r /app/requirements.txt
 
-RUN ["chmod", "+x", "/opt/wait-for.sh"]
+COPY ./projects /app/projects
+COPY ./setup.py /app/setup.py
+
+RUN pip install /app/
+
+COPY ./samples /samples
+
+WORKDIR /app/
+
+EXPOSE 8080
+
+ENTRYPOINT ["python", "-m", "projects.api.main"]
+CMD ["--init-db", "--samples-config", "/samples/config.json"]
