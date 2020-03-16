@@ -1,5 +1,4 @@
 # Built-in components
-
     ├── automl-classifier
     │   ├── Training.ipynb      <- Scripts to train models
     │   └── Inference.ipynb     <- Scripts to make predictions

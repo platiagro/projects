@@ -1,6 +1,8 @@
-from os import getenv
 import json
 import requests
+
+from os import getenv
+from werkzeug.exceptions import BadRequest
 
 ENDPOINT = getenv("JUPYTER_ENDPOINT", "server.anonymous:80/notebook/anonymous/server")
 
@@ -30,6 +32,22 @@ def get_file(folderPath, name):
         
     return r.json()
 
+def remove_file(path):
+    r = requests.delete(url = URL_CONTENTS.format(path), cookies=COOKIES, headers=HEADERS)
+
+    if r.status_code != requests.codes.no_content:
+        raise BadRequest(r.json())
+        
+    return
+
+def get_files(path):
+    r = requests.get(url = URL_CONTENTS.format(path))
+
+    if r.status_code != requests.codes.ok:
+        raise BadRequest(r.json())
+        
+    return r.json()
+    
 def create_new_file(folderPath, name, isFolder, content=None):
 
     if content is not None:

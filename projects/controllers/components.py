@@ -4,14 +4,15 @@ from datetime import datetime
 from pkgutil import get_data
 from uuid import uuid4
 
+from minio.error import ResponseError
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from .jupyter import create_new_file, set_workspace
+from .jupyter import create_new_file, set_workspace, get_files, remove_file
 
 from ..database import db_session
 from ..models import Component
-from ..object_storage import BUCKET_NAME, get_object, put_object, duplicate_object
+from ..object_storage import BUCKET_NAME, get_object, put_object, duplicate_object, list_objects, remove_object
 
 PREFIX = "components"
 TRAINING_NOTEBOOK = get_data("projects", "config/Training.ipynb")
@@ -147,9 +148,23 @@ def delete_component(uuid):
         raise NotFound("The specified component does not exist")
 
     try:
+        source_name = "{}/{}".format(PREFIX, uuid)
+
+        # remove jupyter files and directory
+        jupyter_files = get_files(source_name)
+        for jupyter_file in jupyter_files["content"]:
+            remove_file(jupyter_file["path"])
+        remove_file(source_name)
+
+         # remove Minio files and directory
+        minio_files = list_objects(source_name)
+        for minio_file in minio_files:
+            remove_object(minio_file.object_name)
+        remove_object(source_name)
+
         db_session.query(Component).filter_by(uuid=uuid).delete()
         db_session.commit()
-    except (InvalidRequestError, ProgrammingError) as e:
+    except (InvalidRequestError, ProgrammingError, ResponseError) as e:
         raise BadRequest(str(e))
 
     return component.as_dict()
