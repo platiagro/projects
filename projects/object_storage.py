@@ -79,3 +79,30 @@ def duplicate_object(source, destination):
         object_name=destination,
         object_source="{}/{}".format(BUCKET_NAME, source),
     )
+
+def list_objects(prefix):
+    """Get objects from MinIO.
+
+    Args:
+        prefix (str): String specifying objects returned must begin with
+    """
+
+    objects = MINIO_CLIENT.list_objects(
+        bucket_name=BUCKET_NAME,
+        prefix=prefix,
+        recursive=True,
+    )
+
+    return objects
+
+def remove_object(object_name):
+    """Remove object from MinIO.
+
+    Args:
+        object_name (str): Name of object to remove
+    """
+
+    MINIO_CLIENT.remove_object(
+        bucket_name=BUCKET_NAME,
+        object_name=object_name,
+    )
