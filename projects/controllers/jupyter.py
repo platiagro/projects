@@ -19,35 +19,31 @@ def get_full_file_path(folderPath, fileName):
         fullFilePath = fileName
     else:
         fullFilePath = folderPath + "/" + fileName
-
     return fullFilePath
+
 
 def get_file(folderPath, name):
     fullFilePath = get_full_file_path(folderPath, name)
-
     r = requests.get(url = URL_CONTENTS.format(fullFilePath))
-
     if r.status_code != requests.codes.ok:
         return
-        
     return r.json()
+
 
 def remove_file(path):
     r = requests.delete(url = URL_CONTENTS.format(path), cookies=COOKIES, headers=HEADERS)
-
     if r.status_code != requests.codes.no_content:
         raise BadRequest(r.json())
-        
     return
+
 
 def get_files(path):
     r = requests.get(url = URL_CONTENTS.format(path))
-
-    if r.status_code != requests.codes.ok:
-        raise BadRequest(r.json())
-        
-    return r.json()
+    if r.status_code == requests.codes.ok:
+        return r.json()
+    return 
     
+
 def create_new_file(folderPath, name, isFolder, content=None):
 
     if content is not None:

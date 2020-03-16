@@ -152,11 +152,12 @@ def delete_component(uuid):
 
         # remove jupyter files and directory
         jupyter_files = get_files(source_name)
-        for jupyter_file in jupyter_files["content"]:
-            remove_file(jupyter_file["path"])
-        remove_file(source_name)
+        if jupyter_files is not None:
+            for jupyter_file in jupyter_files["content"]:
+                 remove_file(jupyter_file["path"])
+            remove_file(source_name)
 
-         # remove Minio files and directory
+        # remove Minio files and directory
         minio_files = list_objects(source_name)
         for minio_file in minio_files:
             remove_object(minio_file.object_name)
