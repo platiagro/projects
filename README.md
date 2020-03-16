@@ -34,7 +34,7 @@ export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
-export JUPYTER_ENDPOINT=localhost:8888
+export JUPYTER_ENDPOINT=http://localhost:8888
 ```
 
 (Optional) Start a MySQL server instance:
@@ -164,7 +164,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-[{"createdAt":"2000-01-01T00:00:00","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}]
+[{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}]
 ```
 
 **Creates a component:** <br>
@@ -180,7 +180,7 @@ curl -X POST \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
 ```
 
 **Details a component** <br>
@@ -195,7 +195,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
 ```
 
 **Updates a component:** <br>
@@ -211,7 +211,7 @@ curl -X PATCH \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"bar","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"bar","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
 ```
 
 ### Projects

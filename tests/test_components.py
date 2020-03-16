@@ -6,6 +6,7 @@ from projects.database import engine
 
 UUID = "6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"
 NAME = "foo"
+DESCRIPTION = "long foo"
 TRAINING_NOTEBOOK_PATH = "minio://anonymous/components/{}/Training.ipynb".format(UUID)
 INFERENCE_NOTEBOOK_PATH = "minio://anonymous/components/{}/Inference.ipynb".format(UUID)
 IS_DEFAULT = False
@@ -18,7 +19,7 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 class TestComponents(unittest.TestCase):
     def setUp(self):
         conn = engine.connect()
-        text = "INSERT INTO components (uuid, name, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, NAME, TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO components (uuid, name, description, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, NAME, DESCRIPTION, TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT)
         conn.execute(text)
         conn.close()
 
@@ -44,10 +45,12 @@ class TestComponents(unittest.TestCase):
 
             rv = c.post("/components", json={
                 "name": "test",
+                "description": "long test",
             })
             result = rv.get_json()
             expected = {
                 "name": "test",
+                "description": "long test",
                 "isDefault": IS_DEFAULT,
             }
             # uuid, training_notebook_path, inference_notebook_path, created_at, updated_at
@@ -67,11 +70,13 @@ class TestComponents(unittest.TestCase):
 
             rv = c.post("/components", json={
                 "name": "test",
+                "description": "long test",
                 "copyFrom": test_uuid,
             })
             result = rv.get_json()
             expected = {
                 "name": "test",
+                "description": "long test",
                 "isDefault": IS_DEFAULT,
             }
             machine_generated = [
@@ -99,6 +104,7 @@ class TestComponents(unittest.TestCase):
             expected = {
                 "uuid": UUID,
                 "name": "foo",
+                "description": DESCRIPTION,
                 "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
@@ -128,6 +134,7 @@ class TestComponents(unittest.TestCase):
             expected = {
                 "uuid": UUID,
                 "name": "bar",
+                "description": DESCRIPTION,
                 "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
