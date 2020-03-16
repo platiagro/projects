@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import unittest
+from unittest import TestCase
 
 from projects.api.main import app
 from projects.database import engine
@@ -20,7 +20,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 
-class TestOperators(unittest.TestCase):
+class TestOperators(TestCase):
     def setUp(self):
         conn = engine.connect()
         text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)

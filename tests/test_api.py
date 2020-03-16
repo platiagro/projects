@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import unittest
+from unittest import TestCase
 
 from projects.api.main import app, parse_args
 
 
-class TestApi(unittest.TestCase):
+class TestApi(TestCase):
 
     def test_parse_args(self):
         parser = parse_args([])

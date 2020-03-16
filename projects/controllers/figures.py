@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Figures controller."""
 
-from platiagro import list_figures
+import platiagro
 
 
-def list_figures(experiment_id=experiment_id, operator_id=operator_id):
+def list_figures(experiment_id, operator_id):
     """Lists all figures from object storage as data URI scheme.
 
     Args:
@@ -14,4 +14,5 @@ def list_figures(experiment_id=experiment_id, operator_id=operator_id):
     Returns:
         A list of data URIs.
     """
-    return list_figures(experiment_id=experiment_id, operator_id=operator_id)
+    return platiagro.list_figures(experiment_id=experiment_id,
+                                  operator_id=operator_id)
