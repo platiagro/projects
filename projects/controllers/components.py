@@ -7,9 +7,11 @@ from uuid import uuid4
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
+from .jupyter import create_new_file, set_workspace
+
 from ..database import db_session
 from ..models import Component
-from ..object_storage import BUCKET_NAME, put_object, duplicate_object
+from ..object_storage import BUCKET_NAME, get_object, put_object, duplicate_object
 
 PREFIX = "components"
 TRAINING_NOTEBOOK = get_data("projects", "config/Training.ipynb")
@@ -23,10 +25,10 @@ def list_components():
         A list of all components ids.
     """
     components = Component.query.all()
-    return [component.uuid for component in components]
+    return components
 
 
-def create_component(name=None, training_notebook=None, inference_notebook=None,
+def create_component(name=None, description=None, training_notebook=None, inference_notebook=None,
                      is_default=False, copy_from=None, **kwargs):
     """Creates a new component in our database/object storage.
 
@@ -49,7 +51,7 @@ def create_component(name=None, training_notebook=None, inference_notebook=None,
     # creates a component with specified name,
     # but copies notebooks from a source component
     if copy_from:
-        return copy_component(name, copy_from)
+        return copy_component(name, description, copy_from)
 
     component_id = str(uuid4())
 
@@ -71,9 +73,13 @@ def create_component(name=None, training_notebook=None, inference_notebook=None,
     put_object(obj_name, inference_notebook)
     inference_notebook_path = "minio://{}/{}".format(BUCKET_NAME, obj_name)
 
+    # create inference notebook and training_notebook on jupyter
+    create_jupyter_files(component_id, inference_notebook, training_notebook)
+
     # saves component info to the database
     component = Component(uuid=component_id,
                           name=name,
+                          description=description,
                           training_notebook_path=training_notebook_path,
                           inference_notebook_path=inference_notebook_path,
                           is_default=is_default)
@@ -126,7 +132,30 @@ def update_component(uuid, **kwargs):
     return component.as_dict()
 
 
-def copy_component(name, copy_from):
+def delete_component(uuid):
+    """Delete a component in our database/object storage.
+
+    Args:
+        uuid (str): the component uuid to look for in our database.
+
+    Returns:
+        The component info.
+    """
+    component = Component.query.get(uuid)
+
+    if component is None:
+        raise NotFound("The specified component does not exist")
+
+    try:
+        db_session.query(Component).filter_by(uuid=uuid).delete()
+        db_session.commit()
+    except (InvalidRequestError, ProgrammingError) as e:
+        raise BadRequest(str(e))
+
+    return component.as_dict()
+
+
+def copy_component(name, description, copy_from):
     """Makes a copy of a component in our database/object storage.
 
     Args:
@@ -148,18 +177,35 @@ def copy_component(name, copy_from):
     destination_name = "{}/{}/Training.ipynb".format(PREFIX, component_id)
     duplicate_object(source_name, destination_name)
     training_notebook_path = "minio://{}/{}".format(BUCKET_NAME, destination_name)
+    training_notebook = get_object(source_name)
 
     source_name = "{}/{}/Inference.ipynb".format(PREFIX, copy_from)
     destination_name = "{}/{}/Inference.ipynb".format(PREFIX, component_id)
     duplicate_object(source_name, destination_name)
     inference_notebook_path = "minio://{}/{}".format(BUCKET_NAME, destination_name)
+    inference_notebook = get_object(source_name)
+
+    # create inference notebook and training_notebook on jupyter
+    create_jupyter_files(component_id, inference_notebook, training_notebook)
 
     # saves component info to the database
     component = Component(uuid=component_id,
                           name=name,
+                          description=description,
                           training_notebook_path=training_notebook_path,
                           inference_notebook_path=inference_notebook_path,
                           is_default=False)
     db_session.add(component)
     db_session.commit()
     return component.as_dict()
+
+
+def create_jupyter_files(component_id, inference_notebook, training_notebook):
+    # always try to create components folder to guarantee his existence
+    create_new_file("", PREFIX, True)
+
+    path = "{}/{}".format(PREFIX, component_id)
+    create_new_file(PREFIX, component_id, True)
+    create_new_file(path, "Inference.ipynb", False, inference_notebook)
+    create_new_file(path, "Training.ipynb", False, training_notebook)
+    set_workspace(path, "Inference.ipynb", "Training.ipynb")

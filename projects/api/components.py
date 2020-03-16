@@ -4,7 +4,7 @@
 from flask import Blueprint, jsonify, request
 
 from ..controllers.components import list_components, create_component, \
-    get_component, update_component
+    get_component, update_component, delete_component
 from ..utils import to_snake_case
 
 bp = Blueprint("components", __name__)
@@ -38,3 +38,9 @@ def handle_patch_component(component_id):
     kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
     component = update_component(uuid=component_id, **kwargs)
     return jsonify(component)
+
+
+@bp.route("<component_id>", methods=["DELETE"])
+def handle_delete_component(component_id):
+    """Handles DELETE requests to /<component_id>."""
+    return jsonify(delete_component(uuid=component_id))

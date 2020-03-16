@@ -7,3 +7,5 @@ platiagro @ git+https://github.com/platiagro/sdk.git@master
 SQLAlchemy==1.3.13
 # MySQL driver
 PyMySQL==0.9.3
+# Requests
+requests==2.23.0
