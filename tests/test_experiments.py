@@ -62,7 +62,7 @@ class TestExperiments(unittest.TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
-                "components": [],
+                "operators": [],
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -89,7 +89,7 @@ class TestExperiments(unittest.TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
-                "components": [],
+                "operators": [],
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
             }
@@ -120,7 +120,7 @@ class TestExperiments(unittest.TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
-                "components": [],
+                "operators": [],
                 "createdAt": CREATED_AT_ISO,
             }
             machine_generated = ["updatedAt"]

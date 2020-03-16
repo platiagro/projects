@@ -1,6 +1,6 @@
 # PlatIAgro Projects
 
-[![Build Status](https://travis-ci.org/platiagro/projects.svg)](https://travis-ci.org/platiagro/projects)
+[![Build Status](https://travis-ci.com/platiagro/projects.svg)](https://travis-ci.com/platiagro/projects)
 [![codecov](https://codecov.io/gh/platiagro/projects/branch/master/graph/badge.svg)](https://codecov.io/gh/platiagro/projects)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Gitter](https://badges.gitter.im/platiagro/community.svg)](https://gitter.im/platiagro/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -91,7 +91,7 @@ export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
-export JUPYTER_ENDPOINT=localhost:8888
+export JUPYTER_ENDPOINT=http://localhost:8888
 ```
 
 (Optional) Create a virtualenv:
@@ -137,7 +137,7 @@ export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
-export JUPYTER_ENDPOINT=localhost:8888
+export JUPYTER_ENDPOINT=http://localhost:8888
 ```
 
 Use the following command to run all tests:
@@ -228,7 +228,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-["cc07c929-85d5-4939-b59c-790e540f207f"]
+[{"createdAt":"2000-01-01T00:00:00","experiments":[],"name":"foo","updatedAt":"2000-01-01T00:00:00","uuid":"cc07c929-85d5-4939-b59c-790e540f207f"}]
 ```
 
 **Creates a project:** <br>
@@ -292,7 +292,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-["2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"]
+[{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","operators":[],"position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}]
 ```
 
 **Creates an experiment:** <br>
@@ -308,7 +308,7 @@ curl -X POST \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
+{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","operators":[],"position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
 ```
 
 **Details an experiment** <br>
@@ -323,7 +323,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
+{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","operators":[],"position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
 ```
 
 **Updates an experiment:** <br>
@@ -339,7 +339,7 @@ curl -X PATCH \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"bar","position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
+{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"bar","operators":[],"position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
 ```
 
 ### Operators
@@ -356,7 +356,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-["e2b1870f-d699-4c7d-bcc4-5828728d1235"]
+[{"componentId":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4","createdAt":"2000-01-01T00:00:00","experimentId":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf","position":0,"updatedAt":"2000-01-01T00:00:00","uuid":"e2b1870f-d699-4c7d-bcc4-5828728d1235"}]
 ```
 
 **Creates an operator:** <br>

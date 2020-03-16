@@ -17,7 +17,7 @@ def list_projects():
         A list of all projects ids.
     """
     projects = Project.query.all()
-    return [project.uuid for project in projects]
+    return [project.as_dict() for project in projects]
 
 
 def create_project(name=None, **kwargs):
