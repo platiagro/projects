@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Components controller."""
+import json
+
 from datetime import datetime
 from pkgutil import get_data
 from uuid import uuid4
@@ -12,7 +14,8 @@ from .jupyter import create_new_file, set_workspace, get_files, remove_file
 
 from ..database import db_session
 from ..models import Component
-from ..object_storage import BUCKET_NAME, get_object, put_object, duplicate_object, list_objects, remove_object
+from ..object_storage import BUCKET_NAME, get_object, put_object, \
+    duplicate_object, list_objects, remove_object
 
 PREFIX = "components"
 TRAINING_NOTEBOOK = get_data("projects", "config/Training.ipynb")
@@ -103,7 +106,9 @@ def get_component(uuid):
     if component is None:
         raise NotFound("The specified component does not exist")
 
-    return component.as_dict()
+    dict_component = component.as_dict()
+    dict_component["params"] = get_component_param(uuid, True)
+    return dict_component
 
 
 def update_component(uuid, **kwargs):
@@ -225,3 +230,52 @@ def create_jupyter_files(component_id, inference_notebook, training_notebook):
     create_new_file(path, "Inference.ipynb", False, inference_notebook)
     create_new_file(path, "Training.ipynb", False, training_notebook)
     set_workspace(path, "Inference.ipynb", "Training.ipynb")
+
+
+def get_component_param(uuid, is_checked=False):
+    """Get the component parameters from notebook.
+
+    Args:
+        uuid (str): the component uuid to look for in our database.
+        is_checked(bool): flag to check if component uuid exist
+    Returns:
+        The component parameters info.
+    """
+    if is_checked == False:
+        component = Component.query.get(uuid)
+        if component is None:
+            raise NotFound("The specified component does not exist")
+
+    notebook_params = []
+    source_name = "{}/{}/Training.ipynb".format(PREFIX, uuid)
+    training_notebook = get_object(source_name)
+    json_training_notebook = json.loads(training_notebook.decode("utf-8"))
+    
+    if "cells" not in json_training_notebook:
+        return notebook_params
+
+    cells = json_training_notebook["cells"]
+    for cell in cells:
+        cell_type = cell["cell_type"]
+        if cell_type == 'code':
+            source = cell["source"]
+            for line in source:
+                if "#@param" in line:
+                    # name = "value" #@param {type:"string"}
+                    param_values = line.replace("\n", "").split("#@param")
+
+                    # name = value
+                    part1 = param_values[0].split("=")
+                    param_name = part1[0].strip()
+                    param_default = part1[1].replace("\"", "").strip()
+
+                    # {type:"string"}
+                    part2 = param_values[1].replace("type", '"type"').strip()
+
+                    # create json param and add to array
+                    param = json.loads(part2)
+                    param["name"] = param_name
+                    param["default"] = param_default
+                    notebook_params.append(param)
+    
+    return notebook_params
