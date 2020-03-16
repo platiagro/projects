@@ -34,6 +34,7 @@ export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
+export JUPYTER_ENDPOINT=localhost:8888
 ```
 
 (Optional) Start a MySQL server instance:
@@ -45,6 +46,15 @@ docker run -d -p 3306:3306 \
   --env "MYSQL_ROOT_PASSWORD=$MYSQL_DB_PASSWORD" \
   --env "MYSQL_ALLOW_EMPTY_PASSWORD=yes" \
   mysql:8
+```
+
+(Optional) Start a Jupyter Notebook instance:
+
+```bash
+docker run -d -p 8888:8888 \
+  --name jupyter \
+  jupyter/base-notebook \
+  start-notebook.sh --NotebookApp.token=''
 ```
 
 Then, build a docker image that launches the API server:
@@ -65,6 +75,7 @@ docker run -it -p 8080:8080 \
   --env "MYSQL_DB_NAME=$MYSQL_DB_NAME" \
   --env "MYSQL_DB_USER=$MYSQL_DB_USER" \
   --env "MYSQL_DB_PASSWORD=$MYSQL_DB_PASSWORD" \
+  --env "JUPYTER_ENDPOINT=$JUPYTER_ENDPOINT" \
   platiagro/projects:0.0.2
 ```
 
@@ -80,6 +91,7 @@ export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
+export JUPYTER_ENDPOINT=localhost:8888
 ```
 
 (Optional) Create a virtualenv:
@@ -125,6 +137,7 @@ export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
+export JUPYTER_ENDPOINT=localhost:8888
 ```
 
 Use the following command to run all tests:
@@ -151,7 +164,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-["6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"]
+[{"createdAt":"2000-01-01T00:00:00","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}]
 ```
 
 **Creates a component:** <br>

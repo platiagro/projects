@@ -1,8 +1,13 @@
 language: python
 services:
   - mysql
+  - docker
 python:
   - "3.6"
+
+before_install:
+  - docker pull jupyter/base-notebook
+  - docker run -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
 
 # command to install dependencies
 install:
