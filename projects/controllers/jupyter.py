@@ -48,7 +48,6 @@ def get_files(path):
         
     return r.json()
     
-
 def create_new_file(folderPath, name, isFolder, content=None):
 
     if content is not None:
