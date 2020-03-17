@@ -4,6 +4,7 @@ services:
   app:
     container_name: projects
     build: .
+    restart: always
     depends_on:
       - db
       - minio
@@ -20,7 +21,7 @@ services:
       - MINIO_SECRET_KEY=minio123
       - MINIO_REGION_NAME=us-east-1
       - MINIO_REGION_NAME=
-      - JUPYTER_ENDPOINT=server.anonymous:80/notebook/anonymous/teste
+      - JUPYTER_ENDPOINT=http://jupyter:8888
 
   db:
     container_name: "${DB_HOST:-mysql}"
@@ -50,3 +51,10 @@ services:
       interval: 1m30s
       timeout: 20s
       retries: 3
+
+  jupyter:
+    container_name: "${JUPYTER_HOST:-jupyter}"
+    image: jupyter/base-notebook
+    command: start-notebook.sh --NotebookApp.token=''
+    ports:
+      - "${JUPYTER_PORT:-8888}:8888"
