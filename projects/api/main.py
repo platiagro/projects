@@ -21,12 +21,12 @@ app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 app.register_blueprint(projects_blueprint, url_prefix="/projects")
 app.register_blueprint(experiments_blueprint,
-    url_prefix="/projects/<project_id>/experiments")
+                       url_prefix="/projects/<project_id>/experiments")
 app.register_blueprint(components_blueprint, url_prefix="/components")
 app.register_blueprint(operators_blueprint,
-    url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators")
+                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators")
 app.register_blueprint(figures_blueprint,
-    url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/figures")
+                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/figures")
 
 
 @app.teardown_appcontext

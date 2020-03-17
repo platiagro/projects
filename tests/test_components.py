@@ -2,7 +2,6 @@
 from io import BytesIO
 from unittest import TestCase
 
-from minio import Minio
 from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app

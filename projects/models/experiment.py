@@ -21,7 +21,7 @@ class Experiment(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     operators = relationship("Operator", backref="experiment",
-                              primaryjoin=uuid == Operator.experiment_id)
+                             primaryjoin=uuid == Operator.experiment_id)
 
     def __repr__(self):
         return "<Experiment {}>".format(self.name)

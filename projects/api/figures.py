@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """Figures blueprint."""
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
 from ..controllers.figures import list_figures
-from ..utils import to_snake_case
 
 bp = Blueprint("figures", __name__)
 

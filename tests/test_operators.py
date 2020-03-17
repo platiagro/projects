@@ -101,5 +101,5 @@ class TestOperators(TestCase):
 
             rv = c.delete("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, UUID))
             result = rv.get_json()
-            expected = {"message":"Operator deleted"}
+            expected = {"message": "Operator deleted"}
             self.assertDictEqual(expected, result)
