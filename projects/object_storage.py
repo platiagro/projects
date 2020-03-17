@@ -79,7 +79,7 @@ def duplicate_object(source, destination):
         object_name=destination,
         object_source="{}/{}".format(BUCKET_NAME, source),
     )
-    
+
 
 def list_objects(prefix):
     """Get objects from MinIO.
@@ -96,7 +96,7 @@ def list_objects(prefix):
 
     return objects
 
-  
+
 def remove_object(object_name):
     """Remove object from MinIO.
 

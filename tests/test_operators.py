@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import unittest
+from unittest import TestCase
 
 from projects.api.main import app
 from projects.database import engine
@@ -20,7 +20,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 
-class TestExperimentComponents(unittest.TestCase):
+class TestOperators(TestCase):
     def setUp(self):
         conn = engine.connect()
         text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)
@@ -32,13 +32,13 @@ class TestExperimentComponents(unittest.TestCase):
         text = "INSERT INTO components (uuid, name, training_notebook_path, inference_notebook_path, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO experiment_components (uuid, experiment_id, component_id, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, EXPERIMENT_ID, COMPONENT_ID, POSITION, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, EXPERIMENT_ID, COMPONENT_ID, POSITION, CREATED_AT, UPDATED_AT)
         conn.execute(text)
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
-        text = "DELETE FROM experiment_components WHERE experiment_id = '{}'".format(EXPERIMENT_ID)
+        text = "DELETE FROM operators WHERE experiment_id = '{}'".format(EXPERIMENT_ID)
         conn.execute(text)
 
         text = "DELETE FROM components WHERE uuid = '{}'".format(COMPONENT_ID)
@@ -51,21 +51,21 @@ class TestExperimentComponents(unittest.TestCase):
         conn.execute(text)
         conn.close()
 
-    def test_list_components(self):
+    def test_list_operators(self):
         with app.test_client() as c:
-            rv = c.get("/projects/{}/experiments/{}/components".format(PROJECT_ID, EXPERIMENT_ID))
+            rv = c.get("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID))
             result = rv.get_json()
             self.assertIsInstance(result, list)
 
-    def test_create_component(self):
+    def test_create_operator(self):
         with app.test_client() as c:
-            rv = c.post("/projects/{}/experiments/{}/components".format(PROJECT_ID, EXPERIMENT_ID), json={})
+            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={})
             result = rv.get_json()
             expected = {"message": "componentId is required"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post("/projects/{}/experiments/{}/components".format(PROJECT_ID, EXPERIMENT_ID), json={
+            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
                 "componentId": COMPONENT_ID,
             })
             result = rv.get_json()
@@ -73,7 +73,7 @@ class TestExperimentComponents(unittest.TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post("/projects/{}/experiments/{}/components".format(PROJECT_ID, EXPERIMENT_ID), json={
+            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
                 "componentId": COMPONENT_ID,
                 "position": POSITION,
             })
@@ -91,15 +91,15 @@ class TestExperimentComponents(unittest.TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
-    def test_delete_component(self):
+    def test_delete_operator(self):
         with app.test_client() as c:
-            rv = c.delete("/projects/{}/experiments/{}/components/unk".format(PROJECT_ID, EXPERIMENT_ID))
+            rv = c.delete("/projects/{}/experiments/{}/operators/unk".format(PROJECT_ID, EXPERIMENT_ID))
             result = rv.get_json()
-            expected = {"message": "The specified experiment-component does not exist"}
+            expected = {"message": "The specified operator does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/projects/{}/experiments/{}/components/{}".format(PROJECT_ID, EXPERIMENT_ID, UUID))
+            rv = c.delete("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, UUID))
             result = rv.get_json()
-            expected = {"message":"Component deleted"}
+            expected = {"message": "Operator deleted"}
             self.assertDictEqual(expected, result)

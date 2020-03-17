@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import unittest
+from unittest import TestCase
 
 from projects.api.main import app
 from projects.database import engine
@@ -16,7 +16,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 
-class TestExperiments(unittest.TestCase):
+class TestExperiments(TestCase):
     def setUp(self):
         conn = engine.connect()
         text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)
@@ -62,7 +62,7 @@ class TestExperiments(unittest.TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
-                "components": [],
+                "operators": [],
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -89,7 +89,7 @@ class TestExperiments(unittest.TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
-                "components": [],
+                "operators": [],
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
             }
@@ -120,7 +120,7 @@ class TestExperiments(unittest.TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
-                "components": [],
+                "operators": [],
                 "createdAt": CREATED_AT_ISO,
             }
             machine_generated = ["updatedAt"]

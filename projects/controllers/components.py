@@ -32,8 +32,9 @@ def list_components():
     return components
 
 
-def create_component(name=None, description=None, training_notebook=None, inference_notebook=None,
-                     is_default=False, copy_from=None, **kwargs):
+def create_component(name=None, description=None, training_notebook=None,
+                     inference_notebook=None, is_default=False, copy_from=None,
+                     **kwargs):
     """Creates a new component in our database/object storage.
 
     Args:
@@ -159,7 +160,7 @@ def delete_component(uuid):
         jupyter_files = get_files(source_name)
         if jupyter_files is not None:
             for jupyter_file in jupyter_files["content"]:
-                 remove_file(jupyter_file["path"])
+                remove_file(jupyter_file["path"])
             remove_file(source_name)
 
         # remove Minio files and directory
@@ -241,7 +242,7 @@ def get_component_param(uuid, is_checked=False):
     Returns:
         The component parameters info.
     """
-    if is_checked == False:
+    if not is_checked:
         component = Component.query.get(uuid)
         if component is None:
             raise NotFound("The specified component does not exist")
@@ -250,7 +251,7 @@ def get_component_param(uuid, is_checked=False):
     source_name = "{}/{}/Training.ipynb".format(PREFIX, uuid)
     training_notebook = get_object(source_name)
     json_training_notebook = json.loads(training_notebook.decode("utf-8"))
-    
+
     if "cells" not in json_training_notebook:
         return notebook_params
 
@@ -277,5 +278,5 @@ def get_component_param(uuid, is_checked=False):
                     param["name"] = param_name
                     param["default"] = param_default
                     notebook_params.append(param)
-    
+
     return notebook_params

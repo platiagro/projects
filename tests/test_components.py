@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
-import unittest
+from io import BytesIO
+from unittest import TestCase
+
+from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
 from projects.database import engine
+from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 UUID = "6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"
 NAME = "foo"
@@ -16,12 +20,33 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 
-class TestComponents(unittest.TestCase):
+class TestComponents(TestCase):
     def setUp(self):
         conn = engine.connect()
         text = "INSERT INTO components (uuid, name, description, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, NAME, DESCRIPTION, TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT)
         conn.execute(text)
         conn.close()
+
+        try:
+            MINIO_CLIENT.make_bucket(BUCKET_NAME)
+        except BucketAlreadyOwnedByYou:
+            pass
+
+        file = BytesIO(b'{"cells":[{"cell_type":"code","execution_count":null,"metadata":{},"outputs":[],"source":[]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}')
+        MINIO_CLIENT.put_object(
+            bucket_name=BUCKET_NAME,
+            object_name=TRAINING_NOTEBOOK_PATH[len("minio://anonymous/"):],
+            data=file,
+            length=file.getbuffer().nbytes,
+        )
+
+        file = BytesIO(b'{"cells":[{"cell_type":"code","execution_count":null,"metadata":{},"outputs":[],"source":[]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}')
+        MINIO_CLIENT.put_object(
+            bucket_name=BUCKET_NAME,
+            object_name=INFERENCE_NOTEBOOK_PATH[len("minio://anonymous/"):],
+            data=file,
+            length=file.getbuffer().nbytes,
+        )
 
     def tearDown(self):
         conn = engine.connect()
@@ -108,6 +133,7 @@ class TestComponents(unittest.TestCase):
                 "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
+                "params": [],
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
             }
