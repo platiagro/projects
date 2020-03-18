@@ -317,7 +317,7 @@ url: /projects/:project_id/experiments
 ```bash
 curl -X POST \
   http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments \
-  -d '{"dataset":"iris","name":"foo","position":0,"target":"col4"}'
+  -d '{"dataset":"iris","name":"foo","target":"col4"}'
 ```
 
 Expected Output:
