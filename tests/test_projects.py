@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import unittest
+from unittest import TestCase
 
 from projects.api.main import app
 from projects.database import engine
@@ -12,7 +12,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 
-class TestProjects(unittest.TestCase):
+class TestProjects(TestCase):
     def setUp(self):
         conn = engine.connect()
         text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(UUID, NAME, CREATED_AT, UPDATED_AT)
@@ -103,3 +103,17 @@ class TestProjects(unittest.TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+    def test_delete_project(self):
+        with app.test_client() as c:
+            rv = c.delete("/projects/unk")
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.delete("/projects/{}".format(UUID))
+            result = rv.get_json()
+            expected = {"message": "Project deleted"}
+            self.assertDictEqual(expected, result)
+

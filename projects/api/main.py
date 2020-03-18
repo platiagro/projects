@@ -11,8 +11,9 @@ from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
 from .components import bp as components_blueprint
 from ..database import db_session, init_db
 from .experiments import bp as experiments_blueprint
-from .experiments_components import bp as experiments_components_blueprint
+from .figures import bp as figures_blueprint
 from .json_encoder import CustomJSONEncoder
+from .operators import bp as operators_blueprint
 from .projects import bp as projects_blueprint
 from ..samples import init_components
 
@@ -20,10 +21,12 @@ app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 app.register_blueprint(projects_blueprint, url_prefix="/projects")
 app.register_blueprint(experiments_blueprint,
-    url_prefix="/projects/<project_id>/experiments")
+                       url_prefix="/projects/<project_id>/experiments")
 app.register_blueprint(components_blueprint, url_prefix="/components")
-app.register_blueprint(experiments_components_blueprint,
-    url_prefix="/projects/<project_id>/experiments/<experiment_id>/components")
+app.register_blueprint(operators_blueprint,
+                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators")
+app.register_blueprint(figures_blueprint,
+                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/figures")
 
 
 @app.teardown_appcontext

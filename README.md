@@ -1,6 +1,6 @@
 # PlatIAgro Projects
 
-[![Build Status](https://travis-ci.org/platiagro/projects.svg)](https://travis-ci.org/platiagro/projects)
+[![Build Status](https://travis-ci.com/platiagro/projects.svg)](https://travis-ci.com/platiagro/projects)
 [![codecov](https://codecov.io/gh/platiagro/projects/branch/master/graph/badge.svg)](https://codecov.io/gh/platiagro/projects)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Gitter](https://badges.gitter.im/platiagro/community.svg)](https://gitter.im/platiagro/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -91,7 +91,7 @@ export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
-export JUPYTER_ENDPOINT=localhost:8888
+export JUPYTER_ENDPOINT=http://localhost:8888
 ```
 
 (Optional) Create a virtualenv:
@@ -137,7 +137,7 @@ export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
-export JUPYTER_ENDPOINT=localhost:8888
+export JUPYTER_ENDPOINT=http://localhost:8888
 ```
 
 Use the following command to run all tests:
@@ -164,7 +164,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-[{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}]
+[{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","params":[],"trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}]
 ```
 
 **Creates a component:** <br>
@@ -180,7 +180,7 @@ curl -X POST \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","params":[],"trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
 ```
 
 **Details a component** <br>
@@ -195,7 +195,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"foo","params":[],"trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
 ```
 
 **Updates a component:** <br>
@@ -211,7 +211,7 @@ curl -X PATCH \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"bar","trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
+{"createdAt":"2000-01-01T00:00:00","description":"long foo","inferenceNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Inference.ipynb","isDefault":false,"name":"bar","params":[],"trainingNotebookPath":"minio://anonymous/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4/Training.ipynb","updatedAt":"2000-01-01T00:00:00","uuid":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}
 ```
 
 ### Projects
@@ -228,7 +228,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-["cc07c929-85d5-4939-b59c-790e540f207f"]
+[{"createdAt":"2000-01-01T00:00:00","experiments":[],"name":"foo","updatedAt":"2000-01-01T00:00:00","uuid":"cc07c929-85d5-4939-b59c-790e540f207f"}]
 ```
 
 **Creates a project:** <br>
@@ -278,6 +278,21 @@ Expected Output:
 {"createdAt":"2000-01-01T00:00:00","experiments":[],"name":"bar","updatedAt":"2000-01-01T00:00:00","uuid":"cc07c929-85d5-4939-b59c-790e540f207f"}
 ```
 
+**Deletes a project:** <br>
+method: DELETE <br>
+url: /projects/:uuid
+
+```bash
+curl -X DELETE \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f
+```
+
+Expected Output:
+
+```json
+{"message":"Project deleted"}
+```
+
 ### Experiments
 
 **Lists experiments:** <br>
@@ -292,7 +307,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-["2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"]
+[{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","operators":[],"position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}]
 ```
 
 **Creates an experiment:** <br>
@@ -308,7 +323,7 @@ curl -X POST \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
+{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","operators":[],"position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
 ```
 
 **Details an experiment** <br>
@@ -323,7 +338,7 @@ curl -X GET \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
+{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"foo","operators":[],"position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
 ```
 
 **Updates an experiment:** <br>
@@ -339,33 +354,48 @@ curl -X PATCH \
 Expected Output:
 
 ```json
-{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"bar","position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
+{"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"bar","operators":[],"position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
 ```
 
-### Experiment-Components
-
-**Lists experiment-components:** <br>
-method: GET <br>
-url: /projects/:project_id/experiments/:experiment_id/components
+**Deletes an experiment:** <br>
+method: DELETE <br>
+url: /projects/:project_id/experiments/:uuid
 
 ```bash
-curl -X GET \
-  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/components
+curl -X DELETE \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf
 ```
 
 Expected Output:
 
 ```json
-["e2b1870f-d699-4c7d-bcc4-5828728d1235"]
+{"message":"Experiment deleted"}
 ```
 
-**Creates an experiment-component:** <br>
+### Operators
+
+**Lists operators:** <br>
+method: GET <br>
+url: /projects/:project_id/experiments/:experiment_id/operators
+
+```bash
+curl -X GET \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/operators
+```
+
+Expected Output:
+
+```json
+[{"componentId":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4","createdAt":"2000-01-01T00:00:00","experimentId":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf","position":0,"updatedAt":"2000-01-01T00:00:00","uuid":"e2b1870f-d699-4c7d-bcc4-5828728d1235"}]
+```
+
+**Creates an operator:** <br>
 method: POST <br>
-url: /projects/:project_id/experiments/:experiment_id/components
+url: /projects/:project_id/experiments/:experiment_id/operators
 
 ```bash
 curl -X POST \
-  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/components \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/operators \
   -d '{"componentId":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4","position":0}'
 ```
 
@@ -375,17 +405,34 @@ Expected Output:
 {"componentId":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4","createdAt":"2000-01-01T00:00:00","experimentId":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf","position":0,"updatedAt":"2000-01-01T00:00:00","uuid":"e2b1870f-d699-4c7d-bcc4-5828728d1235"}
 ```
 
-**Deletes an experiment-component:** <br>
+**Deletes an operator:** <br>
 method: DELETE <br>
-url: /projects/:project_id/experiments/:experiment_id/components/:uuid
+url: /projects/:project_id/experiments/:experiment_id/operators/:uuid
 
 ```bash
 curl -X DELETE \
-  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/components/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/operators/6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4
 ```
 
 Expected Output:
 
 ```json
-{"message":"Component deleted"}
+{"message":"Operator deleted"}
+```
+
+### Figures
+
+**Lists figures:** <br>
+method: GET <br>
+url: /projects/:project_id/experiments/:experiment_id/operators/:operator_id/figures
+
+```bash
+curl -X GET \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/operators/2b457c55-2e2c-485a-a1c3-db4492dace33/figures
+```
+
+Expected Output:
+
+```json
+["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAC6CAIAAAB3B9X3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAG6SURBVHhe7dIxAQAADMOg+TfdicgLGrhBIBCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhDB9ho69eEGiUHfAAAAAElFTkSuQmCC"]
 ```

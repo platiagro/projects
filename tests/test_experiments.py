@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import unittest
+from unittest import TestCase
 
 from projects.api.main import app
 from projects.database import engine
@@ -16,7 +16,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 
-class TestExperiments(unittest.TestCase):
+class TestExperiments(TestCase):
     def setUp(self):
         conn = engine.connect()
         text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)
@@ -62,7 +62,7 @@ class TestExperiments(unittest.TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
-                "components": [],
+                "operators": [],
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -89,7 +89,7 @@ class TestExperiments(unittest.TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
-                "components": [],
+                "operators": [],
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
             }
@@ -120,11 +120,24 @@ class TestExperiments(unittest.TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
-                "components": [],
+                "operators": [],
                 "createdAt": CREATED_AT_ISO,
             }
             machine_generated = ["updatedAt"]
             for attr in machine_generated:
                 self.assertIn(attr, result)
                 del result[attr]
+            self.assertDictEqual(expected, result)
+
+    def test_delete_experiment(self):
+        with app.test_client() as c:
+            rv = c.delete("/projects/{}/experiments/unk".format(PROJECT_ID))
+            result = rv.get_json()
+            expected = {"message": "The specified experiment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.delete("/projects/{}/experiments/{}".format(PROJECT_ID, UUID))
+            result = rv.get_json()
+            expected = {"message": "Experiment deleted"}
             self.assertDictEqual(expected, result)
