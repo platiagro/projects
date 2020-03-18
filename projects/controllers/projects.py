@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """Projects controller."""
 from datetime import datetime
+from os.path import join
 from uuid import uuid4
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
-from ..models import Project
+from ..models import Project, Experiment
+from ..object_storage import remove_objects
 
 
 def list_projects():
@@ -80,3 +82,28 @@ def update_project(uuid, **kwargs):
         raise BadRequest(str(e))
 
     return project.as_dict()
+
+
+def delete_project(uuid):
+    """Delete a project in our database.
+
+    Args:
+        uuid (str): the project uuid to look for in our database.
+
+    Returns:
+        The deletion result.
+    """
+    project = Project.query.get(uuid)
+
+    if project is None:
+        raise NotFound("The specified project does not exist")
+
+    Experiment.query.filter(Experiment.project_id == uuid).delete()
+
+    db_session.delete(project)
+    db_session.commit()
+
+    prefix = join("experiments", uuid)
+    remove_objects(prefix=prefix)
+
+    return {"message": "Project deleted"}

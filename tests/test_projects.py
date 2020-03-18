@@ -103,3 +103,17 @@ class TestProjects(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+    def test_delete_project(self):
+        with app.test_client() as c:
+            rv = c.delete("/projects/unk")
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.delete("/projects/{}".format(UUID))
+            result = rv.get_json()
+            expected = {"message": "Project deleted"}
+            self.assertDictEqual(expected, result)
+

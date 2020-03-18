@@ -278,6 +278,21 @@ Expected Output:
 {"createdAt":"2000-01-01T00:00:00","experiments":[],"name":"bar","updatedAt":"2000-01-01T00:00:00","uuid":"cc07c929-85d5-4939-b59c-790e540f207f"}
 ```
 
+**Deletes a project:** <br>
+method: DELETE <br>
+url: /projects/:uuid
+
+```bash
+curl -X DELETE \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f
+```
+
+Expected Output:
+
+```json
+{"message":"Project deleted"}
+```
+
 ### Experiments
 
 **Lists experiments:** <br>
