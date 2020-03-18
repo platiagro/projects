@@ -85,7 +85,7 @@ def update_project(uuid, **kwargs):
 
 
 def delete_project(uuid):
-    """Delete a project in our database.
+    """Delete a project in our database and in the object storage.
 
     Args:
         uuid (str): the project uuid to look for in our database.

@@ -94,7 +94,7 @@ def update_experiment(uuid, **kwargs):
 
 
 def delete_experiment(uuid):
-    """Delete an experiment in our database.
+    """Delete an experiment in our database and in the object storage.
 
     Args:
         uuid (str): the experiment uuid to look for in our database.
