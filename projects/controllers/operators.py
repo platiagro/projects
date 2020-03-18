@@ -19,7 +19,7 @@ def list_operators(project_id, experiment_id):
         A list of all operator ids.
     """
     operators = Operator.query.filter_by(experiment_id=experiment_id)
-    return [operator.as_dict() for operator in operators]
+    return sorted([operator.as_dict() for operator in operators], key=lambda e: e["position"])
 
 
 def create_operator(project_id, experiment_id, component_id=None,
@@ -47,6 +47,11 @@ def create_operator(project_id, experiment_id, component_id=None,
                         position=position)
     db_session.add(operator)
     db_session.commit()
+
+    fix_positions(experiment_id=experiment_id,
+                  operator_id=operator.uuid,
+                  new_position=position)
+
     return operator.as_dict()
 
 
@@ -67,4 +72,28 @@ def delete_operator(uuid):
     db_session.delete(operator)
     db_session.commit()
 
+    fix_positions(experiment_id=operator.experiment_id)
+
     return {"message": "Operator deleted"}
+
+
+def fix_positions(experiment_id, operator_id=None, new_position=-1):
+    """Reorders the operators in an experiment when an operator is updated/deleted.
+
+    Args:
+        experiment_id (str): the experiment uuid.
+        operator_id (str): the operator uuid.
+        new_position (int): the position where the operator is shown.
+    """
+    other_operators = db_session.query(Operator) \
+        .filter_by(experiment_id=experiment_id) \
+        .filter(Operator.uuid != operator_id).all()
+
+    if operator_id is not None:
+        operator = Operator.query.get(operator_id)
+        other_operators.insert(new_position, operator)
+
+    for index, operator in enumerate(other_operators):
+        data = {"position": index}
+        db_session.query(Operator).filter_by(uuid=operator.uuid).update(data)
+    db_session.commit()
