@@ -53,7 +53,6 @@ class TestExperiments(TestCase):
                 "name": "test",
                 "dataset": DATASET,
                 "target": TARGET,
-                "position": POSITION,
             })
             result = rv.get_json()
             expected = {
@@ -61,7 +60,7 @@ class TestExperiments(TestCase):
                 "projectId": PROJECT_ID,
                 "dataset": DATASET,
                 "target": TARGET,
-                "position": POSITION,
+                "position": 0,
                 "operators": [],
             }
             # uuid, created_at, updated_at are machine-generated

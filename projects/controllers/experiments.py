@@ -22,11 +22,11 @@ def list_experiments(project_id):
         A list of all experiments ids.
     """
     experiments = db_session.query(Experiment).filter_by(project_id=project_id).all()
-    return [experiment.as_dict() for experiment in experiments]
+    return sorted([experiment.as_dict() for experiment in experiments], key=lambda e: e["position"])
 
 
 def create_experiment(name=None, project_id=None, dataset=None, target=None,
-                      position=None, **kwargs):
+                      position=0, **kwargs):
     """Creates a new experiment in our database.
 
     Args:
@@ -46,6 +46,8 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
                             dataset=dataset, target=target, position=position)
     db_session.add(experiment)
     db_session.commit()
+
+    fix_positions(experiment_id=experiment.uuid, new_position=position)
     return experiment.as_dict()
 
 
@@ -90,6 +92,8 @@ def update_experiment(uuid, **kwargs):
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
 
+    fix_positions(experiment_id=experiment.uuid, new_position=experiment.position)
+
     return experiment.as_dict()
 
 
@@ -114,3 +118,23 @@ def delete_experiment(uuid):
     remove_objects(prefix=prefix)
 
     return {"message": "Experiment deleted"}
+
+
+def fix_positions(experiment_id, new_position):
+    """Reorders the experiments in a project when an experiment updates position.
+
+    Args:
+        experiment_id (str): the experiment uuid.
+        new_position (int): the position where the experiment is shown.
+    """
+    experiment = Experiment.query.get(experiment_id)
+    other_experiments = db_session.query(Experiment) \
+        .filter_by(project_id=experiment.project_id) \
+        .filter(Experiment.uuid != experiment_id).all()
+
+    other_experiments.insert(new_position, experiment)
+
+    for index, experiment in enumerate(other_experiments):
+        data = {"position": index}
+        db_session.query(Experiment).filter_by(uuid=experiment.uuid).update(data)
+    db_session.commit()
