@@ -27,7 +27,7 @@ def list_experiments(project_id):
 
 def create_experiment(name=None, project_id=None, dataset=None, target=None,
                       position=0, **kwargs):
-    """Creates a new experiment in our database.
+    """Creates a new experiment in our database and adjusts the position of others.
 
     Args:
         name (str): the experiment name.
@@ -47,7 +47,8 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
     db_session.add(experiment)
     db_session.commit()
 
-    fix_positions(experiment_id=experiment.uuid, new_position=position)
+    fix_positions(project_id=project_id, experiment_id=experiment.uuid,
+                  new_position=position)
     return experiment.as_dict()
 
 
@@ -69,7 +70,7 @@ def get_experiment(uuid):
 
 
 def update_experiment(uuid, **kwargs):
-    """Updates an experiment in our database.
+    """Updates an experiment in our database and adjusts the position of others.
 
     Args:
         uuid (str): the experiment uuid to look for in our database.
@@ -92,7 +93,9 @@ def update_experiment(uuid, **kwargs):
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
 
-    fix_positions(experiment_id=experiment.uuid, new_position=experiment.position)
+    fix_positions(project_id=experiment.project_id,
+                  experiment_id=experiment.uuid,
+                  new_position=experiment.position)
 
     return experiment.as_dict()
 
@@ -114,25 +117,29 @@ def delete_experiment(uuid):
     db_session.delete(experiment)
     db_session.commit()
 
+    fix_positions(project_id=experiment.project_id)
+
     prefix = join("experiments", uuid)
     remove_objects(prefix=prefix)
 
     return {"message": "Experiment deleted"}
 
 
-def fix_positions(experiment_id, new_position):
-    """Reorders the experiments in a project when an experiment updates position.
+def fix_positions(project_id, experiment_id=None, new_position=None):
+    """Reorders the experiments in a project when an experiment is updated/deleted.
 
     Args:
+        project_id (str): the project uuid.
         experiment_id (str): the experiment uuid.
         new_position (int): the position where the experiment is shown.
     """
-    experiment = Experiment.query.get(experiment_id)
     other_experiments = db_session.query(Experiment) \
-        .filter_by(project_id=experiment.project_id) \
+        .filter_by(project_id=project_id) \
         .filter(Experiment.uuid != experiment_id).all()
 
-    other_experiments.insert(new_position, experiment)
+    if experiment_id is not None:
+        experiment = Experiment.query.get(experiment_id)
+        other_experiments.insert(new_position, experiment)
 
     for index, experiment in enumerate(other_experiments):
         data = {"position": index}
