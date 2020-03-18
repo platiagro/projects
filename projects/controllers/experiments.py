@@ -89,3 +89,23 @@ def update_experiment(uuid, **kwargs):
         raise BadRequest(str(e))
 
     return experiment.as_dict()
+
+
+def delete_experiment(uuid):
+    """Delete an experiment in our database.
+
+    Args:
+        uuid (str): the experiment uuid to look for in our database.
+
+    Returns:
+        The deletion result.
+    """
+    experiment = Experiment.query.get(uuid)
+
+    if experiment is None:
+        raise NotFound("The specified experiment does not exist")
+
+    db_session.delete(experiment)
+    db_session.commit()
+
+    return {"message": "Experiment deleted"}
