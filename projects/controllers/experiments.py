@@ -22,7 +22,7 @@ def list_experiments(project_id):
         A list of all experiments ids.
     """
     experiments = db_session.query(Experiment).filter_by(project_id=project_id).all()
-    return [experiment.uuid for experiment in experiments]
+    return [experiment.as_dict() for experiment in experiments]
 
 
 def create_experiment(name=None, project_id=None, dataset=None, target=None,
