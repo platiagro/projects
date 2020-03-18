@@ -128,3 +128,16 @@ class TestExperiments(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+    def test_delete_experiment(self):
+        with app.test_client() as c:
+            rv = c.delete("/projects/{}/experiments/unk".format(PROJECT_ID))
+            result = rv.get_json()
+            expected = {"message": "The specified experiment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.delete("/projects/{}/experiments/{}".format(PROJECT_ID, UUID))
+            result = rv.get_json()
+            expected = {"message": "Experiment deleted"}
+            self.assertDictEqual(expected, result)

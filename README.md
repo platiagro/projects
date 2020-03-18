@@ -278,6 +278,21 @@ Expected Output:
 {"createdAt":"2000-01-01T00:00:00","experiments":[],"name":"bar","updatedAt":"2000-01-01T00:00:00","uuid":"cc07c929-85d5-4939-b59c-790e540f207f"}
 ```
 
+**Deletes a project:** <br>
+method: DELETE <br>
+url: /projects/:uuid
+
+```bash
+curl -X DELETE \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f
+```
+
+Expected Output:
+
+```json
+{"message":"Project deleted"}
+```
+
 ### Experiments
 
 **Lists experiments:** <br>
@@ -340,6 +355,21 @@ Expected Output:
 
 ```json
 {"createdAt":"2000-01-01T00:00:00","dataset":"iris","name":"bar","operators":[],"position":0,"projectId":"cc07c929-85d5-4939-b59c-790e540f207f","target":"col4","updatedAt":"2000-01-01T00:00:00","uuid":"2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"}
+```
+
+**Deletes an experiment:** <br>
+method: DELETE <br>
+url: /projects/:project_id/experiments/:uuid
+
+```bash
+curl -X DELETE \
+  http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf
+```
+
+Expected Output:
+
+```json
+{"message":"Experiment deleted"}
 ```
 
 ### Operators

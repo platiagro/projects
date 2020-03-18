@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Experiments controller."""
 from datetime import datetime
+from os.path import join
 from uuid import uuid4
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
@@ -8,6 +9,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
 from ..models import Experiment
+from ..object_storage import remove_objects
 
 
 def list_experiments(project_id):
@@ -89,3 +91,26 @@ def update_experiment(uuid, **kwargs):
         raise BadRequest(str(e))
 
     return experiment.as_dict()
+
+
+def delete_experiment(uuid):
+    """Delete an experiment in our database and in the object storage.
+
+    Args:
+        uuid (str): the experiment uuid to look for in our database.
+
+    Returns:
+        The deletion result.
+    """
+    experiment = Experiment.query.get(uuid)
+
+    if experiment is None:
+        raise NotFound("The specified experiment does not exist")
+
+    db_session.delete(experiment)
+    db_session.commit()
+
+    prefix = join("experiments", uuid)
+    remove_objects(prefix=prefix)
+
+    return {"message": "Experiment deleted"}

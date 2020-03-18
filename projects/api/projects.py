@@ -4,7 +4,7 @@
 from flask import Blueprint, jsonify, request
 
 from ..controllers.projects import list_projects, create_project, \
-    get_project, update_project
+    get_project, update_project, delete_project
 from ..utils import to_snake_case
 
 bp = Blueprint("projects", __name__)
@@ -37,4 +37,11 @@ def handle_patch_project(project_id):
     kwargs = request.get_json(force=True)
     kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
     project = update_project(uuid=project_id, **kwargs)
+    return jsonify(project)
+
+
+@bp.route("<project_id>", methods=["DELETE"])
+def handle_delete_project(project_id):
+    """Handles DELETE requests to /<project_id>."""
+    project = delete_project(uuid=project_id)
     return jsonify(project)
