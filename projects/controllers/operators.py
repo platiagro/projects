@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Operator controller."""
 import sys
+from datetime import datetime
 from uuid import uuid4
 
+from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
@@ -50,6 +52,37 @@ def create_operator(project_id, experiment_id, component_id=None, **kwargs):
     fix_positions(experiment_id=experiment_id,
                   operator_id=operator.uuid,
                   new_position=sys.maxsize) # will add to end of list
+
+    return operator.as_dict()
+
+
+def update_operator(uuid, **kwargs):
+    """Updates an operator in our database and adjusts the position of others.
+
+    Args:
+        uuid (str): the operator uuid to look for in our database.
+        **kwargs: arbitrary keyword arguments.
+
+    Returns:
+        The operator info.
+    """
+    operator = Operator.query.get(uuid)
+
+    if operator is None:
+        raise NotFound("The specified operator does not exist")
+
+    data = {"updated_at": datetime.utcnow()}
+    data.update(kwargs)
+
+    try:
+        db_session.query(Operator).filter_by(uuid=uuid).update(data)
+        db_session.commit()
+    except (InvalidRequestError, ProgrammingError) as e:
+        raise BadRequest(str(e))
+
+    fix_positions(experiment_id=operator.experiment_id,
+                  operator_id=operator.uuid,
+                  new_position=operator.position)
 
     return operator.as_dict()
 
