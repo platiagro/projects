@@ -69,23 +69,45 @@ class TestOperators(TestCase):
                 "componentId": COMPONENT_ID,
             })
             result = rv.get_json()
-            expected = {"message": "position is required"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
-                "componentId": COMPONENT_ID,
-                "position": POSITION,
-            })
-            result = rv.get_json()
             expected = {
                 "experimentId": EXPERIMENT_ID,
                 "componentId": COMPONENT_ID,
-                "position": POSITION,
+                "position": 1,
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
             machine_generated = ["uuid", "createdAt", "updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+    def test_update_operator(self):
+        with app.test_client() as c:
+            rv = c.patch("/projects/{}/experiments/{}/operators/foo".format(PROJECT_ID, EXPERIMENT_ID), json={})
+            result = rv.get_json()
+            expected = {"message": "The specified operator does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, UUID), json={
+                "unk": "bar",
+            })
+            result = rv.get_json()
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, UUID), json={
+                "position": 0,
+            })
+            result = rv.get_json()
+            expected = {
+                "uuid": UUID,
+                "experimentId": EXPERIMENT_ID,
+                "componentId": COMPONENT_ID,
+                "position": 0,
+                "createdAt": CREATED_AT_ISO,
+            }
+            machine_generated = ["updatedAt"]
             for attr in machine_generated:
                 self.assertIn(attr, result)
                 del result[attr]

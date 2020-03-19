@@ -60,7 +60,7 @@ class TestExperiments(TestCase):
                 "projectId": PROJECT_ID,
                 "dataset": DATASET,
                 "target": TARGET,
-                "position": 0,
+                "position": 1,
                 "operators": [],
             }
             # uuid, created_at, updated_at are machine-generated
