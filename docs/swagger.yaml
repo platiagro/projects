@@ -1,0 +1,778 @@
+openapi: 3.0.0
+info:
+  title: PlatIAgro Projects API
+  version: "0.0.2"
+  description: >
+    These are the docs for PlatIAgro Projects API.
+    The endpoints below are usually accessed by the PlatIAgro Web-UI.
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+tags:
+  - name: "Components"
+    description: >
+      Components are tools and algorithms that a data-scientist writes in Jupyter Notebooks.
+      You may use these components as a step of an experiment to perform model training or inference.
+  - name: "Projects"
+    description: >
+      Projects are a way to organize the problems a data-scientist is trying to solve.
+      In a project, you may test different experiments (hypothesis/solutions/models) that addresses the business question you are trying to answer.
+  - name: "Experiments"
+    description: >
+      Experiments allow data-scientists to draw sequential flows using the components.
+      These flows may describe the steps of data-preparation, data-modeling, or even a real-time inference service.
+  - name: "Operators"
+    description: >
+      An Operator is a single unit in an experiment flow.
+      When a data-scientist runs an experiment, the operator runs a Jupyter Notebook of its component.
+paths:
+  /components:
+    get:
+      summary: "List all components."
+      tags:
+        - "Components"
+      responses:
+        "200":
+          $ref: "#/components/responses/Components"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new component."
+      tags:
+        - "Components"
+      requestBody:
+        $ref: "#/components/requestBodies/ComponentPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/Component"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /components/{componentId}:
+    get:
+      summary: "Detail a specific component by ID."
+      tags:
+        - "Components"
+      parameters:
+        - name: componentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Component"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    patch:
+      summary: "Update a component by ID."
+      tags:
+        - "Components"
+      parameters:
+        - name: componentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/ComponentPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/Component"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete a component by ID."
+      tags:
+        - "Components"
+      parameters:
+        - name: componentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects:
+    get:
+      summary: "List all projects."
+      tags:
+        - "Projects"
+      responses:
+        "200":
+          $ref: "#/components/responses/Projects"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new project."
+      tags:
+        - "Projects"
+      requestBody:
+        $ref: "#/components/requestBodies/Project"
+      responses:
+        "200":
+          $ref: "#/components/responses/Project"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}:
+    get:
+      summary: "Detail a specific project by ID."
+      tags:
+        - "Projects"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Project"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    patch:
+      summary: "Update a project by ID."
+      tags:
+        - "Projects"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/Project"
+      responses:
+        "200":
+          $ref: "#/components/responses/Project"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete a project by ID."
+      tags:
+        - "Projects"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments:
+    get:
+      summary: "List all experiments."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Experiments"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new experiment."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/ExperimentPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/Experiment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}:
+    get:
+      summary: "Detail a specific experiment by ID."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Experiment"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    patch:
+      summary: "Update an experiment by ID."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/ExperimentPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/Experiment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete an experiment by ID."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators:
+    get:
+      summary: "List all operators."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Operators"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new operator."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/OperatorPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/Operator"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}:
+    get:
+      summary: "Detail a specific operator by ID."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Operator"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    patch:
+      summary: "Update an operator by ID."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/OperatorPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/Operator"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete an operator by ID."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/figures:
+    get:
+      summary: "List all figures."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Figures"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+components:
+  schemas:
+    Component:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/Parameter"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Components:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Component"
+    Parameter:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [string, integer]
+        name:
+          type: string
+        default:
+          type: string
+    Project:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        experiments:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/Experiment"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Projects:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Project"
+    Experiment:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        position:
+          type: integer
+        dataset:
+          type: string
+        target:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        operators:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/Operator"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Experiments:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Experiment"
+    Operator:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        componentId:
+          type: string
+          format: uuid
+        position:
+          type: integer
+        experimentId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Operators:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Operator"
+    Figures:
+      type: array
+      items:
+        oneOf:
+          - type: string
+            example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAC6CAIAAAB3B9X3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAG6SURBVHhe7dIxAQAADMOg+TfdicgLGrhBIBCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhDB9ho69eEGiUHfAAAAAElFTkSuQmCC"
+  requestBodies:
+    ComponentPost:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              copyFrom:
+                type: string
+                format: uuid
+    ComponentPatch:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+    Project:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+    ExperimentPost:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              dataset:
+                type: string
+              target:
+                type: string
+    ExperimentPatch:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              dataset:
+                type: string
+              target:
+                type: string
+              position:
+                type: integer
+    OperatorPost:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              componentId:
+                type: string
+    OperatorPatch:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              componentId:
+                type: string
+              position:
+                type: integer
+  responses:
+    Component:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Component"
+    Components:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Components"
+    Project:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Project"
+    Projects:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Projects"
+    Experiment:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Experiment"
+    Experiments:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Experiments"
+    Operator:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Operator"
+    Operators:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Operators"
+    Figures:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Figures"
+    Message:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            required:
+              - message
+    BadRequest:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            required:
+              - message
+    InternalServerError:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "An internal failure occurred."
+            required:
+              - message
+    ServiceUnavailable:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "The service is unavailable. Try your call again."
+            required:
+              - message
