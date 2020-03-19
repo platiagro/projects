@@ -28,7 +28,7 @@ def list_operators(project_id, experiment_id):
 def create_operator(project_id, experiment_id, component_id=None, **kwargs):
     """Creates a new operator in our database.
 
-    The new operator is added at the end of the operator list.
+    The new operator is added to the end of the operator list.
 
     Args:
         project_id (str): the project uuid.
@@ -44,14 +44,13 @@ def create_operator(project_id, experiment_id, component_id=None, **kwargs):
     operator = Operator(uuid=str(uuid4()),
                         experiment_id=experiment_id,
                         component_id=component_id,
-                        position=-1) # use temporary position -1.
-                                     # will fix_position below
+                        position=-1)    # use temporary position -1, fix_position below
     db_session.add(operator)
     db_session.commit()
 
     fix_positions(experiment_id=experiment_id,
                   operator_id=operator.uuid,
-                  new_position=sys.maxsize) # will add to end of list
+                  new_position=sys.maxsize)     # will add to end of list
 
     return operator.as_dict()
 

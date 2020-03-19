@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Experiments controller."""
+import sys
 from datetime import datetime
 from os.path import join
 from uuid import uuid4
@@ -26,15 +27,16 @@ def list_experiments(project_id):
 
 
 def create_experiment(name=None, project_id=None, dataset=None, target=None,
-                      position=0, **kwargs):
+                      **kwargs):
     """Creates a new experiment in our database and adjusts the position of others.
+
+    The new experiment is added to the end of the experiment list.
 
     Args:
         name (str): the experiment name.
         project_id (str): the project uuid.
         dataset (str, optional): the dataset uuid.
         target (str, optional): the target column.
-        position (int, optional): the position where the experiment is shown.
 
     Returns:
         The experiment info.
@@ -42,13 +44,18 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
-    experiment = Experiment(uuid=str(uuid4()), name=name, project_id=project_id,
-                            dataset=dataset, target=target, position=position)
+    experiment = Experiment(uuid=str(uuid4()),
+                            name=name,
+                            project_id=project_id,
+                            dataset=dataset,
+                            target=target,
+                            position=-1)    # use temporary position -1, fix_position below
     db_session.add(experiment)
     db_session.commit()
 
-    fix_positions(project_id=project_id, experiment_id=experiment.uuid,
-                  new_position=position)
+    fix_positions(project_id=project_id,
+                  experiment_id=experiment.uuid,
+                  new_position=sys.maxsize)  # will add to end of list
     return experiment.as_dict()
 
 
