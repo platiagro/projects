@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Operator controller."""
+import sys
 from uuid import uuid4
 
 from werkzeug.exceptions import BadRequest, NotFound
@@ -22,15 +23,15 @@ def list_operators(project_id, experiment_id):
     return sorted([operator.as_dict() for operator in operators], key=lambda e: e["position"])
 
 
-def create_operator(project_id, experiment_id, component_id=None,
-                    position=None, **kwargs):
+def create_operator(project_id, experiment_id, component_id=None, **kwargs):
     """Creates a new operator in our database.
+
+    The new operator is added at the end of the operator list.
 
     Args:
         project_id (str): the project uuid.
         experiment_id (str): the experiment uuid.
         component_id (str): the component uuid.
-        position (int, optional): the position where the operator is shown.
 
     Returns:
         The operator info.
@@ -38,19 +39,17 @@ def create_operator(project_id, experiment_id, component_id=None,
     if not isinstance(component_id, str):
         raise BadRequest("componentId is required")
 
-    if not isinstance(position, int):
-        raise BadRequest("position is required")
-
     operator = Operator(uuid=str(uuid4()),
                         experiment_id=experiment_id,
                         component_id=component_id,
-                        position=position)
+                        position=-1) # use temporary position -1.
+                                     # will fix_position below
     db_session.add(operator)
     db_session.commit()
 
     fix_positions(experiment_id=experiment_id,
                   operator_id=operator.uuid,
-                  new_position=position)
+                  new_position=sys.maxsize) # will add to end of list
 
     return operator.as_dict()
 

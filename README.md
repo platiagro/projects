@@ -396,7 +396,7 @@ url: /projects/:project_id/experiments/:experiment_id/operators
 ```bash
 curl -X POST \
   http://localhost:8080/projects/cc07c929-85d5-4939-b59c-790e540f207f/experiments/2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf/operators \
-  -d '{"componentId":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4","position":0}'
+  -d '{"componentId":"6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"}'
 ```
 
 Expected Output:

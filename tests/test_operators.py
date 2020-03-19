@@ -69,19 +69,10 @@ class TestOperators(TestCase):
                 "componentId": COMPONENT_ID,
             })
             result = rv.get_json()
-            expected = {"message": "position is required"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
-                "componentId": COMPONENT_ID,
-                "position": POSITION,
-            })
-            result = rv.get_json()
             expected = {
                 "experimentId": EXPERIMENT_ID,
                 "componentId": COMPONENT_ID,
-                "position": POSITION,
+                "position": 1,
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
