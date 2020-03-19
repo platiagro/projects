@@ -21,8 +21,11 @@ def list_operators(project_id, experiment_id):
     Returns:
         A list of all operator ids.
     """
-    operators = Operator.query.filter_by(experiment_id=experiment_id)
-    return sorted([operator.as_dict() for operator in operators], key=lambda e: e["position"])
+    operators = db_session.query(Operator) \
+        .filter_by(experiment_id=experiment_id) \
+        .order_by(Operator.position.asc()) \
+        .all()
+    return [operator.as_dict() for operator in operators]
 
 
 def create_operator(project_id, experiment_id, component_id=None, **kwargs):
@@ -118,7 +121,9 @@ def fix_positions(experiment_id, operator_id=None, new_position=-1):
     """
     other_operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
-        .filter(Operator.uuid != operator_id).all()
+        .filter(Operator.uuid != operator_id)\
+        .order_by(Operator.position.asc()) \
+        .all()
 
     if operator_id is not None:
         operator = Operator.query.get(operator_id)

@@ -22,8 +22,11 @@ def list_experiments(project_id):
     Returns:
         A list of all experiments ids.
     """
-    experiments = db_session.query(Experiment).filter_by(project_id=project_id).all()
-    return sorted([experiment.as_dict() for experiment in experiments], key=lambda e: e["position"])
+    experiments = db_session.query(Experiment) \
+        .filter_by(project_id=project_id) \
+        .order_by(Experiment.position.asc()) \
+        .all()
+    return [experiment.as_dict() for experiment in experiments]
 
 
 def create_experiment(name=None, project_id=None, dataset=None, target=None,
@@ -142,7 +145,9 @@ def fix_positions(project_id, experiment_id=None, new_position=None):
     """
     other_experiments = db_session.query(Experiment) \
         .filter_by(project_id=project_id) \
-        .filter(Experiment.uuid != experiment_id).all()
+        .filter(Experiment.uuid != experiment_id)\
+        .order_by(Experiment.position.asc())\
+        .all()
 
     if experiment_id is not None:
         experiment = Experiment.query.get(experiment_id)
