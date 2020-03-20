@@ -148,4 +148,4 @@ pytest
 
 ## API
 
-See the [PlatIAgro Projects API doc](https://platiagro.github.io/projects) for API specification.
+See the [PlatIAgro Projects API doc](https://platiagro.github.io/projects/) for API specification.

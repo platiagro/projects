@@ -20,7 +20,7 @@ def list_experiments(project_id):
         project_id (str): the project uuid.
 
     Returns:
-        A list of all experiments ids.
+        A list of all experiments.
     """
     experiments = db_session.query(Experiment) \
         .filter_by(project_id=project_id) \

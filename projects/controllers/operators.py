@@ -19,7 +19,7 @@ def list_operators(project_id, experiment_id):
         experiment_id (str): the experiment uuid.
 
     Returns:
-        A list of all operator ids.
+        A list of all operator.
     """
     operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \

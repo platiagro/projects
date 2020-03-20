@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 from io import BytesIO
 from unittest import TestCase
+from uuid import uuid4
 
 from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
-PROJECT_ID = "f9b7bf45-8f0e-42fc-9575-3df61ed58e04"
-EXPERIMENT_ID = "69bde77a-fcda-4661-9abd-e9b51b4115d7"
-OPERATOR_ID = "9d4bc593-ae82-4f41-92bc-818011c1bb9c"
+PROJECT_ID = str(uuid4())
+EXPERIMENT_ID = str(uuid4())
+OPERATOR_ID = str(uuid4())
 FIGURE_NAME = "experiments/{}/operators/{}/figure-123456.png".format(EXPERIMENT_ID, OPERATOR_ID)
 
 
@@ -27,6 +28,11 @@ class TestFigures(TestCase):
             data=file,
             length=file.getbuffer().nbytes,
         )
+
+    def tearDown(self):
+        prefix = "experiments/{}".format(EXPERIMENT_ID)
+        for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
+            MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
     def test_list_figures(self):
         with app.test_client() as c:
