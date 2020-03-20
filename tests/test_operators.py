@@ -3,17 +3,19 @@ from unittest import TestCase
 
 from projects.api.main import app
 from projects.database import engine
+from projects.object_storage import BUCKET_NAME
+from uuid import uuid4
 
-UUID = "e2b1870f-d699-4c7d-bcc4-5828728d1235"
+UUID = str(uuid4())
 NAME = "foo"
-PROJECT_ID = "51c487dd-f9f5-4e91-9477-406c72392f47"
-EXPERIMENT_ID = "a9127077-44cf-44b4-adbe-5a168ca7d51a"
-COMPONENT_ID = "7caaee98-ac93-46c6-9e98-f4709fc65593"
+PROJECT_ID = str(uuid4())
+EXPERIMENT_ID = str(uuid4())
+COMPONENT_ID = str(uuid4())
 DATASET = "iris"
 TARGET = "col4"
 POSITION = 0
-TRAINING_NOTEBOOK_PATH = "minio://anonymous/components/{}/Training.ipynb".format(UUID)
-INFERENCE_NOTEBOOK_PATH = "minio://anonymous/components/{}/Inference.ipynb".format(UUID)
+TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, UUID)
+INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, UUID)
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"

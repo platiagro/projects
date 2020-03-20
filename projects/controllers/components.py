@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Components controller."""
-import json
-
 from datetime import datetime
 from pkgutil import get_data
 from uuid import uuid4
@@ -10,7 +8,7 @@ from minio.error import ResponseError
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from .jupyter import create_new_file, set_workspace, get_files, remove_file
+from ..jupyter import create_new_file, set_workspace, get_files, remove_file
 
 from ..database import db_session
 from ..models import Component
@@ -26,10 +24,10 @@ def list_components():
     """Lists all components from our database.
 
     Returns:
-        A list of all components ids.
+        A list of all components.
     """
     components = Component.query.all()
-    return components
+    return [component.as_dict() for component in components]
 
 
 def create_component(name=None, description=None, training_notebook=None,
@@ -90,6 +88,7 @@ def create_component(name=None, description=None, training_notebook=None,
                           is_default=is_default)
     db_session.add(component)
     db_session.commit()
+
     return component.as_dict()
 
 
@@ -107,9 +106,7 @@ def get_component(uuid):
     if component is None:
         raise NotFound("The specified component does not exist")
 
-    dict_component = component.as_dict()
-    dict_component["params"] = get_component_param(uuid, True)
-    return dict_component
+    return component.as_dict()
 
 
 def update_component(uuid, **kwargs):
@@ -174,7 +171,7 @@ def delete_component(uuid):
     except (InvalidRequestError, ProgrammingError, ResponseError) as e:
         raise BadRequest(str(e))
 
-    return component.as_dict()
+    return {"message": "Component deleted"}
 
 
 def copy_component(name, description, copy_from):
@@ -219,6 +216,7 @@ def copy_component(name, description, copy_from):
                           is_default=False)
     db_session.add(component)
     db_session.commit()
+
     return component.as_dict()
 
 
@@ -231,52 +229,3 @@ def create_jupyter_files(component_id, inference_notebook, training_notebook):
     create_new_file(path, "Inference.ipynb", False, inference_notebook)
     create_new_file(path, "Training.ipynb", False, training_notebook)
     set_workspace(path, "Inference.ipynb", "Training.ipynb")
-
-
-def get_component_param(uuid, is_checked=False):
-    """Get the component parameters from notebook.
-
-    Args:
-        uuid (str): the component uuid to look for in our database.
-        is_checked(bool): flag to check if component uuid exist
-    Returns:
-        The component parameters info.
-    """
-    if not is_checked:
-        component = Component.query.get(uuid)
-        if component is None:
-            raise NotFound("The specified component does not exist")
-
-    notebook_params = []
-    source_name = "{}/{}/Training.ipynb".format(PREFIX, uuid)
-    training_notebook = get_object(source_name)
-    json_training_notebook = json.loads(training_notebook.decode("utf-8"))
-
-    if "cells" not in json_training_notebook:
-        return notebook_params
-
-    cells = json_training_notebook["cells"]
-    for cell in cells:
-        cell_type = cell["cell_type"]
-        if cell_type == 'code':
-            source = cell["source"]
-            for line in source:
-                if "#@param" in line:
-                    # name = "value" #@param {type:"string"}
-                    param_values = line.replace("\n", "").split("#@param")
-
-                    # name = value
-                    part1 = param_values[0].split("=")
-                    param_name = part1[0].strip()
-                    param_default = part1[1].replace("\"", "").strip()
-
-                    # {type:"string"}
-                    part2 = param_values[1].replace("type", '"type"').strip()
-
-                    # create json param and add to array
-                    param = json.loads(part2)
-                    param["name"] = param_name
-                    param["default"] = param_default
-                    notebook_params.append(param)
-
-    return notebook_params

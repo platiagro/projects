@@ -16,7 +16,7 @@ def list_projects():
     """Lists all projects from our database.
 
     Returns:
-        A list of all projects ids.
+        A list of all projects.
     """
     projects = Project.query.all()
     return [project.as_dict() for project in projects]

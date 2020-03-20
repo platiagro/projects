@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
+from uuid import uuid4
 
 from projects.api.main import app
 from projects.database import engine
 
-UUID = "2b42d7b7-3a32-4678-b59e-91b2ad9e1fcf"
+UUID = str(uuid4())
 NAME = "foo"
-PROJECT_ID = "84af0bb0-345f-449b-b586-0dfe40aacd4e"
+PROJECT_ID = str(uuid4())
 DATASET = "iris"
 TARGET = "col4"
 POSITION = 0

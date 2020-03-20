@@ -8,6 +8,8 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+servers:
+  - url: http://localhost:8080
 tags:
   - name: "Components"
     description: >
@@ -107,6 +109,24 @@ paths:
           $ref: "#/components/responses/Message"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /components/{componentId}/parameters:
+    get:
+      summary: "List all parameters."
+      tags:
+        - "Components"
+      parameters:
+        - name: componentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Parameters"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -511,6 +531,11 @@ components:
           type: string
         default:
           type: string
+    Parameters:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Parameter"
     Project:
       type: object
       properties:
@@ -688,6 +713,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Components"
+    Parameters:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Parameters"
     Project:
       description: ""
       content:

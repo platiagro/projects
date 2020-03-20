@@ -14,6 +14,7 @@ from .experiments import bp as experiments_blueprint
 from .figures import bp as figures_blueprint
 from .json_encoder import CustomJSONEncoder
 from .operators import bp as operators_blueprint
+from .parameters import bp as parameters_blueprint
 from .projects import bp as projects_blueprint
 from ..samples import init_components
 
@@ -23,6 +24,8 @@ app.register_blueprint(projects_blueprint, url_prefix="/projects")
 app.register_blueprint(experiments_blueprint,
                        url_prefix="/projects/<project_id>/experiments")
 app.register_blueprint(components_blueprint, url_prefix="/components")
+app.register_blueprint(parameters_blueprint,
+                       url_prefix="/components/<component_id>/parameters")
 app.register_blueprint(operators_blueprint,
                        url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators")
 app.register_blueprint(figures_blueprint,

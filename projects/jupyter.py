@@ -5,6 +5,7 @@ from os import getenv
 import requests
 from werkzeug.exceptions import BadRequest
 
+from .object_storage import BUCKET_NAME, get_object
 
 ENDPOINT = getenv("JUPYTER_ENDPOINT", "server.anonymous:80/notebook/anonymous/server")
 
@@ -116,3 +117,39 @@ def set_workspace(path, inference_filename, training_filename):
         headers=HEADERS,
         data=json.dumps(resp)
     )
+
+
+def read_parameters(notebook_path):
+    notebook_params = []
+    object_name = notebook_path[len("minio://{}/".format(BUCKET_NAME)):]
+    training_notebook = get_object(object_name)
+    json_training_notebook = json.loads(training_notebook.decode("utf-8"))
+
+    if "cells" not in json_training_notebook:
+        return notebook_params
+
+    cells = json_training_notebook["cells"]
+    for cell in cells:
+        cell_type = cell["cell_type"]
+        if cell_type == "code":
+            source = cell["source"]
+            for line in source:
+                if "#@param" in line:
+                    # name = "value" #@param {type:"string"}
+                    param_values = line.replace("\n", "").split("#@param")
+
+                    # name = value
+                    part1 = param_values[0].split("=")
+                    param_name = part1[0].strip()
+                    param_default = part1[1].replace("\"", "").strip()
+
+                    # {type:"string"}
+                    part2 = param_values[1].replace("type", '"type"').strip()
+
+                    # create json param and add to array
+                    param = json.loads(part2)
+                    param["name"] = param_name
+                    param["default"] = param_default
+                    notebook_params.append(param)
+
+    return notebook_params

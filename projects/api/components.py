@@ -4,7 +4,7 @@
 from flask import Blueprint, jsonify, request
 
 from ..controllers.components import list_components, create_component, \
-    get_component, get_component_param, update_component, delete_component
+    get_component, update_component, delete_component
 from ..utils import to_snake_case
 
 bp = Blueprint("components", __name__)
@@ -29,12 +29,6 @@ def handle_post_components():
 def handle_get_component(component_id):
     """Handles GET requests to /<component_id>."""
     return jsonify(get_component(uuid=component_id))
-
-
-@bp.route("/params/<component_id>", methods=["GET"])
-def handle_get_component_param(component_id):
-    """Handles GET requests to /params/<component_id>."""
-    return jsonify(get_component_param(uuid=component_id))
 
 
 @bp.route("<component_id>", methods=["PATCH"])
