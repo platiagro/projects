@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from json import dumps
 from unittest import TestCase
 
 from projects.api.main import app
@@ -8,14 +9,16 @@ from uuid import uuid4
 
 UUID = str(uuid4())
 NAME = "foo"
+DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid4())
 EXPERIMENT_ID = str(uuid4())
 COMPONENT_ID = str(uuid4())
 DATASET = "iris"
 TARGET = "col4"
 POSITION = 0
-TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, UUID)
-INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, UUID)
+TAGS = ["PREDICTOR"]
+TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, COMPONENT_ID)
+INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, COMPONENT_ID)
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -31,7 +34,7 @@ class TestOperators(TestCase):
         text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO components (uuid, name, training_notebook_path, inference_notebook_path, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, DESCRIPTION, dumps(TAGS), TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
         text = "INSERT INTO operators (uuid, experiment_id, component_id, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, EXPERIMENT_ID, COMPONENT_ID, POSITION, CREATED_AT, UPDATED_AT)

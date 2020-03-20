@@ -2,7 +2,7 @@
 """Component model."""
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, String, Text
+from sqlalchemy import Boolean, Column, DateTime, JSON, String, Text
 from sqlalchemy.sql import expression
 
 from ..database import Base
@@ -15,6 +15,7 @@ class Component(Base):
     uuid = Column(String(255), primary_key=True)
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
+    tags = Column(JSON, nullable=False, default=[])
     training_notebook_path = Column(String(255))
     inference_notebook_path = Column(String(255))
     is_default = Column(Boolean, nullable=False, server_default=expression.false())

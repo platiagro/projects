@@ -16,6 +16,7 @@ from ..object_storage import BUCKET_NAME, get_object, put_object, \
     duplicate_object, list_objects, remove_object
 
 PREFIX = "components"
+VALID_TAGS = ["DEFAULT", "FEATURE_ENGINEERING", "PREDICTOR"]
 TRAINING_NOTEBOOK = get_data("projects", "config/Training.ipynb")
 INFERENCE_NOTEBOOK = get_data("projects", "config/Inference.ipynb")
 
@@ -30,13 +31,14 @@ def list_components():
     return [component.as_dict() for component in components]
 
 
-def create_component(name=None, description=None, training_notebook=None,
-                     inference_notebook=None, is_default=False, copy_from=None,
-                     **kwargs):
+def create_component(name=None, description=None, tags=None,
+                     training_notebook=None, inference_notebook=None,
+                     is_default=False, copy_from=None, **kwargs):
     """Creates a new component in our database/object storage.
 
     Args:
         name (str): the component name.
+        tags (list): the list of tags.
         training_notebook (str, optional): the notebook content.
         inference_notebook (str, optional): the notebook content.
         is_default (bool, optional): whether it is a built-in component.
@@ -51,10 +53,16 @@ def create_component(name=None, description=None, training_notebook=None,
     if copy_from and (training_notebook or inference_notebook):
         raise BadRequest("Either provide notebooks or a component to copy from")
 
+    if tags is None or len(tags) == 0:
+        tags = ["DEFAULT"]
+
+    if any(tag not in VALID_TAGS for tag in tags):
+        raise BadRequest("Invalid tag. Choose any of {}".format(",".join(VALID_TAGS)))
+
     # creates a component with specified name,
     # but copies notebooks from a source component
     if copy_from:
-        return copy_component(name, description, copy_from)
+        return copy_component(name, description, tags, copy_from)
 
     component_id = str(uuid4())
 
@@ -83,6 +91,7 @@ def create_component(name=None, description=None, training_notebook=None,
     component = Component(uuid=component_id,
                           name=name,
                           description=description,
+                          tags=tags,
                           training_notebook_path=training_notebook_path,
                           inference_notebook_path=inference_notebook_path,
                           is_default=is_default)
@@ -124,6 +133,11 @@ def update_component(uuid, **kwargs):
     if component is None:
         raise NotFound("The specified component does not exist")
 
+    if "tags" in kwargs:
+        tags = kwargs["tags"]
+        if any(tag not in VALID_TAGS for tag in tags):
+            raise BadRequest("Invalid tag. Choose any of {}".format(",".join(VALID_TAGS)))
+
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
 
@@ -153,14 +167,14 @@ def delete_component(uuid):
     try:
         source_name = "{}/{}".format(PREFIX, uuid)
 
-        # remove jupyter files and directory
+        # remove files and directory from jupyter notebook server
         jupyter_files = get_files(source_name)
         if jupyter_files is not None:
             for jupyter_file in jupyter_files["content"]:
                 remove_file(jupyter_file["path"])
             remove_file(source_name)
 
-        # remove Minio files and directory
+        # remove MinIO files and directory
         minio_files = list_objects(source_name)
         for minio_file in minio_files:
             remove_object(minio_file.object_name)
@@ -174,12 +188,14 @@ def delete_component(uuid):
     return {"message": "Component deleted"}
 
 
-def copy_component(name, description, copy_from):
+def copy_component(name, description, tags, copy_from):
     """Makes a copy of a component in our database/object storage.
 
     Args:
         name (str): the component name.
-        copy_from (str, optional): the component_id from which the notebooks are copied.
+        description (str): the component description.
+        tags (list): the component tags list.
+        copy_from (str): the component_id from which the notebooks are copied.
 
     Returns:
         The component info.
@@ -211,6 +227,7 @@ def copy_component(name, description, copy_from):
     component = Component(uuid=component_id,
                           name=name,
                           description=description,
+                          tags=tags,
                           training_notebook_path=training_notebook_path,
                           inference_notebook_path=inference_notebook_path,
                           is_default=False)
