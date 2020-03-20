@@ -27,7 +27,10 @@ def read_notebook(notebook_path):
 
     Args:
         notebook_path (str): the path to the notebook file.
+
+    Returns:
+        The notebook content as bytes.
     """
-    with open(notebook_path) as f:
+    with open(notebook_path, "rb") as f:
         notebook = f.read()
     return notebook
