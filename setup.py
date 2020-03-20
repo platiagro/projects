@@ -14,7 +14,7 @@ extras = {
 
 setup(
     name="projects",
-    version="0.0.1",
+    version="0.0.2",
     author="Fabio Beranizo Lopes",
     author_email="fabio.beranizo@gmail.com",
     description="Manages projects.",

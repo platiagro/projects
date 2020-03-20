@@ -45,7 +45,7 @@ docker run -d -p 3306:3306 \
   --env "MYSQL_DATABASE=$MYSQL_DB_NAME" \
   --env "MYSQL_ROOT_PASSWORD=$MYSQL_DB_PASSWORD" \
   --env "MYSQL_ALLOW_EMPTY_PASSWORD=yes" \
-  mysql:8
+  mysql:5.7
 ```
 
 (Optional) Start a Jupyter Notebook instance:

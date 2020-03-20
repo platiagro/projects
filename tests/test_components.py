@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from io import BytesIO
+from json import dumps
 from unittest import TestCase
 from uuid import uuid4
 
@@ -12,6 +13,7 @@ from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 UUID = str(uuid4())
 NAME = "foo"
 DESCRIPTION = "long foo"
+TAGS = ["PREDICTOR"]
 TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, UUID)
 INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, UUID)
 IS_DEFAULT = False
@@ -26,7 +28,7 @@ SAMPLE_NOTEBOOK = '{"cells":[{"cell_type":"code","execution_count":null,"metadat
 class TestComponents(TestCase):
     def setUp(self):
         conn = engine.connect()
-        text = "INSERT INTO components (uuid, name, description, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, NAME, DESCRIPTION, TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, NAME, DESCRIPTION, dumps(TAGS), TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT)
         conn.execute(text)
         conn.close()
 
@@ -78,6 +80,16 @@ class TestComponents(TestCase):
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
+                "tags": ["UNK"],
+                "copyFrom": UUID,
+            })
+            result = rv.get_json()
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post("/components", json={
+                "name": "test",
+                "description": "long test",
+                "tags": TAGS,
                 "copyFrom": UUID,
                 "trainingNotebook": SAMPLE_NOTEBOOK,
                 "inferenceNotebook": SAMPLE_NOTEBOOK,
@@ -90,6 +102,7 @@ class TestComponents(TestCase):
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
+                "tags": TAGS,
                 "copyFrom": "unk",
             })
             result = rv.get_json()
@@ -105,6 +118,7 @@ class TestComponents(TestCase):
             expected = {
                 "name": "test",
                 "description": "long test",
+                "tags": ["DEFAULT"],
                 "isDefault": IS_DEFAULT,
                 "parameters": [{"default": "boston", "name": "dataset", "type": "string"},
                                {"default": "col13", "name": "target", "type": "string"},
@@ -128,12 +142,14 @@ class TestComponents(TestCase):
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
+                "tags": TAGS,
                 "copyFrom": UUID,
             })
             result = rv.get_json()
             expected = {
                 "name": "test",
                 "description": "long test",
+                "tags": TAGS,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
             }
@@ -163,6 +179,7 @@ class TestComponents(TestCase):
                 "uuid": UUID,
                 "name": "foo",
                 "description": DESCRIPTION,
+                "tags": TAGS,
                 "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
@@ -194,6 +211,34 @@ class TestComponents(TestCase):
                 "uuid": UUID,
                 "name": "bar",
                 "description": DESCRIPTION,
+                "tags": TAGS,
+                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
+                "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
+                "isDefault": IS_DEFAULT,
+                "parameters": PARAMETERS,
+                "createdAt": CREATED_AT_ISO,
+            }
+            machine_generated = ["updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            rv = c.patch("/components/{}".format(UUID), json={
+                "tags": ["UNK"],
+            })
+            result = rv.get_json()
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch("/components/{}".format(UUID), json={
+                "tags": ["FEATURE_ENGINEERING"],
+            })
+            result = rv.get_json()
+            expected = {
+                "uuid": UUID,
+                "name": "bar",
+                "description": DESCRIPTION,
+                "tags": ["FEATURE_ENGINEERING"],
                 "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,

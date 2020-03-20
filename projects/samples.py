@@ -14,9 +14,13 @@ def init_components(config_path):
         components = load(f)
         for component in components:
             name = component["name"]
+            description = component["description"]
+            tags = component["tags"]
             training_notebook = read_notebook(component["trainingNotebook"])
             inference_notebook = read_notebook(component["inferenceNotebook"])
             create_component(name=name,
+                             description=description,
+                             tags=tags,
                              training_notebook=training_notebook,
                              inference_notebook=inference_notebook,
                              is_default=True)

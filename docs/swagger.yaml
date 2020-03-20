@@ -505,6 +505,11 @@ components:
           type: string
         description:
           type: string
+        tags:
+          type: array
+          items:
+            type: string
+            enum: [DEFAULT, FEATURE_ENGINEERING, PREDICTOR]
         parameters:
           type: array
           items:
@@ -635,6 +640,10 @@ components:
                 type: string
               description:
                 type: string
+              tags:
+                type: array
+                items:
+                  type: string
               copyFrom:
                 type: string
                 format: uuid
@@ -648,6 +657,10 @@ components:
                 type: string
               description:
                 type: string
+              tags:
+                type: array
+                items:
+                  type: string
     Project:
       content:
         application/json:
