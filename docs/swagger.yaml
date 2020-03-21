@@ -842,6 +842,9 @@ components:
                 type: string
               position:
                 type: integer
+              templateId:
+                type: string
+                format: uuid
     OperatorPost:
       content:
         application/json:

@@ -9,7 +9,7 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
-from ..models import Experiment
+from ..models import Experiment, Template, Operator
 from ..object_storage import remove_objects
 from .projects import raise_if_project_does_not_exist
 
@@ -105,6 +105,26 @@ def update_experiment(uuid, project_id, **kwargs):
     if experiment is None:
         raise NotFound("The specified experiment does not exist")
 
+    # updates operators
+    if "template_id" in kwargs:
+        template_id = kwargs["template_id"]
+        del kwargs["template_id"]
+        template = Template.query.get(template_id)
+
+        if template is None:
+            raise BadRequest("The specified template does not exist")
+
+        Operator.query.filter(Operator.experiment_id == uuid).delete()
+
+        for index, component_id in enumerate(template.components):
+            objects = [
+                Operator(uuid=str(uuid4()),
+                         experiment_id=uuid,
+                         component_id=component_id,
+                         position=index)
+            ]
+            db_session.bulk_save_objects(objects)
+
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
 
@@ -137,6 +157,8 @@ def delete_experiment(uuid, project_id):
 
     if experiment is None:
         raise NotFound("The specified experiment does not exist")
+
+    Operator.query.filter(Operator.experiment_id == uuid).delete()
 
     db_session.delete(experiment)
     db_session.commit()

@@ -95,6 +95,14 @@ class TestOperators(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
+                "componentId": "unk",
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified component does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
                 "componentId": COMPONENT_ID,
             })
             result = rv.get_json()

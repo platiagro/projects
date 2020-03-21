@@ -53,7 +53,10 @@ def create_operator(project_id, experiment_id, component_id=None, **kwargs):
     if not isinstance(component_id, str):
         raise BadRequest("componentId is required")
 
-    raise_if_component_does_not_exist(component_id)
+    try:
+        raise_if_component_does_not_exist(component_id)
+    except NotFound as e:
+        raise BadRequest(e.description)
 
     operator = Operator(uuid=str(uuid4()),
                         experiment_id=experiment_id,
