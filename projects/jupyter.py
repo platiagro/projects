@@ -3,6 +3,7 @@ import json
 from os import getenv
 
 import requests
+from minio.error import NoSuchKey
 from werkzeug.exceptions import BadRequest
 
 from .object_storage import BUCKET_NAME, get_object
@@ -122,7 +123,10 @@ def set_workspace(path, inference_filename, training_filename):
 def read_parameters(notebook_path):
     notebook_params = []
     object_name = notebook_path[len("minio://{}/".format(BUCKET_NAME)):]
-    training_notebook = get_object(object_name)
+    try:
+        training_notebook = get_object(object_name)
+    except NoSuchKey:
+        return notebook_params
     json_training_notebook = json.loads(training_notebook.decode("utf-8"))
 
     if "cells" not in json_training_notebook:

@@ -16,6 +16,7 @@ from .json_encoder import CustomJSONEncoder
 from .operators import bp as operators_blueprint
 from .parameters import bp as parameters_blueprint
 from .projects import bp as projects_blueprint
+from .templates import bp as templates_blueprint
 from ..samples import init_components
 
 app = Flask(__name__)
@@ -30,6 +31,7 @@ app.register_blueprint(operators_blueprint,
                        url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators")
 app.register_blueprint(figures_blueprint,
                        url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/figures")
+app.register_blueprint(templates_blueprint, url_prefix="/templates")
 
 
 @app.teardown_appcontext

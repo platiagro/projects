@@ -9,6 +9,9 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
 from ..models import Operator
+from .components import raise_if_component_does_not_exist
+from .experiments import raise_if_experiment_does_not_exist
+from .projects import raise_if_project_does_not_exist
 
 
 def list_operators(project_id, experiment_id):
@@ -21,6 +24,9 @@ def list_operators(project_id, experiment_id):
     Returns:
         A list of all operator.
     """
+    raise_if_project_does_not_exist(project_id)
+    raise_if_experiment_does_not_exist(experiment_id)
+
     operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
         .order_by(Operator.position.asc()) \
@@ -41,8 +47,16 @@ def create_operator(project_id, experiment_id, component_id=None, **kwargs):
     Returns:
         The operator info.
     """
+    raise_if_project_does_not_exist(project_id)
+    raise_if_experiment_does_not_exist(experiment_id)
+
     if not isinstance(component_id, str):
         raise BadRequest("componentId is required")
+
+    try:
+        raise_if_component_does_not_exist(component_id)
+    except NotFound as e:
+        raise BadRequest(e.description)
 
     operator = Operator(uuid=str(uuid4()),
                         experiment_id=experiment_id,
@@ -58,16 +72,21 @@ def create_operator(project_id, experiment_id, component_id=None, **kwargs):
     return operator.as_dict()
 
 
-def update_operator(uuid, **kwargs):
+def update_operator(uuid, project_id, experiment_id, **kwargs):
     """Updates an operator in our database and adjusts the position of others.
 
     Args:
         uuid (str): the operator uuid to look for in our database.
+        project_id (str): the project uuid.
+        experiment_id (str): the experiment uuid.
         **kwargs: arbitrary keyword arguments.
 
     Returns:
         The operator info.
     """
+    raise_if_project_does_not_exist(project_id)
+    raise_if_experiment_does_not_exist(experiment_id)
+
     operator = Operator.query.get(uuid)
 
     if operator is None:
@@ -89,15 +108,20 @@ def update_operator(uuid, **kwargs):
     return operator.as_dict()
 
 
-def delete_operator(uuid):
+def delete_operator(uuid, project_id, experiment_id):
     """Delete an operator in our database.
 
     Args:
         uuid (str): the operator uuid to look for in our database.
+        project_id (str): the project uuid.
+        experiment_id (str): the experiment uuid.
 
     Returns:
         The deletion result.
     """
+    raise_if_project_does_not_exist(project_id)
+    raise_if_experiment_does_not_exist(experiment_id)
+
     operator = Operator.query.get(uuid)
 
     if operator is None:

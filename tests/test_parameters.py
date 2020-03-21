@@ -53,6 +53,12 @@ class TestParameters(TestCase):
 
     def test_list_parameters(self):
         with app.test_client() as c:
+            rv = c.get("/components/unk/parameters")
+            result = rv.get_json()
+            expected = {"message": "The specified component does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.get("/components/{}/parameters".format(COMPONENT_ID))
             result = rv.get_json()
             self.assertIsInstance(result, list)
