@@ -7,7 +7,7 @@ from projects.database import engine
 from projects.object_storage import BUCKET_NAME
 from uuid import uuid4
 
-UUID = str(uuid4())
+OPERATOR_ID = str(uuid4())
 NAME = "foo"
 DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid4())
@@ -37,7 +37,7 @@ class TestOperators(TestCase):
         text = "INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, DESCRIPTION, dumps(TAGS), TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, EXPERIMENT_ID, COMPONENT_ID, POSITION, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, CREATED_AT, UPDATED_AT)
         conn.execute(text)
         conn.close()
 
@@ -58,12 +58,36 @@ class TestOperators(TestCase):
 
     def test_list_operators(self):
         with app.test_client() as c:
+            rv = c.get("/projects/unk/experiments/{}/operators".format(EXPERIMENT_ID))
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.get("/projects/{}/experiments/unk/operators".format(PROJECT_ID))
+            result = rv.get_json()
+            expected = {"message": "The specified experiment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.get("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID))
             result = rv.get_json()
             self.assertIsInstance(result, list)
 
     def test_create_operator(self):
         with app.test_client() as c:
+            rv = c.post("/projects/unk/experiments/{}/operators".format(EXPERIMENT_ID), json={})
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.post("/projects/{}/experiments/unk/operators".format(PROJECT_ID), json={})
+            result = rv.get_json()
+            expected = {"message": "The specified experiment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={})
             result = rv.get_json()
             expected = {"message": "componentId is required"}
@@ -89,24 +113,36 @@ class TestOperators(TestCase):
 
     def test_update_operator(self):
         with app.test_client() as c:
+            rv = c.patch("/projects/unk/experiments/{}/operators/{}".format(EXPERIMENT_ID, OPERATOR_ID), json={})
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.patch("/projects/{}/experiments/unk/operators/{}".format(PROJECT_ID, OPERATOR_ID), json={})
+            result = rv.get_json()
+            expected = {"message": "The specified experiment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.patch("/projects/{}/experiments/{}/operators/foo".format(PROJECT_ID, EXPERIMENT_ID), json={})
             result = rv.get_json()
             expected = {"message": "The specified operator does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, UUID), json={
+            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
                 "unk": "bar",
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, UUID), json={
+            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
                 "position": 0,
             })
             result = rv.get_json()
             expected = {
-                "uuid": UUID,
+                "uuid": OPERATOR_ID,
                 "experimentId": EXPERIMENT_ID,
                 "componentId": COMPONENT_ID,
                 "position": 0,
@@ -120,13 +156,25 @@ class TestOperators(TestCase):
 
     def test_delete_operator(self):
         with app.test_client() as c:
+            rv = c.delete("/projects/unk/experiments/{}/operators/{}".format(EXPERIMENT_ID, OPERATOR_ID))
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.delete("/projects/{}/experiments/unk/operators/{}".format(PROJECT_ID, OPERATOR_ID))
+            result = rv.get_json()
+            expected = {"message": "The specified experiment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.delete("/projects/{}/experiments/{}/operators/unk".format(PROJECT_ID, EXPERIMENT_ID))
             result = rv.get_json()
             expected = {"message": "The specified operator does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, UUID))
+            rv = c.delete("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID))
             result = rv.get_json()
             expected = {"message": "Operator deleted"}
             self.assertDictEqual(expected, result)

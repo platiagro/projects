@@ -33,12 +33,17 @@ def handle_patch_operator(project_id, experiment_id, operator_id):
     """Handles PATCH requests to /<operator_id>."""
     kwargs = request.get_json(force=True)
     kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    operator = update_operator(uuid=operator_id, **kwargs)
+    operator = update_operator(uuid=operator_id,
+                               project_id=project_id,
+                               experiment_id=experiment_id,
+                               **kwargs)
     return jsonify(operator)
 
 
 @bp.route("<operator_id>", methods=["DELETE"])
 def handle_delete_operator(project_id, experiment_id, operator_id):
     """Handles DELETE requests to /<operator_id>."""
-    operator = delete_operator(uuid=operator_id)
+    operator = delete_operator(uuid=operator_id,
+                               project_id=project_id,
+                               experiment_id=experiment_id)
     return jsonify(operator)

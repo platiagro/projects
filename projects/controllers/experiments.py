@@ -11,6 +11,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Experiment
 from ..object_storage import remove_objects
+from .projects import raise_if_project_does_not_exist
 
 
 def list_experiments(project_id):
@@ -22,6 +23,8 @@ def list_experiments(project_id):
     Returns:
         A list of all experiments.
     """
+    raise_if_project_does_not_exist(project_id)
+
     experiments = db_session.query(Experiment) \
         .filter_by(project_id=project_id) \
         .order_by(Experiment.position.asc()) \
@@ -44,6 +47,8 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
     Returns:
         The experiment info.
     """
+    raise_if_project_does_not_exist(project_id)
+
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
@@ -62,15 +67,18 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
     return experiment.as_dict()
 
 
-def get_experiment(uuid):
+def get_experiment(uuid, project_id):
     """Details an experiment from our database.
 
     Args:
         uuid (str): the experiment uuid to look for in our database.
+        project_id (str): the project uuid.
 
     Returns:
         The experiment info.
     """
+    raise_if_project_does_not_exist(project_id)
+
     experiment = Experiment.query.get(uuid)
 
     if experiment is None:
@@ -79,16 +87,19 @@ def get_experiment(uuid):
     return experiment.as_dict()
 
 
-def update_experiment(uuid, **kwargs):
+def update_experiment(uuid, project_id, **kwargs):
     """Updates an experiment in our database and adjusts the position of others.
 
     Args:
         uuid (str): the experiment uuid to look for in our database.
+        project_id (str): the project uuid.
         **kwargs: arbitrary keyword arguments.
 
     Returns:
         The experiment info.
     """
+    raise_if_project_does_not_exist(project_id)
+
     experiment = Experiment.query.get(uuid)
 
     if experiment is None:
@@ -110,15 +121,18 @@ def update_experiment(uuid, **kwargs):
     return experiment.as_dict()
 
 
-def delete_experiment(uuid):
+def delete_experiment(uuid, project_id):
     """Delete an experiment in our database and in the object storage.
 
     Args:
         uuid (str): the experiment uuid to look for in our database.
+        project_id (str): the project uuid.
 
     Returns:
         The deletion result.
     """
+    raise_if_project_does_not_exist(project_id)
+
     experiment = Experiment.query.get(uuid)
 
     if experiment is None:
@@ -157,3 +171,17 @@ def fix_positions(project_id, experiment_id=None, new_position=None):
         data = {"position": index}
         db_session.query(Experiment).filter_by(uuid=experiment.uuid).update(data)
     db_session.commit()
+
+
+def raise_if_experiment_does_not_exist(experiment_id):
+    """Raises an exception if the specified experiment does not exist.
+
+    Args:
+        experiment_id (str): the experiment uuid.
+    """
+    exists = db_session.query(Experiment.uuid) \
+        .filter_by(uuid=experiment_id) \
+        .scalar() is not None
+
+    if not exists:
+        raise NotFound("The specified experiment does not exist")

@@ -5,7 +5,7 @@ from uuid import uuid4
 from projects.api.main import app
 from projects.database import engine
 
-UUID = str(uuid4())
+EXPERIMENT_ID = str(uuid4())
 NAME = "foo"
 PROJECT_ID = str(uuid4())
 DATASET = "iris"
@@ -23,7 +23,7 @@ class TestExperiments(TestCase):
         text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, CREATED_AT, UPDATED_AT)
         conn.execute(text)
         conn.close()
 
@@ -38,12 +38,24 @@ class TestExperiments(TestCase):
 
     def test_list_experiments(self):
         with app.test_client() as c:
+            rv = c.get("/projects/unk/experiments")
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.get("/projects/{}/experiments".format(PROJECT_ID))
             result = rv.get_json()
             self.assertIsInstance(result, list)
 
     def test_create_experiment(self):
         with app.test_client() as c:
+            rv = c.post("/projects/unk/experiments", json={})
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.post("/projects/{}/experiments".format(PROJECT_ID), json={})
             result = rv.get_json()
             expected = {"message": "name is required"}
@@ -74,16 +86,22 @@ class TestExperiments(TestCase):
 
     def test_get_experiment(self):
         with app.test_client() as c:
+            rv = c.get("/projects/foo/experiments/{}".format(EXPERIMENT_ID))
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.get("/projects/{}/experiments/foo".format(PROJECT_ID))
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get("/projects/{}/experiments/{}".format(PROJECT_ID, UUID))
+            rv = c.get("/projects/{}/experiments/{}".format(PROJECT_ID, EXPERIMENT_ID))
             result = rv.get_json()
             expected = {
-                "uuid": UUID,
+                "uuid": EXPERIMENT_ID,
                 "name": NAME,
                 "projectId": PROJECT_ID,
                 "dataset": DATASET,
@@ -97,24 +115,30 @@ class TestExperiments(TestCase):
 
     def test_update_experiment(self):
         with app.test_client() as c:
+            rv = c.patch("/projects/foo/experiments/{}".format(EXPERIMENT_ID), json={})
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.patch("/projects/{}/experiments/foo".format(PROJECT_ID), json={})
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/projects/{}/experiments/{}".format(PROJECT_ID, UUID), json={
+            rv = c.patch("/projects/{}/experiments/{}".format(PROJECT_ID, EXPERIMENT_ID), json={
                 "unk": "bar",
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/projects/{}/experiments/{}".format(PROJECT_ID, UUID), json={
+            rv = c.patch("/projects/{}/experiments/{}".format(PROJECT_ID, EXPERIMENT_ID), json={
                 "name": "bar",
             })
             result = rv.get_json()
             expected = {
-                "uuid": UUID,
+                "uuid": EXPERIMENT_ID,
                 "name": "bar",
                 "projectId": PROJECT_ID,
                 "dataset": DATASET,
@@ -131,13 +155,19 @@ class TestExperiments(TestCase):
 
     def test_delete_experiment(self):
         with app.test_client() as c:
+            rv = c.delete("/projects/foo/experiments/{}".format(EXPERIMENT_ID))
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
             rv = c.delete("/projects/{}/experiments/unk".format(PROJECT_ID))
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/projects/{}/experiments/{}".format(PROJECT_ID, UUID))
+            rv = c.delete("/projects/{}/experiments/{}".format(PROJECT_ID, EXPERIMENT_ID))
             result = rv.get_json()
             expected = {"message": "Experiment deleted"}
             self.assertDictEqual(expected, result)

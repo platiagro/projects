@@ -10,12 +10,12 @@ from projects.api.main import app
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
-UUID = str(uuid4())
+COMPONENT_ID = str(uuid4())
 NAME = "foo"
 DESCRIPTION = "long foo"
 TAGS = ["PREDICTOR"]
-TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, UUID)
-INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, UUID)
+TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, COMPONENT_ID)
+INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, COMPONENT_ID)
 IS_DEFAULT = False
 PARAMETERS = []
 CREATED_AT = "2000-01-01 00:00:00"
@@ -28,7 +28,7 @@ SAMPLE_NOTEBOOK = '{"cells":[{"cell_type":"code","execution_count":null,"metadat
 class TestComponents(TestCase):
     def setUp(self):
         conn = engine.connect()
-        text = "INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(UUID, NAME, DESCRIPTION, dumps(TAGS), TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, DESCRIPTION, dumps(TAGS), TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT)
         conn.execute(text)
         conn.close()
 
@@ -55,11 +55,11 @@ class TestComponents(TestCase):
 
     def tearDown(self):
         conn = engine.connect()
-        text = "DELETE FROM components WHERE uuid = '{}'".format(UUID)
+        text = "DELETE FROM components WHERE uuid = '{}'".format(COMPONENT_ID)
         conn.execute(text)
         conn.close()
 
-        prefix = "components/{}".format(UUID)
+        prefix = "components/{}".format(COMPONENT_ID)
         for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
             MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
@@ -81,7 +81,7 @@ class TestComponents(TestCase):
                 "name": "test",
                 "description": "long test",
                 "tags": ["UNK"],
-                "copyFrom": UUID,
+                "copyFrom": COMPONENT_ID,
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
@@ -90,7 +90,7 @@ class TestComponents(TestCase):
                 "name": "test",
                 "description": "long test",
                 "tags": TAGS,
-                "copyFrom": UUID,
+                "copyFrom": COMPONENT_ID,
                 "trainingNotebook": SAMPLE_NOTEBOOK,
                 "inferenceNotebook": SAMPLE_NOTEBOOK,
             })
@@ -133,7 +133,6 @@ class TestComponents(TestCase):
                 "createdAt",
                 "updatedAt",
             ]
-            test_uuid = result["uuid"]
             for attr in machine_generated:
                 self.assertIn(attr, result)
                 del result[attr]
@@ -143,7 +142,7 @@ class TestComponents(TestCase):
                 "name": "test",
                 "description": "long test",
                 "tags": TAGS,
-                "copyFrom": UUID,
+                "copyFrom": COMPONENT_ID,
             })
             result = rv.get_json()
             expected = {
@@ -173,10 +172,10 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get("/components/{}".format(UUID))
+            rv = c.get("/components/{}".format(COMPONENT_ID))
             result = rv.get_json()
             expected = {
-                "uuid": UUID,
+                "uuid": COMPONENT_ID,
                 "name": "foo",
                 "description": DESCRIPTION,
                 "tags": TAGS,
@@ -197,18 +196,18 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/components/{}".format(UUID), json={
+            rv = c.patch("/components/{}".format(COMPONENT_ID), json={
                 "unk": "bar",
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/components/{}".format(UUID), json={
+            rv = c.patch("/components/{}".format(COMPONENT_ID), json={
                 "name": "bar",
             })
             result = rv.get_json()
             expected = {
-                "uuid": UUID,
+                "uuid": COMPONENT_ID,
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": TAGS,
@@ -224,18 +223,18 @@ class TestComponents(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
-            rv = c.patch("/components/{}".format(UUID), json={
+            rv = c.patch("/components/{}".format(COMPONENT_ID), json={
                 "tags": ["UNK"],
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/components/{}".format(UUID), json={
+            rv = c.patch("/components/{}".format(COMPONENT_ID), json={
                 "tags": ["FEATURE_ENGINEERING"],
             })
             result = rv.get_json()
             expected = {
-                "uuid": UUID,
+                "uuid": COMPONENT_ID,
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": ["FEATURE_ENGINEERING"],
@@ -259,7 +258,7 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/components/{}".format(UUID))
+            rv = c.delete("/components/{}".format(COMPONENT_ID))
             result = rv.get_json()
             expected = {"message": "Component deleted"}
             self.assertDictEqual(expected, result)

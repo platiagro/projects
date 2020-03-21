@@ -28,7 +28,8 @@ def handle_post_experiments(project_id):
 @bp.route("<experiment_id>", methods=["GET"])
 def handle_get_experiment(project_id, experiment_id):
     """Handles GET requests to /<experiment_id>."""
-    return jsonify(get_experiment(uuid=experiment_id))
+    return jsonify(get_experiment(uuid=experiment_id,
+                                  project_id=project_id))
 
 
 @bp.route("<experiment_id>", methods=["PATCH"])
@@ -36,12 +37,15 @@ def handle_patch_experiment(project_id, experiment_id):
     """Handles PATCH requests to /<experiment_id>."""
     kwargs = request.get_json(force=True)
     kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    experiment = update_experiment(uuid=experiment_id, **kwargs)
+    experiment = update_experiment(uuid=experiment_id,
+                                   project_id=project_id,
+                                   **kwargs)
     return jsonify(experiment)
 
 
 @bp.route("<experiment_id>", methods=["DELETE"])
 def handle_delete_experiment(project_id, experiment_id):
     """Handles DELETE requests to /<experiment_id>."""
-    experiment = delete_experiment(uuid=experiment_id)
+    experiment = delete_experiment(uuid=experiment_id,
+                                   project_id=project_id)
     return jsonify(experiment)
