@@ -14,9 +14,13 @@ def init_components(config_path):
         components = load(f)
         for component in components:
             name = component["name"]
+            description = component["description"]
+            tags = component["tags"]
             training_notebook = read_notebook(component["trainingNotebook"])
             inference_notebook = read_notebook(component["inferenceNotebook"])
             create_component(name=name,
+                             description=description,
+                             tags=tags,
                              training_notebook=training_notebook,
                              inference_notebook=inference_notebook,
                              is_default=True)
@@ -27,7 +31,10 @@ def read_notebook(notebook_path):
 
     Args:
         notebook_path (str): the path to the notebook file.
+
+    Returns:
+        The notebook content as bytes.
     """
-    with open(notebook_path) as f:
+    with open(notebook_path, "rb") as f:
         notebook = f.read()
     return notebook

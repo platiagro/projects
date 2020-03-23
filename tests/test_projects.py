@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
+from uuid import uuid4
 
 from projects.api.main import app
 from projects.database import engine
 
-UUID = "6814cdae-d88d-4c4d-bfb6-9ea6d6086dc4"
+UUID = str(uuid4())
 NAME = "foo"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
@@ -116,4 +117,3 @@ class TestProjects(TestCase):
             result = rv.get_json()
             expected = {"message": "Project deleted"}
             self.assertDictEqual(expected, result)
-

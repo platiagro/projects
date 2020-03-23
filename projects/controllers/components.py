@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Components controller."""
-import json
-
 from datetime import datetime
 from pkgutil import get_data
 from uuid import uuid4
@@ -10,7 +8,7 @@ from minio.error import ResponseError
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from .jupyter import create_new_file, set_workspace, get_files, remove_file
+from ..jupyter import create_new_file, set_workspace, get_files, remove_file
 
 from ..database import db_session
 from ..models import Component
@@ -18,6 +16,7 @@ from ..object_storage import BUCKET_NAME, get_object, put_object, \
     duplicate_object, list_objects, remove_object
 
 PREFIX = "components"
+VALID_TAGS = ["DEFAULT", "FEATURE_ENGINEERING", "PREDICTOR"]
 TRAINING_NOTEBOOK = get_data("projects", "config/Training.ipynb")
 INFERENCE_NOTEBOOK = get_data("projects", "config/Inference.ipynb")
 
@@ -26,19 +25,20 @@ def list_components():
     """Lists all components from our database.
 
     Returns:
-        A list of all components ids.
+        A list of all components.
     """
     components = Component.query.all()
-    return components
+    return [component.as_dict() for component in components]
 
 
-def create_component(name=None, description=None, training_notebook=None,
-                     inference_notebook=None, is_default=False, copy_from=None,
-                     **kwargs):
+def create_component(name=None, description=None, tags=None,
+                     training_notebook=None, inference_notebook=None,
+                     is_default=False, copy_from=None, **kwargs):
     """Creates a new component in our database/object storage.
 
     Args:
         name (str): the component name.
+        tags (list): the list of tags.
         training_notebook (str, optional): the notebook content.
         inference_notebook (str, optional): the notebook content.
         is_default (bool, optional): whether it is a built-in component.
@@ -53,10 +53,16 @@ def create_component(name=None, description=None, training_notebook=None,
     if copy_from and (training_notebook or inference_notebook):
         raise BadRequest("Either provide notebooks or a component to copy from")
 
+    if tags is None or len(tags) == 0:
+        tags = ["DEFAULT"]
+
+    if any(tag not in VALID_TAGS for tag in tags):
+        raise BadRequest("Invalid tag. Choose any of {}".format(",".join(VALID_TAGS)))
+
     # creates a component with specified name,
     # but copies notebooks from a source component
     if copy_from:
-        return copy_component(name, description, copy_from)
+        return copy_component(name, description, tags, copy_from)
 
     component_id = str(uuid4())
 
@@ -85,11 +91,13 @@ def create_component(name=None, description=None, training_notebook=None,
     component = Component(uuid=component_id,
                           name=name,
                           description=description,
+                          tags=tags,
                           training_notebook_path=training_notebook_path,
                           inference_notebook_path=inference_notebook_path,
                           is_default=is_default)
     db_session.add(component)
     db_session.commit()
+
     return component.as_dict()
 
 
@@ -107,9 +115,7 @@ def get_component(uuid):
     if component is None:
         raise NotFound("The specified component does not exist")
 
-    dict_component = component.as_dict()
-    dict_component["params"] = get_component_param(uuid, True)
-    return dict_component
+    return component.as_dict()
 
 
 def update_component(uuid, **kwargs):
@@ -126,6 +132,11 @@ def update_component(uuid, **kwargs):
 
     if component is None:
         raise NotFound("The specified component does not exist")
+
+    if "tags" in kwargs:
+        tags = kwargs["tags"]
+        if any(tag not in VALID_TAGS for tag in tags):
+            raise BadRequest("Invalid tag. Choose any of {}".format(",".join(VALID_TAGS)))
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
@@ -156,14 +167,14 @@ def delete_component(uuid):
     try:
         source_name = "{}/{}".format(PREFIX, uuid)
 
-        # remove jupyter files and directory
+        # remove files and directory from jupyter notebook server
         jupyter_files = get_files(source_name)
         if jupyter_files is not None:
             for jupyter_file in jupyter_files["content"]:
                 remove_file(jupyter_file["path"])
             remove_file(source_name)
 
-        # remove Minio files and directory
+        # remove MinIO files and directory
         minio_files = list_objects(source_name)
         for minio_file in minio_files:
             remove_object(minio_file.object_name)
@@ -174,15 +185,17 @@ def delete_component(uuid):
     except (InvalidRequestError, ProgrammingError, ResponseError) as e:
         raise BadRequest(str(e))
 
-    return component.as_dict()
+    return {"message": "Component deleted"}
 
 
-def copy_component(name, description, copy_from):
+def copy_component(name, description, tags, copy_from):
     """Makes a copy of a component in our database/object storage.
 
     Args:
         name (str): the component name.
-        copy_from (str, optional): the component_id from which the notebooks are copied.
+        description (str): the component description.
+        tags (list): the component tags list.
+        copy_from (str): the component_id from which the notebooks are copied.
 
     Returns:
         The component info.
@@ -214,11 +227,13 @@ def copy_component(name, description, copy_from):
     component = Component(uuid=component_id,
                           name=name,
                           description=description,
+                          tags=tags,
                           training_notebook_path=training_notebook_path,
                           inference_notebook_path=inference_notebook_path,
                           is_default=False)
     db_session.add(component)
     db_session.commit()
+
     return component.as_dict()
 
 
@@ -233,50 +248,15 @@ def create_jupyter_files(component_id, inference_notebook, training_notebook):
     set_workspace(path, "Inference.ipynb", "Training.ipynb")
 
 
-def get_component_param(uuid, is_checked=False):
-    """Get the component parameters from notebook.
+def raise_if_component_does_not_exist(component_id):
+    """Raises an exception if the specified component does not exist.
 
     Args:
-        uuid (str): the component uuid to look for in our database.
-        is_checked(bool): flag to check if component uuid exist
-    Returns:
-        The component parameters info.
+        component_id (str): the component uuid.
     """
-    if not is_checked:
-        component = Component.query.get(uuid)
-        if component is None:
-            raise NotFound("The specified component does not exist")
+    exists = db_session.query(Component.uuid) \
+        .filter_by(uuid=component_id) \
+        .scalar() is not None
 
-    notebook_params = []
-    source_name = "{}/{}/Training.ipynb".format(PREFIX, uuid)
-    training_notebook = get_object(source_name)
-    json_training_notebook = json.loads(training_notebook.decode("utf-8"))
-
-    if "cells" not in json_training_notebook:
-        return notebook_params
-
-    cells = json_training_notebook["cells"]
-    for cell in cells:
-        cell_type = cell["cell_type"]
-        if cell_type == 'code':
-            source = cell["source"]
-            for line in source:
-                if "#@param" in line:
-                    # name = "value" #@param {type:"string"}
-                    param_values = line.replace("\n", "").split("#@param")
-
-                    # name = value
-                    part1 = param_values[0].split("=")
-                    param_name = part1[0].strip()
-                    param_default = part1[1].replace("\"", "").strip()
-
-                    # {type:"string"}
-                    part2 = param_values[1].replace("type", '"type"').strip()
-
-                    # create json param and add to array
-                    param = json.loads(part2)
-                    param["name"] = param_name
-                    param["default"] = param_default
-                    notebook_params.append(param)
-
-    return notebook_params
+    if not exists:
+        raise NotFound("The specified component does not exist")

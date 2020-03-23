@@ -16,7 +16,7 @@ def list_projects():
     """Lists all projects from our database.
 
     Returns:
-        A list of all projects ids.
+        A list of all projects.
     """
     projects = Project.query.all()
     return [project.as_dict() for project in projects]
@@ -107,3 +107,17 @@ def delete_project(uuid):
     remove_objects(prefix=prefix)
 
     return {"message": "Project deleted"}
+
+
+def raise_if_project_does_not_exist(project_id):
+    """Raises an exception if the specified project does not exist.
+
+    Args:
+        project_id (str): the project uuid.
+    """
+    exists = db_session.query(Project.uuid) \
+        .filter_by(uuid=project_id) \
+        .scalar() is not None
+
+    if not exists:
+        raise NotFound("The specified project does not exist")
