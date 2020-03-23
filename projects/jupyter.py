@@ -8,7 +8,7 @@ from werkzeug.exceptions import BadRequest
 
 from .object_storage import BUCKET_NAME, get_object
 
-ENDPOINT = getenv("JUPYTER_ENDPOINT", "server.anonymous:80/notebook/anonymous/server")
+ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 
 URL_CONTENTS = ENDPOINT + "/api/contents/{}"
 
