@@ -17,6 +17,9 @@
     └── mlp-regressor
     │   ├── Training.ipynb
     │   └── Inference.ipynb
+    └── normalizer
+    │   ├── Training.ipynb
+    │   └── Inference.ipynb
     └── random-forest-classifier
     │   ├── Training.ipynb
     │   └── Inference.ipynb
