@@ -4,69 +4,98 @@
         "description": "A component that trains an AutoML Classifier model using auto-sklearn",
         "trainingNotebook": "/samples/automl-classifier/Training.ipynb",
         "inferenceNotebook": "/samples/automl-classifier/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
     },
     {
         "name": "AutoML Regressor",
         "description": "A component that trains an AutoML Regressor model using auto-sklearn",
         "trainingNotebook": "/samples/automl-regressor/Training.ipynb",
         "inferenceNotebook": "/samples/automl-regressor/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
     },
     {
         "name": "Linear Regression",
         "description": "A component that trains a Logistic Regression (aka logit, MaxEnt) classifier model using Scikit-learn",
         "trainingNotebook": "/samples/linear-regression/Training.ipynb",
         "inferenceNotebook": "/samples/linear-regression/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
     },
     {
         "name": "Logistic Regression",
         "description": "A component that trains an ordinary least squares Linear Regression model using Scikit-learn",
         "trainingNotebook": "/samples/logistic-regression/Training.ipynb",
         "inferenceNotebook": "/samples/logistic-regression/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
     },
     {
         "name": "MLP Classifier",
         "description": "A component that trains a Multi-layer Perceptron Classifier model using Scikit-learn",
         "trainingNotebook": "/samples/mlp-classifier/Training.ipynb",
         "inferenceNotebook": "/samples/mlp-classifier/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
     },
     {
         "name": "MLP Regressor",
         "description": "A component that trains a Multi-layer Perceptron Regression model using Scikit-learn",
         "trainingNotebook": "/samples/mlp-regressor/Training.ipynb",
         "inferenceNotebook": "/samples/mlp-regressor/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
     },
     {
         "name": "Random Forest Classifier",
         "description": "A component that trains a Random Forest Classifier model using Scikit-learn",
         "trainingNotebook": "/samples/random-forest-classifier/Training.ipynb",
         "inferenceNotebook": "/samples/random-forest-classifier/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
     },
     {
         "name": "Random Forest Regressor",
         "description": "A component that trains a Random Forest Regression model using Scikit-learn",
         "trainingNotebook": "/samples/random-forest-regressor/Training.ipynb",
         "inferenceNotebook": "/samples/random-forest-regressor/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
     },
     {
         "name": "SVC",
         "description": "A component that trains a Random Forest Regression model using Scikit-learn",
         "trainingNotebook": "/samples/svc/Training.ipynb",
         "inferenceNotebook": "/samples/svc/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
     },
     {
         "name": "SVR",
         "description": "A component that trains a Support Vector Regression model using Scikit-learn",
         "trainingNotebook": "/samples/svr/Training.ipynb",
         "inferenceNotebook": "/samples/svr/Inference.ipynb",
-		"tags": ["PREDICTOR"]
+        "tags": [
+            "PREDICTOR"
+        ]
+    },
+    {
+        "name": "Normalizer",
+        "description": "A component that normalize samples individually to unit norm model using Scikit-learn",
+        "trainingNotebook": "/samples/normalizer/Training.ipynb",
+        "inferenceNotebook": "/samples/normalizer/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
     }
 ]

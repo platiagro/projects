@@ -120,9 +120,11 @@ class TestComponents(TestCase):
                 "description": "long test",
                 "tags": ["DEFAULT"],
                 "isDefault": IS_DEFAULT,
-                "parameters": [{"default": "boston", "name": "dataset", "type": "string"},
-                               {"default": "col13", "name": "target", "type": "string"},
-                               {"default": "99284308-cd3f-47d4-ab71-9c57acbb4d7b", "name": "experiment_id", "type": "string"}],
+                "parameters": [{"default": "iris", "name": "dataset", "type": "string"},
+                               {"default": "iris-out", "name": "out_dataset", "type": "string"},
+                               {"default": "Species", "name": "target", "type": "string"},
+                               {"default": "a71b85d0-6d92-4868-80a1-d2efd270ca5f", "name": "experiment_id", "type": "string"},
+                               {"default": "c0deb81a-540e-4d51-bf8f-c332f9b9fd73", "name": "operator_id", "type": "string"}],
             }
             # uuid, training_notebook_path, inference_notebook_path, created_at, updated_at
             # are machine-generated we assert they exist, but we don't assert their values
