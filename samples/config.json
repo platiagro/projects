@@ -97,5 +97,32 @@
         "tags": [
             "FEATURE_ENGINEERING"
         ]
+    },
+    {
+        "name": "Imputer",
+        "description": "A component for imputing missing values using mean, median or most frequent.",
+        "trainingNotebook": "/samples/imputer/Training.ipynb",
+        "inferenceNotebook": "/samples/imputer/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
+        "name": "Variance Threshold",
+        "description": "A component that removes all low-variance features.",
+        "trainingNotebook": "/samples/variance-threshold/Training.ipynb",
+        "inferenceNotebook": "/samples/variance-threshold/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
+        "name": "Quantile Transformer",
+        "description": "A component that transforms the features to follow a uniform or a normal distribution.",
+        "trainingNotebook": "/samples/quantile-transformer/Training.ipynb",
+        "inferenceNotebook": "/samples/quantile-transformer/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
     }
 ]
