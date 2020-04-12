@@ -2,7 +2,7 @@
 """Operator model."""
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, String, ForeignKey
+from sqlalchemy import Column, DateTime, Integer, JSON, String, ForeignKey
 
 from ..database import Base
 from ..utils import to_camel_case
@@ -14,6 +14,7 @@ class Operator(Base):
     experiment_id = Column(String(255), ForeignKey("experiments.uuid"), nullable=False)
     component_id = Column(String(255), ForeignKey("components.uuid"), nullable=False)
     position = Column(Integer)
+    parameters = Column(JSON, nullable=False, default={})
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 

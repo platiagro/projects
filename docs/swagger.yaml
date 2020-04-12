@@ -727,6 +727,10 @@ components:
           format: uuid
         position:
           type: integer
+        parameters:
+          type: object
+          additionalProperties:
+            type: string
         experimentId:
           type: string
           format: uuid
@@ -853,6 +857,10 @@ components:
             properties:
               componentId:
                 type: string
+              parameters:
+                type: object
+                additionalProperties:
+                  type: string
     OperatorPatch:
       content:
         application/json:
@@ -863,6 +871,10 @@ components:
                 type: string
               position:
                 type: integer
+              parameters:
+                type: object
+                additionalProperties:
+                  type: string
     TemplatePost:
       content:
         application/json:
