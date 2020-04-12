@@ -34,7 +34,8 @@ def list_operators(project_id, experiment_id):
     return [operator.as_dict() for operator in operators]
 
 
-def create_operator(project_id, experiment_id, component_id=None, **kwargs):
+def create_operator(project_id, experiment_id, component_id=None,
+                    parameters=None, **kwargs):
     """Creates a new operator in our database.
 
     The new operator is added to the end of the operator list.
@@ -43,6 +44,7 @@ def create_operator(project_id, experiment_id, component_id=None, **kwargs):
         project_id (str): the project uuid.
         experiment_id (str): the experiment uuid.
         component_id (str): the component uuid.
+        parameters (dict): the parameters dict.
 
     Returns:
         The operator info.
@@ -58,10 +60,16 @@ def create_operator(project_id, experiment_id, component_id=None, **kwargs):
     except NotFound as e:
         raise BadRequest(e.description)
 
+    if parameters is None:
+        parameters = {}
+
+    raise_if_parameters_are_invalid(parameters)
+
     operator = Operator(uuid=str(uuid4()),
                         experiment_id=experiment_id,
                         component_id=component_id,
-                        position=-1)    # use temporary position -1, fix_position below
+                        position=-1,
+                        parameters=parameters)  # use temporary position -1, fix_position below
     db_session.add(operator)
     db_session.commit()
 
@@ -91,6 +99,8 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
 
     if operator is None:
         raise NotFound("The specified operator does not exist")
+
+    raise_if_parameters_are_invalid(kwargs.get("parameters", {}))
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
@@ -157,3 +167,17 @@ def fix_positions(experiment_id, operator_id=None, new_position=-1):
         data = {"position": index}
         db_session.query(Operator).filter_by(uuid=operator.uuid).update(data)
     db_session.commit()
+
+
+def raise_if_parameters_are_invalid(parameters):
+    """Raises an exception if the specified parameters are not valid.
+
+    Args:
+        parameters (duct): the parameters dict.
+    """
+    if not isinstance(parameters, dict):
+        raise BadRequest("The specified parameters are not valid")
+
+    for key, value in parameters.items():
+        if not isinstance(value, (str, int, float)):
+            raise BadRequest("The specified parameters are not valid")

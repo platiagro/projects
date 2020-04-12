@@ -16,6 +16,7 @@ OPERATOR_ID = str(uuid4())
 DATASET = "iris"
 TARGET = "col4"
 POSITION = 0
+PARAMETERS = {"coef": 0.1}
 OPERATORS = [{"componentId": COMPONENT_ID, "position": POSITION}]
 DESCRIPTION = "long foo"
 TAGS = ["PREDICTOR"]
@@ -29,6 +30,7 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 class TestTemplates(TestCase):
     def setUp(self):
+        self.maxDiff = None
         conn = engine.connect()
         text = "INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, DESCRIPTION, dumps(TAGS), TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT)
         conn.execute(text)
@@ -39,7 +41,7 @@ class TestTemplates(TestCase):
         text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, dumps(PARAMETERS), CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
         text = "INSERT INTO templates (uuid, name, components, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}')".format(TEMPLATE_ID, NAME, dumps([COMPONENT_ID]), CREATED_AT, UPDATED_AT)

@@ -13,9 +13,11 @@ DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid4())
 EXPERIMENT_ID = str(uuid4())
 COMPONENT_ID = str(uuid4())
+PARAMETERS = {"coef": 0.1}
 DATASET = "iris"
 TARGET = "col4"
 POSITION = 0
+PARAMETERS = {}
 TAGS = ["PREDICTOR"]
 TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, COMPONENT_ID)
 INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, COMPONENT_ID)
@@ -37,7 +39,7 @@ class TestOperators(TestCase):
         text = "INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, DESCRIPTION, dumps(TAGS), TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, dumps(PARAMETERS), CREATED_AT, UPDATED_AT)
         conn.execute(text)
         conn.close()
 
@@ -104,12 +106,50 @@ class TestOperators(TestCase):
 
             rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
                 "componentId": COMPONENT_ID,
+                "parameters": [{"name": "coef", "value": 0.1}],
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified parameters are not valid"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
+                "componentId": COMPONENT_ID,
+                "parameters": {"coef": [0.1]},
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified parameters are not valid"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
+                "componentId": COMPONENT_ID,
             })
             result = rv.get_json()
             expected = {
                 "experimentId": EXPERIMENT_ID,
                 "componentId": COMPONENT_ID,
                 "position": 1,
+                "parameters": {},
+            }
+            # uuid, created_at, updated_at are machine-generated
+            # we assert they exist, but we don't assert their values
+            machine_generated = ["uuid", "createdAt", "updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
+                "componentId": COMPONENT_ID,
+                "parameters": {"coef": 1.0}
+            })
+            result = rv.get_json()
+            expected = {
+                "experimentId": EXPERIMENT_ID,
+                "componentId": COMPONENT_ID,
+                "position": 2,
+                "parameters": {"coef": 1.0},
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -146,6 +186,22 @@ class TestOperators(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
+                "parameters": [{"name": "coef", "value": 0.1}],
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified parameters are not valid"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
+                "parameters": {"coef": [0.1]},
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified parameters are not valid"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
                 "position": 0,
             })
             result = rv.get_json()
@@ -154,6 +210,25 @@ class TestOperators(TestCase):
                 "experimentId": EXPERIMENT_ID,
                 "componentId": COMPONENT_ID,
                 "position": 0,
+                "parameters": PARAMETERS,
+                "createdAt": CREATED_AT_ISO,
+            }
+            machine_generated = ["updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
+                "parameters": {"coef": 0.2},
+            })
+            result = rv.get_json()
+            expected = {
+                "uuid": OPERATOR_ID,
+                "experimentId": EXPERIMENT_ID,
+                "componentId": COMPONENT_ID,
+                "position": 0,
+                "parameters": {"coef": 0.2},
                 "createdAt": CREATED_AT_ISO,
             }
             machine_generated = ["updatedAt"]
