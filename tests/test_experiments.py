@@ -16,6 +16,7 @@ OPERATOR_ID = str(uuid4())
 DATASET = "iris"
 TARGET = "col4"
 POSITION = 0
+PARAMETERS = {"coef": 0.1}
 DESCRIPTION = "long foo"
 TAGS = ["PREDICTOR"]
 TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, COMPONENT_ID)
@@ -24,7 +25,7 @@ CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
-OPERATORS = [{"uuid": OPERATOR_ID, "componentId": COMPONENT_ID, "position": POSITION, "experimentId": EXPERIMENT_ID, "createdAt": CREATED_AT_ISO, "updatedAt": UPDATED_AT_ISO}]
+OPERATORS = [{"uuid": OPERATOR_ID, "componentId": COMPONENT_ID, "position": POSITION, "parameters": PARAMETERS, "experimentId": EXPERIMENT_ID, "createdAt": CREATED_AT_ISO, "updatedAt": UPDATED_AT_ISO}]
 
 
 class TestExperiments(TestCase):
@@ -40,7 +41,7 @@ class TestExperiments(TestCase):
         text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, dumps(PARAMETERS), CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
         text = "INSERT INTO templates (uuid, name, components, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}')".format(TEMPLATE_ID, NAME, dumps([COMPONENT_ID]), CREATED_AT, UPDATED_AT)
@@ -213,6 +214,7 @@ class TestExperiments(TestCase):
                 "componentId": COMPONENT_ID,
                 "experimentId": EXPERIMENT_ID,
                 "position": POSITION,
+                "parameters": {},
             }]
             machine_generated = ["uuid", "createdAt", "updatedAt"]
             for attr in machine_generated:

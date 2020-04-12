@@ -17,6 +17,7 @@ PARAMETERS = {"coef": 0.1}
 DATASET = "iris"
 TARGET = "col4"
 POSITION = 0
+PARAMETERS = {}
 TAGS = ["PREDICTOR"]
 TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, COMPONENT_ID)
 INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, COMPONENT_ID)
