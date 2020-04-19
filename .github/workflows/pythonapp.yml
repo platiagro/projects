@@ -1,0 +1,63 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: platiagro
+        ports:
+        - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.6
+    - name: Run jupyter image
+      run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install .
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      run: |
+        pip install pytest pytest-cov
+        platiagro-init-db
+        pytest --cov=platiagro --cov-report=xml
+      env:
+        MINIO_ENDPOINT: play.min.io
+        MINIO_ACCESS_KEY: Q3AM3UQ867SPQQA43P2F
+        MINIO_SECRET_KEY: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+        MYSQL_DB_HOST: localhost
+        MYSQL_DB_NAME: platiagro
+        MYSQL_DB_USER: root
+        JUPYTER_ENDPOINT: http://localhost:8888
+    - name: Upload coverage report to codecov
+      run: |
+        pip install codecov
+        codecov
