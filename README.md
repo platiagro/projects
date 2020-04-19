@@ -1,6 +1,6 @@
 # PlatIAgro Projects
 
-[![Build Status](https://travis-ci.com/platiagro/projects.svg)](https://travis-ci.com/platiagro/projects)
+[![Build Status](https://github.com/platiagro/projects/workflows/Python%20application/badge.svg)](https://github.com/platiagro/projects/actions?query=workflow%3A%22Python+application%22)
 [![codecov](https://codecov.io/gh/platiagro/projects/branch/master/graph/badge.svg)](https://codecov.io/gh/platiagro/projects)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Gitter](https://badges.gitter.im/platiagro/community.svg)](https://gitter.im/platiagro/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -144,6 +144,12 @@ Use the following command to run all tests:
 
 ```bash
 pytest
+```
+
+Use the following command to run lint:
+
+```bash
+flake8
 ```
 
 ## API
