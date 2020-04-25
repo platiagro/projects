@@ -1,5 +1,7 @@
 from setuptools import find_packages, setup
 
+from projects import __version__
+
 with open("requirements.txt") as f:
     requirements = f.read().splitlines()
 
@@ -14,7 +16,7 @@ extras = {
 
 setup(
     name="projects",
-    version="0.0.2",
+    version=__version__,
     author="Fabio Beranizo Lopes",
     author_email="fabio.beranizo@gmail.com",
     description="Manages projects.",
