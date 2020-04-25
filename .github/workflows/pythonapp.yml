@@ -37,18 +37,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install .
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
         platiagro-init-db
-        pytest --cov=platiagro --cov-report=xml
+        pytest --cov=. --cov-report=xml
       env:
         MINIO_ENDPOINT: play.min.io
         MINIO_ACCESS_KEY: Q3AM3UQ867SPQQA43P2F
@@ -57,10 +50,11 @@ jobs:
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://localhost:8888
-    - name: Upload coverage report to codecov
-      run: |
-        pip install codecov
-        codecov
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     - name: Build docker image
       run: |
         docker build -t "platiagro/projects:$GITHUB_SHA" .
