@@ -8,7 +8,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
 from ..models import Template, Operator
-from .experiments import raise_if_experiment_does_not_exist
+from .utils import raise_if_experiment_does_not_exist
 
 
 def list_templates():
