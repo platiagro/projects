@@ -9,9 +9,8 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
 from ..models import Operator
-from .components import raise_if_component_does_not_exist
-from .experiments import raise_if_experiment_does_not_exist
-from .projects import raise_if_project_does_not_exist
+from .utils import raise_if_component_does_not_exist, \
+    raise_if_project_does_not_exist, raise_if_experiment_does_not_exist
 
 
 def list_operators(project_id, experiment_id):

@@ -246,17 +246,3 @@ def create_jupyter_files(component_id, inference_notebook, training_notebook):
     create_new_file(path, "Inference.ipynb", False, inference_notebook)
     create_new_file(path, "Training.ipynb", False, training_notebook)
     set_workspace(path, "Inference.ipynb", "Training.ipynb")
-
-
-def raise_if_component_does_not_exist(component_id):
-    """Raises an exception if the specified component does not exist.
-
-    Args:
-        component_id (str): the component uuid.
-    """
-    exists = db_session.query(Component.uuid) \
-        .filter_by(uuid=component_id) \
-        .scalar() is not None
-
-    if not exists:
-        raise NotFound("The specified component does not exist")

@@ -1,5 +1,7 @@
 from setuptools import find_packages, setup
 
+from projects import __version__
+
 with open("requirements.txt") as f:
     requirements = f.read().splitlines()
 
@@ -8,13 +10,13 @@ extras = {
         "pytest>=4.4.0",
         "pytest-xdist==1.31.0",
         "pytest-cov==2.8.1",
-        "codecov==2.0.15",
+        "flake8==3.7.9",
     ]
 }
 
 setup(
     name="projects",
-    version="0.0.2",
+    version=__version__,
     author="Fabio Beranizo Lopes",
     author_email="fabio.beranizo@gmail.com",
     description="Manages projects.",
