@@ -38,7 +38,7 @@ class TestTemplates(TestCase):
         text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, 1, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
         text = "INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, dumps(PARAMETERS), CREATED_AT, UPDATED_AT)
