@@ -41,7 +41,7 @@ jobs:
       run: |
         pip install pytest pytest-cov
         coverage erase
-        coverage run --branch --source=platiagro -m pytest
+        coverage run --branch --source=projects -m pytest
         coverage xml -i
       env:
         MINIO_ENDPOINT: play.min.io
