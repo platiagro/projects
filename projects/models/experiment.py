@@ -2,8 +2,9 @@
 """Experiment model."""
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import expression
 
 from .operators import Operator
 from ..database import Base
@@ -17,7 +18,8 @@ class Experiment(Base):
     project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False)
     dataset = Column(String(255))
     target = Column(String(255))
-    position = Column(Integer)
+    position = Column(Integer, nullable=False, default=-1)
+    is_active = Column(Boolean, nullable=False, server_default=expression.true())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     operators = relationship("Operator", backref="experiment",

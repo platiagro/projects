@@ -16,6 +16,7 @@ OPERATOR_ID = str(uuid4())
 DATASET = "iris"
 TARGET = "col4"
 POSITION = 0
+IS_ACTIVE = True
 PARAMETERS = {"coef": 0.1}
 DESCRIPTION = "long foo"
 TAGS = ["PREDICTOR"]
@@ -38,7 +39,7 @@ class TestExperiments(TestCase):
         text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, 1, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
         text = "INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, dumps(PARAMETERS), CREATED_AT, UPDATED_AT)
@@ -104,6 +105,7 @@ class TestExperiments(TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": 1,
+                "isActive": IS_ACTIVE,
                 "operators": [],
             }
             # uuid, created_at, updated_at are machine-generated
@@ -137,6 +139,7 @@ class TestExperiments(TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
+                "isActive": IS_ACTIVE,
                 "operators": OPERATORS,
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
@@ -174,6 +177,7 @@ class TestExperiments(TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
+                "isActive": IS_ACTIVE,
                 "operators": OPERATORS,
                 "createdAt": CREATED_AT_ISO,
             }
@@ -202,6 +206,7 @@ class TestExperiments(TestCase):
                 "dataset": DATASET,
                 "target": TARGET,
                 "position": POSITION,
+                "isActive": IS_ACTIVE,
                 "createdAt": CREATED_AT_ISO,
             }
             result_operators = result["operators"]

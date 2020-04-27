@@ -21,7 +21,7 @@ class TestProjects(TestCase):
         text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)
         conn.execute(text)
 
-        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, created_at, updated_at) VALUES ('{}', '{}', '{}', null, null, '{}', '{}', '{}')".format(EXPERIMENT_ID, EXPERIMENT_NAME, PROJECT_ID, 0, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) VALUES ('{}', '{}', '{}', null, null, '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, EXPERIMENT_NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT)
         conn.execute(text)
         conn.close()
 
@@ -69,6 +69,7 @@ class TestProjects(TestCase):
                 "dataset": None,
                 "target": None,
                 "position": 0,
+                "isActive": True,
                 "operators": [],
             }
             self.assertEqual(len(result_experiments), 1)
@@ -104,6 +105,7 @@ class TestProjects(TestCase):
                 "dataset": None,
                 "target": None,
                 "position": 0,
+                "isActive": True,
                 "operators": [],
             }
             self.assertEqual(len(result_experiments), 1)
@@ -150,6 +152,7 @@ class TestProjects(TestCase):
                 "dataset": None,
                 "target": None,
                 "position": 0,
+                "isActive": True,
                 "operators": [],
             }
             self.assertEqual(len(result_experiments), 1)
