@@ -40,8 +40,9 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
-        platiagro-init-db
-        pytest --cov=. --cov-report=xml
+        coverage erase
+        coverage run --branch --source=platiagro -m pytest
+        coverage xml -i
       env:
         MINIO_ENDPOINT: play.min.io
         MINIO_ACCESS_KEY: Q3AM3UQ867SPQQA43P2F
