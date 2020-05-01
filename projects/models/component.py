@@ -23,7 +23,7 @@ class Component(Base):
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
-        return "<Component {}>".format(self.name)
+        return f"<Component {self.name}>"
 
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}

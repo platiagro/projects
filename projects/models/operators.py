@@ -19,7 +19,7 @@ class Operator(Base):
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
-        return "<Operator {}>".format(self.uuid)
+        return f"<Operator {self.uuid}>"
 
     def as_dict(self):
         return {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}

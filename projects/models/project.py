@@ -18,7 +18,7 @@ class Project(Base):
     experiments = relationship("Experiment", lazy="joined")
 
     def __repr__(self):
-        return "<Project {}>".format(self.name)
+        return f"<Project {self.name}>"
 
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}

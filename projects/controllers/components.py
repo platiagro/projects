@@ -57,7 +57,8 @@ def create_component(name=None, description=None, tags=None,
         tags = ["DEFAULT"]
 
     if any(tag not in VALID_TAGS for tag in tags):
-        raise BadRequest("Invalid tag. Choose any of {}".format(",".join(VALID_TAGS)))
+        valid_str = ",".join(VALID_TAGS)
+        raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
     # creates a component with specified name,
     # but copies notebooks from a source component
@@ -71,18 +72,18 @@ def create_component(name=None, description=None, tags=None,
         training_notebook = TRAINING_NOTEBOOK
 
     # adds notebook to object storage
-    obj_name = "{}/{}/Training.ipynb".format(PREFIX, component_id)
+    obj_name = f"{PREFIX}/{component_id}/Training.ipynb"
     put_object(obj_name, training_notebook)
 
     # formats the notebook path (will save the path to database)
-    training_notebook_path = "minio://{}/{}".format(BUCKET_NAME, obj_name)
+    training_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
 
     # repeat the steps above for the inference notebook
     if inference_notebook is None:
         inference_notebook = INFERENCE_NOTEBOOK
-    obj_name = "{}/{}/Inference.ipynb".format(PREFIX, component_id)
+    obj_name = f"{PREFIX}/{component_id}/Inference.ipynb"
     put_object(obj_name, inference_notebook)
-    inference_notebook_path = "minio://{}/{}".format(BUCKET_NAME, obj_name)
+    inference_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
 
     # create inference notebook and training_notebook on jupyter
     create_jupyter_files(component_id, inference_notebook, training_notebook)
@@ -136,7 +137,8 @@ def update_component(uuid, **kwargs):
     if "tags" in kwargs:
         tags = kwargs["tags"]
         if any(tag not in VALID_TAGS for tag in tags):
-            raise BadRequest("Invalid tag. Choose any of {}".format(",".join(VALID_TAGS)))
+            valid_str = ",".join(VALID_TAGS)
+            raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
@@ -165,7 +167,7 @@ def delete_component(uuid):
         raise NotFound("The specified component does not exist")
 
     try:
-        source_name = "{}/{}".format(PREFIX, uuid)
+        source_name = f"{PREFIX}/{uuid}"
 
         # remove files and directory from jupyter notebook server
         jupyter_files = get_files(source_name)
@@ -208,16 +210,16 @@ def copy_component(name, description, tags, copy_from):
     component_id = str(uuid4())
 
     # adds notebooks to object storage
-    source_name = "{}/{}/Training.ipynb".format(PREFIX, copy_from)
-    destination_name = "{}/{}/Training.ipynb".format(PREFIX, component_id)
+    source_name = f"{PREFIX}/{copy_from}/Training.ipynb"
+    destination_name = f"{PREFIX}/{component_id}/Training.ipynb"
     duplicate_object(source_name, destination_name)
-    training_notebook_path = "minio://{}/{}".format(BUCKET_NAME, destination_name)
+    training_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
     training_notebook = get_object(source_name)
 
-    source_name = "{}/{}/Inference.ipynb".format(PREFIX, copy_from)
-    destination_name = "{}/{}/Inference.ipynb".format(PREFIX, component_id)
+    source_name = f"{PREFIX}/{copy_from}/Inference.ipynb"
+    destination_name = f"{PREFIX}/{component_id}/Inference.ipynb"
     duplicate_object(source_name, destination_name)
-    inference_notebook_path = "minio://{}/{}".format(BUCKET_NAME, destination_name)
+    inference_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
     inference_notebook = get_object(source_name)
 
     # create inference notebook and training_notebook on jupyter
@@ -241,7 +243,7 @@ def create_jupyter_files(component_id, inference_notebook, training_notebook):
     # always try to create components folder to guarantee his existence
     create_new_file("", PREFIX, True)
 
-    path = "{}/{}".format(PREFIX, component_id)
+    path = f"{PREFIX}/{component_id}"
     create_new_file(PREFIX, component_id, True)
     create_new_file(path, "Inference.ipynb", False, inference_notebook)
     create_new_file(path, "Training.ipynb", False, training_notebook)

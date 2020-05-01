@@ -80,8 +80,8 @@ def set_workspace(path, inference_filename, training_filename):
     if r.status_code != requests.codes.ok:
         return
 
-    inference = "notebook:{}/{}".format(path, inference_filename)
-    training = "notebook:{}/{}".format(path, training_filename)
+    inference = f"notebook:{path}/{inference_filename}"
+    training = f"notebook:{path}/{training_filename}"
 
     resp = r.json()
     data = resp["data"]
@@ -101,13 +101,13 @@ def set_workspace(path, inference_filename, training_filename):
     }
     data[inference] = {
         "data": {
-            "path": "{}/{}".format(path, inference_filename),
+            "path": f"{path}/{inference_filename}",
             "factory": "Notebook"
         }
     }
     data[training] = {
         "data": {
-            "path": "{}/{}".format(path, training_filename),
+            "path": f"{path}/{training_filename}",
             "factory": "Notebook"
         }
     }
@@ -122,7 +122,7 @@ def set_workspace(path, inference_filename, training_filename):
 
 def read_parameters(notebook_path):
     notebook_params = []
-    object_name = notebook_path[len("minio://{}/".format(BUCKET_NAME)):]
+    object_name = notebook_path[len(f"minio://{BUCKET_NAME}/"):]
     try:
         training_notebook = get_object(object_name)
     except NoSuchKey:

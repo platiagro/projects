@@ -14,8 +14,9 @@ COMPONENT_ID = str(uuid4())
 NAME = "foo"
 DESCRIPTION = "long foo"
 TAGS = ["PREDICTOR"]
-TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, COMPONENT_ID)
-INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, COMPONENT_ID)
+TAGS_JSON = dumps(TAGS)
+TRAINING_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Training.ipynb"
+INFERENCE_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Inference.ipynb"
 IS_DEFAULT = False
 PARAMETERS = []
 CREATED_AT = "2000-01-01 00:00:00"
@@ -27,8 +28,12 @@ SAMPLE_NOTEBOOK = '{"cells":[{"cell_type":"code","execution_count":null,"metadat
 
 class TestComponents(TestCase):
     def setUp(self):
+        self.maxDiff = None
         conn = engine.connect()
-        text = "INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, DESCRIPTION, dumps(TAGS), TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT)
+        text = (
+            f"INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{TRAINING_NOTEBOOK_PATH}', '{INFERENCE_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
         conn.execute(text)
         conn.close()
 
@@ -40,7 +45,7 @@ class TestComponents(TestCase):
         file = BytesIO(SAMPLE_NOTEBOOK.encode("utf-8"))
         MINIO_CLIENT.put_object(
             bucket_name=BUCKET_NAME,
-            object_name=TRAINING_NOTEBOOK_PATH[len("minio://{}/".format(BUCKET_NAME)):],
+            object_name=TRAINING_NOTEBOOK_PATH[len(f"minio://{BUCKET_NAME}/"):],
             data=file,
             length=file.getbuffer().nbytes,
         )
@@ -48,18 +53,18 @@ class TestComponents(TestCase):
         file = BytesIO(b'{"cells":[{"cell_type":"code","execution_count":null,"metadata":{},"outputs":[],"source":[]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}')
         MINIO_CLIENT.put_object(
             bucket_name=BUCKET_NAME,
-            object_name=INFERENCE_NOTEBOOK_PATH[len("minio://{}/".format(BUCKET_NAME)):],
+            object_name=INFERENCE_NOTEBOOK_PATH[len(f"minio://{BUCKET_NAME}/"):],
             data=file,
             length=file.getbuffer().nbytes,
         )
 
     def tearDown(self):
         conn = engine.connect()
-        text = "DELETE FROM components WHERE uuid = '{}'".format(COMPONENT_ID)
+        text = f"DELETE FROM components WHERE uuid = '{COMPONENT_ID}'"
         conn.execute(text)
         conn.close()
 
-        prefix = "components/{}".format(COMPONENT_ID)
+        prefix = f"components/{COMPONENT_ID}"
         for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
             MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
@@ -120,10 +125,12 @@ class TestComponents(TestCase):
                 "description": "long test",
                 "tags": ["DEFAULT"],
                 "isDefault": IS_DEFAULT,
-                "parameters": [{"default": "titanic", "name": "dataset", "type": "string"},
-                               {"default": "Survived", "name": "target", "type": "string"},
-                               {"default": "a71b85d0-6d92-4868-80a1-d2efd270ca5f", "name": "experiment_id", "type": "string"},
-                               {"default": "c0deb81a-540e-4d51-bf8f-c332f9b9fd73", "name": "operator_id", "type": "string"}],
+                "parameters": [
+                    {"default": "iris", "name": "dataset", "type": "string"},
+                    {"default": "Species", "name": "target", "type": "string"},
+                    {"default": "a71b85d0-6d92-4868-80a1-d2efd270ca5f", "name": "experiment_id", "type": "string"},
+                    {"default": "c0deb81a-540e-4d51-bf8f-c332f9b9fd73", "name": "operator_id", "type": "string"},
+                ],
             }
             # uuid, training_notebook_path, inference_notebook_path, created_at, updated_at
             # are machine-generated we assert they exist, but we don't assert their values
@@ -173,7 +180,7 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get("/components/{}".format(COMPONENT_ID))
+            rv = c.get(f"/components/{COMPONENT_ID}")
             result = rv.get_json()
             expected = {
                 "uuid": COMPONENT_ID,
@@ -197,13 +204,13 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/components/{}".format(COMPONENT_ID), json={
+            rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "unk": "bar",
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/components/{}".format(COMPONENT_ID), json={
+            rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "name": "bar",
             })
             result = rv.get_json()
@@ -224,13 +231,13 @@ class TestComponents(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
-            rv = c.patch("/components/{}".format(COMPONENT_ID), json={
+            rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "tags": ["UNK"],
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/components/{}".format(COMPONENT_ID), json={
+            rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "tags": ["FEATURE_ENGINEERING"],
             })
             result = rv.get_json()
@@ -259,7 +266,7 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/components/{}".format(COMPONENT_ID))
+            rv = c.delete(f"/components/{COMPONENT_ID}")
             result = rv.get_json()
             expected = {"message": "Component deleted"}
             self.assertDictEqual(expected, result)

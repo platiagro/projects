@@ -11,11 +11,12 @@ from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 PROJECT_ID = str(uuid4())
 EXPERIMENT_ID = str(uuid4())
 OPERATOR_ID = str(uuid4())
-FIGURE_NAME = "experiments/{}/operators/{}/figure-123456.png".format(EXPERIMENT_ID, OPERATOR_ID)
+FIGURE_NAME = f"experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/figure-123456.png"
 
 
 class TestFigures(TestCase):
     def setUp(self):
+        self.maxDiff = None
         try:
             MINIO_CLIENT.make_bucket(BUCKET_NAME)
         except BucketAlreadyOwnedByYou:
@@ -30,12 +31,12 @@ class TestFigures(TestCase):
         )
 
     def tearDown(self):
-        prefix = "experiments/{}".format(EXPERIMENT_ID)
+        prefix = f"experiments/{EXPERIMENT_ID}"
         for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
             MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
     def test_list_figures(self):
         with app.test_client() as c:
-            rv = c.get("/projects/{}/experiments/{}/operators/{}/figures".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID))
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/figures")
             result = rv.get_json()
             self.assertIsInstance(result, list)
