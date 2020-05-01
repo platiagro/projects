@@ -1,159 +1,181 @@
 # -*- coding: utf-8 -*-
-import json
+"""Functions that access Jupyter Notebook API."""
+from json import dumps, loads, JSONDecodeError
 from os import getenv
+from os.path import basename, dirname
+from re import compile, sub
 
-import requests
 from minio.error import NoSuchKey
-from werkzeug.exceptions import BadRequest
+from requests import Session
 
 from .object_storage import BUCKET_NAME, get_object
 
-ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
+JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
+URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
+URL_WORKSPACES = f"{JUPYTER_ENDPOINT}/lab/api/workspaces/lab"
 
-URL_CONTENTS = ENDPOINT + "/api/contents/{}"
-
-URL_WORKSPACES = ENDPOINT + "/lab/api/workspaces/lab"
-
-COOKIES = dict(_xsrf="token")
-
+COOKIES = {"_xsrf": "token"}
 HEADERS = {"content-type": "application/json", "X-XSRFToken": "token"}
 
+SESSION = Session()
+SESSION.cookies.update(COOKIES)
+SESSION.headers.update(HEADERS)
+SESSION.hooks = {
+    "response": lambda r, *args, **kwargs: r.raise_for_status(),
+}
 
-def get_full_file_path(folder_path, filename):
-    if folder_path == "":
-        full_filepath = filename
-    else:
-        full_filepath = folder_path + "/" + filename
-    return full_filepath
 
+def list_files(path):
+    """Lists the files in the specified path.
 
-def get_file(folder_path, name):
-    full_filepath = get_full_file_path(folder_path, name)
-    r = requests.get(url=URL_CONTENTS.format(full_filepath))
-    if r.status_code != requests.codes.ok:
-        return
+    Args:
+        path (str): path to a folder.
+
+    Returns:
+        list: A list of filenames.
+    """
+    r = SESSION.get(url=f"{URL_CONTENTS}/{path}")
     return r.json()
 
 
-def remove_file(path):
-    r = requests.delete(url=URL_CONTENTS.format(path), cookies=COOKIES,
-                        headers=HEADERS)
-    if r.status_code != requests.codes.no_content:
-        raise BadRequest(r.json())
-    return
+def create_new_file(path, is_folder, content=None):
+    """Creates a new file or directory in the specified path.
 
-
-def get_files(path):
-    r = requests.get(url=URL_CONTENTS.format(path))
-    if r.status_code == requests.codes.ok:
-        return r.json()
-    return
-
-
-def create_new_file(folder_path, name, is_folder, content=None):
-
+    Args:
+        path (str): path to the file or folder.
+        is_folder (bool): whether to create a file or a folder.
+        content (bool, optional): the file content.
+    """
     if content is not None:
-        content = json.loads(content.decode("utf-8"))
+        content = loads(content.decode("utf-8"))
 
-    full_filepath = get_full_file_path(folder_path, name)
+    filetype = "directory" if is_folder else "notebook"
+    payload = {"type": filetype, "content": content}
 
-    fileType = "directory" if is_folder else "notebook"
-
-    payload = {"type": fileType, "content": content}
-
-    r = requests.put(
-        url=URL_CONTENTS.format(full_filepath),
-        cookies=COOKIES,
-        headers=HEADERS,
-        data=json.dumps(payload)
+    SESSION.put(
+        url=f"{URL_CONTENTS}/{path}",
+        data=dumps(payload),
     )
 
-    if r.status_code != requests.codes.created:
-        return
 
-    return r.json()
+def delete_file(path):
+    """Deletes a file or directory in the given path.
+
+    Args:
+        path (str): path to the file.
+    """
+    SESSION.delete(
+        url=f"{URL_CONTENTS}/{path}",
+    )
 
 
-def set_workspace(path, inference_filename, training_filename):
-    r = requests.get(url=URL_WORKSPACES)
+def set_workspace(*args):
+    """Sets the notebooks that are open in the default workspace.
 
-    if r.status_code != requests.codes.ok:
-        return
-
-    inference = f"notebook:{path}/{inference_filename}"
-    training = f"notebook:{path}/{training_filename}"
-
+    Args:
+        *args: list of notebook paths.
+    """
+    r = SESSION.get(url=URL_WORKSPACES)
     resp = r.json()
+
     data = resp["data"]
     data["layout-restorer:data"] = {
         "main": {
             "dock": {
                 "type": "tab-area",
                 "currentIndex": 0,
-                "widgets": [inference, training]
+                "widgets": args
             },
             "mode": "multiple-document",
-            "current": inference
+            "current": args,
         }
     }
-    data["file-browser-filebrowser:cwd"] = {
-        "path": path
-    }
-    data[inference] = {
-        "data": {
-            "path": f"{path}/{inference_filename}",
-            "factory": "Notebook"
+    if len(args) > 0:
+        data["file-browser-filebrowser:cwd"] = {
+            "path": dirname(args[-1]),
         }
-    }
-    data[training] = {
-        "data": {
-            "path": f"{path}/{training_filename}",
-            "factory": "Notebook"
-        }
-    }
 
-    r = requests.put(
+    for path in args:
+        filename = basename(path)
+        data[filename] = {
+            "data": {
+                "path": path,
+                "factory": "Notebook",
+            }
+        }
+
+    SESSION.put(
         url=URL_WORKSPACES,
-        cookies=COOKIES,
-        headers=HEADERS,
-        data=json.dumps(resp)
+        data=dumps(resp),
     )
 
 
-def read_parameters(notebook_path):
-    notebook_params = []
-    object_name = notebook_path[len(f"minio://{BUCKET_NAME}/"):]
+def read_parameters(path):
+    """Lists the parameters declared in a notebook.
+
+    Args:
+        path (str): path to the .ipynb file.
+
+    Returns:
+        list: a list of parameters (name, default, type, label, description).
+    """
+    object_name = path[len(f"minio://{BUCKET_NAME}/"):]
     try:
-        training_notebook = get_object(object_name)
-    except NoSuchKey:
-        return notebook_params
-    json_training_notebook = json.loads(training_notebook.decode("utf-8"))
+        training_notebook = loads(get_object(object_name).decode("utf-8"))
+    except (NoSuchKey, JSONDecodeError):
+        return []
 
-    if "cells" not in json_training_notebook:
-        return notebook_params
-
-    cells = json_training_notebook["cells"]
+    parameters = []
+    cells = training_notebook.get("cells", [])
     for cell in cells:
         cell_type = cell["cell_type"]
-        if cell_type == "code":
+        tags = cell["metadata"].get("tags", [])
+        if cell_type == "code" and "parameters" in tags:
             source = cell["source"]
-            for line in source:
-                if "#@param" in line:
-                    # name = "value" #@param {type:"string"}
-                    param_values = line.replace("\n", "").split("#@param")
 
-                    # name = value
-                    part1 = param_values[0].split("=")
-                    param_name = part1[0].strip()
-                    param_default = part1[1].replace("\"", "").strip()
+            parameters.extend(
+                read_parameters_from_source(source),
+            )
 
-                    # {type:"string"}
-                    part2 = param_values[1].replace("type", '"type"').strip()
+    return parameters
 
-                    # create json param and add to array
-                    param = json.loads(part2)
-                    param["name"] = param_name
-                    param["default"] = param_default
-                    notebook_params.append(param)
 
-    return notebook_params
+def read_parameters_from_source(source):
+    """Lists the parameters declared in source code.
+
+    Args:
+        source (list): source code lines.
+
+    Returns:
+        list: a list of parameters (name, default, type, label, description).
+    """
+    parameters = []
+    # Regex to capture a parameter declaration
+    # Inspired by Google Colaboratory Forms
+    # Example of a parameter declaration:
+    # name = "value" #@param ["1st option", "2nd option"] {type:"string", label:"Foo Bar", description:"Foo Bar"}
+    pattern = compile(r"^(\w+)\s*=\s*(.+)\s+#@param(?:(\s+\[.*\]))?(\s+\{.*\})")
+
+    for line in source:
+        match = pattern.search(line)
+        if match:
+            try:
+                name = match.group(1)
+                default = match.group(2)
+                options = match.group(3)
+                metadata = match.group(4)
+
+                parameter = {"name": name, "default": loads(default)}
+
+                if options:
+                    parameter["options"] = loads(options)
+
+                # adds quotes to metadata keys
+                metadata = sub(r"(\w+):", r'"\1":', metadata)
+                parameter.update(loads(metadata))
+
+                parameters.append(parameter)
+            except JSONDecodeError:
+                pass
+
+    return parameters

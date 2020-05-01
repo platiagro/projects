@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 from io import BytesIO
-from json import dumps
+from json import dumps, loads
 from unittest import TestCase
 from uuid import uuid4
 
+import requests
 from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
 from projects.database import engine
+from projects.jupyter import JUPYTER_ENDPOINT, COOKIES, HEADERS
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 COMPONENT_ID = str(uuid4())
@@ -58,15 +60,42 @@ class TestComponents(TestCase):
             length=file.getbuffer().nbytes,
         )
 
+        session = requests.Session()
+        session.cookies.update(COOKIES)
+        session.headers.update(HEADERS)
+        session.hooks = {
+            "response": lambda r, *args, **kwargs: r.raise_for_status(),
+        }
+
+        session.put(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/components",
+            data=dumps({"type": "directory", "content": None}),
+        )
+
+        session.put(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}",
+            data=dumps({"type": "directory", "content": None}),
+        )
+
+        session.put(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Inference.ipynb",
+            data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
+        )
+
+        session.put(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Training.ipynb",
+            data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
+        )
+
     def tearDown(self):
+        prefix = f"components/{COMPONENT_ID}"
+        for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
+            MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
+
         conn = engine.connect()
         text = f"DELETE FROM components WHERE uuid = '{COMPONENT_ID}'"
         conn.execute(text)
         conn.close()
-
-        prefix = f"components/{COMPONENT_ID}"
-        for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
-            MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
     def test_list_components(self):
         with app.test_client() as c:
