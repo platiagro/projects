@@ -2,7 +2,7 @@
 """Functions that access Jupyter Notebook API."""
 from json import dumps, loads, JSONDecodeError
 from os import getenv
-from os.path import basename, dirname
+from os.path import dirname
 from re import compile, sub
 
 from minio.error import NoSuchKey
@@ -78,26 +78,28 @@ def set_workspace(*args):
     r = SESSION.get(url=URL_WORKSPACES)
     resp = r.json()
 
+    prefixed_args = [f"notebook:{arg}" for arg in args]
+
     data = resp["data"]
     data["layout-restorer:data"] = {
         "main": {
             "dock": {
                 "type": "tab-area",
                 "currentIndex": 0,
-                "widgets": args
+                "widgets": prefixed_args,
             },
             "mode": "multiple-document",
-            "current": args,
+            "current": next(iter(prefixed_args), None),
         }
     }
+
     if len(args) > 0:
         data["file-browser-filebrowser:cwd"] = {
             "path": dirname(args[-1]),
         }
 
-    for path in args:
-        filename = basename(path)
-        data[filename] = {
+    for path, prefix_path in zip(args, prefixed_args):
+        data[prefix_path] = {
             "data": {
                 "path": path,
                 "factory": "Notebook",
