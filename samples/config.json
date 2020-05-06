@@ -117,15 +117,6 @@
         ]
     },
     {
-        "name": "Quantile Transformer",
-        "description": "A component that transforms the features to follow a uniform or a normal distribution.",
-        "trainingNotebook": "/samples/quantile-transformer/Training.ipynb",
-        "inferenceNotebook": "/samples/quantile-transformer/Inference.ipynb",
-        "tags": [
-            "FEATURE_ENGINEERING"
-        ]
-    },
-    {
         "name": "Robust Scaler",
         "description": "A component that scale features using statistics that are robust to outliers.",
         "trainingNotebook": "/samples/robust-scaler/Training.ipynb",
