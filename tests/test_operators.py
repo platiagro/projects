@@ -19,8 +19,10 @@ TARGET = "col4"
 POSITION = 0
 PARAMETERS = {}
 TAGS = ["PREDICTOR"]
-TRAINING_NOTEBOOK_PATH = "minio://{}/components/{}/Training.ipynb".format(BUCKET_NAME, COMPONENT_ID)
-INFERENCE_NOTEBOOK_PATH = "minio://{}/components/{}/Inference.ipynb".format(BUCKET_NAME, COMPONENT_ID)
+TAGS_JSON = dumps(TAGS)
+PARAMETERS_JSON = dumps(PARAMETERS)
+TRAINING_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Training.ipynb"
+INFERENCE_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Inference.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -29,74 +31,87 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 class TestOperators(TestCase):
     def setUp(self):
+        self.maxDiff = None
         conn = engine.connect()
-        text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)
+        text = (
+            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
+            f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
         conn.execute(text)
 
-        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, NAME, PROJECT_ID, DATASET, TARGET, POSITION, 1, CREATED_AT, UPDATED_AT)
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{DATASET}', '{TARGET}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
         conn.execute(text)
 
-        text = "INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(COMPONENT_ID, NAME, DESCRIPTION, dumps(TAGS), TRAINING_NOTEBOOK_PATH, INFERENCE_NOTEBOOK_PATH, CREATED_AT, UPDATED_AT)
+        text = (
+            f"INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{TRAINING_NOTEBOOK_PATH}', '{INFERENCE_NOTEBOOK_PATH}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
         conn.execute(text)
 
-        text = "INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(OPERATOR_ID, EXPERIMENT_ID, COMPONENT_ID, POSITION, dumps(PARAMETERS), CREATED_AT, UPDATED_AT)
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{POSITION}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
         conn.execute(text)
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
-        text = "DELETE FROM operators WHERE experiment_id = '{}'".format(EXPERIMENT_ID)
+        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
-        text = "DELETE FROM components WHERE uuid = '{}'".format(COMPONENT_ID)
+        text = f"DELETE FROM components WHERE uuid = '{COMPONENT_ID}'"
         conn.execute(text)
 
-        text = "DELETE FROM experiments WHERE project_id = '{}'".format(PROJECT_ID)
+        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
-        text = "DELETE FROM projects WHERE uuid = '{}'".format(PROJECT_ID)
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
         conn.close()
 
     def test_list_operators(self):
         with app.test_client() as c:
-            rv = c.get("/projects/unk/experiments/{}/operators".format(EXPERIMENT_ID))
+            rv = c.get(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators")
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get("/projects/{}/experiments/unk/operators".format(PROJECT_ID))
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/unk/operators")
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID))
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators")
             result = rv.get_json()
             self.assertIsInstance(result, list)
 
     def test_create_operator(self):
         with app.test_client() as c:
-            rv = c.post("/projects/unk/experiments/{}/operators".format(EXPERIMENT_ID), json={})
+            rv = c.post(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators", json={})
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.post("/projects/{}/experiments/unk/operators".format(PROJECT_ID), json={})
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/unk/operators", json={})
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={})
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={})
             result = rv.get_json()
             expected = {"message": "componentId is required"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "componentId": "unk",
             })
             result = rv.get_json()
@@ -104,7 +119,7 @@ class TestOperators(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "componentId": COMPONENT_ID,
                 "parameters": [{"name": "coef", "value": 0.1}],
             })
@@ -113,7 +128,7 @@ class TestOperators(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "componentId": COMPONENT_ID,
                 "parameters": {"coef": [0.1]},
             })
@@ -122,7 +137,7 @@ class TestOperators(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "componentId": COMPONENT_ID,
             })
             result = rv.get_json()
@@ -140,7 +155,7 @@ class TestOperators(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
-            rv = c.post("/projects/{}/experiments/{}/operators".format(PROJECT_ID, EXPERIMENT_ID), json={
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "componentId": COMPONENT_ID,
                 "parameters": {"coef": 1.0}
             })
@@ -161,31 +176,31 @@ class TestOperators(TestCase):
 
     def test_update_operator(self):
         with app.test_client() as c:
-            rv = c.patch("/projects/unk/experiments/{}/operators/{}".format(EXPERIMENT_ID, OPERATOR_ID), json={})
+            rv = c.patch(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={})
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/projects/{}/experiments/unk/operators/{}".format(PROJECT_ID, OPERATOR_ID), json={})
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID}", json={})
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/projects/{}/experiments/{}/operators/foo".format(PROJECT_ID, EXPERIMENT_ID), json={})
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/foo", json={})
             result = rv.get_json()
             expected = {"message": "The specified operator does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "unk": "bar",
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "parameters": [{"name": "coef", "value": 0.1}],
             })
             result = rv.get_json()
@@ -193,7 +208,7 @@ class TestOperators(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "parameters": {"coef": [0.1]},
             })
             result = rv.get_json()
@@ -201,7 +216,7 @@ class TestOperators(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "position": 0,
             })
             result = rv.get_json()
@@ -219,7 +234,7 @@ class TestOperators(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
-            rv = c.patch("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID), json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "parameters": {"coef": 0.2},
             })
             result = rv.get_json()
@@ -239,25 +254,25 @@ class TestOperators(TestCase):
 
     def test_delete_operator(self):
         with app.test_client() as c:
-            rv = c.delete("/projects/unk/experiments/{}/operators/{}".format(EXPERIMENT_ID, OPERATOR_ID))
+            rv = c.delete(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}")
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/projects/{}/experiments/unk/operators/{}".format(PROJECT_ID, OPERATOR_ID))
+            rv = c.delete(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID}")
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/projects/{}/experiments/{}/operators/unk".format(PROJECT_ID, EXPERIMENT_ID))
+            rv = c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/unk")
             result = rv.get_json()
             expected = {"message": "The specified operator does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/projects/{}/experiments/{}/operators/{}".format(PROJECT_ID, EXPERIMENT_ID, OPERATOR_ID))
+            rv = c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}")
             result = rv.get_json()
             expected = {"message": "Operator deleted"}
             self.assertDictEqual(expected, result)

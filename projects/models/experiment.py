@@ -26,7 +26,7 @@ class Experiment(Base):
                              primaryjoin=uuid == Operator.experiment_id)
 
     def __repr__(self):
-        return "<Experiment {}>".format(self.name)
+        return f"<Experiment {self.name}>"
 
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}

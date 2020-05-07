@@ -18,6 +18,7 @@ DESCRIPTION= "Description"
 
 class TestProjects(TestCase):
     def setUp(self):
+        self.maxDiff = None
         conn = engine.connect()
         text = "INSERT INTO projects (uuid, name, created_at, updated_at,description) VALUES ('{}', '{}', '{}', '{}','{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, DESCRIPTION)
         conn.execute(text)
@@ -28,10 +29,10 @@ class TestProjects(TestCase):
 
     def tearDown(self):
         conn = engine.connect()
-        text = "DELETE FROM experiments WHERE uuid = '{}'".format(EXPERIMENT_ID)
+        text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
-        text = "DELETE FROM projects WHERE uuid = '{}'".format(PROJECT_ID)
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
         conn.close()
 
@@ -90,7 +91,7 @@ class TestProjects(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get("/projects/{}".format(PROJECT_ID))
+            rv = c.get(f"/projects/{PROJECT_ID}")
             result = rv.get_json()
             result_experiments = result.pop("experiments")
             expected = {
@@ -127,13 +128,13 @@ class TestProjects(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/projects/{}".format(PROJECT_ID), json={
+            rv = c.patch(f"/projects/{PROJECT_ID}", json={
                 "unk": "bar",
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/projects/{}".format(PROJECT_ID), json={
+            rv = c.patch(f"/projects/{PROJECT_ID}", json={
                 "name": "bar",
             })
             result = rv.get_json()
@@ -174,7 +175,7 @@ class TestProjects(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/projects/{}".format(PROJECT_ID))
+            rv = c.delete(f"/projects/{PROJECT_ID}")
             result = rv.get_json()
             expected = {"message": "Project deleted"}
             self.assertDictEqual(expected, result)

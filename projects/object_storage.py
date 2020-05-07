@@ -78,7 +78,7 @@ def duplicate_object(source, destination):
     MINIO_CLIENT.copy_object(
         bucket_name=BUCKET_NAME,
         object_name=destination,
-        object_source="{}/{}".format(BUCKET_NAME, source),
+        object_source=f"{BUCKET_NAME}/{source}"
     )
 
 
