@@ -13,15 +13,16 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 EXPERIMENT_ID = str(uuid4())
 EXPERIMENT_NAME = "Novo experimento"
+DESCRIPTION= "Description"
 
 
 class TestProjects(TestCase):
     def setUp(self):
         conn = engine.connect()
-        text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO projects (uuid, name, created_at, updated_at,description) VALUES ('{}', '{}', '{}', '{}','{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, DESCRIPTION)
         conn.execute(text)
 
-        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) VALUES ('{}', '{}', '{}', null, null, '{}', '{}', '{}', '{}')".format(EXPERIMENT_ID, EXPERIMENT_NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT)
+        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at,description) VALUES ('{}', '{}', '{}', null, null, '{}', '{}', '{}', '{}','{}')".format(EXPERIMENT_ID, EXPERIMENT_NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT, DESCRIPTION)
         conn.execute(text)
         conn.close()
 
@@ -44,17 +45,19 @@ class TestProjects(TestCase):
         with app.test_client() as c:
             rv = c.post("/projects", json={})
             result = rv.get_json()
-            expected = {"message": "name is required"}
+            expected = {"message": "name and description is required"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
             rv = c.post("/projects", json={
                 "name": "foo",
+                "description":"description",
             })
             result = rv.get_json()
             result_experiments = result.pop("experiments")
             expected = {
                 "name": "foo",
+                "description": "description",
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -73,7 +76,7 @@ class TestProjects(TestCase):
                 "operators": [],
             }
             self.assertEqual(len(result_experiments), 1)
-            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt"]
+            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt", "description"]
             for attr in machine_generated:
                 self.assertIn(attr, result_experiments[0])
                 del result_experiments[0][attr]
@@ -95,6 +98,7 @@ class TestProjects(TestCase):
                 "name": NAME,
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
+                "description": DESCRIPTION,
             }
             self.assertDictEqual(expected, result)
 

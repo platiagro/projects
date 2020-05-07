@@ -156,6 +156,12 @@ paths:
       summary: "Create a new project."
       tags:
         - "Projects"
+      parameters:
+        - name: description
+          in: path
+          required: true
+          schema:
+          type: string
       requestBody:
         $ref: "#/components/requestBodies/Project"
       responses:
