@@ -156,12 +156,6 @@ paths:
       summary: "Create a new project."
       tags:
         - "Projects"
-      parameters:
-        - name: description
-          in: path
-          required: true
-          schema:
-          type: string
       requestBody:
         $ref: "#/components/requestBodies/Project"
       responses:
@@ -673,6 +667,8 @@ components:
           format: uuid
         name:
           type: string
+        description:
+          type: string
         experiments:
           type: array
           items:
@@ -827,6 +823,8 @@ components:
             type: object
             properties:
               name:
+                type: string
+              description:
                 type: string
     ExperimentPost:
       content:
