@@ -15,7 +15,7 @@ class Project(Base):
     name = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    description = Column(Text, nullable=False)
+    description = Column(Text)
     experiments = relationship("Experiment", lazy="joined")
 
     def __repr__(self):
