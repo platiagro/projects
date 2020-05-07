@@ -20,15 +20,9 @@ class TestProjects(TestCase):
     def setUp(self):
         self.maxDiff = None
         conn = engine.connect()
-<<<<<<< HEAD
-        text = "INSERT INTO projects (uuid, name, created_at, updated_at,description) VALUES ('{}', '{}', '{}', '{}','{}')".format(PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, DESCRIPTION)
-        conn.execute(text)
-
-        text = "INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at,description) VALUES ('{}', '{}', '{}', null, null, '{}', '{}', '{}', '{}','{}')".format(EXPERIMENT_ID, EXPERIMENT_NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT, DESCRIPTION)
-=======
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, description) "
+            f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}', '{DESCRIPTION}')"
         )
         conn.execute(text)
 
@@ -36,7 +30,7 @@ class TestProjects(TestCase):
             f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
             f"VALUES ('{EXPERIMENT_ID}', '{EXPERIMENT_NAME}', '{PROJECT_ID}', null, null, 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
->>>>>>> master
+
         conn.execute(text)
         conn.close()
 
@@ -59,7 +53,7 @@ class TestProjects(TestCase):
         with app.test_client() as c:
             rv = c.post("/projects", json={})
             result = rv.get_json()
-            expected = {"message": "name and description is required"}
+            expected = {"message": "name is required"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
@@ -90,7 +84,7 @@ class TestProjects(TestCase):
                 "operators": [],
             }
             self.assertEqual(len(result_experiments), 1)
-            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt", "description"]
+            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt"]
             for attr in machine_generated:
                 self.assertIn(attr, result_experiments[0])
                 del result_experiments[0][attr]
@@ -156,6 +150,7 @@ class TestProjects(TestCase):
                 "uuid": PROJECT_ID,
                 "name": "bar",
                 "createdAt": CREATED_AT_ISO,
+                "description": DESCRIPTION,
             }
             machine_generated = ["updatedAt"]
             for attr in machine_generated:
