@@ -1,7 +1,7 @@
 # PlatIAgro Projects
 
 [![Build Status](https://github.com/platiagro/projects/workflows/Python%20application/badge.svg)](https://github.com/platiagro/projects/actions?query=workflow%3A%22Python+application%22)
-[![codecov](https://codecov.io/gh/platiagro/projects/branch/master/graph/badge.svg)](https://codecov.io/gh/platiagro/projects)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=platiagro_projects&metric=alert_status)](https://sonarcloud.io/dashboard?id=platiagro_projects)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Gitter](https://badges.gitter.im/platiagro/community.svg)](https://gitter.im/platiagro/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Known Vulnerabilities](https://snyk.io/test/github/platiagro/projects/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/platiagro/projects?targetFile=requirements.txt)
@@ -149,7 +149,7 @@ pytest
 Use the following command to run lint:
 
 ```bash
-flake8
+flake8 --max-line-length 127 projects/
 ```
 
 ## API

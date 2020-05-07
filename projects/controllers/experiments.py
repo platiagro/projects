@@ -11,7 +11,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Experiment, Template, Operator
 from ..object_storage import remove_objects
-from .projects import raise_if_project_does_not_exist
+from .utils import raise_if_project_does_not_exist
 
 
 def list_experiments(project_id):
@@ -56,8 +56,7 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
                             name=name,
                             project_id=project_id,
                             dataset=dataset,
-                            target=target,
-                            position=-1)    # use temporary position -1, fix_position below
+                            target=target)
     db_session.add(experiment)
     db_session.commit()
 
@@ -191,19 +190,15 @@ def fix_positions(project_id, experiment_id=None, new_position=None):
 
     for index, experiment in enumerate(other_experiments):
         data = {"position": index}
+        is_last = (index == len(other_experiments) - 1)
+        # if experiment_id WAS NOT informed, then set the higher position as is_active=True
+        if experiment_id is None and is_last:
+            data["is_active"] = True
+        # if experiment_id WAS informed, then set experiment.is_active=True
+        elif experiment_id is not None and experiment_id == experiment.uuid:
+            data["is_active"] = True
+        else:
+            data["is_active"] = False
+
         db_session.query(Experiment).filter_by(uuid=experiment.uuid).update(data)
     db_session.commit()
-
-
-def raise_if_experiment_does_not_exist(experiment_id):
-    """Raises an exception if the specified experiment does not exist.
-
-    Args:
-        experiment_id (str): the experiment uuid.
-    """
-    exists = db_session.query(Experiment.uuid) \
-        .filter_by(uuid=experiment_id) \
-        .scalar() is not None
-
-    if not exists:
-        raise NotFound("The specified experiment does not exist")

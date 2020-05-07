@@ -5,24 +5,39 @@ from uuid import uuid4
 from projects.api.main import app
 from projects.database import engine
 
-UUID = str(uuid4())
+PROJECT_ID = str(uuid4())
 NAME = "foo"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
+EXPERIMENT_ID = str(uuid4())
+EXPERIMENT_NAME = "Novo experimento"
 
 
 class TestProjects(TestCase):
     def setUp(self):
+        self.maxDiff = None
         conn = engine.connect()
-        text = "INSERT INTO projects (uuid, name, created_at, updated_at) VALUES ('{}', '{}', '{}', '{}')".format(UUID, NAME, CREATED_AT, UPDATED_AT)
+        text = (
+            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
+            f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID}', '{EXPERIMENT_NAME}', '{PROJECT_ID}', null, null, 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
         conn.execute(text)
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
-        text = "DELETE FROM projects WHERE uuid = '{}'".format(UUID)
+        text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
         conn.close()
 
@@ -44,9 +59,9 @@ class TestProjects(TestCase):
                 "name": "foo",
             })
             result = rv.get_json()
+            result_experiments = result.pop("experiments")
             expected = {
                 "name": "foo",
-                "experiments": [],
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -56,6 +71,21 @@ class TestProjects(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
+            expected = {
+                "name": EXPERIMENT_NAME,
+                "dataset": None,
+                "target": None,
+                "position": 0,
+                "isActive": True,
+                "operators": [],
+            }
+            self.assertEqual(len(result_experiments), 1)
+            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result_experiments[0])
+                del result_experiments[0][attr]
+            self.assertDictEqual(expected, result_experiments[0])
+
     def test_get_project(self):
         with app.test_client() as c:
             rv = c.get("/projects/foo")
@@ -64,16 +94,33 @@ class TestProjects(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get("/projects/{}".format(UUID))
+            rv = c.get(f"/projects/{PROJECT_ID}")
             result = rv.get_json()
+            result_experiments = result.pop("experiments")
             expected = {
-                "uuid": UUID,
+                "uuid": PROJECT_ID,
                 "name": NAME,
-                "experiments": [],
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
             }
             self.assertDictEqual(expected, result)
+
+            expected = {
+                "uuid": EXPERIMENT_ID,
+                "name": EXPERIMENT_NAME,
+                "projectId": PROJECT_ID,
+                "dataset": None,
+                "target": None,
+                "position": 0,
+                "isActive": True,
+                "operators": [],
+            }
+            self.assertEqual(len(result_experiments), 1)
+            machine_generated = ["createdAt", "updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result_experiments[0])
+                del result_experiments[0][attr]
+            self.assertDictEqual(expected, result_experiments[0])
 
     def test_update_project(self):
         with app.test_client() as c:
@@ -83,20 +130,20 @@ class TestProjects(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/projects/{}".format(UUID), json={
+            rv = c.patch(f"/projects/{PROJECT_ID}", json={
                 "unk": "bar",
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/projects/{}".format(UUID), json={
+            rv = c.patch(f"/projects/{PROJECT_ID}", json={
                 "name": "bar",
             })
             result = rv.get_json()
+            result_experiments = result.pop("experiments")
             expected = {
-                "uuid": UUID,
+                "uuid": PROJECT_ID,
                 "name": "bar",
-                "experiments": [],
                 "createdAt": CREATED_AT_ISO,
             }
             machine_generated = ["updatedAt"]
@@ -104,6 +151,23 @@ class TestProjects(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+            expected = {
+                "uuid": EXPERIMENT_ID,
+                "name": EXPERIMENT_NAME,
+                "projectId": PROJECT_ID,
+                "dataset": None,
+                "target": None,
+                "position": 0,
+                "isActive": True,
+                "operators": [],
+            }
+            self.assertEqual(len(result_experiments), 1)
+            machine_generated = ["createdAt", "updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result_experiments[0])
+                del result_experiments[0][attr]
+            self.assertDictEqual(expected, result_experiments[0])
 
     def test_delete_project(self):
         with app.test_client() as c:
@@ -113,7 +177,7 @@ class TestProjects(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete("/projects/{}".format(UUID))
+            rv = c.delete(f"/projects/{PROJECT_ID}")
             result = rv.get_json()
             expected = {"message": "Project deleted"}
             self.assertDictEqual(expected, result)

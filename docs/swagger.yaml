@@ -693,6 +693,8 @@ components:
           type: string
         position:
           type: integer
+        isActive:
+          type: boolean
         dataset:
           type: string
         target:
@@ -846,6 +848,8 @@ components:
                 type: string
               position:
                 type: integer
+              isActive:
+                type: boolean
               templateId:
                 type: string
                 format: uuid
