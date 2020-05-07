@@ -6,8 +6,8 @@ from pkgutil import get_data
 from uuid import uuid4
 
 from minio.error import ResponseError
-from sqlalchemy.exc import InvalidRequestError, ProgrammingError
-from werkzeug.exceptions import BadRequest, NotFound
+from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError
+from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
 from ..jupyter import create_new_file, set_workspace, list_files, delete_file
 
@@ -168,6 +168,9 @@ def delete_component(uuid):
         raise NotFound("The specified component does not exist")
 
     try:
+        db_session.query(Component).filter_by(uuid=uuid).delete()
+        db_session.commit()
+
         source_name = f"{PREFIX}/{uuid}"
 
         # remove files and directory from jupyter notebook server
@@ -182,9 +185,8 @@ def delete_component(uuid):
         for minio_file in minio_files:
             remove_object(minio_file.object_name)
         remove_object(source_name)
-
-        db_session.query(Component).filter_by(uuid=uuid).delete()
-        db_session.commit()
+    except IntegrityError as e:
+        raise Forbidden(str(e))
     except (InvalidRequestError, ProgrammingError, ResponseError) as e:
         raise BadRequest(str(e))
 
