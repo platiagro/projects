@@ -13,6 +13,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 EXPERIMENT_ID = str(uuid4())
 EXPERIMENT_NAME = "Novo experimento"
+DESCRIPTION= "Description"
 
 
 class TestProjects(TestCase):
@@ -20,8 +21,8 @@ class TestProjects(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, description) "
+            f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}', '{DESCRIPTION}')"
         )
         conn.execute(text)
 
@@ -29,6 +30,7 @@ class TestProjects(TestCase):
             f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
             f"VALUES ('{EXPERIMENT_ID}', '{EXPERIMENT_NAME}', '{PROJECT_ID}', null, null, 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
+
         conn.execute(text)
         conn.close()
 
@@ -57,11 +59,13 @@ class TestProjects(TestCase):
 
             rv = c.post("/projects", json={
                 "name": "foo",
+                "description":"description",
             })
             result = rv.get_json()
             result_experiments = result.pop("experiments")
             expected = {
                 "name": "foo",
+                "description": "description",
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -102,6 +106,7 @@ class TestProjects(TestCase):
                 "name": NAME,
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
+                "description": DESCRIPTION,
             }
             self.assertDictEqual(expected, result)
 
@@ -145,6 +150,7 @@ class TestProjects(TestCase):
                 "uuid": PROJECT_ID,
                 "name": "bar",
                 "createdAt": CREATED_AT_ISO,
+                "description": DESCRIPTION,
             }
             machine_generated = ["updatedAt"]
             for attr in machine_generated:

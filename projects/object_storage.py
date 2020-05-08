@@ -16,6 +16,7 @@ MINIO_CLIENT = Minio(
 )
 
 
+
 def make_bucket(name):
     """Creates the bucket in MinIO. Ignores exception if bucket already exists.
 
