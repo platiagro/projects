@@ -667,6 +667,8 @@ components:
           format: uuid
         name:
           type: string
+        description:
+          type: string
         experiments:
           type: array
           items:
@@ -821,6 +823,8 @@ components:
             type: object
             properties:
               name:
+                type: string
+              description:
                 type: string
     ExperimentPost:
       content:

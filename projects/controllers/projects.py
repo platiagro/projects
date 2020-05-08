@@ -35,7 +35,7 @@ def create_project(name=None, **kwargs):
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
-    project = Project(uuid=str(uuid4()), name=name)
+    project = Project(uuid=str(uuid4()), name=name, description=kwargs.get("description"))
     db_session.add(project)
     db_session.commit()
     create_experiment(name="Novo experimento", project_id=project.uuid)
