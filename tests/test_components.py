@@ -157,8 +157,6 @@ class TestComponents(TestCase):
                 "parameters": [
                     {"default": "iris", "name": "dataset", "type": "string"},
                     {"default": "Species", "name": "target", "type": "string"},
-                    {"default": "a71b85d0-6d92-4868-80a1-d2efd270ca5f", "name": "experiment_id", "type": "string"},
-                    {"default": "c0deb81a-540e-4d51-bf8f-c332f9b9fd73", "name": "operator_id", "type": "string"},
                 ],
             }
             # uuid, training_notebook_path, inference_notebook_path, created_at, updated_at
