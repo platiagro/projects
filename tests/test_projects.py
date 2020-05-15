@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
-from uuid import uuid4
 
 from projects.api.main import app
 from projects.database import engine
+from projects.controllers.utils import uuid_alpha
 
-PROJECT_ID = str(uuid4())
+PROJECT_ID = str(uuid_alpha())
 NAME = "foo"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
-EXPERIMENT_ID = str(uuid4())
+EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_NAME = "Novo experimento"
 DESCRIPTION= "Description"
 

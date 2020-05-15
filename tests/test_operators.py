@@ -5,14 +5,14 @@ from unittest import TestCase
 from projects.api.main import app
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME
-from uuid import uuid4
+from projects.controllers.utils import uuid_alpha
 
-OPERATOR_ID = str(uuid4())
+OPERATOR_ID = str(uuid_alpha())
 NAME = "foo"
 DESCRIPTION = "long foo"
-PROJECT_ID = str(uuid4())
-EXPERIMENT_ID = str(uuid4())
-COMPONENT_ID = str(uuid4())
+PROJECT_ID = str(uuid_alpha())
+EXPERIMENT_ID = str(uuid_alpha())
+COMPONENT_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1}
 DATASET = "iris"
 TARGET = "col4"
