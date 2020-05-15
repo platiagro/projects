@@ -10,7 +10,6 @@ from ..models import Template, Operator
 from .utils import raise_if_experiment_does_not_exist, uuid_alpha
 
 
-
 def list_templates():
     """Lists all templates from our database.
 
