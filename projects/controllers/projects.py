@@ -2,7 +2,6 @@
 """Projects controller."""
 from datetime import datetime
 from os.path import join
-from uuid import uuid4
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
@@ -11,6 +10,7 @@ from .experiments import create_experiment
 from ..database import db_session
 from ..models import Project, Experiment
 from ..object_storage import remove_objects
+from .utils import uuid_alpha
 
 
 def list_projects():
@@ -35,7 +35,7 @@ def create_project(name=None, **kwargs):
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
-    project = Project(uuid=str(uuid4()), name=name, description=kwargs.get("description"))
+    project = Project(uuid=uuid_alpha(), name=name, description=kwargs.get("description"))
     db_session.add(project)
     db_session.commit()
     create_experiment(name="Novo experimento", project_id=project.uuid)

@@ -3,18 +3,18 @@
 from datetime import datetime
 from os.path import join
 from pkgutil import get_data
-from uuid import uuid4
 
 from minio.error import ResponseError
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from ..jupyter import create_new_file, set_workspace, list_files, delete_file
 
 from ..database import db_session
+from ..jupyter import create_new_file, set_workspace, list_files, delete_file
 from ..models import Component
 from ..object_storage import BUCKET_NAME, get_object, put_object, \
     duplicate_object, list_objects, remove_object
+from .utils import uuid_alpha
 
 PREFIX = "components"
 VALID_TAGS = ["DEFAULT", "FEATURE_ENGINEERING", "PREDICTOR"]
@@ -66,7 +66,7 @@ def create_component(name=None, description=None, tags=None,
     if copy_from:
         return copy_component(name, description, tags, copy_from)
 
-    component_id = str(uuid4())
+    component_id = str(uuid_alpha())
 
     # loads a sample notebook if none was sent
     if training_notebook is None:
@@ -208,7 +208,7 @@ def copy_component(name, description, tags, copy_from):
     if component is None:
         raise BadRequest("Source component does not exist")
 
-    component_id = str(uuid4())
+    component_id = uuid_alpha()
 
     # adds notebooks to object storage
     source_name = f"{PREFIX}/{copy_from}/Training.ipynb"

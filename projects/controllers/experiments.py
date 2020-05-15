@@ -3,7 +3,6 @@
 import sys
 from datetime import datetime
 from os.path import join
-from uuid import uuid4
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
@@ -11,7 +10,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Experiment, Template, Operator
 from ..object_storage import remove_objects
-from .utils import raise_if_project_does_not_exist
+from .utils import raise_if_project_does_not_exist, uuid_alpha
 
 
 def list_experiments(project_id):
@@ -52,7 +51,7 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
-    experiment = Experiment(uuid=str(uuid4()),
+    experiment = Experiment(uuid=uuid_alpha(),
                             name=name,
                             project_id=project_id,
                             dataset=dataset,
@@ -117,7 +116,7 @@ def update_experiment(uuid, project_id, **kwargs):
 
         for index, component_id in enumerate(template.components):
             objects = [
-                Operator(uuid=str(uuid4()),
+                Operator(uuid=uuid_alpha(),
                          experiment_id=uuid,
                          component_id=component_id,
                          position=index)

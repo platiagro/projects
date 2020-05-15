@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """Templates controller."""
 from datetime import datetime
-from uuid import uuid4
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
 from ..models import Template, Operator
-from .utils import raise_if_experiment_does_not_exist
+from .utils import raise_if_experiment_does_not_exist, uuid_alpha
+
 
 
 def list_templates():
@@ -50,7 +50,7 @@ def create_template(name=None, experiment_id=None, **kwargs):
     # so there is no need to save positions
     components = [operator.component_id for operator in operators]
 
-    template = Template(uuid=str(uuid4()), name=name, components=components)
+    template = Template(uuid=uuid_alpha(), name=name, components=components)
     db_session.add(template)
     db_session.commit()
     return template.as_dict()

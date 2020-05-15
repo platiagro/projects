@@ -2,7 +2,6 @@
 """Operator controller."""
 import sys
 from datetime import datetime
-from uuid import uuid4
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
@@ -10,7 +9,8 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Operator
 from .utils import raise_if_component_does_not_exist, \
-    raise_if_project_does_not_exist, raise_if_experiment_does_not_exist
+    raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
+    uuid_alpha
 
 
 def list_operators(project_id, experiment_id):
@@ -64,7 +64,7 @@ def create_operator(project_id, experiment_id, component_id=None,
 
     raise_if_parameters_are_invalid(parameters)
 
-    operator = Operator(uuid=str(uuid4()),
+    operator = Operator(uuid=uuid_alpha(),
                         experiment_id=experiment_id,
                         component_id=component_id,
                         position=-1,
