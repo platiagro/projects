@@ -5,8 +5,8 @@ from unittest import TestCase
 from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 from projects.controllers.utils import uuid_alpha
+from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())

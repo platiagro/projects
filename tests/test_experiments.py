@@ -3,9 +3,9 @@ from json import dumps
 from unittest import TestCase
 
 from projects.api.main import app
+from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME
-from projects.controllers.utils import uuid_alpha
 
 EXPERIMENT_ID = str(uuid_alpha())
 NAME = "foo"

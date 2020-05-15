@@ -2,8 +2,8 @@
 from unittest import TestCase
 
 from projects.api.main import app
-from projects.database import engine
 from projects.controllers.utils import uuid_alpha
+from projects.database import engine
 
 PROJECT_ID = str(uuid_alpha())
 NAME = "foo"

@@ -6,9 +6,9 @@ from unittest import TestCase
 from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
+from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
-from projects.controllers.utils import uuid_alpha
 
 COMPONENT_ID = str(uuid_alpha())
 NAME = "foo"

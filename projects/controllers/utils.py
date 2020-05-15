@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Shared functions."""
 import random
-import string
 import uuid
 
 from werkzeug.exceptions import NotFound
@@ -56,6 +55,6 @@ def uuid_alpha() -> str:
     """Generates an uuid that always starts with an alpha char."""
     uuid_ = str(uuid.uuid4())
     if not uuid_[0].isalpha():
-        c = random.choice(string.ascii_lowercase)
+        c = random.choice(["a", "b", "c", "d", "e", "f"])
         uuid_ = f"{c}{uuid_[1:]}"
     return uuid_
