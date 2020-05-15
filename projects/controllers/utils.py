@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """Shared functions."""
+import random
+import uuid
+
 from werkzeug.exceptions import NotFound
 
 from ..database import db_session
@@ -46,3 +49,12 @@ def raise_if_experiment_does_not_exist(experiment_id):
 
     if not exists:
         raise NotFound("The specified experiment does not exist")
+
+
+def uuid_alpha() -> str:
+    """Generates an uuid that always starts with an alpha char."""
+    uuid_ = str(uuid.uuid4())
+    if not uuid_[0].isalpha():
+        c = random.choice(["a", "b", "c", "d", "e", "f"])
+        uuid_ = f"{c}{uuid_[1:]}"
+    return uuid_

@@ -2,17 +2,17 @@
 from io import BytesIO
 from json import dumps, loads
 from unittest import TestCase
-from uuid import uuid4
 
 import requests
 from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
+from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.jupyter import JUPYTER_ENDPOINT, COOKIES, HEADERS
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
-COMPONENT_ID = str(uuid4())
+COMPONENT_ID = str(uuid_alpha())
 NAME = "foo"
 DESCRIPTION = "long foo"
 TAGS = ["PREDICTOR"]
