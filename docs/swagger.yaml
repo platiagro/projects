@@ -33,7 +33,7 @@ tags:
 paths:
   /components:
     get:
-      summary: "List all components."
+      summary: "List all components sorted by name in ascending order."
       tags:
         - "Components"
       responses:
@@ -142,7 +142,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects:
     get:
-      summary: "List all projects."
+      summary: "List all projects sorted by name in ascending order."
       tags:
         - "Projects"
       responses:
@@ -231,7 +231,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments:
     get:
-      summary: "List all experiments."
+      summary: "List all experiments sorted by position in ascending order."
       tags:
         - "Experiments"
       parameters:
@@ -351,7 +351,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments/{experimentId}/operators:
     get:
-      summary: "List all operators."
+      summary: "List all operators sorted by position in ascending order."
       tags:
         - "Operators"
       parameters:
@@ -524,7 +524,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /templates:
     get:
-      summary: "List all templates."
+      summary: "List all templates sorted by name in ascending order."
       tags:
         - "Templates"
       responses:
