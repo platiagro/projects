@@ -17,9 +17,11 @@ def list_projects():
     """Lists all projects from our database.
 
     Returns:
-        A list of all projects.
+        A list of all projects sorted by name in ascending order.
     """
-    projects = Project.query.all()
+    projects = db_session.query(Project) \
+        .order_by(Project.name.asc()) \
+        .all()
     return [project.as_dict() for project in projects]
 
 
