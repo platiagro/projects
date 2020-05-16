@@ -26,9 +26,11 @@ def list_components():
     """Lists all components from our database.
 
     Returns:
-        A list of all components.
+        A list of all components sorted by name in ascending order.
     """
-    components = Component.query.all()
+    components = db_session.query(Component) \
+        .order_by(Component.name.asc()) \
+        .all()
     return [component.as_dict() for component in components]
 
 
