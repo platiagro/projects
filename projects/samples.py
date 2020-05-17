@@ -41,5 +41,5 @@ def read_notebook(notebook_path):
         The notebook content as bytes.
     """
     with open(notebook_path, "rb") as f:
-        notebook = f.read()
+        notebook = load(f)
     return notebook

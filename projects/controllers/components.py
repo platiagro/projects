@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Components controller."""
 from datetime import datetime
+from json import dumps
 from os.path import join
 from pkgutil import get_data
 
@@ -73,6 +74,8 @@ def create_component(name=None, description=None, tags=None,
     # loads a sample notebook if none was sent
     if training_notebook is None:
         training_notebook = TRAINING_NOTEBOOK
+    else:
+        training_notebook = dumps(training_notebook).encode()
 
     # adds notebook to object storage
     obj_name = f"{PREFIX}/{component_id}/Training.ipynb"
@@ -84,6 +87,9 @@ def create_component(name=None, description=None, tags=None,
     # repeat the steps above for the inference notebook
     if inference_notebook is None:
         inference_notebook = INFERENCE_NOTEBOOK
+    else:
+        inference_notebook = dumps(inference_notebook).encode()
+
     obj_name = f"{PREFIX}/{component_id}/Inference.ipynb"
     put_object(obj_name, inference_notebook)
     inference_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
@@ -142,6 +148,16 @@ def update_component(uuid, **kwargs):
         if any(tag not in VALID_TAGS for tag in tags):
             valid_str = ",".join(VALID_TAGS)
             raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
+
+    if "training_notebook" in kwargs:
+        obj_name = f"{PREFIX}/{uuid}/Training.ipynb"
+        put_object(obj_name, dumps(kwargs["training_notebook"]).encode())
+        del kwargs["training_notebook"]
+
+    if "inference_notebook" in kwargs:
+        obj_name = f"{PREFIX}/{uuid}/Inference.ipynb"
+        put_object(obj_name, dumps(kwargs["inference_notebook"]).encode())
+        del kwargs["inference_notebook"]
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)

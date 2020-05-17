@@ -105,12 +105,16 @@ class TestComponents(TestCase):
 
     def test_create_component(self):
         with app.test_client() as c:
+            # when name is missing
+            # should raise bad request
             rv = c.post("/components", json={})
             result = rv.get_json()
             expected = {"message": "name is required"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            # when invalid tag is sent
+            # should raise bad request
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
@@ -120,19 +124,23 @@ class TestComponents(TestCase):
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
+            # when copyFrom and trainingNotebook/inferenceNotebook are sent
+            # should raise bad request
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
                 "tags": TAGS,
                 "copyFrom": COMPONENT_ID,
-                "trainingNotebook": SAMPLE_NOTEBOOK,
-                "inferenceNotebook": SAMPLE_NOTEBOOK,
+                "trainingNotebook": loads(SAMPLE_NOTEBOOK),
+                "inferenceNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
             expected = {"message": "Either provide notebooks or a component to copy from"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            # when copyFrom uuid does note exist
+            # should raise bad request
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
@@ -144,6 +152,8 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            # when neither copyFrom nor trainingNotebook/inferenceNotebook are sent
+            # should create a component using an empty template notebook
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
@@ -173,11 +183,42 @@ class TestComponents(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
+            # when copyFrom is sent
+            # should create a component copying notebooks from copyFrom
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
                 "tags": TAGS,
                 "copyFrom": COMPONENT_ID,
+            })
+            result = rv.get_json()
+            expected = {
+                "name": "test",
+                "description": "long test",
+                "tags": TAGS,
+                "isDefault": IS_DEFAULT,
+                "parameters": PARAMETERS,
+            }
+            machine_generated = [
+                "uuid",
+                "trainingNotebookPath",
+                "inferenceNotebookPath",
+                "createdAt",
+                "updatedAt",
+            ]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            # when trainingNotebook and inferenceNotebook are sent
+            # should create a component using their values as source
+            rv = c.post("/components", json={
+                "name": "test",
+                "description": "long test",
+                "tags": TAGS,
+                "trainingNotebook": loads(SAMPLE_NOTEBOOK),
+                "inferenceNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
             expected = {
@@ -266,6 +307,48 @@ class TestComponents(TestCase):
 
             rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "tags": ["FEATURE_ENGINEERING"],
+            })
+            result = rv.get_json()
+            expected = {
+                "uuid": COMPONENT_ID,
+                "name": "bar",
+                "description": DESCRIPTION,
+                "tags": ["FEATURE_ENGINEERING"],
+                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
+                "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
+                "isDefault": IS_DEFAULT,
+                "parameters": PARAMETERS,
+                "createdAt": CREATED_AT_ISO,
+            }
+            machine_generated = ["updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            rv = c.patch(f"/components/{COMPONENT_ID}", json={
+                "trainingNotebook": loads(SAMPLE_NOTEBOOK),
+            })
+            result = rv.get_json()
+            expected = {
+                "uuid": COMPONENT_ID,
+                "name": "bar",
+                "description": DESCRIPTION,
+                "tags": ["FEATURE_ENGINEERING"],
+                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
+                "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
+                "isDefault": IS_DEFAULT,
+                "parameters": PARAMETERS,
+                "createdAt": CREATED_AT_ISO,
+            }
+            machine_generated = ["updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            rv = c.patch(f"/components/{COMPONENT_ID}", json={
+                "inferenceNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
             expected = {
