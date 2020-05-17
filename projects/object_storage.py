@@ -34,6 +34,9 @@ def get_object(source):
     Args:
         source (str): the path to source object.
     """
+    # ensures MinIO bucket exists
+    make_bucket(BUCKET_NAME)
+
     data = MINIO_CLIENT.get_object(
         bucket_name=BUCKET_NAME,
         object_name=source,
