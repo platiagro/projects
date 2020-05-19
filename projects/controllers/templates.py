@@ -16,7 +16,9 @@ def list_templates():
     Returns:
         A list of all templates.
     """
-    templates = Template.query.all()
+    templates = db_session.query(Template) \
+        .order_by(Template.name.asc()) \
+        .all()
     return [template.as_dict() for template in templates]
 
 
