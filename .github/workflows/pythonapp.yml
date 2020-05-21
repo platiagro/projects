@@ -25,6 +25,15 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
+    - name: Set Docker TAG
+      id: var
+      run: |
+        echo ${{ github.ref }}
+        if [ ${{ github.ref }} = "refs/heads/master" ]; then
+          echo ::set-output name=TAG::0.0.2
+        else
+          echo ::set-output name=TAG::0.0.2-SNAPSHOT
+        fi
     - uses: actions/checkout@v2
     - name: Set up Python 3.6
       uses: actions/setup-python@v1
@@ -64,4 +73,4 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         registry: registry.hub.docker.com
         repository: platiagro/projects
-        tags: 0.0.2
+        tags: ${{ steps.var.outputs.TAG }}
