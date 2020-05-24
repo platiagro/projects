@@ -33,7 +33,7 @@ tags:
 paths:
   /components:
     get:
-      summary: "List all components sorted by name in ascending order."
+      summary: "List all components sorted by name in natural sort order."
       tags:
         - "Components"
       responses:
@@ -142,7 +142,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects:
     get:
-      summary: "List all projects sorted by name in ascending order."
+      summary: "List all projects sorted by name in natural sort order."
       tags:
         - "Projects"
       responses:
@@ -549,7 +549,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /templates:
     get:
-      summary: "List all templates sorted by name in ascending order."
+      summary: "List all templates sorted by name in natural sort order."
       tags:
         - "Templates"
       responses:
@@ -825,7 +825,7 @@ components:
       items:
         oneOf:
           - type: object
-            example:   
+            example:
               metric_name: metric_value
     Template:
       type: object

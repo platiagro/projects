@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Components controller."""
+import re
 from datetime import datetime
 from json import dumps
 from os.path import join
@@ -27,11 +28,12 @@ def list_components():
     """Lists all components from our database.
 
     Returns:
-        A list of all components sorted by name in ascending order.
+        A list of all components sorted by name in natural sort order.
     """
     components = db_session.query(Component) \
-        .order_by(Component.name.asc()) \
         .all()
+    # sort the list in place, using natural sort
+    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', o.name)])
     return [component.as_dict() for component in components]
 
 

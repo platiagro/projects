@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Templates controller."""
+import re
 from datetime import datetime
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
@@ -14,11 +15,12 @@ def list_templates():
     """Lists all templates from our database.
 
     Returns:
-        A list of all templates.
+        A list of all templates sorted by name in natural sort order.
     """
     templates = db_session.query(Template) \
-        .order_by(Template.name.asc()) \
         .all()
+    # sort the list in place, using natural sort
+    templates.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', o.name)])
     return [template.as_dict() for template in templates]
 
 
