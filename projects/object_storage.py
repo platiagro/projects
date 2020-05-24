@@ -33,6 +33,9 @@ def get_object(source):
 
     Args:
         source (str): the path to source object.
+
+    Returns:
+        bytes: the file contents as bytes.
     """
     # ensures MinIO bucket exists
     make_bucket(BUCKET_NAME)

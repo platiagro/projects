@@ -44,7 +44,7 @@ def create_new_file(path, is_folder, content=None):
     Args:
         path (str): path to the file or folder.
         is_folder (bool): whether to create a file or a folder.
-        content (bool, optional): the file content.
+        content (bytes, optional): the file content.
     """
     if content is not None:
         content = loads(content.decode("utf-8"))

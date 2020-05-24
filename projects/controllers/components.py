@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Components controller."""
 from datetime import datetime
-from json import dumps
+from json import dumps, loads
 from os.path import join
 from pkgutil import get_data
 
@@ -14,13 +14,13 @@ from ..database import db_session
 from ..jupyter import create_new_file, set_workspace, list_files, delete_file
 from ..models import Component
 from ..object_storage import BUCKET_NAME, get_object, put_object, \
-    duplicate_object, list_objects, remove_object
+    list_objects, remove_object
 from .utils import uuid_alpha
 
 PREFIX = "components"
 VALID_TAGS = ["DEFAULT", "FEATURE_ENGINEERING", "PREDICTOR"]
-TRAINING_NOTEBOOK = get_data("projects", "config/Training.ipynb")
-INFERENCE_NOTEBOOK = get_data("projects", "config/Inference.ipynb")
+INFERENCE_NOTEBOOK = loads(get_data("projects", "config/Inference.ipynb"))
+TRAINING_NOTEBOOK = loads(get_data("projects", "config/Training.ipynb"))
 
 
 def list_components():
@@ -74,28 +74,28 @@ def create_component(name=None, description=None, tags=None,
     # loads a sample notebook if none was sent
     if training_notebook is None:
         training_notebook = TRAINING_NOTEBOOK
-    else:
-        training_notebook = dumps(training_notebook).encode()
 
-    # adds notebook to object storage
-    obj_name = f"{PREFIX}/{component_id}/Training.ipynb"
-    put_object(obj_name, training_notebook)
-
-    # formats the notebook path (will save the path to database)
-    training_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
-
-    # repeat the steps above for the inference notebook
     if inference_notebook is None:
         inference_notebook = INFERENCE_NOTEBOOK
-    else:
-        inference_notebook = dumps(inference_notebook).encode()
 
+    # The new component must have its own experiment_id and operator_id.
+    # Notice these values are ignored when a notebook is run in a pipeline.
+    # They are only used by JupyterLab interface.
+    init_notebook_metadata(inference_notebook, training_notebook)
+
+    # saves new notebooks to object storage
     obj_name = f"{PREFIX}/{component_id}/Inference.ipynb"
-    put_object(obj_name, inference_notebook)
     inference_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
+    put_object(obj_name, dumps(inference_notebook).encode())
+
+    obj_name = f"{PREFIX}/{component_id}/Training.ipynb"
+    training_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
+    put_object(obj_name, dumps(training_notebook).encode())
 
     # create inference notebook and training_notebook on jupyter
-    create_jupyter_files(component_id, inference_notebook, training_notebook)
+    create_jupyter_files(component_id=component_id,
+                         inference_notebook=dumps(inference_notebook).encode(),
+                         training_notebook=dumps(training_notebook).encode())
 
     # saves component info to the database
     component = Component(uuid=component_id,
@@ -228,29 +228,41 @@ def copy_component(name, description, tags, copy_from):
 
     component_id = uuid_alpha()
 
-    # adds notebooks to object storage
-    source_name = f"{PREFIX}/{copy_from}/Training.ipynb"
-    destination_name = f"{PREFIX}/{component_id}/Training.ipynb"
-    duplicate_object(source_name, destination_name)
-    training_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
-    training_notebook = get_object(source_name)
-
+    # reads source notebooks from object storage
     source_name = f"{PREFIX}/{copy_from}/Inference.ipynb"
+    inference_notebook = loads(get_object(source_name))
+
+    source_name = f"{PREFIX}/{copy_from}/Training.ipynb"
+    training_notebook = loads(get_object(source_name))
+
+    # Even though we are creating 'copies', the new component must have
+    # its own experiment_id and operator_id. We don't want to mix models and
+    # metrics of different components.
+    # Notice these values are ignored when a notebook is run in a pipeline.
+    # They are only used by JupyterLab interface.
+    init_notebook_metadata(inference_notebook, training_notebook)
+
+    # saves new notebooks to object storage
     destination_name = f"{PREFIX}/{component_id}/Inference.ipynb"
-    duplicate_object(source_name, destination_name)
     inference_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
-    inference_notebook = get_object(source_name)
+    put_object(destination_name, dumps(inference_notebook).encode())
+
+    destination_name = f"{PREFIX}/{component_id}/Training.ipynb"
+    training_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
+    put_object(destination_name, dumps(training_notebook).encode())
 
     # create inference notebook and training_notebook on jupyter
-    create_jupyter_files(component_id, inference_notebook, training_notebook)
+    create_jupyter_files(component_id=component_id,
+                         inference_notebook=dumps(inference_notebook).encode(),
+                         training_notebook=dumps(training_notebook).encode())
 
     # saves component info to the database
     component = Component(uuid=component_id,
                           name=name,
                           description=description,
                           tags=tags,
-                          training_notebook_path=training_notebook_path,
                           inference_notebook_path=inference_notebook_path,
+                          training_notebook_path=training_notebook_path,
                           is_default=False)
     db_session.add(component)
     db_session.commit()
@@ -263,8 +275,8 @@ def create_jupyter_files(component_id, inference_notebook, training_notebook):
 
     Args:
         component_id (str): the component uuid.
-        inference_notebook (str): the notebook content.
-        training_notebook (str): the notebook content.
+        inference_notebook (bytes): the notebook content.
+        training_notebook (bytes): the notebook content.
     """
     # always try to create components folder to guarantee its existence
     create_new_file(PREFIX, is_folder=True)
@@ -283,3 +295,22 @@ def create_jupyter_files(component_id, inference_notebook, training_notebook):
                     content=training_notebook)
 
     set_workspace(inference_notebook_path, training_notebook_path)
+
+
+def init_notebook_metadata(inference_notebook, training_notebook):
+    """Sets random experiment_id and operator_id to notebooks metadata.
+
+    Dicts are passed by reference, so no need to return.
+
+    Args:
+        inference_notebook (dict): the inference notebook content.
+        training_notebook (dict): the training notebook content.
+    """
+    experiment_id = uuid_alpha()
+    operator_id = uuid_alpha()
+
+    # sets these values to notebooks
+    inference_notebook["metadata"]["experiment_id"] = experiment_id
+    inference_notebook["metadata"]["operator_id"] = operator_id
+    training_notebook["metadata"]["experiment_id"] = experiment_id
+    training_notebook["metadata"]["operator_id"] = operator_id
