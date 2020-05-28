@@ -90,6 +90,24 @@
         ]
     },
     {
+        "name": "KMeans",
+        "description": "A component that trains a KMeans model using Scikit-learn",
+        "trainingNotebook": "/samples/kmeans-clustering/Training.ipynb",
+        "inferenceNotebook": "/samples/kmeans-clustering/Inference.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ]
+    },
+    {
+        "name": "Isolation Forest",
+        "description": "A component that trains a Isolation Forest model using Scikit-learn",
+        "trainingNotebook": "/samples/isolation-forest-clustering/Training.ipynb",
+        "inferenceNotebook": "/samples/isolation-forest-clustering/Inference.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ]
+    },
+    {
         "name": "Normalizer",
         "description": "A component that normalize samples individually to unit norm model using Scikit-learn",
         "trainingNotebook": "/samples/normalizer/Training.ipynb",
