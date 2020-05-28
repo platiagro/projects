@@ -519,6 +519,34 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/datasets:
+    get:
+      summary: "Retrieves a dataset."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Datasets"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/figures:
     get:
       summary: "List all figures."
@@ -814,6 +842,36 @@ components:
       items:
         oneOf:
           - $ref: "#/components/schemas/Operator"
+    Datasets:
+      type: array
+      items:
+        oneOf:
+          - type: object
+            properties:
+              columns:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                      example: "SepalLengthCm"
+                    - type: string
+                      example: "Species"
+              index:
+                type: array
+                items:
+                  oneOf:
+                    - type: integer
+              data:
+                type: array
+                items:
+                  oneOf:
+                    - type: array
+                      items:
+                        oneOf:
+                          - type: number
+                            example: 5.1
+                          - type: string
+                            example: "Iris-setosa"
     Figures:
       type: array
       items:
@@ -1039,6 +1097,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Operators"
+    Datasets:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Datasets"
     Figures:
       description: ""
       content:
