@@ -178,5 +178,5 @@ def raise_if_parameters_are_invalid(parameters):
         raise BadRequest("The specified parameters are not valid")
 
     for key, value in parameters.items():
-        if not isinstance(value, (str, int, float, list, dict)):
+        if not isinstance(value, (str, int, float, bool, list, dict)):
             raise BadRequest("The specified parameters are not valid")
