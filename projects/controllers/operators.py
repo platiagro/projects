@@ -172,11 +172,11 @@ def raise_if_parameters_are_invalid(parameters):
     """Raises an exception if the specified parameters are not valid.
 
     Args:
-        parameters (duct): the parameters dict.
+        parameters (dict): the parameters dict.
     """
     if not isinstance(parameters, dict):
         raise BadRequest("The specified parameters are not valid")
 
     for key, value in parameters.items():
-        if not isinstance(value, (str, int, float)):
+        if not isinstance(value, (str, int, float, list, dict)):
             raise BadRequest("The specified parameters are not valid")

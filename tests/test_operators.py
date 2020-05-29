@@ -130,7 +130,7 @@ class TestOperators(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "componentId": COMPONENT_ID,
-                "parameters": {"coef": [0.1]},
+                "parameters": {"coef": None},
             })
             result = rv.get_json()
             expected = {"message": "The specified parameters are not valid"}
@@ -209,7 +209,7 @@ class TestOperators(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-                "parameters": {"coef": [0.1]},
+                "parameters": {"coef": None},
             })
             result = rv.get_json()
             expected = {"message": "The specified parameters are not valid"}
