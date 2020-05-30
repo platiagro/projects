@@ -177,6 +177,9 @@ def read_parameters_from_source(source):
                 options = match.group(3)
                 metadata = match.group(4)
 
+                if default in ["True", "False"]:
+                    default = default.lower()
+
                 parameter = {"name": name, "default": loads(default)}
 
                 if options:
