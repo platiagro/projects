@@ -7,6 +7,8 @@ from re import compile, sub
 
 from minio.error import NoSuchKey
 from requests import Session
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 from .object_storage import BUCKET_NAME, get_object
 
@@ -23,6 +25,14 @@ SESSION.headers.update(HEADERS)
 SESSION.hooks = {
     "response": lambda r, *args, **kwargs: r.raise_for_status(),
 }
+RETRY_STRATEGY = Retry(
+    total=5,
+    backoff_factor=0.5,
+    status_forcelist=[429, 500, 502, 503, 504],
+    method_whitelist=["HEAD", "GET", "PUT", "OPTIONS", "DELETE"]
+)
+ADAPTER = HTTPAdapter(max_retries=RETRY_STRATEGY)
+SESSION.mount("http://", ADAPTER)
 
 
 def list_files(path):
