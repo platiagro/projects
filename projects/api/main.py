@@ -11,6 +11,7 @@ from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
 from .components import bp as components_blueprint
 from ..database import db_session, init_db
 from .experiments import bp as experiments_blueprint
+from .datasets import bp as datasets_blueprint
 from .figures import bp as figures_blueprint
 from .json_encoder import CustomJSONEncoder
 from .operators import bp as operators_blueprint
@@ -30,6 +31,8 @@ app.register_blueprint(parameters_blueprint,
                        url_prefix="/components/<component_id>/parameters")
 app.register_blueprint(operators_blueprint,
                        url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators")
+app.register_blueprint(datasets_blueprint,
+                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/datasets")
 app.register_blueprint(figures_blueprint,
                        url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/figures")
 app.register_blueprint(metrics_blueprint,
