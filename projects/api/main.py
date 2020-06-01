@@ -6,7 +6,7 @@ import sys
 from flask import Flask, jsonify
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
-    InternalServerError
+    Forbidden, InternalServerError
 
 from .components import bp as components_blueprint
 from ..database import db_session, init_db
@@ -54,6 +54,7 @@ def ping():
 @app.errorhandler(BadRequest)
 @app.errorhandler(NotFound)
 @app.errorhandler(MethodNotAllowed)
+@app.errorhandler(Forbidden)
 @app.errorhandler(InternalServerError)
 def handle_errors(e):
     """Handles exceptions raised by the API."""
