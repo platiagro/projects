@@ -8,6 +8,7 @@ from re import compile, sub
 from minio.error import NoSuchKey
 from requests import Session
 from requests.adapters import HTTPAdapter
+from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 
 from .object_storage import BUCKET_NAME, get_object
@@ -44,8 +45,13 @@ def list_files(path):
     Returns:
         list: A list of filenames.
     """
-    r = SESSION.get(url=f"{URL_CONTENTS}/{path}")
-    return r.json()
+    try:
+        r = SESSION.get(url=f"{URL_CONTENTS}/{path}")
+        return r.json()
+    except HTTPError as e:
+        status_code = e.response.status_code
+        if status_code == 404:
+            return None
 
 
 def create_new_file(path, is_folder, content=None):

@@ -7,8 +7,8 @@ from os.path import join
 from pkgutil import get_data
 
 from minio.error import ResponseError
-from sqlalchemy.exc import InvalidRequestError, ProgrammingError
-from werkzeug.exceptions import BadRequest, NotFound
+from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError
+from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
 
 from ..database import db_session
@@ -190,6 +190,8 @@ def delete_component(uuid):
     try:
         source_name = f"{PREFIX}/{uuid}"
 
+        db_session.query(Component).filter_by(uuid=uuid).delete()
+
         # remove files and directory from jupyter notebook server
         jupyter_files = list_files(source_name)
         if jupyter_files is not None:
@@ -203,8 +205,9 @@ def delete_component(uuid):
             remove_object(minio_file.object_name)
         remove_object(source_name)
 
-        db_session.query(Component).filter_by(uuid=uuid).delete()
         db_session.commit()
+    except IntegrityError as e:
+        raise Forbidden(str(e))
     except (InvalidRequestError, ProgrammingError, ResponseError) as e:
         raise BadRequest(str(e))
 
