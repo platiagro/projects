@@ -163,9 +163,15 @@ class TestDatasets(TestCase):
 
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID2}/datasets")
             result = rv.get_json()
-            expected = {"message": "The specified dataset does not exist"}
+            expected = {
+                "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
+                "data": [
+                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+                ]
+            }
             self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
 
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/datasets")
             result = rv.get_json()
