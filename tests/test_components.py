@@ -17,8 +17,8 @@ NAME = "foo"
 DESCRIPTION = "long foo"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
-TRAINING_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Training.ipynb"
-INFERENCE_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Inference.ipynb"
+TRAINING_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
+INFERENCE_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Deployment.ipynb"
 IS_DEFAULT = False
 PARAMETERS = [{"default": True, "name": "shuffle", "type": "boolean"}]
 CREATED_AT = "2000-01-01 00:00:00"
@@ -78,12 +78,12 @@ class TestComponents(TestCase):
         )
 
         session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Inference.ipynb",
+            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Deployment.ipynb",
             data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
         )
 
         session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Training.ipynb",
+            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Experiment.ipynb",
             data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
         )
 

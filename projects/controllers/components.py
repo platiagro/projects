@@ -20,8 +20,8 @@ from .utils import uuid_alpha
 
 PREFIX = "components"
 VALID_TAGS = ["DEFAULT", "FEATURE_ENGINEERING", "PREDICTOR"]
-INFERENCE_NOTEBOOK = loads(get_data("projects", "config/Inference.ipynb"))
-TRAINING_NOTEBOOK = loads(get_data("projects", "config/Training.ipynb"))
+INFERENCE_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
+TRAINING_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
 
 
 def list_components():
@@ -86,11 +86,11 @@ def create_component(name=None, description=None, tags=None,
     init_notebook_metadata(inference_notebook, training_notebook)
 
     # saves new notebooks to object storage
-    obj_name = f"{PREFIX}/{component_id}/Inference.ipynb"
+    obj_name = f"{PREFIX}/{component_id}/Deployment.ipynb"
     inference_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
     put_object(obj_name, dumps(inference_notebook).encode())
 
-    obj_name = f"{PREFIX}/{component_id}/Training.ipynb"
+    obj_name = f"{PREFIX}/{component_id}/Experiment.ipynb"
     training_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
     put_object(obj_name, dumps(training_notebook).encode())
 
@@ -152,12 +152,12 @@ def update_component(uuid, **kwargs):
             raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
     if "training_notebook" in kwargs:
-        obj_name = f"{PREFIX}/{uuid}/Training.ipynb"
+        obj_name = f"{PREFIX}/{uuid}/Experiment.ipynb"
         put_object(obj_name, dumps(kwargs["training_notebook"]).encode())
         del kwargs["training_notebook"]
 
     if "inference_notebook" in kwargs:
-        obj_name = f"{PREFIX}/{uuid}/Inference.ipynb"
+        obj_name = f"{PREFIX}/{uuid}/Deployment.ipynb"
         put_object(obj_name, dumps(kwargs["inference_notebook"]).encode())
         del kwargs["inference_notebook"]
 
@@ -234,10 +234,10 @@ def copy_component(name, description, tags, copy_from):
     component_id = uuid_alpha()
 
     # reads source notebooks from object storage
-    source_name = f"{PREFIX}/{copy_from}/Inference.ipynb"
+    source_name = f"{PREFIX}/{copy_from}/Deployment.ipynb"
     inference_notebook = loads(get_object(source_name))
 
-    source_name = f"{PREFIX}/{copy_from}/Training.ipynb"
+    source_name = f"{PREFIX}/{copy_from}/Experiment.ipynb"
     training_notebook = loads(get_object(source_name))
 
     # Even though we are creating 'copies', the new component must have
@@ -248,11 +248,11 @@ def copy_component(name, description, tags, copy_from):
     init_notebook_metadata(inference_notebook, training_notebook)
 
     # saves new notebooks to object storage
-    destination_name = f"{PREFIX}/{component_id}/Inference.ipynb"
+    destination_name = f"{PREFIX}/{component_id}/Deployment.ipynb"
     inference_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
     put_object(destination_name, dumps(inference_notebook).encode())
 
-    destination_name = f"{PREFIX}/{component_id}/Training.ipynb"
+    destination_name = f"{PREFIX}/{component_id}/Experiment.ipynb"
     training_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
     put_object(destination_name, dumps(training_notebook).encode())
 
@@ -289,12 +289,12 @@ def create_jupyter_files(component_id, inference_notebook, training_notebook):
     path = f"{PREFIX}/{component_id}"
     create_new_file(path=path, is_folder=True)
 
-    inference_notebook_path = join(path, "Inference.ipynb")
+    inference_notebook_path = join(path, "Deployment.ipynb")
     create_new_file(path=inference_notebook_path,
                     is_folder=False,
                     content=inference_notebook)
 
-    training_notebook_path = join(path, "Training.ipynb")
+    training_notebook_path = join(path, "Experiment.ipynb")
     create_new_file(path=training_notebook_path,
                     is_folder=False,
                     content=training_notebook)

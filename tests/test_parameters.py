@@ -15,8 +15,8 @@ NAME = "foo"
 DESCRIPTION = "long foo"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
-TRAINING_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Training.ipynb"
-INFERENCE_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Inference.ipynb"
+TRAINING_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
+INFERENCE_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 
