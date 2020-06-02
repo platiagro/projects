@@ -28,6 +28,11 @@ def get_dataset(project_id, experiment_id, operator_id):
     raise_if_operator_does_not_exist(operator_id)
 
     try:
+        metadata = platiagro.stat_dataset(name=experiment.dataset,
+                                          operator_id=operator_id)
+        if "run_id" not in metadata:
+            raise FileNotFoundError()
+
         dataset = platiagro.load_dataset(name=experiment.dataset,
                                          run_id="latest",
                                          operator_id=operator_id)
