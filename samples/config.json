@@ -142,5 +142,32 @@
         "tags": [
             "FEATURE_ENGINEERING"
         ]
+    },
+    {
+        "name": "Feature Tools",
+        "description": "A component that use Feature Tools library to Feature Engineering.",
+        "trainingNotebook": "/samples/feature-tools/Training.ipynb",
+        "inferenceNotebook": "/samples/feature-tools/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
+        "name": "Simulated Annealing",
+        "description": "A component that applies simulated annealing strategy to Feature Engineering.",
+        "trainingNotebook": "/samples/simulated-annealing/Training.ipynb",
+        "inferenceNotebook": "/samples/simulated-annealing/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
+        "name": "Transformation Graph",
+        "description": "A component that uses a transformation graph strategy to Feature Engineering.",
+        "trainingNotebook": "/samples/transformation-graph/Training.ipynb",
+        "inferenceNotebook": "/samples/transformation-graph/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
     }
 ]
