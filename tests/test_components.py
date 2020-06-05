@@ -33,7 +33,7 @@ class TestComponents(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) "
+            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, inference_notebook_path, is_default, created_at, updated_at) "
             f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{TRAINING_NOTEBOOK_PATH}', '{INFERENCE_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
@@ -124,14 +124,14 @@ class TestComponents(TestCase):
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            # when copyFrom and trainingNotebook/inferenceNotebook are sent
+            # when copyFrom and experimentNotebook/inferenceNotebook are sent
             # should raise bad request
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
                 "tags": TAGS,
                 "copyFrom": COMPONENT_ID,
-                "trainingNotebook": loads(SAMPLE_NOTEBOOK),
+                "experimentNotebook": loads(SAMPLE_NOTEBOOK),
                 "inferenceNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
@@ -152,7 +152,7 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            # when neither copyFrom nor trainingNotebook/inferenceNotebook are sent
+            # when neither copyFrom nor experimentNotebook/inferenceNotebook are sent
             # should create a component using an empty template notebook
             rv = c.post("/components", json={
                 "name": "test",
@@ -169,11 +169,11 @@ class TestComponents(TestCase):
                     {"default": "Species", "name": "target", "type": "string"},
                 ],
             }
-            # uuid, training_notebook_path, inference_notebook_path, created_at, updated_at
+            # uuid, experiment_notebook_path, inference_notebook_path, created_at, updated_at
             # are machine-generated we assert they exist, but we don't assert their values
             machine_generated = [
                 "uuid",
-                "trainingNotebookPath",
+                "experimentNotebookPath",
                 "inferenceNotebookPath",
                 "createdAt",
                 "updatedAt",
@@ -201,7 +201,7 @@ class TestComponents(TestCase):
             }
             machine_generated = [
                 "uuid",
-                "trainingNotebookPath",
+                "experimentNotebookPath",
                 "inferenceNotebookPath",
                 "createdAt",
                 "updatedAt",
@@ -211,13 +211,13 @@ class TestComponents(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
-            # when trainingNotebook and inferenceNotebook are sent
+            # when experimentNotebook and inferenceNotebook are sent
             # should create a component using their values as source
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
                 "tags": TAGS,
-                "trainingNotebook": loads(SAMPLE_NOTEBOOK),
+                "experimentNotebook": loads(SAMPLE_NOTEBOOK),
                 "inferenceNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
@@ -230,7 +230,7 @@ class TestComponents(TestCase):
             }
             machine_generated = [
                 "uuid",
-                "trainingNotebookPath",
+                "experimentNotebookPath",
                 "inferenceNotebookPath",
                 "createdAt",
                 "updatedAt",
@@ -255,7 +255,7 @@ class TestComponents(TestCase):
                 "name": "foo",
                 "description": DESCRIPTION,
                 "tags": TAGS,
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
+                "experimentNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
@@ -287,7 +287,7 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": TAGS,
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
+                "experimentNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
@@ -314,7 +314,7 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": ["FEATURE_ENGINEERING"],
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
+                "experimentNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
@@ -327,7 +327,7 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.patch(f"/components/{COMPONENT_ID}", json={
-                "trainingNotebook": loads(SAMPLE_NOTEBOOK),
+                "experimentNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
             expected = {
@@ -335,7 +335,7 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": ["FEATURE_ENGINEERING"],
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
+                "experimentNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
@@ -356,7 +356,7 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": ["FEATURE_ENGINEERING"],
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
+                "experimentNotebookPath": TRAINING_NOTEBOOK_PATH,
                 "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,

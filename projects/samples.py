@@ -21,12 +21,12 @@ def init_components(config_path):
                 continue
             description = component["description"]
             tags = component["tags"]
-            training_notebook = read_notebook(component["trainingNotebook"])
+            experiment_notebook = read_notebook(component["experimentNotebook"])
             inference_notebook = read_notebook(component["inferenceNotebook"])
             create_component(name=name,
                              description=description,
                              tags=tags,
-                             training_notebook=training_notebook,
+                             experiment_notebook=experiment_notebook,
                              inference_notebook=inference_notebook,
                              is_default=True)
 

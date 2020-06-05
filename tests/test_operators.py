@@ -46,7 +46,7 @@ class TestOperators(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, created_at, updated_at) "
+            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, inference_notebook_path, created_at, updated_at) "
             f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{TRAINING_NOTEBOOK_PATH}', '{INFERENCE_NOTEBOOK_PATH}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
