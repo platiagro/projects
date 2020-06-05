@@ -20,8 +20,8 @@ from .utils import uuid_alpha
 
 PREFIX = "components"
 VALID_TAGS = ["DEFAULT", "FEATURE_ENGINEERING", "PREDICTOR"]
-INFERENCE_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
-TRAINING_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
+DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
+EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
 
 
 def list_components():
@@ -38,7 +38,7 @@ def list_components():
 
 
 def create_component(name=None, description=None, tags=None,
-                     experiment_notebook=None, inference_notebook=None,
+                     experiment_notebook=None, deployment_notebook=None,
                      is_default=False, copy_from=None, **kwargs):
     """Creates a new component in our database/object storage.
 
@@ -46,7 +46,7 @@ def create_component(name=None, description=None, tags=None,
         name (str): the component name.
         tags (list): the list of tags.
         experiment_notebook (str, optional): the notebook content.
-        inference_notebook (str, optional): the notebook content.
+        deployment_notebook (str, optional): the notebook content.
         is_default (bool, optional): whether it is a built-in component.
         copy_from (str, optional): the component to copy the notebooks from.
 
@@ -56,7 +56,7 @@ def create_component(name=None, description=None, tags=None,
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
-    if copy_from and (experiment_notebook or inference_notebook):
+    if copy_from and (experiment_notebook or deployment_notebook):
         raise BadRequest("Either provide notebooks or a component to copy from")
 
     if tags is None or len(tags) == 0:
@@ -75,28 +75,28 @@ def create_component(name=None, description=None, tags=None,
 
     # loads a sample notebook if none was sent
     if experiment_notebook is None:
-        experiment_notebook = TRAINING_NOTEBOOK
+        experiment_notebook = EXPERIMENT_NOTEBOOK
 
-    if inference_notebook is None:
-        inference_notebook = INFERENCE_NOTEBOOK
+    if deployment_notebook is None:
+        deployment_notebook = DEPLOYMENT_NOTEBOOK
 
     # The new component must have its own experiment_id and operator_id.
     # Notice these values are ignored when a notebook is run in a pipeline.
     # They are only used by JupyterLab interface.
-    init_notebook_metadata(inference_notebook, experiment_notebook)
+    init_notebook_metadata(deployment_notebook, experiment_notebook)
 
     # saves new notebooks to object storage
     obj_name = f"{PREFIX}/{component_id}/Deployment.ipynb"
-    inference_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
-    put_object(obj_name, dumps(inference_notebook).encode())
+    deployment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
+    put_object(obj_name, dumps(deployment_notebook).encode())
 
     obj_name = f"{PREFIX}/{component_id}/Experiment.ipynb"
     experiment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
     put_object(obj_name, dumps(experiment_notebook).encode())
 
-    # create inference notebook and experiment_notebook on jupyter
+    # create deployment notebook and experiment_notebook on jupyter
     create_jupyter_files(component_id=component_id,
-                         inference_notebook=dumps(inference_notebook).encode(),
+                         deployment_notebook=dumps(deployment_notebook).encode(),
                          experiment_notebook=dumps(experiment_notebook).encode())
 
     # saves component info to the database
@@ -105,7 +105,7 @@ def create_component(name=None, description=None, tags=None,
                           description=description,
                           tags=tags,
                           experiment_notebook_path=experiment_notebook_path,
-                          inference_notebook_path=inference_notebook_path,
+                          deployment_notebook_path=deployment_notebook_path,
                           is_default=is_default)
     db_session.add(component)
     db_session.commit()
@@ -156,10 +156,10 @@ def update_component(uuid, **kwargs):
         put_object(obj_name, dumps(kwargs["experiment_notebook"]).encode())
         del kwargs["experiment_notebook"]
 
-    if "inference_notebook" in kwargs:
+    if "deployment_notebook" in kwargs:
         obj_name = f"{PREFIX}/{uuid}/Deployment.ipynb"
-        put_object(obj_name, dumps(kwargs["inference_notebook"]).encode())
-        del kwargs["inference_notebook"]
+        put_object(obj_name, dumps(kwargs["deployment_notebook"]).encode())
+        del kwargs["deployment_notebook"]
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
@@ -235,7 +235,7 @@ def copy_component(name, description, tags, copy_from):
 
     # reads source notebooks from object storage
     source_name = f"{PREFIX}/{copy_from}/Deployment.ipynb"
-    inference_notebook = loads(get_object(source_name))
+    deployment_notebook = loads(get_object(source_name))
 
     source_name = f"{PREFIX}/{copy_from}/Experiment.ipynb"
     experiment_notebook = loads(get_object(source_name))
@@ -245,20 +245,20 @@ def copy_component(name, description, tags, copy_from):
     # metrics of different components.
     # Notice these values are ignored when a notebook is run in a pipeline.
     # They are only used by JupyterLab interface.
-    init_notebook_metadata(inference_notebook, experiment_notebook)
+    init_notebook_metadata(deployment_notebook, experiment_notebook)
 
     # saves new notebooks to object storage
     destination_name = f"{PREFIX}/{component_id}/Deployment.ipynb"
-    inference_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
-    put_object(destination_name, dumps(inference_notebook).encode())
+    deployment_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
+    put_object(destination_name, dumps(deployment_notebook).encode())
 
     destination_name = f"{PREFIX}/{component_id}/Experiment.ipynb"
     experiment_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
     put_object(destination_name, dumps(experiment_notebook).encode())
 
-    # create inference notebook and experiment_notebook on jupyter
+    # create deployment notebook and eperiment notebook on jupyter
     create_jupyter_files(component_id=component_id,
-                         inference_notebook=dumps(inference_notebook).encode(),
+                         deployment_notebook=dumps(deployment_notebook).encode(),
                          experiment_notebook=dumps(experiment_notebook).encode())
 
     # saves component info to the database
@@ -266,7 +266,7 @@ def copy_component(name, description, tags, copy_from):
                           name=name,
                           description=description,
                           tags=tags,
-                          inference_notebook_path=inference_notebook_path,
+                          deployment_notebook_path=deployment_notebook_path,
                           experiment_notebook_path=experiment_notebook_path,
                           is_default=False)
     db_session.add(component)
@@ -275,12 +275,12 @@ def copy_component(name, description, tags, copy_from):
     return component.as_dict()
 
 
-def create_jupyter_files(component_id, inference_notebook, experiment_notebook):
+def create_jupyter_files(component_id, deployment_notebook, experiment_notebook):
     """Creates jupyter notebook files on jupyter server.
 
     Args:
         component_id (str): the component uuid.
-        inference_notebook (bytes): the notebook content.
+        deployment_notebook (bytes): the notebook content.
         experiment_notebook (bytes): the notebook content.
     """
     # always try to create components folder to guarantee its existence
@@ -289,33 +289,33 @@ def create_jupyter_files(component_id, inference_notebook, experiment_notebook):
     path = f"{PREFIX}/{component_id}"
     create_new_file(path=path, is_folder=True)
 
-    inference_notebook_path = join(path, "Deployment.ipynb")
-    create_new_file(path=inference_notebook_path,
+    deployment_notebook_path = join(path, "Deployment.ipynb")
+    create_new_file(path=deployment_notebook_path,
                     is_folder=False,
-                    content=inference_notebook)
+                    content=deployment_notebook)
 
     experiment_notebook_path = join(path, "Experiment.ipynb")
     create_new_file(path=experiment_notebook_path,
                     is_folder=False,
                     content=experiment_notebook)
 
-    set_workspace(inference_notebook_path, experiment_notebook_path)
+    set_workspace(deployment_notebook_path, experiment_notebook_path)
 
 
-def init_notebook_metadata(inference_notebook, experiment_notebook):
+def init_notebook_metadata(deployment_notebook, experiment_notebook):
     """Sets random experiment_id and operator_id to notebooks metadata.
 
     Dicts are passed by reference, so no need to return.
 
     Args:
-        inference_notebook (dict): the inference notebook content.
+        deployment_notebook (dict): the deployment notebook content.
         experiment_notebook (dict): the experiment notebook content.
     """
     experiment_id = uuid_alpha()
     operator_id = uuid_alpha()
 
     # sets these values to notebooks
-    inference_notebook["metadata"]["experiment_id"] = experiment_id
-    inference_notebook["metadata"]["operator_id"] = operator_id
+    deployment_notebook["metadata"]["experiment_id"] = experiment_id
+    deployment_notebook["metadata"]["operator_id"] = operator_id
     experiment_notebook["metadata"]["experiment_id"] = experiment_id
     experiment_notebook["metadata"]["operator_id"] = operator_id

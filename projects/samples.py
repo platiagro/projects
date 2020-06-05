@@ -22,12 +22,12 @@ def init_components(config_path):
             description = component["description"]
             tags = component["tags"]
             experiment_notebook = read_notebook(component["experimentNotebook"])
-            inference_notebook = read_notebook(component["inferenceNotebook"])
+            deployment_notebook = read_notebook(component["deploymentNotebook"])
             create_component(name=name,
                              description=description,
                              tags=tags,
                              experiment_notebook=experiment_notebook,
-                             inference_notebook=inference_notebook,
+                             deployment_notebook=deployment_notebook,
                              is_default=True)
 
 

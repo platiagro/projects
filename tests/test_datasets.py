@@ -23,8 +23,8 @@ PARAMETERS = {}
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
-TRAINING_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
-INFERENCE_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Deployment.ipynb"
 RUN_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID2 = str(uuid_alpha())
@@ -49,8 +49,8 @@ class TestDatasets(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, inference_notebook_path, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{TRAINING_NOTEBOOK_PATH}', '{INFERENCE_NOTEBOOK_PATH}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, deployment_notebook_path, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
