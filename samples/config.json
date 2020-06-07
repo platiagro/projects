@@ -142,5 +142,23 @@
         "tags": [
             "FEATURE_ENGINEERING"
         ]
+    },
+    {
+        "name": "Pre Selection",
+        "description": "A component that removes all low-variance and highly correlated features.",
+        "trainingNotebook": "/samples/pre-selection/Training.ipynb",
+        "inferenceNotebook": "/samples/pre-selection/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
+        "name": "Filter Selection",
+        "description": "A component that removes selected features from the dataset.",
+        "trainingNotebook": "/samples/filter-selection/Training.ipynb",
+        "inferenceNotebook": "/samples/filter-selection/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
     }
 ]
