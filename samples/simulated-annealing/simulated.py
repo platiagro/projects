@@ -236,7 +236,10 @@ class SimulatedAnnealing:
                         if '{0}---{1}'.format(numb, column) not in list(new_solution.columns):
                             new_solution['{0}---{1}'.format(numb, column)] = 0
 
-                        new_solution['{0}---{1}'.format(numb, column)] = new_solution[column].apply(lambda x: np_func(x))
+                        try:
+                            new_solution['{0}---{1}'.format(numb, column)] = new_solution[column].apply(lambda x: np_func(x))
+                        except:
+                            new_solution.pop('{0}---{1}'.format(numb, column))
 
             return numbt
 
@@ -306,7 +309,10 @@ class SimulatedAnnealing:
                                 if '{0}---{1}---{2}'.format(group_var, group, column) not in list(new_solution.columns):
                                     new_solution['{0}---{1}---{2}'.format(group_var, group, column)] = 0
 
-                                new_solution['{0}---{1}---{2}'.format(group_var, group, column)].loc[new_solution[group_var] == label] = pd_func(new_solution.query('%s == %s' % (group_var, label))[column])
+                                try:
+                                    new_solution['{0}---{1}---{2}'.format(group_var, group, column)].loc[new_solution[group_var] == label] = pd_func(new_solution.query('%s == %s' % (group_var, label))[column])
+                                except:
+                                    new_solution.pop('{0}---{1}---{2}'.format(group_var, group, column))
 
             return groupt
 

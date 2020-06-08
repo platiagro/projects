@@ -252,7 +252,10 @@ class TGraph:
                 if '{0}---{1}'.format(transformation, column) not in list(solution.columns):
                     solution['{0}---{1}'.format(transformation, column)] = 0
 
-                solution['{0}---{1}'.format(transformation, column)] = solution[column].apply(lambda x: np_func(x))
+                try:
+                    solution['{0}---{1}'.format(transformation, column)] = solution[column].apply(lambda x: np_func(x))
+                except:
+                    new_solution.pop('{0}---{1}'.format(numb, column))
 
 
     def apply_grouped(self, solution, transformation):
@@ -297,7 +300,10 @@ class TGraph:
                             if '{0}---{1}---{2}'.format(group_var, transformation, column) not in list(solution.columns):
                                 solution['{0}---{1}---{2}'.format(group_var, transformation, column)] = 0
 
-                            solution['{0}---{1}---{2}'.format(group_var, transformation, column)].loc[solution[group_var] == label] = pd_func(solution.query('%s == %s' % (group_var, label))[column])
+                            try:
+                                solution['{0}---{1}---{2}'.format(group_var, transformation, column)].loc[solution[group_var] == label] = pd_func(solution.query('%s == %s' % (group_var, label))[column])
+                            except:
+                                solution.pop('{0}---{1}---{2}'.format(group_var, transformation, column))
 
     def apply_timely(self, solution, transformation):
         """
