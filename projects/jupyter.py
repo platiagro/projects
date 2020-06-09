@@ -139,12 +139,12 @@ def read_parameters(path):
     """
     object_name = path[len(f"minio://{BUCKET_NAME}/"):]
     try:
-        training_notebook = loads(get_object(object_name).decode("utf-8"))
+        experiment_notebook = loads(get_object(object_name).decode("utf-8"))
     except (NoSuchKey, JSONDecodeError):
         return []
 
     parameters = []
-    cells = training_notebook.get("cells", [])
+    cells = experiment_notebook.get("cells", [])
     for cell in cells:
         cell_type = cell["cell_type"]
         tags = cell["metadata"].get("tags", [])

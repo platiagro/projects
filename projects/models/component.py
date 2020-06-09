@@ -16,8 +16,8 @@ class Component(Base):
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     tags = Column(JSON, nullable=False, default=[])
-    training_notebook_path = Column(String(255))
-    inference_notebook_path = Column(String(255))
+    experiment_notebook_path = Column(String(255))
+    deployment_notebook_path = Column(String(255))
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -27,5 +27,5 @@ class Component(Base):
 
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
-        d["parameters"] = read_parameters(self.training_notebook_path)
+        d["parameters"] = read_parameters(self.experiment_notebook_path)
         return d
