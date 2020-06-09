@@ -146,8 +146,8 @@
     {
         "name": "Pre Selection",
         "description": "A component that removes all low-variance and highly correlated features",
-        "trainingNotebook": "/samples/pre-selection/Experiment.ipynb",
-        "inferenceNotebook": "/samples/pre-selection/Deployment.ipynb",
+        "experimentNotebook": "/samples/pre-selection/Experiment.ipynb",
+        "deploymentNotebook": "/samples/pre-selection/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
@@ -155,8 +155,8 @@
     {
         "name": "Filter Selection",
         "description": "A component that removes selected features from the dataset",
-        "trainingNotebook": "/samples/filter-selection/Experiment.ipynb",
-        "inferenceNotebook": "/samples/filter-selection/Deployment.ipynb",
+        "experimentNotebook": "/samples/filter-selection/Experiment.ipynb",
+        "deploymentNotebook": "/samples/filter-selection/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
