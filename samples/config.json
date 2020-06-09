@@ -2,8 +2,8 @@
     {
         "name": "AutoML Classifier",
         "description": "A component that trains an AutoML Classifier model using auto-sklearn",
-        "trainingNotebook": "/samples/automl-classifier/Training.ipynb",
-        "inferenceNotebook": "/samples/automl-classifier/Inference.ipynb",
+        "experimentNotebook": "/samples/automl-classifier/Experiment.ipynb",
+        "deploymentNotebook": "/samples/automl-classifier/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -11,8 +11,8 @@
     {
         "name": "AutoML Regressor",
         "description": "A component that trains an AutoML Regressor model using auto-sklearn",
-        "trainingNotebook": "/samples/automl-regressor/Training.ipynb",
-        "inferenceNotebook": "/samples/automl-regressor/Inference.ipynb",
+        "experimentNotebook": "/samples/automl-regressor/Experiment.ipynb",
+        "deploymentNotebook": "/samples/automl-regressor/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -20,8 +20,8 @@
     {
         "name": "Linear Regression",
         "description": "A component that trains a Logistic Regression (aka logit, MaxEnt) classifier model using Scikit-learn",
-        "trainingNotebook": "/samples/linear-regression/Training.ipynb",
-        "inferenceNotebook": "/samples/linear-regression/Inference.ipynb",
+        "experimentNotebook": "/samples/linear-regression/Experiment.ipynb",
+        "deploymentNotebook": "/samples/linear-regression/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -29,8 +29,8 @@
     {
         "name": "Logistic Regression",
         "description": "A component that trains an ordinary least squares Linear Regression model using Scikit-learn",
-        "trainingNotebook": "/samples/logistic-regression/Training.ipynb",
-        "inferenceNotebook": "/samples/logistic-regression/Inference.ipynb",
+        "experimentNotebook": "/samples/logistic-regression/Experiment.ipynb",
+        "deploymentNotebook": "/samples/logistic-regression/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -38,8 +38,8 @@
     {
         "name": "MLP Classifier",
         "description": "A component that trains a Multi-layer Perceptron Classifier model using Scikit-learn",
-        "trainingNotebook": "/samples/mlp-classifier/Training.ipynb",
-        "inferenceNotebook": "/samples/mlp-classifier/Inference.ipynb",
+        "experimentNotebook": "/samples/mlp-classifier/Experiment.ipynb",
+        "deploymentNotebook": "/samples/mlp-classifier/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -47,8 +47,8 @@
     {
         "name": "MLP Regressor",
         "description": "A component that trains a Multi-layer Perceptron Regression model using Scikit-learn",
-        "trainingNotebook": "/samples/mlp-regressor/Training.ipynb",
-        "inferenceNotebook": "/samples/mlp-regressor/Inference.ipynb",
+        "experimentNotebook": "/samples/mlp-regressor/Experiment.ipynb",
+        "deploymentNotebook": "/samples/mlp-regressor/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -56,8 +56,8 @@
     {
         "name": "Random Forest Classifier",
         "description": "A component that trains a Random Forest Classifier model using Scikit-learn",
-        "trainingNotebook": "/samples/random-forest-classifier/Training.ipynb",
-        "inferenceNotebook": "/samples/random-forest-classifier/Inference.ipynb",
+        "experimentNotebook": "/samples/random-forest-classifier/Experiment.ipynb",
+        "deploymentNotebook": "/samples/random-forest-classifier/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -65,8 +65,8 @@
     {
         "name": "Random Forest Regressor",
         "description": "A component that trains a Random Forest Regression model using Scikit-learn",
-        "trainingNotebook": "/samples/random-forest-regressor/Training.ipynb",
-        "inferenceNotebook": "/samples/random-forest-regressor/Inference.ipynb",
+        "experimentNotebook": "/samples/random-forest-regressor/Experiment.ipynb",
+        "deploymentNotebook": "/samples/random-forest-regressor/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -74,8 +74,8 @@
     {
         "name": "SVC",
         "description": "A component that trains a Random Forest Regression model using Scikit-learn",
-        "trainingNotebook": "/samples/svc/Training.ipynb",
-        "inferenceNotebook": "/samples/svc/Inference.ipynb",
+        "experimentNotebook": "/samples/svc/Experiment.ipynb",
+        "deploymentNotebook": "/samples/svc/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -83,8 +83,8 @@
     {
         "name": "SVR",
         "description": "A component that trains a Support Vector Regression model using Scikit-learn",
-        "trainingNotebook": "/samples/svr/Training.ipynb",
-        "inferenceNotebook": "/samples/svr/Inference.ipynb",
+        "experimentNotebook": "/samples/svr/Experiment.ipynb",
+        "deploymentNotebook": "/samples/svr/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -92,8 +92,8 @@
     {
         "name": "KMeans",
         "description": "A component that trains a KMeans model using Scikit-learn",
-        "trainingNotebook": "/samples/kmeans-clustering/Training.ipynb",
-        "inferenceNotebook": "/samples/kmeans-clustering/Inference.ipynb",
+        "experimentNotebook": "/samples/kmeans-clustering/Experiment.ipynb",
+        "deploymentNotebook": "/samples/kmeans-clustering/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -101,8 +101,8 @@
     {
         "name": "Isolation Forest",
         "description": "A component that trains a Isolation Forest model using Scikit-learn",
-        "trainingNotebook": "/samples/isolation-forest-clustering/Training.ipynb",
-        "inferenceNotebook": "/samples/isolation-forest-clustering/Inference.ipynb",
+        "experimentNotebook": "/samples/isolation-forest-clustering/Experiment.ipynb",
+        "deploymentNotebook": "/samples/isolation-forest-clustering/Deployment.ipynb",
         "tags": [
             "PREDICTOR"
         ]
@@ -110,80 +110,80 @@
     {
         "name": "Normalizer",
         "description": "A component that normalize samples individually to unit norm model using Scikit-learn",
-        "trainingNotebook": "/samples/normalizer/Training.ipynb",
-        "inferenceNotebook": "/samples/normalizer/Inference.ipynb",
+        "experimentNotebook": "/samples/normalizer/Experiment.ipynb",
+        "deploymentNotebook": "/samples/normalizer/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
     },
     {
         "name": "Imputer",
-        "description": "A component for imputing missing values using mean, median or most frequent.",
-        "trainingNotebook": "/samples/imputer/Training.ipynb",
-        "inferenceNotebook": "/samples/imputer/Inference.ipynb",
+        "description": "A component for imputing missing values using mean, median or most frequent",
+        "experimentNotebook": "/samples/imputer/Experiment.ipynb",
+        "deploymentNotebook": "/samples/imputer/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
     },
     {
         "name": "Variance Threshold",
-        "description": "A component that removes all low-variance features.",
-        "trainingNotebook": "/samples/variance-threshold/Training.ipynb",
-        "inferenceNotebook": "/samples/variance-threshold/Inference.ipynb",
+        "description": "A component that removes all low-variance features",
+        "experimentNotebook": "/samples/variance-threshold/Experiment.ipynb",
+        "deploymentNotebook": "/samples/variance-threshold/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
     },
     {
         "name": "Robust Scaler",
-        "description": "A component that scale features using statistics that are robust to outliers.",
-        "trainingNotebook": "/samples/robust-scaler/Training.ipynb",
-        "inferenceNotebook": "/samples/robust-scaler/Inference.ipynb",
+        "description": "A component that scale features using statistics that are robust to outliers",
+        "experimentNotebook": "/samples/robust-scaler/Experiment.ipynb",
+        "deploymentNotebook": "/samples/robust-scaler/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
     },
     {
         "name": "Feature Tools",
-        "description": "A component that use Feature Tools library to Feature Engineering.",
-        "trainingNotebook": "/samples/feature-tools/Training.ipynb",
-        "inferenceNotebook": "/samples/feature-tools/Inference.ipynb",
+        "description": "A component that use Feature Tools library to Feature Engineering",
+        "experimentNotebook": "/samples/feature-tools/Experiment.ipynb",
+        "deploymentNotebook": "/samples/feature-tools/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
     },
     {
         "name": "Pre Selection",
-        "description": "A component that removes all low-variance and highly correlated features.",
-        "trainingNotebook": "/samples/pre-selection/Training.ipynb",
-        "inferenceNotebook": "/samples/pre-selection/Inference.ipynb",
+        "description": "A component that removes all low-variance and highly correlated features",
+        "experimentNotebook": "/samples/pre-selection/Experiment.ipynb",
+        "deploymentNotebook": "/samples/pre-selection/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
     },
     {
         "name": "Simulated Annealing",
-        "description": "A component that applies simulated annealing strategy to Feature Engineering.",
-        "trainingNotebook": "/samples/simulated-annealing/Training.ipynb",
-        "inferenceNotebook": "/samples/simulated-annealing/Inference.ipynb",
+        "description": "A component that applies simulated annealing strategy to Feature Engineering",
+        "experimentNotebook": "/samples/simulated-annealing/Experiment.ipynb",
+        "deploymentNotebook": "/samples/simulated-annealing/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
     },
     {
         "name": "Transformation Graph",
-        "description": "A component that uses a transformation graph strategy to Feature Engineering.",
-        "trainingNotebook": "/samples/transformation-graph/Training.ipynb",
-        "inferenceNotebook": "/samples/transformation-graph/Inference.ipynb",
+        "description": "A component that uses a transformation graph strategy to Feature Engineering",
+        "experimentNotebook": "/samples/transformation-graph/Experiment.ipynb",
+        "deploymentNotebook": "/samples/transformation-graph/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
     },
     {
         "name": "Filter Selection",
-        "description": "A component that removes selected features from the dataset.",
-        "trainingNotebook": "/samples/filter-selection/Training.ipynb",
-        "inferenceNotebook": "/samples/filter-selection/Inference.ipynb",
+        "description": "A component that removes selected features from the dataset",
+        "experimentNotebook": "/samples/filter-selection/Experiment.ipynb",
+        "deploymentNotebook": "/samples/filter-selection/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
