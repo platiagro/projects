@@ -118,7 +118,7 @@
     },
     {
         "name": "Imputer",
-        "description": "A component for imputing missing values using mean, median or most frequent.",
+        "description": "A component for imputing missing values using mean, median or most frequent",
         "experimentNotebook": "/samples/imputer/Experiment.ipynb",
         "deploymentNotebook": "/samples/imputer/Deployment.ipynb",
         "tags": [
@@ -127,7 +127,7 @@
     },
     {
         "name": "Variance Threshold",
-        "description": "A component that removes all low-variance features.",
+        "description": "A component that removes all low-variance features",
         "experimentNotebook": "/samples/variance-threshold/Experiment.ipynb",
         "deploymentNotebook": "/samples/variance-threshold/Deployment.ipynb",
         "tags": [
@@ -136,7 +136,7 @@
     },
     {
         "name": "Robust Scaler",
-        "description": "A component that scale features using statistics that are robust to outliers.",
+        "description": "A component that scale features using statistics that are robust to outliers",
         "experimentNotebook": "/samples/robust-scaler/Experiment.ipynb",
         "deploymentNotebook": "/samples/robust-scaler/Deployment.ipynb",
         "tags": [
@@ -145,18 +145,18 @@
     },
     {
         "name": "Pre Selection",
-        "description": "A component that removes all low-variance and highly correlated features.",
-        "trainingNotebook": "/samples/pre-selection/Training.ipynb",
-        "inferenceNotebook": "/samples/pre-selection/Inference.ipynb",
+        "description": "A component that removes all low-variance and highly correlated features",
+        "experimentNotebook": "/samples/pre-selection/Experiment.ipynb",
+        "deploymentNotebook": "/samples/pre-selection/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
     },
     {
         "name": "Filter Selection",
-        "description": "A component that removes selected features from the dataset.",
-        "trainingNotebook": "/samples/filter-selection/Training.ipynb",
-        "inferenceNotebook": "/samples/filter-selection/Inference.ipynb",
+        "description": "A component that removes selected features from the dataset",
+        "experimentNotebook": "/samples/filter-selection/Experiment.ipynb",
+        "deploymentNotebook": "/samples/filter-selection/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
