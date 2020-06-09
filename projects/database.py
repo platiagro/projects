@@ -10,7 +10,10 @@ DB_NAME = getenv("MYSQL_DB_NAME", "platiagro")
 DB_USER = getenv("MYSQL_DB_USER", "root")
 DB_PASS = getenv("MYSQL_DB_PASSWORD", "")
 DB_URL = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
-engine = create_engine(DB_URL, convert_unicode=True)
+engine = create_engine(DB_URL,
+                       convert_unicode=True,
+                       pool_size=20,
+                       pool_recycle=300)
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))

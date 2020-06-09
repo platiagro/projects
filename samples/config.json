@@ -153,6 +153,15 @@
         ]
     },
     {
+        "name": "Pre Selection",
+        "description": "A component that removes all low-variance and highly correlated features.",
+        "trainingNotebook": "/samples/pre-selection/Training.ipynb",
+        "inferenceNotebook": "/samples/pre-selection/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
         "name": "Simulated Annealing",
         "description": "A component that applies simulated annealing strategy to Feature Engineering.",
         "trainingNotebook": "/samples/simulated-annealing/Training.ipynb",
@@ -166,6 +175,15 @@
         "description": "A component that uses a transformation graph strategy to Feature Engineering.",
         "trainingNotebook": "/samples/transformation-graph/Training.ipynb",
         "inferenceNotebook": "/samples/transformation-graph/Inference.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
+        "name": "Filter Selection",
+        "description": "A component that removes selected features from the dataset.",
+        "trainingNotebook": "/samples/filter-selection/Training.ipynb",
+        "inferenceNotebook": "/samples/filter-selection/Inference.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
