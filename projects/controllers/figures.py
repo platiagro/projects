@@ -16,4 +16,5 @@ def list_figures(project_id, experiment_id, operator_id):
         A list of data URIs.
     """
     return platiagro.list_figures(experiment_id=experiment_id,
-                                  operator_id=operator_id)
+                                  operator_id=operator_id,
+                                  run_id='latest')
