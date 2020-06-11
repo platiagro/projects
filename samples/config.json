@@ -187,5 +187,14 @@
         "tags": [
             "FEATURE_ENGINEERING"
         ]
+    },
+    {
+        "name": "Recursive Feature Elimination",
+        "description": "A component that performs feature ranking with recursive feature elimination based on a Random Forest estimator",
+        "experimentNotebook": "/samples/rfe-selector/Experiment.ipynb",
+        "deploymentNotebook": "/samples/rfe-selector/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
     }
 ]
