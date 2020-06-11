@@ -1,34 +1,43 @@
 # Built-in components
     ├── automl-classifier
-    │   ├── Training.ipynb      <- Scripts to train models
-    │   └── Inference.ipynb     <- Scripts to make predictions
-    ├── automl-regressor
-    │   ├── Training.ipynb
-    │   └── Inference.ipynb
+    │   ├── Experiment.ipynb      <- Scripts to train models
+    │   └── Deployment.ipynb      <- Scripts to make predictions
+    └── automl-regressor
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
+    └── filter-selection
+    |   ├── Experiment.ipynb
+    |   └── Deployment.ipynb
+    └── kmeans-clustering
+    |   ├── Experiment.ipynb
+    |   └── Deployment.ipynb
     └── linear-regression
-    │   ├── Training.ipynb
-    │   └── Inference.ipynb
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
     └── logistic-regression
-    │   ├── Training.ipynb
-    │   └── Inference.ipynb
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
     └── mlp-classifier
-    │   ├── Training.ipynb
-    │   └── Inference.ipynb
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
     └── mlp-regressor
-    │   ├── Training.ipynb
-    │   └── Inference.ipynb
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
     └── normalizer
-    │   ├── Training.ipynb
-    │   └── Inference.ipynb
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
+    └── pre-selection
+    |   ├── Experiment.ipynb
+    |   └── Deployment.ipynb 
     └── random-forest-classifier
-    │   ├── Training.ipynb
-    │   └── Inference.ipynb
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
     └── random-forest-regressor
-    │   ├── Training.ipynb
-    │   └── Inference.ipynb
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
     └── svc
-    │   ├── Training.ipynb
-    │   └── Inference.ipynb
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
     └── svr
-        ├── Training.ipynb
-        └── Inference.ipynb
+        ├── Experiment.ipynb
+        └── Deployment.ipynb

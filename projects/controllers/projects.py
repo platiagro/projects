@@ -9,7 +9,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from .experiments import create_experiment
 from ..database import db_session
-from ..models import Project, Experiment
+from ..models import Project, Experiment, Operator
 from ..object_storage import remove_objects
 from .utils import uuid_alpha
 
@@ -103,6 +103,10 @@ def delete_project(uuid):
 
     if project is None:
         raise NotFound("The specified project does not exist")
+
+    experiments = Experiment.query.filter(Experiment.project_id == uuid).all()
+    for experiment in experiments:
+        Operator.query.filter(Operator.experiment_id == experiment.uuid).delete()
 
     Experiment.query.filter(Experiment.project_id == uuid).delete()
 

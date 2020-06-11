@@ -17,8 +17,8 @@ NAME = "foo"
 DESCRIPTION = "long foo"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
-TRAINING_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Training.ipynb"
-INFERENCE_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Inference.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Deployment.ipynb"
 IS_DEFAULT = False
 PARAMETERS = [{"default": True, "name": "shuffle", "type": "boolean"}]
 CREATED_AT = "2000-01-01 00:00:00"
@@ -33,8 +33,8 @@ class TestComponents(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO components (uuid, name, description, tags, training_notebook_path, inference_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{TRAINING_NOTEBOOK_PATH}', '{INFERENCE_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -47,7 +47,7 @@ class TestComponents(TestCase):
         file = BytesIO(SAMPLE_NOTEBOOK.encode("utf-8"))
         MINIO_CLIENT.put_object(
             bucket_name=BUCKET_NAME,
-            object_name=TRAINING_NOTEBOOK_PATH[len(f"minio://{BUCKET_NAME}/"):],
+            object_name=EXPERIMENT_NOTEBOOK_PATH[len(f"minio://{BUCKET_NAME}/"):],
             data=file,
             length=file.getbuffer().nbytes,
         )
@@ -55,7 +55,7 @@ class TestComponents(TestCase):
         file = BytesIO(b'{"cells":[{"cell_type":"code","execution_count":null,"metadata":{},"outputs":[],"source":[]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}')
         MINIO_CLIENT.put_object(
             bucket_name=BUCKET_NAME,
-            object_name=INFERENCE_NOTEBOOK_PATH[len(f"minio://{BUCKET_NAME}/"):],
+            object_name=DEPLOYMENT_NOTEBOOK_PATH[len(f"minio://{BUCKET_NAME}/"):],
             data=file,
             length=file.getbuffer().nbytes,
         )
@@ -78,12 +78,12 @@ class TestComponents(TestCase):
         )
 
         session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Inference.ipynb",
+            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Deployment.ipynb",
             data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
         )
 
         session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Training.ipynb",
+            url=f"{JUPYTER_ENDPOINT}/api/contents/components/{COMPONENT_ID}/Experiment.ipynb",
             data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
         )
 
@@ -124,15 +124,15 @@ class TestComponents(TestCase):
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
-            # when copyFrom and trainingNotebook/inferenceNotebook are sent
+            # when copyFrom and experimentNotebook/deploymentNotebook are sent
             # should raise bad request
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
                 "tags": TAGS,
                 "copyFrom": COMPONENT_ID,
-                "trainingNotebook": loads(SAMPLE_NOTEBOOK),
-                "inferenceNotebook": loads(SAMPLE_NOTEBOOK),
+                "experimentNotebook": loads(SAMPLE_NOTEBOOK),
+                "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
             expected = {"message": "Either provide notebooks or a component to copy from"}
@@ -152,7 +152,7 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            # when neither copyFrom nor trainingNotebook/inferenceNotebook are sent
+            # when neither copyFrom nor experimentNotebook/deploymentNotebook are sent
             # should create a component using an empty template notebook
             rv = c.post("/components", json={
                 "name": "test",
@@ -169,12 +169,12 @@ class TestComponents(TestCase):
                     {"default": "Species", "name": "target", "type": "string"},
                 ],
             }
-            # uuid, training_notebook_path, inference_notebook_path, created_at, updated_at
+            # uuid, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
             # are machine-generated we assert they exist, but we don't assert their values
             machine_generated = [
                 "uuid",
-                "trainingNotebookPath",
-                "inferenceNotebookPath",
+                "experimentNotebookPath",
+                "deploymentNotebookPath",
                 "createdAt",
                 "updatedAt",
             ]
@@ -201,8 +201,8 @@ class TestComponents(TestCase):
             }
             machine_generated = [
                 "uuid",
-                "trainingNotebookPath",
-                "inferenceNotebookPath",
+                "experimentNotebookPath",
+                "deploymentNotebookPath",
                 "createdAt",
                 "updatedAt",
             ]
@@ -211,14 +211,14 @@ class TestComponents(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
-            # when trainingNotebook and inferenceNotebook are sent
+            # when experimentNotebook and deploymentNotebook are sent
             # should create a component using their values as source
             rv = c.post("/components", json={
                 "name": "test",
                 "description": "long test",
                 "tags": TAGS,
-                "trainingNotebook": loads(SAMPLE_NOTEBOOK),
-                "inferenceNotebook": loads(SAMPLE_NOTEBOOK),
+                "experimentNotebook": loads(SAMPLE_NOTEBOOK),
+                "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
             expected = {
@@ -230,8 +230,8 @@ class TestComponents(TestCase):
             }
             machine_generated = [
                 "uuid",
-                "trainingNotebookPath",
-                "inferenceNotebookPath",
+                "experimentNotebookPath",
+                "deploymentNotebookPath",
                 "createdAt",
                 "updatedAt",
             ]
@@ -255,8 +255,8 @@ class TestComponents(TestCase):
                 "name": "foo",
                 "description": DESCRIPTION,
                 "tags": TAGS,
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
-                "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
+                "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
+                "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
@@ -287,8 +287,8 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": TAGS,
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
-                "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
+                "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
+                "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
@@ -314,8 +314,8 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": ["FEATURE_ENGINEERING"],
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
-                "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
+                "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
+                "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
@@ -327,7 +327,7 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.patch(f"/components/{COMPONENT_ID}", json={
-                "trainingNotebook": loads(SAMPLE_NOTEBOOK),
+                "experimentNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
             expected = {
@@ -335,8 +335,8 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": ["FEATURE_ENGINEERING"],
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
-                "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
+                "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
+                "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
@@ -348,7 +348,7 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.patch(f"/components/{COMPONENT_ID}", json={
-                "inferenceNotebook": loads(SAMPLE_NOTEBOOK),
+                "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
             expected = {
@@ -356,8 +356,8 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "tags": ["FEATURE_ENGINEERING"],
-                "trainingNotebookPath": TRAINING_NOTEBOOK_PATH,
-                "inferenceNotebookPath": INFERENCE_NOTEBOOK_PATH,
+                "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
+                "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
