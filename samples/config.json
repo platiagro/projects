@@ -144,10 +144,37 @@
         ]
     },
     {
+        "name": "Feature Tools",
+        "description": "A component that use Feature Tools library to Feature Engineering",
+        "experimentNotebook": "/samples/feature-tools/Experiment.ipynb",
+        "deploymentNotebook": "/samples/feature-tools/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
         "name": "Pre Selection",
         "description": "A component that removes all low-variance and highly correlated features",
         "experimentNotebook": "/samples/pre-selection/Experiment.ipynb",
         "deploymentNotebook": "/samples/pre-selection/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
+        "name": "Simulated Annealing",
+        "description": "A component that applies simulated annealing strategy to Feature Engineering",
+        "experimentNotebook": "/samples/simulated-annealing/Experiment.ipynb",
+        "deploymentNotebook": "/samples/simulated-annealing/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
+    },
+    {
+        "name": "Transformation Graph",
+        "description": "A component that uses a transformation graph strategy to Feature Engineering",
+        "experimentNotebook": "/samples/transformation-graph/Experiment.ipynb",
+        "deploymentNotebook": "/samples/transformation-graph/Deployment.ipynb",
         "tags": [
             "FEATURE_ENGINEERING"
         ]
