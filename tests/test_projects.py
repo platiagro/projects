@@ -57,14 +57,16 @@ class TestProjects(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            project_name = str(uuid_alpha())
+
             rv = c.post("/projects", json={
-                "name": "foo",
-                "description":"description",
+                "name": project_name,
+                "description": "description"
             })
             result = rv.get_json()
             result_experiments = result.pop("experiments")
             expected = {
-                "name": "foo",
+                "name": project_name,
                 "description": "description",
             }
             # uuid, created_at, updated_at are machine-generated
@@ -89,6 +91,15 @@ class TestProjects(TestCase):
                 self.assertIn(attr, result_experiments[0])
                 del result_experiments[0][attr]
             self.assertDictEqual(expected, result_experiments[0])
+
+            rv = c.post("/projects", json={
+                "name": project_name,
+                "description": "description"
+            })
+            result = rv.get_json()
+            expected = {"message": "Name already exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
     def test_get_project(self):
         with app.test_client() as c:

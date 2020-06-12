@@ -93,7 +93,7 @@ class TestComponents(TestCase):
             MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
         conn = engine.connect()
-        text = f"DELETE FROM components WHERE uuid = '{COMPONENT_ID}'"
+        text = f"DELETE FROM components WHERE 1 = 1"
         conn.execute(text)
         conn.close()
 
@@ -139,10 +139,10 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            # when copyFrom uuid does note exist
+            # when copyFrom uuid does not exist
             # should raise bad request
             rv = c.post("/components", json={
-                "name": "test",
+                "name": "test copyFrom uuid does not exist ",
                 "description": "long test",
                 "tags": TAGS,
                 "copyFrom": "unk",
@@ -155,12 +155,12 @@ class TestComponents(TestCase):
             # when neither copyFrom nor experimentNotebook/deploymentNotebook are sent
             # should create a component using an empty template notebook
             rv = c.post("/components", json={
-                "name": "test",
+                "name": "test create a component using an empty template notebook",
                 "description": "long test",
             })
             result = rv.get_json()
             expected = {
-                "name": "test",
+                "name": "test create a component using an empty template notebook",
                 "description": "long test",
                 "tags": ["DEFAULT"],
                 "isDefault": IS_DEFAULT,
@@ -186,14 +186,14 @@ class TestComponents(TestCase):
             # when copyFrom is sent
             # should create a component copying notebooks from copyFrom
             rv = c.post("/components", json={
-                "name": "test",
+                "name": "test copy",
                 "description": "long test",
                 "tags": TAGS,
                 "copyFrom": COMPONENT_ID,
             })
             result = rv.get_json()
             expected = {
-                "name": "test",
+                "name": "test copy",
                 "description": "long test",
                 "tags": TAGS,
                 "isDefault": IS_DEFAULT,
@@ -239,6 +239,14 @@ class TestComponents(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+            rv = c.post("/components", json={
+                "name": "test",
+            })
+            result = rv.get_json()
+            expected = {"message": "Name already exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
     def test_get_component(self):
         with app.test_client() as c:
