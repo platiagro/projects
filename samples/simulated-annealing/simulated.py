@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
@@ -107,19 +107,19 @@ class SimulatedAnnealing:
             self.ftypes_list.pop(date_indx)
 
         # Convert all categorical columns to numerical
-        cat_feats_indexes = [indx for indx, x in enumerate(self.ftypes_list) if x == 'Categorical']
-        cat_feats = self.best_solution.columns[cat_feats_indexes].tolist()
+        cat_feats_indexes = [indx for indx, x in enumerate(self.ftypes_list) if x != 'Numerical']
+        if len(cat_feats_indexes) > 0:
+
+            cat_feats = self.best_solution.columns[cat_feats_indexes].tolist()
+
+            oe = OrdinalEncoder()
+
+            if len(cat_feats) > 0:
+                self.best_solution[cat_feats] = oe.fit_transform(self.best_solution[cat_feats])
 
         # Get numeric columns
-        self.num_feats = list(set(self.best_solution.columns) - set(cat_feats))
-
-        le = LabelEncoder()
-
-        if len(cat_feats) > 0:
-
-            for cat in cat_feats:
-
-                self.best_solution[cat] = le.fit_transform(self.best_solution[cat])
+        num_feats_indexes = [indx for indx, x in enumerate(self.ftypes_list) if x == 'Numerical']
+        self.num_feats =  self.best_solution.columns[num_feats_indexes].tolist()
 
         # Copy to initiate every round
         self.data_processed = self.best_solution.copy()

@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.compose import ColumnTransformer
@@ -89,20 +89,20 @@ class TGraph:
             self.date = pd.to_datetime(self.solution.pop(self.date_name))
             self.ftypes_list.pop(date_indx)
 
-        # Convert all categorical columns to numerical
-        cat_feats_indexes = [indx for indx, x in enumerate(self.ftypes_list) if x == 'Categorical']
-        cat_feats = self.solution.columns[cat_feats_indexes].tolist()
+        # Encode all categorical and datetime features
+        cat_feats_indexes = [indx for indx, x in enumerate(self.ftypes_list) if x != 'Numerical']
+        if len(cat_feats_indexes) > 0:
 
-        # Get numeric columns
-        self.num_feats = list(set(self.solution.columns) - set(cat_feats))
+            cat_feats = self.solution.columns[cat_feats_indexes].tolist()
 
-        le = LabelEncoder()
+            oe = OrdinalEncoder()
 
-        if len(cat_feats) > 0:
+            if len(cat_feats) > 0:
+                self.solution[cat_feats] = oe.fit_transform(self.solution[cat_feats])
 
-            for cat in cat_feats:
-
-                self.solution[cat] = le.fit_transform(self.solution[cat])
+        # Get numeric features
+        num_feats_indexes = [indx for indx, x in enumerate(self.ftypes_list) if x == 'Numerical']
+        self.num_feats = self.solution.columns[num_feats_indexes].tolist()
 
         # Add the 0 node to the graph
         reward = self.energy(self.solution)
@@ -255,7 +255,7 @@ class TGraph:
                 try:
                     solution['{0}---{1}'.format(transformation, column)] = solution[column].apply(lambda x: np_func(x))
                 except:
-                    new_solution.pop('{0}---{1}'.format(numb, column))
+                    solution.pop('{0}---{1}'.format(transformation, column))
 
 
     def apply_grouped(self, solution, transformation):
@@ -342,8 +342,10 @@ class TGraph:
 
         solution = solution.fillna(method='ffill').fillna(method='bfill')
 
+        only_num = set(solution.columns).intersection(self.num_feats)
+
         # Execute PCA to obtain a sub group of features
-        model = PCA(n_components=0.98).fit(solution)
+        model = PCA(n_components=0.98).fit(solution[only_num])
 
         # Obtain only the important features
         num_components = model.components_.shape[0]
