@@ -66,6 +66,10 @@ def create_component(name=None, description=None, tags=None,
         valid_str = ",".join(VALID_TAGS)
         raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
+    check_comp_name = db_session.query(Component).filter_by(name=name).first()
+    if check_comp_name:
+        raise BadRequest("Name already exist")
+
     # creates a component with specified name,
     # but copies notebooks from a source component
     if copy_from:
@@ -144,6 +148,13 @@ def update_component(uuid, **kwargs):
 
     if component is None:
         raise NotFound("The specified component does not exist")
+
+    if "name" in kwargs:
+        name = kwargs["name"]
+        if name != component.name:
+            check_comp_name = db_session.query(Component).filter_by(name=name).first()
+            if check_comp_name:
+                raise BadRequest("Name already exist")
 
     if "tags" in kwargs:
         tags = kwargs["tags"]
