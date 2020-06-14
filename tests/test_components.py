@@ -165,8 +165,7 @@ class TestComponents(TestCase):
                 "tags": ["DEFAULT"],
                 "isDefault": IS_DEFAULT,
                 "parameters": [
-                    {"default": "iris", "name": "dataset", "type": "string"},
-                    {"default": "Species", "name": "target", "type": "string"},
+                    {"default": "", "name": "dataset", "type": "string"},
                 ],
             }
             # uuid, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
