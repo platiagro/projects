@@ -9,8 +9,8 @@ from .utils import creates_iris_metadata, creates_titanic_metadata, \
 from projects.controllers.utils import uuid_alpha
 
 EXPERIMENT_ID = str(uuid_alpha())
-KERNEL_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
+RUN_ID = str(uuid_alpha())
 
 IRIS_DATASET = "iris_mock"
 IRIS_TARGET = "Species"
@@ -22,8 +22,8 @@ class TestProcessors(TestCase):
     def setUp(self):
         # Set environment variables needed to run notebooks
         environ["EXPERIMENT_ID"] = EXPERIMENT_ID
-        environ["KERNEL_ID"] = KERNEL_ID
         environ["OPERATOR_ID"] = OPERATOR_ID
+        environ["RUN_ID"] = RUN_ID
 
         iris_content = \
             get('https://raw.githubusercontent.com/platiagro/datasets/master/samples/iris.csv').content

@@ -9,7 +9,6 @@ from .utils import creates_boston_metadata, creates_titanic_metadata, \
 from projects.controllers.utils import uuid_alpha
 
 EXPERIMENT_ID = str(uuid_alpha())
-KERNEL_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 
@@ -23,8 +22,8 @@ class TestRegressors(TestCase):
     def setUp(self):
         # Set environment variables needed to run notebooks
         environ["EXPERIMENT_ID"] = EXPERIMENT_ID
-        environ["KERNEL_ID"] = KERNEL_ID
         environ["OPERATOR_ID"] = OPERATOR_ID
+        environ["RUN_ID"] = RUN_ID
 
         boston_content = \
             get('https://raw.githubusercontent.com/platiagro/datasets/master/samples/boston.csv').content
@@ -32,11 +31,11 @@ class TestRegressors(TestCase):
         titanic_content = \
             get('https://raw.githubusercontent.com/platiagro/datasets/master/samples/titanic.csv').content
 
-        # Creates iris dataset
+        # Creates mock iris dataset
         creates_mock_dataset(BOSTON_DATASET, boston_content)
         creates_boston_metadata(BOSTON_DATASET)
 
-        # Creates titanic dataset
+        # Creates mock titanic dataset
         creates_mock_dataset(TITANIC_DATASET, titanic_content)
         creates_titanic_metadata(TITANIC_DATASET)
 

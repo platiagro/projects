@@ -17,6 +17,7 @@ with open("requirements.txt") as f:
 extras = {
     "testing": [
         "pytest>=4.4.0",
+        "papermill>=2.1.1",
         "pytest-xdist==1.31.0",
         "pytest-cov==2.8.1",
         "flake8==3.7.9",
