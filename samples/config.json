@@ -196,23 +196,5 @@
         "tags": [
             "FEATURE_ENGINEERING"
         ]
-    },
-    {
-        "name": "Simulated Annealing",
-        "description": "A component that find the best solution for either a global minimum or maximum",
-        "experimentNotebook": "/samples/simulated-annealing/Experiment.ipynb",
-        "deploymentNotebook": "/samples/simulated-annealing/Deployment.ipynb",
-        "tags": [
-            "AUTO_FEATURING"
-        ]
-    },
-    {
-        "name": "Transformation Graph",
-        "description": "A component that uses a technique of exploring the possible solutions oriented by a graph to perform AutoFeaturing",
-        "experimentNotebook": "/samples/transformation-graph/Experiment.ipynb",
-        "deploymentNotebook": "/samples/transformation-graph/Deployment.ipynb",
-        "tags": [
-            "AUTO_FEATURING"
-        ]
     }
 ]
