@@ -51,6 +51,13 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
+    check_experiment_name = db_session.query(Experiment)\
+        .filter(Experiment.project_id == project_id)\
+        .filter(Experiment.name == name)\
+        .first()
+    if check_experiment_name:
+        raise BadRequest("an experiment with that name already exists")
+
     experiment = Experiment(uuid=uuid_alpha(),
                             name=name,
                             project_id=project_id,
@@ -102,6 +109,16 @@ def update_experiment(uuid, project_id, **kwargs):
 
     if experiment is None:
         raise NotFound("The specified experiment does not exist")
+
+    if "name" in kwargs:
+        name = kwargs["name"]
+        if name != experiment.name:
+            check_experiment_name = db_session.query(Experiment)\
+                .filter(Experiment.project_id == project_id)\
+                .filter(Experiment.name == name)\
+                .first()
+            if check_experiment_name:
+                raise BadRequest("an experiment with that name already exists")
 
     # updates operators
     if "template_id" in kwargs:

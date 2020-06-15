@@ -31,6 +31,9 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 OPERATORS = [{"uuid": OPERATOR_ID, "componentId": COMPONENT_ID, "position": POSITION, "parameters": PARAMETERS, "experimentId": EXPERIMENT_ID, "createdAt": CREATED_AT_ISO, "updatedAt": UPDATED_AT_ISO}]
 
+EXPERIMENT_ID_2 = str(uuid_alpha())
+NAME_2 = "foo 2"
+POSITION_2 = 1
 
 class TestExperiments(TestCase):
     def setUp(self):
@@ -55,6 +58,12 @@ class TestExperiments(TestCase):
         conn.execute(text)
 
         text = (
+            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID_2}', '{NAME_2}', '{PROJECT_ID}', '{DATASET}', '{TARGET}', '{POSITION_2}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
             f"INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) "
             f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{POSITION}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
@@ -73,6 +82,9 @@ class TestExperiments(TestCase):
         conn.execute(text)
 
         text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_2}'"
         conn.execute(text)
 
         text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
@@ -112,6 +124,14 @@ class TestExperiments(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
+                "name": NAME,
+            })
+            result = rv.get_json()
+            expected = {"message": "an experiment with that name already exists"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
                 "name": "test",
                 "dataset": DATASET,
                 "target": TARGET,
@@ -122,7 +142,7 @@ class TestExperiments(TestCase):
                 "projectId": PROJECT_ID,
                 "dataset": DATASET,
                 "target": TARGET,
-                "position": 1,
+                "position": 2,
                 "isActive": IS_ACTIVE,
                 "operators": [],
             }
@@ -179,10 +199,31 @@ class TestExperiments(TestCase):
             self.assertEqual(rv.status_code, 404)
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
-                "unk": "bar",
+                "name": NAME_2,
             })
             result = rv.get_json()
+            expected = {"message": "an experiment with that name already exists"}
+            self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
+                "templateId": "unk",
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified template does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
+                "unk": "bar",
+            })
+            self.assertEqual(rv.status_code, 400)
+
+            # update experiment using the same name
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
+                "name": NAME,
+            })
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
                 "name": "bar",
@@ -204,14 +245,6 @@ class TestExperiments(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
-
-            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
-                "templateId": "unk",
-            })
-            result = rv.get_json()
-            expected = {"message": "The specified template does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
                 "templateId": TEMPLATE_ID,
