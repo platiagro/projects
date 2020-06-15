@@ -15,6 +15,9 @@ EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_NAME = "Novo experimento"
 DESCRIPTION= "Description"
 
+PROJECT_ID_2 = str(uuid_alpha())
+NAME_2 = "foo 2"
+
 
 class TestProjects(TestCase):
     def setUp(self):
@@ -23,6 +26,12 @@ class TestProjects(TestCase):
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at, description) "
             f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}', '{DESCRIPTION}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, description) "
+            f"VALUES ('{PROJECT_ID_2}', '{NAME_2}', '{CREATED_AT}', '{UPDATED_AT}', '{DESCRIPTION}')"
         )
         conn.execute(text)
 
@@ -41,6 +50,9 @@ class TestProjects(TestCase):
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
+
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_2}'"
+        conn.execute(text)
         conn.close()
 
     def test_list_projects(self):
@@ -54,6 +66,14 @@ class TestProjects(TestCase):
             rv = c.post("/projects", json={})
             result = rv.get_json()
             expected = {"message": "name is required"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post("/projects", json={
+                "name": NAME
+            })
+            result = rv.get_json()
+            expected = {"message": "a project with that name already exists"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
@@ -91,15 +111,6 @@ class TestProjects(TestCase):
                 self.assertIn(attr, result_experiments[0])
                 del result_experiments[0][attr]
             self.assertDictEqual(expected, result_experiments[0])
-
-            rv = c.post("/projects", json={
-                "name": project_name,
-                "description": "description"
-            })
-            result = rv.get_json()
-            expected = {"message": "Name already exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
 
     def test_get_project(self):
         with app.test_client() as c:
@@ -147,10 +158,23 @@ class TestProjects(TestCase):
             self.assertEqual(rv.status_code, 404)
 
             rv = c.patch(f"/projects/{PROJECT_ID}", json={
-                "unk": "bar",
+                "name": NAME_2,
             })
             result = rv.get_json()
+            expected = {"message": "a project with that name already exists"}
+            self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}", json={
+                "unk": "bar",
+            })
+            self.assertEqual(rv.status_code, 400)
+
+            # update project using the same name
+            rv = c.patch(f"/projects/{PROJECT_ID}", json={
+                "name": NAME,
+            })
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.patch(f"/projects/{PROJECT_ID}", json={
                 "name": "bar",

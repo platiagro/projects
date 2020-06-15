@@ -68,7 +68,7 @@ def create_component(name=None, description=None, tags=None,
 
     check_comp_name = db_session.query(Component).filter_by(name=name).first()
     if check_comp_name:
-        raise BadRequest("Name already exist")
+        raise BadRequest("a component with that name already exists")
 
     # creates a component with specified name,
     # but copies notebooks from a source component
@@ -154,7 +154,7 @@ def update_component(uuid, **kwargs):
         if name != component.name:
             check_comp_name = db_session.query(Component).filter_by(name=name).first()
             if check_comp_name:
-                raise BadRequest("Name already exist")
+                raise BadRequest("a component with that name already exists")
 
     if "tags" in kwargs:
         tags = kwargs["tags"]

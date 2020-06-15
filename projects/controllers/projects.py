@@ -41,7 +41,7 @@ def create_project(name=None, **kwargs):
 
     check_project_name = db_session.query(Project).filter_by(name=name).first()
     if check_project_name:
-        raise BadRequest("Name already exist")
+        raise BadRequest("a project with that name already exists")
 
     project = Project(uuid=uuid_alpha(), name=name, description=kwargs.get("description"))
     db_session.add(project)
@@ -87,7 +87,7 @@ def update_project(uuid, **kwargs):
         if name != project.name:
             check_project_name = db_session.query(Project).filter_by(name=name).first()
             if check_project_name:
-                raise BadRequest("Name already exist")
+                raise BadRequest("a project with that name already exists")
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)

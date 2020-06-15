@@ -56,7 +56,7 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
         .filter(Experiment.name == name)\
         .first()
     if check_experiment_name:
-        raise BadRequest("Name already exist")
+        raise BadRequest("an experiment with that name already exists")
 
     experiment = Experiment(uuid=uuid_alpha(),
                             name=name,
@@ -118,7 +118,7 @@ def update_experiment(uuid, project_id, **kwargs):
                 .filter(Experiment.name == name)\
                 .first()
             if check_experiment_name:
-                raise BadRequest("Name already exist")
+                raise BadRequest("an experiment with that name already exists")
 
     # updates operators
     if "template_id" in kwargs:
