@@ -73,7 +73,7 @@ def creates_eucalyptus_metadata(dataset_object_name):
     metadata = {"columns": ["Abbrev", "Rep", "Locality", "Map_Ref", "Latitude", "Altitude",
                             "Rainfall", "Frosts", "Year", "Sp", "PMCno", "DBH", "Ht", "Surv",
                             "Vig", "Ins_res", "Stem_Fm", "Crown_Fm", "Brnch_Fm", "Utility"],
-                "featuretypes": ["Categorical", "Numerical", "Categorical", "Categorical" "Categorical",
+                "featuretypes": ["Categorical", "Numerical", "Categorical", "Categorical", "Categorical",
                                  "Numerical", "Numerical", "Numerical", "Numerical", "Categorical",
                                  "Numerical", "Numerical", "Numerical", "Numerical", "Numerical",
                                  "Numerical", "Numerical", "Numerical", "Numerical", "Categorical"],

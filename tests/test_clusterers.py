@@ -1,4 +1,4 @@
-from os import environ
+from os import environ, path, remove
 from requests import get
 from unittest import TestCase
 
@@ -38,24 +38,34 @@ class TestClusteres(TestCase):
         creates_titanic_metadata(TITANIC_DATASET)
 
     def tearDown(self):
+        files_after_executed = ["Model.py", "contract.json"]
+
+        for generated_file in files_after_executed:
+            if path.exists(generated_file):
+                remove(generated_file)
+
         # Delete mock datasets
         delete_mock_dataset(IRIS_DATASET)
         delete_mock_dataset(TITANIC_DATASET)
 
     def test_kmeans(self):
-        input_path = "samples/kmeans-clustering/Experiment.ipynb"
+        experiment_path = "samples/kmeans-clustering/Experiment.ipynb"
+        deployment_path = "samples/kmeans-clustering/Deployment.ipynb"
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=IRIS_DATASET))
+        # Run test with iris and titanic datasets
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET))
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET))
 
-        # Run with titanic dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=TITANIC_DATASET))
+        # Deploy component
+        execute_notebook(deployment_path, "-")
 
     def test_isolation_foresting(self):
-        input_path = "samples/isolation-forest-clustering/Experiment.ipynb"
+        experiment_path = "samples/isolation-forest-clustering/Experiment.ipynb"
+        deployment_path = "samples/isolation-forest-clustering/Deployment.ipynb"
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=IRIS_DATASET))
+        # Run test with iris and titanic datasets
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET))
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET))
 
-        # Run with titanic dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=TITANIC_DATASET))
+        # Deploy component
+        execute_notebook(deployment_path, "-")

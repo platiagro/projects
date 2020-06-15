@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from papermill import execute_notebook
 
-from .utils import creates_iris_metadata, creates_titanic_metadata, \
+from .utils import creates_boston_metadata, creates_iris_metadata, creates_titanic_metadata, \
     creates_mock_dataset, creates_eucalyptus_metadata, delete_mock_dataset
 from projects.controllers.utils import uuid_alpha
 
@@ -20,6 +20,9 @@ TITANIC_TARGET = "Survived"
 
 EUCALYPTUS_DATASET = "eucalyptus_mock"
 EUCALYPTUS_TARGET = "Utility"
+
+BOSTON_DATASET = "boston_mock"
+BOSTON_TARGET = "medv"
 
 
 class TestProcessors(TestCase):
@@ -38,6 +41,9 @@ class TestProcessors(TestCase):
         eucalyptus_content = \
             get("https://raw.githubusercontent.com/platiagro/datasets/master/samples/eucalyptus.csv").content
 
+        boston_content = \
+            get('https://raw.githubusercontent.com/platiagro/datasets/master/samples/boston.csv').content
+
         # Creates mock iris dataset
         creates_mock_dataset(IRIS_DATASET, iris_content)
         creates_iris_metadata(IRIS_DATASET)
@@ -50,8 +56,13 @@ class TestProcessors(TestCase):
         creates_mock_dataset(EUCALYPTUS_DATASET, eucalyptus_content)
         creates_eucalyptus_metadata(EUCALYPTUS_DATASET)
 
+        # Creates mock boston dataset
+        creates_mock_dataset(BOSTON_DATASET, boston_content)
+        creates_boston_metadata(BOSTON_DATASET)
+
     def tearDown(self):
-        files_after_executed = ["CustomTransformer.py", "simulated.py", "tgraph.py"]
+        files_after_executed = ["CustomTransformer.py", "simulated.py", "tgraph.py",
+                                "Model.py", "contract.json"]
 
         for generated_file in files_after_executed:
             if path.exists(generated_file):
@@ -61,94 +72,104 @@ class TestProcessors(TestCase):
         delete_mock_dataset(IRIS_DATASET)
         delete_mock_dataset(TITANIC_DATASET)
         delete_mock_dataset(EUCALYPTUS_DATASET)
+        delete_mock_dataset(BOSTON_DATASET)
 
     def test_filter_selection(self):
-        input_path = "samples/filter-selection/Experiment.ipynb"
+        experiment_path = "samples/filter-selection/Experiment.ipynb"
+        deployment_path = "samples/filter-selection/Deployment.ipynb"
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        # Run test with iris and titanic datasets
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET,
+                                                               target=TITANIC_TARGET,
+                                                               features_to_filter=["PassengerId"]))
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "tests/output.ipynb", parameters=dict(dataset=TITANIC_DATASET,
-                                                                           target=TITANIC_TARGET,
-                                                                           features_to_filter=["PassengerId"]))
-
-        # Delete modified dataset
-        delete_mock_dataset(IRIS_DATASET)
-        delete_mock_dataset(TITANIC_DATASET)
+        # Deploy component
+        execute_notebook(deployment_path, "-")
 
     def test_imputer(self):
-        input_path = "samples/imputer/Experiment.ipynb"
+        experiment_path = "samples/imputer/Experiment.ipynb"
+        deployment_path = "samples/imputer/Deployment.ipynb"
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        # Run test with iris and titanic datasets
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
+        # Deploy component
+        execute_notebook(deployment_path, "-")
 
     def test_normalizer(self):
-        input_path = "samples/normalizer/Experiment.ipynb"
+        experiment_path = "samples/normalizer/Experiment.ipynb"
+        deployment_path = "samples/normalizer/Deployment.ipynb"
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        # Run test with iris and titanic datasets
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
+        # Deploy component
+        execute_notebook(deployment_path, "-")
 
     def test_pre_selection(self):
-        input_path = "samples/pre-selection/Experiment.ipynb"
+        experiment_path = "samples/pre-selection/Experiment.ipynb"
+        deployment_path = "samples/pre-selection/Deployment.ipynb"
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        # Run test with iris and titanic datasets
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
-        # Delete modified dataset
-        delete_mock_dataset(IRIS_DATASET)
-        delete_mock_dataset(TITANIC_DATASET)
+        # Deploy component
+        execute_notebook(deployment_path, "-")
 
     def test_robust_scaler(self):
-        input_path = "samples/normalizer/Experiment.ipynb"
+        experiment_path = "samples/robust-scaler/Experiment.ipynb"
+        deployment_path = "samples/robust-scaler/Deployment.ipynb"
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        # Run test with iris and titanic datasets
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
+        # Deploy component
+        execute_notebook(deployment_path, "-")
 
     def test_variance_threshold(self):
-        input_path = "samples/normalizer/Experiment.ipynb"
+        experiment_path = "samples/variance-threshold/Experiment.ipynb"
+        deployment_path = "samples/variance-threshold/Deployment.ipynb"
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        # Run test with iris and titanic datasets
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
-        # Run test with iris dataset
-        execute_notebook(input_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
+        # Deploy component
+        execute_notebook(deployment_path, "-")
 
-        # Delete modified dataset
-        delete_mock_dataset(IRIS_DATASET)
-        delete_mock_dataset(TITANIC_DATASET)
+    def test_rfe_selector(self):
+        experiment_path = "samples/rfe-selector/Experiment.ipynb"
+        deployment_path = "samples/rfe-selector/Deployment.ipynb"
 
-    # def test_rfe_selector(self):
-    #     input_path = "samples/rfe-selector/Experiment.ipynb"
+        # Run test with boston dataset
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=BOSTON_DATASET,
+                                                               target=BOSTON_TARGET))
 
-    #     # Run test with eucalyptus dataset
-    #     execute_notebook(input_path, "tests/output.ipynb", parameters=dict(dataset=EUCALYPTUS_DATASET, target=EUCALYPTUS_TARGET))
+        # Deploy component
+        execute_notebook(deployment_path, "-")
 
-    # def test_simulated_annealing(self):
-    #     input_path = "samples/simulated-annealing/Experiment.ipynb"
+    def test_simulated_annealing(self):
+        experiment_path = "samples/simulated-annealing/Experiment.ipynb"
+        deployment_path = "samples/simulated-annealing/Deployment.ipynb"
 
-    #     # Run test with eucalyptus dataset
-    #     execute_notebook(input_path, "tests/output.ipynb", parameters=dict(dataset=EUCALYPTUS_DATASET, target=EUCALYPTUS_TARGET))
+        # Run test with eucalyptus dataset
+        execute_notebook(experiment_path, "-", parameters=dict(dataset=EUCALYPTUS_DATASET,
+                                                               target=EUCALYPTUS_TARGET))
 
-    #     # Delete modified dataset
-    #     delete_mock_dataset(EUCALYPTUS_DATASET)
+        # Deploy component
+        execute_notebook(deployment_path, "-")
 
     # def test_transformation_graph(self):
-    #     input_path = "samples/transformation-graph/Experiment.ipynb"
+    #     experiment_path = "samples/transformation-graph/Experiment.ipynb"
+    #     deployment_path = "samples/transformation-graph/Deployment.ipynb"
 
     #     # Run test with eucalyptus dataset
-    #     execute_notebook(input_path, "-", parameters=dict(dataset=EUCALYPTUS_DATASET, target=EUCALYPTUS_TARGET))
+    #     execute_notebook(experiment_path, "-", parameters=dict(dataset=EUCALYPTUS_DATASET, target=EUCALYPTUS_TARGET))
 
-    #     # Delete modified dataset
-    #     delete_mock_dataset(EUCALYPTUS_DATASET)
+    #     # Deploy component
+    #     execute_notebook(deployment_path, "-")
