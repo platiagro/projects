@@ -196,5 +196,13 @@
         "tags": [
             "FEATURE_ENGINEERING"
         ]
+    },
+    {
+        "name": "Descriptive Analysis",
+        "description": "A component that generates descriptive statistics for a given dataset.",
+        "experimentNotebook": "/samples/descriptive-analysis/Experiment.ipynb",
+        "tags": [
+            "DESCRIPTIVE_STATISTICS"
+        ]
     }
 ]
