@@ -39,6 +39,10 @@ def create_project(name=None, **kwargs):
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
+    check_project_name = db_session.query(Project).filter_by(name=name).first()
+    if check_project_name:
+        raise BadRequest("a project with that name already exists")
+
     project = Project(uuid=uuid_alpha(), name=name, description=kwargs.get("description"))
     db_session.add(project)
     db_session.commit()
@@ -77,6 +81,13 @@ def update_project(uuid, **kwargs):
 
     if project is None:
         raise NotFound("The specified project does not exist")
+
+    if "name" in kwargs:
+        name = kwargs["name"]
+        if name != project.name:
+            check_project_name = db_session.query(Project).filter_by(name=name).first()
+            if check_project_name:
+                raise BadRequest("a project with that name already exists")
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)

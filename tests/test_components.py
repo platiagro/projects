@@ -27,6 +27,10 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 SAMPLE_NOTEBOOK = '{"cells":[{"cell_type":"code","execution_count":null,"metadata":{"tags":["parameters"]},"outputs":[],"source":["shuffle = True #@param {type: \\"boolean\\"}"]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}'
 
+COMPONENT_ID_2 = str(uuid_alpha())
+EXPERIMENT_NOTEBOOK_PATH_2 = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID_2}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH_2 = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID_2}/Deployment.ipynb"
+
 
 class TestComponents(TestCase):
     def setUp(self):
@@ -35,6 +39,11 @@ class TestComponents(TestCase):
         text = (
             f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+        text = (
+            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID_2}', 'foo 2', '{DESCRIPTION}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH_2}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -93,7 +102,7 @@ class TestComponents(TestCase):
             MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
         conn = engine.connect()
-        text = f"DELETE FROM components WHERE uuid = '{COMPONENT_ID}'"
+        text = f"DELETE FROM components WHERE 1 = 1"
         conn.execute(text)
         conn.close()
 
@@ -124,6 +133,15 @@ class TestComponents(TestCase):
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
+            # component name already exists
+            rv = c.post("/components", json={
+                "name": "foo",
+            })
+            result = rv.get_json()
+            expected = {"message": "a component with that name already exists"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
             # when copyFrom and experimentNotebook/deploymentNotebook are sent
             # should raise bad request
             rv = c.post("/components", json={
@@ -139,10 +157,10 @@ class TestComponents(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            # when copyFrom uuid does note exist
+            # when copyFrom uuid does not exist
             # should raise bad request
             rv = c.post("/components", json={
-                "name": "test",
+                "name": "test copyFrom uuid does not exist ",
                 "description": "long test",
                 "tags": TAGS,
                 "copyFrom": "unk",
@@ -155,18 +173,17 @@ class TestComponents(TestCase):
             # when neither copyFrom nor experimentNotebook/deploymentNotebook are sent
             # should create a component using an empty template notebook
             rv = c.post("/components", json={
-                "name": "test",
+                "name": "test create a component using an empty template notebook",
                 "description": "long test",
             })
             result = rv.get_json()
             expected = {
-                "name": "test",
+                "name": "test create a component using an empty template notebook",
                 "description": "long test",
                 "tags": ["DEFAULT"],
                 "isDefault": IS_DEFAULT,
                 "parameters": [
-                    {"default": "iris", "name": "dataset", "type": "string"},
-                    {"default": "Species", "name": "target", "type": "string"},
+                    {"default": "", "name": "dataset", "type": "string"},
                 ],
             }
             # uuid, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
@@ -186,14 +203,14 @@ class TestComponents(TestCase):
             # when copyFrom is sent
             # should create a component copying notebooks from copyFrom
             rv = c.post("/components", json={
-                "name": "test",
+                "name": "test copy",
                 "description": "long test",
                 "tags": TAGS,
                 "copyFrom": COMPONENT_ID,
             })
             result = rv.get_json()
             expected = {
-                "name": "test",
+                "name": "test copy",
                 "description": "long test",
                 "tags": TAGS,
                 "isDefault": IS_DEFAULT,
@@ -266,18 +283,44 @@ class TestComponents(TestCase):
 
     def test_update_component(self):
         with app.test_client() as c:
+            # component none
             rv = c.patch("/components/foo", json={})
             result = rv.get_json()
             expected = {"message": "The specified component does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
+            # component name already exists
+            rv = c.patch(f"/components/{COMPONENT_ID}", json={
+                "name": "foo 2",
+            })
+            result = rv.get_json()
+            expected = {"message": "a component with that name already exists"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            # invalid tags
+            rv = c.patch(f"/components/{COMPONENT_ID}", json={
+                "tags": ["UNK"],
+            })
+            result = rv.get_json()
+            self.assertEqual(rv.status_code, 400)
+
+            # invalid key
             rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "unk": "bar",
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 400)
 
+            # update component using the same name
+            rv = c.patch(f"/components/{COMPONENT_ID}", json={
+                "name": "foo",
+            })
+            result = rv.get_json()
+            self.assertEqual(rv.status_code, 200)
+
+            # update component name
             rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "name": "bar",
             })
@@ -299,12 +342,7 @@ class TestComponents(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
-            rv = c.patch(f"/components/{COMPONENT_ID}", json={
-                "tags": ["UNK"],
-            })
-            result = rv.get_json()
-            self.assertEqual(rv.status_code, 400)
-
+            # update component tags
             rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "tags": ["FEATURE_ENGINEERING"],
             })
@@ -326,6 +364,7 @@ class TestComponents(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
+            # update component experiment notebook
             rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "experimentNotebook": loads(SAMPLE_NOTEBOOK),
             })
@@ -347,6 +386,7 @@ class TestComponents(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
+            # update component deployment notebook
             rv = c.patch(f"/components/{COMPONENT_ID}", json={
                 "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
             })
@@ -370,13 +410,21 @@ class TestComponents(TestCase):
 
     def test_delete_component(self):
         with app.test_client() as c:
+            # component is none
             rv = c.delete("/components/unk")
             result = rv.get_json()
             expected = {"message": "The specified component does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
+            # jupyter file is not none
             rv = c.delete(f"/components/{COMPONENT_ID}")
+            result = rv.get_json()
+            expected = {"message": "Component deleted"}
+            self.assertDictEqual(expected, result)
+
+            # jupyter file is none
+            rv = c.delete(f"/components/{COMPONENT_ID_2}")
             result = rv.get_json()
             expected = {"message": "Component deleted"}
             self.assertDictEqual(expected, result)
