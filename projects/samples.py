@@ -21,8 +21,16 @@ def init_components(config_path):
                 continue
             description = component["description"]
             tags = component["tags"]
-            experiment_notebook = read_notebook(component["experimentNotebook"])
-            deployment_notebook = read_notebook(component["deploymentNotebook"])
+
+            try:
+                experiment_notebook = read_notebook(component["experimentNotebook"])
+            except KeyError:
+                experiment_notebook = None
+            try:
+                deployment_notebook = read_notebook(component["deploymentNotebook"])
+            except KeyError:
+                deployment_notebook = None
+
             create_component(name=name,
                              description=description,
                              tags=tags,
