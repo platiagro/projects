@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from json import load
 
+from werkzeug.exceptions import BadRequest
+
 from .controllers.components import create_component, list_components
 
 
@@ -31,12 +33,15 @@ def init_components(config_path):
             except KeyError:
                 deployment_notebook = None
 
-            create_component(name=name,
-                             description=description,
-                             tags=tags,
-                             experiment_notebook=experiment_notebook,
-                             deployment_notebook=deployment_notebook,
-                             is_default=True)
+            try:
+                create_component(name=name,
+                                 description=description,
+                                 tags=tags,
+                                 experiment_notebook=experiment_notebook,
+                                 deployment_notebook=deployment_notebook,
+                                 is_default=True)
+            except BadRequest:
+                pass
 
 
 def read_notebook(notebook_path):
