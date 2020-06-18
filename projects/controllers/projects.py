@@ -23,7 +23,7 @@ def list_projects():
     projects = db_session.query(Project) \
         .all()
     # sort the list in place, using natural sort
-    projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', o.name)])
+    projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [project.as_dict() for project in projects]
 
 

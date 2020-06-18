@@ -33,7 +33,7 @@ def list_components():
     components = db_session.query(Component) \
         .all()
     # sort the list in place, using natural sort
-    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', o.name)])
+    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [component.as_dict() for component in components]
 
 
