@@ -19,7 +19,7 @@ from ..object_storage import BUCKET_NAME, get_object, put_object, \
 from .utils import uuid_alpha
 
 PREFIX = "components"
-VALID_TAGS = ["DEFAULT", "FEATURE_ENGINEERING", "PREDICTOR"]
+VALID_TAGS = ["DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
 DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
 
