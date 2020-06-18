@@ -3,7 +3,7 @@ from json import load
 
 from werkzeug.exceptions import BadRequest
 
-from .controllers.components import create_component, list_components
+from .controllers.components import create_component
 
 
 def init_components(config_path):
@@ -14,7 +14,7 @@ def init_components(config_path):
     """
     with open(config_path) as f:
         components = load(f)
-        existing = [c["name"] for c in list_components() if c["isDefault"]]
+
         for component in components:
             name = component["name"]
             description = component["description"]
