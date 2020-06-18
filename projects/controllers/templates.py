@@ -20,7 +20,7 @@ def list_templates():
     templates = db_session.query(Template) \
         .all()
     # sort the list in place, using natural sort
-    templates.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', o.name)])
+    templates.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [template.as_dict() for template in templates]
 
 

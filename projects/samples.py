@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from json import load
 
-from .controllers.components import create_component, list_components
+from werkzeug.exceptions import BadRequest
+
+from .controllers.components import create_component
 
 
 def init_components(config_path):
@@ -12,23 +14,31 @@ def init_components(config_path):
     """
     with open(config_path) as f:
         components = load(f)
-        existing = [c["name"] for c in list_components() if c["isDefault"]]
+
         for component in components:
             name = component["name"]
-            # if this component already exists,
-            # skip this and avoid creating a duplicate
-            if name in existing:
-                continue
             description = component["description"]
             tags = component["tags"]
-            experiment_notebook = read_notebook(component["experimentNotebook"])
-            deployment_notebook = read_notebook(component["deploymentNotebook"])
-            create_component(name=name,
-                             description=description,
-                             tags=tags,
-                             experiment_notebook=experiment_notebook,
-                             deployment_notebook=deployment_notebook,
-                             is_default=True)
+
+            try:
+                experiment_notebook = read_notebook(component["experimentNotebook"])
+            except KeyError:
+                experiment_notebook = None
+
+            try:
+                deployment_notebook = read_notebook(component["deploymentNotebook"])
+            except KeyError:
+                deployment_notebook = None
+
+            try:
+                create_component(name=name,
+                                 description=description,
+                                 tags=tags,
+                                 experiment_notebook=experiment_notebook,
+                                 deployment_notebook=deployment_notebook,
+                                 is_default=True)
+            except BadRequest:
+                pass
 
 
 def read_notebook(notebook_path):

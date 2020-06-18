@@ -19,7 +19,7 @@ from ..object_storage import BUCKET_NAME, get_object, put_object, \
 from .utils import uuid_alpha
 
 PREFIX = "components"
-VALID_TAGS = ["DEFAULT", "FEATURE_ENGINEERING", "PREDICTOR"]
+VALID_TAGS = ["DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
 DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
 
@@ -33,7 +33,7 @@ def list_components():
     components = db_session.query(Component) \
         .all()
     # sort the list in place, using natural sort
-    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', o.name)])
+    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [component.as_dict() for component in components]
 
 
