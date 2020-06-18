@@ -17,10 +17,6 @@ def init_components(config_path):
         existing = [c["name"] for c in list_components() if c["isDefault"]]
         for component in components:
             name = component["name"]
-            # if this component already exists,
-            # skip this and avoid creating a duplicate
-            if name in existing:
-                continue
             description = component["description"]
             tags = component["tags"]
 
@@ -28,6 +24,7 @@ def init_components(config_path):
                 experiment_notebook = read_notebook(component["experimentNotebook"])
             except KeyError:
                 experiment_notebook = None
+
             try:
                 deployment_notebook = read_notebook(component["deploymentNotebook"])
             except KeyError:
