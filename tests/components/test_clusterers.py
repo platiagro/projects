@@ -1,7 +1,7 @@
 from os import environ, path, remove
 from requests import get
-from unittest import TestCase
 
+from pytest import fixture
 from papermill import execute_notebook
 
 from .utils import creates_iris_metadata, creates_titanic_metadata, \
@@ -16,56 +16,60 @@ IRIS_DATASET = "iris_mock"
 TITANIC_DATASET = "titanic_mock"
 
 
-class TestClusteres(TestCase):
-    def setUp(self):
-        # Set environment variables needed to run notebooks
-        environ["EXPERIMENT_ID"] = EXPERIMENT_ID
-        environ["OPERATOR_ID"] = OPERATOR_ID
-        environ["RUN_ID"] = RUN_ID
+@fixture(scope="session", autouse=True)
+def setup(request):
+    # Set environment variables needed to run notebooks
+    environ["EXPERIMENT_ID"] = EXPERIMENT_ID
+    environ["OPERATOR_ID"] = OPERATOR_ID
+    environ["RUN_ID"] = RUN_ID
 
-        iris_content = \
-            get('https://raw.githubusercontent.com/platiagro/datasets/master/samples/iris.csv').content
+    iris_content = \
+        get('https://raw.githubusercontent.com/platiagro/datasets/master/samples/iris.csv').content
 
-        titanic_content = \
-            get('https://raw.githubusercontent.com/platiagro/datasets/master/samples/titanic.csv').content
+    titanic_content = \
+        get('https://raw.githubusercontent.com/platiagro/datasets/master/samples/titanic.csv').content
 
-        # Creates iris dataset
-        creates_mock_dataset(IRIS_DATASET, iris_content)
-        creates_iris_metadata(IRIS_DATASET)
+    # Creates iris dataset
+    creates_mock_dataset(IRIS_DATASET, iris_content)
+    creates_iris_metadata(IRIS_DATASET)
 
-        # Creates titanic dataset
-        creates_mock_dataset(TITANIC_DATASET, titanic_content)
-        creates_titanic_metadata(TITANIC_DATASET)
+    # Creates titanic dataset
+    creates_mock_dataset(TITANIC_DATASET, titanic_content)
+    creates_titanic_metadata(TITANIC_DATASET)
 
-    def tearDown(self):
+    def delete_datasets():
         files_after_executed = ["Model.py", "contract.json"]
 
         for generated_file in files_after_executed:
             if path.exists(generated_file):
                 remove(generated_file)
 
-        # Delete mock datasets
+        # delete datasets
         delete_mock_dataset(IRIS_DATASET)
         delete_mock_dataset(TITANIC_DATASET)
 
-    def test_kmeans(self):
-        experiment_path = "samples/kmeans-clustering/Experiment.ipynb"
-        deployment_path = "samples/kmeans-clustering/Deployment.ipynb"
+    request.addfinalizer(delete_datasets)
 
-        # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET))
-        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET))
 
-        # Deploy component
-        execute_notebook(deployment_path, "-")
+def test_kmeans(setup):
+    experiment_path = "samples/kmeans-clustering/Experiment.ipynb"
+    deployment_path = "samples/kmeans-clustering/Deployment.ipynb"
 
-    def test_isolation_foresting(self):
-        experiment_path = "samples/isolation-forest-clustering/Experiment.ipynb"
-        deployment_path = "samples/isolation-forest-clustering/Deployment.ipynb"
+    # Run test with iris and titanic datasets
+    execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET))
+    execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET))
 
-        # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET))
-        execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET))
+    # Deploy component
+    execute_notebook(deployment_path, "-")
 
-        # Deploy component
-        execute_notebook(deployment_path, "-")
+
+def test_isolation_foresting(setup):
+    experiment_path = "samples/isolation-forest-clustering/Experiment.ipynb"
+    deployment_path = "samples/isolation-forest-clustering/Deployment.ipynb"
+
+    # Run test with iris and titanic datasets
+    execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET))
+    execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET))
+
+    # Deploy component
+    execute_notebook(deployment_path, "-")
