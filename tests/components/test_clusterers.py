@@ -16,7 +16,7 @@ IRIS_DATASET = "iris_mock"
 TITANIC_DATASET = "titanic_mock"
 
 
-@fixture(scope="session", autouse=True)
+@fixture(scope="module", autouse=True)
 def setup(request):
     # Set environment variables needed to run notebooks
     environ["EXPERIMENT_ID"] = EXPERIMENT_ID
