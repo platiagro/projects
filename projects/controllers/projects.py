@@ -128,3 +128,6 @@ def delete_project(uuid):
     remove_objects(prefix=prefix)
 
     return {"message": "Project deleted"}
+
+def pagination_project(page, page_size):
+    return db_session.query(Project).limit(page).offset((page - 1) * page_size).all()

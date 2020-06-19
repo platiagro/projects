@@ -330,3 +330,6 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
     deployment_notebook["metadata"]["operator_id"] = operator_id
     experiment_notebook["metadata"]["experiment_id"] = experiment_id
     experiment_notebook["metadata"]["operator_id"] = operator_id
+
+def pagination_components (page, page_size):
+    return db_session.query(Component).limit(page).offset((page - 1) * page_size).all()

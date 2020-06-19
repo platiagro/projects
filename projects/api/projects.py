@@ -4,7 +4,7 @@
 from flask import Blueprint, jsonify, request
 
 from ..controllers.projects import list_projects, create_project, \
-    get_project, update_project, delete_project
+    get_project, update_project, delete_project, pagination_project
 from ..utils import to_snake_case
 
 bp = Blueprint("projects", __name__)
@@ -45,3 +45,8 @@ def handle_delete_project(project_id):
     """Handles DELETE requests to /<project_id>."""
     project = delete_project(uuid=project_id)
     return jsonify(project)
+
+@bp.route("<int:page>/<int:page_size>", methods=["GET"])
+def handle_pagination(page, page_size):
+    projects = pagination_project(page=page, page_size=page_size)
+    return jsonify(projects)
