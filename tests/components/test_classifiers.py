@@ -50,7 +50,7 @@ def setup(request):
         # delete datasets
         delete_mock_dataset(IRIS_DATASET)
         delete_mock_dataset(TITANIC_DATASET)
-    
+
     request.addfinalizer(delete_datasets)
 
 
