@@ -56,7 +56,7 @@ def setup(request):
 
 def test_run_automl_classifier(setup):
     experiment_path = "samples/automl-classifier/Experiment.ipynb"
-    deployment_path = "samples/automl-classifier/Experiment.ipynb"
+    deployment_path = "samples/automl-classifier/Deployment.ipynb"
 
     # Run with iris and titanic datasets
     execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
