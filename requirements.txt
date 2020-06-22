@@ -1,6 +1,8 @@
 # WSGI server
 Flask==1.1.1
 Flask-Cors==3.0.8
+# smorest
+flask-smorest==0.21.2
 # PlatIAgro SDK
 platiagro @ git+https://github.com/platiagro/sdk.git@master
 # ORM

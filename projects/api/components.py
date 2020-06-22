@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Components blueprint."""
 
-from flask import Blueprint, jsonify, request
+from flask import jsonify, request
+from flask_smorest import Blueprint
 
 from ..controllers.components import list_components, create_component, \
     get_component, update_component, delete_component, pagination_components
@@ -45,7 +46,8 @@ def handle_delete_component(component_id):
     """Handles DELETE requests to /<component_id>."""
     return jsonify(delete_component(uuid=component_id))
 
-@bp.route("<int:page>/<int:page_size>", methods=["GET"])
-def handle_pagination(page, page_size):
-    components = pagination_components(page=page, page_size=page_size)
+@bp.route("/", methods=["GET"])
+@bp.paginate()
+def handle_pagination(pagination_parameters):
+    components = pagination_components(page=pagination_parameters.page, page_size=pagination_parameters.page_size)
     return jsonify(components)
