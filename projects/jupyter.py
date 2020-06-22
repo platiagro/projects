@@ -186,7 +186,10 @@ def read_parameters_from_source(source):
                 if default in ["True", "False"]:
                     default = default.lower()
 
-                parameter = {"name": name, "default": loads(default)}
+                parameter = {"name": name}
+
+                if default and default != 'None':
+                    parameter["default"] = loads(default)
 
                 if options:
                     parameter["options"] = loads(options)
@@ -196,7 +199,8 @@ def read_parameters_from_source(source):
                 parameter.update(loads(metadata))
 
                 parameters.append(parameter)
-            except JSONDecodeError:
+            except JSONDecodeError as e:
+                print(e)
                 pass
 
     return parameters
