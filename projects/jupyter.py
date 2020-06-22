@@ -199,8 +199,7 @@ def read_parameters_from_source(source):
                 parameter.update(loads(metadata))
 
                 parameters.append(parameter)
-            except JSONDecodeError as e:
-                print(e)
+            except JSONDecodeError:
                 pass
 
     return parameters
