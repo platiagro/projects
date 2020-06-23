@@ -428,9 +428,3 @@ class TestComponents(TestCase):
             result = rv.get_json()
             expected = {"message": "Component deleted"}
             self.assertDictEqual(expected, result)
-
-    def test_pagination_components(self):
-        with app.test_client() as c:
-            rv = c.get("/components/?page=1&page_size=1")
-            result = rv.get_json()
-            self.assertIsInstance(result, list)
