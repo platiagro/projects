@@ -222,3 +222,9 @@ class TestProjects(TestCase):
             result = rv.get_json()
             expected = {"message": "Project deleted"}
             self.assertDictEqual(expected, result)
+
+    def test_pagination_project(self):
+        with app.test_client() as p:
+            rv = p.get("/projects/?page=1&page_size=1")
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
