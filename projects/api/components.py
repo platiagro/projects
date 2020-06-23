@@ -46,6 +46,7 @@ def handle_delete_component(component_id):
     """Handles DELETE requests to /<component_id>."""
     return jsonify(delete_component(uuid=component_id))
 
+
 @bp.route("/", methods=["GET"])
 @bp.paginate()
 def handle_pagination(pagination_parameters):

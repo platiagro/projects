@@ -45,7 +45,10 @@ def handle_delete_project(project_id):
     """Handles DELETE requests to /<project_id>."""
     project = delete_project(uuid=project_id)
     return jsonify(project)
+
+
 @bp.route("/", methods=["GET"])
 @bp.paginate()
 def handle_pagination_projects(pagination_parameters):
-    return pagination_projects(page=pagination_parameters.page, page_size=pagination_parameters.page_size)
+    projects = pagination_projects(page=pagination_parameters.page, page_size=pagination_parameters.page_size)
+    return jsonify(projects)
