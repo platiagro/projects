@@ -20,8 +20,8 @@ def list_projects():
     Returns:
         A list of all projects sorted by name in natural sort order.
     """
-    projects = db_session.query(Project) \
-        .all()
+
+    projects = db_session.query(Project).all()
     # sort the list in place, using natural sort
     projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [project.as_dict() for project in projects]
@@ -128,3 +128,12 @@ def delete_project(uuid):
     remove_objects(prefix=prefix)
 
     return {"message": "Project deleted"}
+
+
+def pagination_projects(page, page_size):
+    """The numbers of items to return maximum 100 """
+    if page_size > 100:
+        page_size = 100
+    projects = db_session.query(Project).limit(page_size).offset((page - 1) * page_size).all()
+    projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
+    return [project.as_dict() for project in projects]

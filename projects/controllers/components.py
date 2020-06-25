@@ -30,8 +30,7 @@ def list_components():
     Returns:
         A list of all components sorted by name in natural sort order.
     """
-    components = db_session.query(Component) \
-        .all()
+    components = db_session.query(Component).all()
     # sort the list in place, using natural sort
     components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [component.as_dict() for component in components]
@@ -330,3 +329,11 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
     deployment_notebook["metadata"]["operator_id"] = operator_id
     experiment_notebook["metadata"]["experiment_id"] = experiment_id
     experiment_notebook["metadata"]["operator_id"] = operator_id
+
+
+def pagination_components(page, page_size):
+    if page_size > 100:
+        page_size = 100
+    components = db_session.query(Component).limit(page_size).offset((page - 1) * page_size).all()
+    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
+    return [component.as_dict() for component in components]
