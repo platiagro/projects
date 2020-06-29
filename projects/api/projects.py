@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Projects blueprint."""
 
-from flask import Blueprint, jsonify, request
-
+from flask import jsonify, request
+from flask_smorest import Blueprint
 from ..controllers.projects import list_projects, create_project, \
-    get_project, update_project, delete_project
+    get_project, update_project, delete_project, pagination_projects, total_rows_projects
 from ..utils import to_snake_case
 
 bp = Blueprint("projects", __name__)
@@ -45,3 +45,15 @@ def handle_delete_project(project_id):
     """Handles DELETE requests to /<project_id>."""
     project = delete_project(uuid=project_id)
     return jsonify(project)
+
+
+@bp.route("/", methods=["GET"])
+@bp.paginate()
+def handle_pagination_projects(pagination_parameters):
+    total_rows = total_rows_projects()
+    projects = pagination_projects(page=pagination_parameters.page, page_size=pagination_parameters.page_size)
+    response = {
+        'total': total_rows,
+        'projects': projects
+    }
+    return jsonify(response)
