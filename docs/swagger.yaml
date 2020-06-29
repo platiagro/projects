@@ -58,6 +58,29 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /components/:
+    get:
+      summary: "List components paginated."
+      tags:
+        - "Components"
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+          description: Page size
+      responses:
+        "200":
+          $ref: "#/components/responses/ComponentsPaginated"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /components/{componentId}:
     get:
       summary: "Detail a specific component by ID."
@@ -163,6 +186,29 @@ paths:
           $ref: "#/components/responses/Project"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/:
+    get:
+      summary: "List projects paginated."
+      tags:
+        - "Projects"
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+          description: Page size
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectsPaginated"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -702,6 +748,16 @@ components:
       items:
         oneOf:
           - $ref: "#/components/schemas/Component"
+    ComponentsPaginated:
+      type: object
+      properties:
+        components:
+         type: array
+         items:
+            oneOf:
+              - $ref: "#/components/schemas/Component"
+        total:
+          type: integer
     ComponentEmpty:
       type: object
       properties:
@@ -783,6 +839,16 @@ components:
       items:
         oneOf:
           - $ref: "#/components/schemas/Project"
+    ProjectsPaginated:
+      type: object
+      properties:
+        projects:
+         type: array
+         items:
+            oneOf:
+              - $ref: "#/components/schemas/Project"
+        total:
+          type: integer
     Experiment:
       type: object
       properties:
@@ -1055,6 +1121,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Components"
+    ComponentsPaginated:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ComponentsPaginated"
     Parameters:
       description: ""
       content:
@@ -1073,6 +1145,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Projects"
+    ProjectsPaginated:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProjectsPaginated"
     Experiment:
       description: ""
       content:
