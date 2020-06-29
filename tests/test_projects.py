@@ -227,7 +227,5 @@ class TestProjects(TestCase):
         with app.test_client() as p:
             rv = p.get("/projects/?page=1&page_size=1")
             result = rv.get_json()
-            self.assertIsInstance(result, list)
-
-
-
+            self.assertIsInstance(result['projects'], list)
+            self.assertIsInstance(result['total'], int)
