@@ -7,6 +7,7 @@ from os.path import join
 from pkgutil import get_data
 
 from minio.error import ResponseError
+from sqlalchemy import func
 from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError
 from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
@@ -334,6 +335,15 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
 def pagination_components(page, page_size):
     if page_size > 100:
         page_size = 100
-    components = db_session.query(Component).limit(page_size).offset((page - 1) * page_size).all()
+    components = db_session.query(Component) \
+        .order_by(Component.name) \
+        .limit(page_size) \
+        .offset((page - 1) * page_size) \
+        .all()
     components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [component.as_dict() for component in components]
+
+
+def total_rows_components():
+    rows = db_session.query(func.count(Component.uuid)).scalar()
+    return rows

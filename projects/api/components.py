@@ -5,7 +5,7 @@ from flask import jsonify, request
 from flask_smorest import Blueprint
 
 from ..controllers.components import list_components, create_component, \
-    get_component, update_component, delete_component, pagination_components
+    get_component, update_component, delete_component, pagination_components, total_rows_components
 from ..utils import to_snake_case
 
 bp = Blueprint("components", __name__)
@@ -50,5 +50,10 @@ def handle_delete_component(component_id):
 @bp.route("/", methods=["GET"])
 @bp.paginate()
 def handle_pagination(pagination_parameters):
+    total_rows = total_rows_components()
     components = pagination_components(page=pagination_parameters.page, page_size=pagination_parameters.page_size)
-    return jsonify(components)
+    response = {
+        'total': total_rows,
+        'components': components
+    }
+    return jsonify(response)

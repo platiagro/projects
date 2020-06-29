@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from os.path import join
 
+from sqlalchemy import func
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -134,6 +135,14 @@ def pagination_projects(page, page_size):
     """The numbers of items to return maximum 100 """
     if page_size > 100:
         page_size = 100
-    projects = db_session.query(Project).limit(page_size).offset((page - 1) * page_size).all()
+    projects = db_session.query(Project) \
+        .order_by(Project.name) \
+        .limit(page_size).offset((page - 1) * page_size) \
+        .all()
     projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [project.as_dict() for project in projects]
+
+
+def total_rows_projects():
+    rows = db_session.query(func.count(Project.uuid)).scalar()
+    return rows
