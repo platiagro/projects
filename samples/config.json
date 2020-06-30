@@ -19,7 +19,7 @@
     },
     {
         "name": "Linear Regression",
-        "description": "Um componente que treina um modelo de Regressão Logística para classificação usando scikit-learn",
+        "description": "Um componente que treina um modelo de Regressão Linear para regressão usando scikit-learn",
         "experimentNotebook": "/samples/linear-regression/Experiment.ipynb",
         "deploymentNotebook": "/samples/linear-regression/Deployment.ipynb",
         "tags": [
@@ -28,7 +28,7 @@
     },
     {
         "name": "Logistic Regression",
-        "description": "Um componente que treina um modelo de Regressão Linear para regressão usando scikit-learn",
+        "description": "Um componente que treina um modelo de Regressão Logística para classificação usando scikit-learn",
         "experimentNotebook": "/samples/logistic-regression/Experiment.ipynb",
         "deploymentNotebook": "/samples/logistic-regression/Deployment.ipynb",
         "tags": [
