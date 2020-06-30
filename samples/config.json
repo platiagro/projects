@@ -1,7 +1,7 @@
 [
     {
         "name": "AutoML Classifier",
-        "description": "A component that trains an AutoML Classifier model using auto-sklearn",
+        "description": "Um componente que utiliza o auto-sklearn para obter um ou mais modelos classificadores já otimizados",
         "experimentNotebook": "/samples/automl-classifier/Experiment.ipynb",
         "deploymentNotebook": "/samples/automl-classifier/Deployment.ipynb",
         "tags": [
@@ -10,7 +10,7 @@
     },
     {
         "name": "AutoML Regressor",
-        "description": "A component that trains an AutoML Regressor model using auto-sklearn",
+        "description": "Um componente que utiliza o auto-sklearn para obter um ou mais modelos regressores já otimizados",
         "experimentNotebook": "/samples/automl-regressor/Experiment.ipynb",
         "deploymentNotebook": "/samples/automl-regressor/Deployment.ipynb",
         "tags": [
@@ -19,7 +19,7 @@
     },
     {
         "name": "Linear Regression",
-        "description": "A component that trains a Logistic Regression (aka logit, MaxEnt) classifier model using Scikit-learn",
+        "description": "Um componente que treina um modelo de Regressão Linear para regressão usando scikit-learn",
         "experimentNotebook": "/samples/linear-regression/Experiment.ipynb",
         "deploymentNotebook": "/samples/linear-regression/Deployment.ipynb",
         "tags": [
@@ -28,7 +28,7 @@
     },
     {
         "name": "Logistic Regression",
-        "description": "A component that trains an ordinary least squares Linear Regression model using Scikit-learn",
+        "description": "Um componente que treina um modelo de Regressão Logística para classificação usando scikit-learn",
         "experimentNotebook": "/samples/logistic-regression/Experiment.ipynb",
         "deploymentNotebook": "/samples/logistic-regression/Deployment.ipynb",
         "tags": [
@@ -37,7 +37,7 @@
     },
     {
         "name": "MLP Classifier",
-        "description": "A component that trains a Multi-layer Perceptron Classifier model using Scikit-learn",
+        "description": "Um componente que treina um modelo classificador Multi-layer Perceptron (MLP) usando scikit-learn",
         "experimentNotebook": "/samples/mlp-classifier/Experiment.ipynb",
         "deploymentNotebook": "/samples/mlp-classifier/Deployment.ipynb",
         "tags": [
@@ -46,7 +46,7 @@
     },
     {
         "name": "MLP Regressor",
-        "description": "A component that trains a Multi-layer Perceptron Regression model using Scikit-learn",
+        "description": "Um componente que treina um modelo regressor Multi-layer Perceptron (MLP) usando scikit-learn",
         "experimentNotebook": "/samples/mlp-regressor/Experiment.ipynb",
         "deploymentNotebook": "/samples/mlp-regressor/Deployment.ipynb",
         "tags": [
@@ -55,7 +55,7 @@
     },
     {
         "name": "Random Forest Classifier",
-        "description": "A component that trains a Random Forest Classifier model using Scikit-learn",
+        "description": "Um componente que treina um modelo classificador Random Forest usando scikit-learn",
         "experimentNotebook": "/samples/random-forest-classifier/Experiment.ipynb",
         "deploymentNotebook": "/samples/random-forest-classifier/Deployment.ipynb",
         "tags": [
@@ -64,7 +64,7 @@
     },
     {
         "name": "Random Forest Regressor",
-        "description": "A component that trains a Random Forest Regression model using Scikit-learn",
+        "description": "Um componente que treina um modelo regressor Random Forest usando scikit-learn",
         "experimentNotebook": "/samples/random-forest-regressor/Experiment.ipynb",
         "deploymentNotebook": "/samples/random-forest-regressor/Deployment.ipynb",
         "tags": [
@@ -73,7 +73,7 @@
     },
     {
         "name": "SVC",
-        "description": "A component that trains a Random Forest Regression model using Scikit-learn",
+        "description": "Um componente que treina um modelo Support Vector Classification usando scikit-learn",
         "experimentNotebook": "/samples/svc/Experiment.ipynb",
         "deploymentNotebook": "/samples/svc/Deployment.ipynb",
         "tags": [
@@ -82,7 +82,7 @@
     },
     {
         "name": "SVR",
-        "description": "A component that trains a Support Vector Regression model using Scikit-learn",
+        "description": "Um componente que treina um modelo Support Vector Regression usando scikit-learn",
         "experimentNotebook": "/samples/svr/Experiment.ipynb",
         "deploymentNotebook": "/samples/svr/Deployment.ipynb",
         "tags": [
@@ -91,7 +91,7 @@
     },
     {
         "name": "KMeans",
-        "description": "A component that trains a KMeans model using Scikit-learn",
+        "description": "Um componente que treina um modelo KMeans para clusterização usando scikit-learn",
         "experimentNotebook": "/samples/kmeans-clustering/Experiment.ipynb",
         "deploymentNotebook": "/samples/kmeans-clustering/Deployment.ipynb",
         "tags": [
@@ -100,7 +100,7 @@
     },
     {
         "name": "Isolation Forest",
-        "description": "A component that trains a Isolation Forest model using Scikit-learn",
+        "description": "Um componente que treina um modelo Isolation Forest para detecção de anomalias usando scikit-learn",
         "experimentNotebook": "/samples/isolation-forest-clustering/Experiment.ipynb",
         "deploymentNotebook": "/samples/isolation-forest-clustering/Deployment.ipynb",
         "tags": [
@@ -109,7 +109,7 @@
     },
     {
         "name": "Normalizer",
-        "description": "A component that normalize samples individually to unit norm model using Scikit-learn",
+        "description": "Um componente que normaliza amostras individualmente para o modelo de norma de unidade usando scikit-learn",
         "experimentNotebook": "/samples/normalizer/Experiment.ipynb",
         "deploymentNotebook": "/samples/normalizer/Deployment.ipynb",
         "tags": [
@@ -118,7 +118,7 @@
     },
     {
         "name": "Imputer",
-        "description": "A component for imputing missing values using mean, median or most frequent",
+        "description": "Um componente para imputar valores ausentes usando média, mediana ou mais frequente",
         "experimentNotebook": "/samples/imputer/Experiment.ipynb",
         "deploymentNotebook": "/samples/imputer/Deployment.ipynb",
         "tags": [
@@ -127,7 +127,7 @@
     },
     {
         "name": "Variance Threshold",
-        "description": "A component that removes all low-variance features",
+        "description": "Um componente que remove todos os recursos de baixa variação",
         "experimentNotebook": "/samples/variance-threshold/Experiment.ipynb",
         "deploymentNotebook": "/samples/variance-threshold/Deployment.ipynb",
         "tags": [
@@ -136,7 +136,7 @@
     },
     {
         "name": "Robust Scaler",
-        "description": "A component that scale features using statistics that are robust to outliers",
+        "description": "Um componente que dimensiona features usando estatísticas robustas para outliers",
         "experimentNotebook": "/samples/robust-scaler/Experiment.ipynb",
         "deploymentNotebook": "/samples/robust-scaler/Deployment.ipynb",
         "tags": [
@@ -145,7 +145,7 @@
     },
     {
         "name": "Feature Tools",
-        "description": "A component that use Feature Tools library to Feature Engineering",
+        "description": "Um componente que usa a biblioteca Feature Tools para Feature Engineering",
         "experimentNotebook": "/samples/feature-tools/Experiment.ipynb",
         "deploymentNotebook": "/samples/feature-tools/Deployment.ipynb",
         "tags": [
@@ -154,7 +154,7 @@
     },
     {
         "name": "Pre Selection",
-        "description": "A component that removes all low-variance and highly correlated features",
+        "description": "Um componente que remove todos as features de baixa variação e altamente correlacionadas",
         "experimentNotebook": "/samples/pre-selection/Experiment.ipynb",
         "deploymentNotebook": "/samples/pre-selection/Deployment.ipynb",
         "tags": [
@@ -163,7 +163,7 @@
     },
     {
         "name": "Simulated Annealing",
-        "description": "A component that applies simulated annealing strategy to Feature Engineering",
+        "description": "Um componente que aplica a estratégia simulated annealing para Feature Engineering",
         "experimentNotebook": "/samples/simulated-annealing/Experiment.ipynb",
         "deploymentNotebook": "/samples/simulated-annealing/Deployment.ipynb",
         "tags": [
@@ -172,7 +172,7 @@
     },
     {
         "name": "Transformation Graph",
-        "description": "A component that uses a transformation graph strategy to Feature Engineering",
+        "description": "Um componente que usa uma estratégia de gráfico de transformação para o Feature Engineering",
         "experimentNotebook": "/samples/transformation-graph/Experiment.ipynb",
         "deploymentNotebook": "/samples/transformation-graph/Deployment.ipynb",
         "tags": [
@@ -181,7 +181,7 @@
     },
     {
         "name": "Filter Selection",
-        "description": "A component that removes selected features from the dataset",
+        "description": "Um componente que remove as features específicas do conjunto de dados",
         "experimentNotebook": "/samples/filter-selection/Experiment.ipynb",
         "deploymentNotebook": "/samples/filter-selection/Deployment.ipynb",
         "tags": [
@@ -190,7 +190,7 @@
     },
     {
         "name": "Recursive Feature Elimination",
-        "description": "A component that performs feature ranking with recursive feature elimination based on a Random Forest estimator",
+        "description": "Um componente que realiza a seleção de features baseado no método de eliminação recursiva usando um estimador Random Forest",
         "experimentNotebook": "/samples/rfe-selector/Experiment.ipynb",
         "deploymentNotebook": "/samples/rfe-selector/Deployment.ipynb",
         "tags": [
@@ -199,7 +199,7 @@
     },
     {
         "name": "Descriptive Analysis",
-        "description": "A component that generates descriptive statistics for a given dataset.",
+        "description": "Um componente que gera estatísticas descritivas para um determinado conjunto de dados",
         "experimentNotebook": "/samples/descriptive-analysis/Experiment.ipynb",
         "tags": [
             "DESCRIPTIVE_STATISTICS"
