@@ -154,7 +154,7 @@
     },
     {
         "name": "Pre Selection",
-        "description": "Um componente que remove todos as features de baixa variação e altamente correlacionados",
+        "description": "Um componente que remove todos as features de baixa variação e altamente correlacionadas",
         "experimentNotebook": "/samples/pre-selection/Experiment.ipynb",
         "deploymentNotebook": "/samples/pre-selection/Deployment.ipynb",
         "tags": [
@@ -163,7 +163,7 @@
     },
     {
         "name": "Simulated Annealing",
-        "description": "Um componente que aplica estratégia de recozimento simulado à Engenharia de recursos",
+        "description": "Um componente que aplica a estratégia simulated annealing para Feature Engineering",
         "experimentNotebook": "/samples/simulated-annealing/Experiment.ipynb",
         "deploymentNotebook": "/samples/simulated-annealing/Deployment.ipynb",
         "tags": [
@@ -190,7 +190,7 @@
     },
     {
         "name": "Recursive Feature Elimination",
-        "description": "Um componente que executa a classificação de recursos com eliminação recursiva de recursos com base em um estimador Random Forest",
+        "description": "Um componente que realiza a seleção de features baseado no método de eliminação recursiva usando um estimador Random Forest",
         "experimentNotebook": "/samples/rfe-selector/Experiment.ipynb",
         "deploymentNotebook": "/samples/rfe-selector/Deployment.ipynb",
         "tags": [
