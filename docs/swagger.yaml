@@ -448,36 +448,6 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}:
-    get:
-      summary: "Detail a specific operator by ID."
-      tags:
-        - "Operators"
-      parameters:
-        - name: projectId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/Operator"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
     patch:
       summary: "Update an operator by ID."
       tags:
@@ -911,8 +881,14 @@ components:
     Operators:
       type: array
       items:
-        oneOf:
+        allOf:
           - $ref: "#/components/schemas/Operator"
+          - type: object
+            properties:
+              status:
+                type: string
+                enum: [Unset, Setted up]
+                example: Setted up
     Datasets:
       type: array
       items:

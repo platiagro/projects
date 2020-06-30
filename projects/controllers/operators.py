@@ -8,6 +8,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
 from ..models import Operator
+from .parameters import list_parameters
 from .utils import raise_if_component_does_not_exist, \
     raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
     uuid_alpha
@@ -30,7 +31,13 @@ def list_operators(project_id, experiment_id):
         .filter_by(experiment_id=experiment_id) \
         .order_by(Operator.position.asc()) \
         .all()
-    return [operator.as_dict() for operator in operators]
+
+    response = []
+    for operator in operators:
+        check_status(operator)
+        response.append(operator.as_dict())
+
+    return response
 
 
 def create_operator(project_id, experiment_id, component_id=None,
@@ -76,6 +83,8 @@ def create_operator(project_id, experiment_id, component_id=None,
                   operator_id=operator.uuid,
                   new_position=sys.maxsize)     # will add to end of list
 
+    check_status(operator)
+
     return operator.as_dict()
 
 
@@ -113,6 +122,8 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
     fix_positions(experiment_id=operator.experiment_id,
                   operator_id=operator.uuid,
                   new_position=operator.position)
+
+    check_status(operator)
 
     return operator.as_dict()
 
@@ -180,3 +191,19 @@ def raise_if_parameters_are_invalid(parameters):
     for key, value in parameters.items():
         if not isinstance(value, (str, int, float, bool, list, dict)):
             raise BadRequest("The specified parameters are not valid")
+
+
+def check_status(operator):
+    # get total operator parameters with value
+    op_params_keys = [key for key in operator.parameters.keys() if operator.parameters[key] != '']
+    total_op_params = len(op_params_keys)
+
+    # get component parameters and remove dataset parameter
+    comp_params = list_parameters(operator.component_id)
+    comp_params = [parameter for parameter in comp_params if parameter['name'] != 'dataset']
+    total_comp_params = len(comp_params)
+
+    if total_op_params == total_comp_params:
+        operator.status = 'Setted up'
+    else:
+        operator.status = 'Unset'

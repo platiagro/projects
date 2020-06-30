@@ -146,6 +146,7 @@ class TestOperators(TestCase):
                 "componentId": COMPONENT_ID,
                 "position": 1,
                 "parameters": {},
+                "status": "Setted up",
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -165,6 +166,7 @@ class TestOperators(TestCase):
                 "componentId": COMPONENT_ID,
                 "position": 2,
                 "parameters": {"coef": 1.0},
+                "status": "Unset",
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -227,6 +229,7 @@ class TestOperators(TestCase):
                 "position": 0,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
+                "status": "Setted up",
             }
             machine_generated = ["updatedAt"]
             for attr in machine_generated:
@@ -245,6 +248,7 @@ class TestOperators(TestCase):
                 "position": 0,
                 "parameters": {"coef": 0.2},
                 "createdAt": CREATED_AT_ISO,
+                "status": "Unset",
             }
             machine_generated = ["updatedAt"]
             for attr in machine_generated:
