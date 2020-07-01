@@ -568,6 +568,44 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/datasets/:
+    get:
+      summary: "List datasets paginated."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+          description: Page size
+      responses:
+        "200":
+          $ref: "#/components/responses/DatasetsPaginated"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/figures:
     get:
       summary: "List all figures."
@@ -938,6 +976,34 @@ components:
                             example: 5.1
                           - type: string
                             example: "Iris-setosa"
+    DatasetsPaginated:
+      type: array
+      items:
+        oneOf:
+          - type: object
+            properties:
+              columns:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                      example: "SepalLengthCm"
+                    - type: string
+                      example: "Species"
+              data:
+                type: array
+                items:
+                  oneOf:
+                    - type: array
+                      items:
+                        oneOf:
+                          - type: number
+                            example: 5.1
+                          - type: string
+                            example: "Iris-setosa"
+              pages:
+                type: number
+                example: 1
     Figures:
       type: array
       items:
@@ -1181,6 +1247,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Datasets"
+    DatasetsPaginated:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DatasetsPaginated"
     Figures:
       description: ""
       content:

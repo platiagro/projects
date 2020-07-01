@@ -2,6 +2,8 @@
 """Shared functions."""
 import random
 import uuid
+import math
+from flask import jsonify
 
 from werkzeug.exceptions import NotFound
 
@@ -72,3 +74,30 @@ def uuid_alpha() -> str:
         c = random.choice(["a", "b", "c", "d", "e", "f"])
         uuid_ = f"{c}{uuid_[1:]}"
     return uuid_
+
+
+def pagination_datasets(page, page_size, elements):
+    try:
+        count = 0
+        new_elements = []
+        total_elements = len(elements['data'])
+
+        if page_size > 100:
+            page_size = 100
+
+        pages = int(((int(total_elements / page_size)) + (
+            math.ceil((total_elements % float(page_size)) / float(page_size)))))
+        page = (page * page_size) - page_size
+        for i in range(page, total_elements):
+            new_elements.append(elements['data'][i])
+            count += 1
+            if page_size == count:
+                response = {
+                    'columns': elements['columns'],
+                    'data': new_elements,
+                    'pages': pages
+                }
+                return response
+    except RuntimeError:
+        return elements
+
