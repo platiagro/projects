@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: docker://platiagro/platiagro-notebook-image:0.0.2
+      image: docker://platiagro/platiagro-notebook-image:0.1.0
 
     steps:
       - uses: actions/checkout@v2
