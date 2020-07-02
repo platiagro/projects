@@ -190,7 +190,22 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/:
+  /projects/deleteprojects:
+    post:
+      summary: "delete projects by ids."
+      tags:
+        - "Projects"
+      requestBody:
+        $ref: "#/components/requestBodies/Deleteprojects"
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
     get:
       summary: "List projects paginated."
       tags:
@@ -1074,6 +1089,17 @@ components:
                 type: string
               description:
                 type: string
+
+    Deleteprojects:
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+             properties:
+              uuid:
+                type: string
+
     ExperimentPost:
       content:
         application/json:

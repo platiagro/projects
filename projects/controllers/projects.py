@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from os.path import join
 
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -146,3 +146,23 @@ def pagination_projects(page, page_size):
 def total_rows_projects():
     rows = db_session.query(func.count(Project.uuid)).scalar()
     return rows
+
+
+def delete_projects(project_ids):
+    total_elements = len(project_ids)
+    all_projects_ids = []
+    if total_elements > 0:
+        for i in project_ids:
+            all_projects_ids.append(i['uuid'])
+    projects = db_session.query(Project).filter(Project.uuid.in_(all_projects_ids)).all()
+    if len(projects) == 0:
+        raise NotFound("The specified project does not exist")
+    if len(projects) == total_elements:
+        deleted_experments = Experiment.__table__.delete().where(Experiment.project_id.in_(all_projects_ids))
+        db_session.execute(deleted_experments)
+        deleted_projects = Project.__table__.delete().where(Project.uuid.in_(all_projects_ids))
+        db_session.execute(deleted_projects)
+        db_session.commit()
+        return {"message": "Successfully removed projects"}
+    else:
+        raise NotFound("The specified project does not exist")
