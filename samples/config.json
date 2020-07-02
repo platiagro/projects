@@ -163,6 +163,7 @@
     "uuid": "dataset",
     "name": "Conjunto de dados",
     "description": "",
+    "experimentNotebook": "/samples/datasets/Experiment.ipynb",
     "tags": ["DATASETS"]
   }
 ]
