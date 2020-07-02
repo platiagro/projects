@@ -30,9 +30,9 @@ jobs:
       run: |
         echo ${{ github.ref }}
         if [ ${{ github.ref }} = "refs/heads/master" ]; then
-          echo ::set-output name=TAG::0.0.2
+          echo ::set-output name=TAG::0.1.0
         else
-          echo ::set-output name=TAG::0.0.2-SNAPSHOT
+          echo ::set-output name=TAG::0.1.0-SNAPSHOT
         fi
     - uses: actions/checkout@v2
     - name: Set up Python 3.6
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: docker://platiagro/platiagro-notebook-image:0.0.2
+      image: docker://platiagro/platiagro-notebook-image:0.1.0
 
     steps:
       - uses: actions/checkout@v2
