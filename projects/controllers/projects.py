@@ -146,3 +146,16 @@ def pagination_projects(page, page_size):
 def total_rows_projects():
     rows = db_session.query(func.count(Project.uuid)).scalar()
     return rows
+
+
+def delete_ids(project_ids):
+    total_elements = len(project_ids)
+    if total_elements > 0:
+        for i in project_ids:
+            project = Project.query.get(i['uuid'])
+            if project is None:
+                raise NotFound("Code {} does not exist in projects".format(i['uuid']))
+            db_session.delete(project)
+            db_session.commit()
+    return {"message": "Successfully removed projects"}
+
