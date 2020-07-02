@@ -61,6 +61,6 @@ def handle_pagination_projects(pagination_parameters):
 
 
 @bp.route("/deleteprojects", methods=["POST"])
-def handle_delete_project():
+def handle_delete_projects():
     kwargs = request.get_json(force=True)
     return jsonify(delete_ids(kwargs))

@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from os.path import join
 
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -150,12 +150,17 @@ def total_rows_projects():
 
 def delete_ids(project_ids):
     total_elements = len(project_ids)
+    all_projects_ids = []
     if total_elements > 0:
         for i in project_ids:
-            project = Project.query.get(i['uuid'])
-            if project is None:
-                raise NotFound("Code {} does not exist in projects".format(i['uuid']))
-            db_session.delete(project)
-            db_session.commit()
-    return {"message": "Successfully removed projects"}
-
+            all_projects_ids.append(i['uuid'])
+    projects = db_session.query(Project).filter(Project.uuid.in_(all_projects_ids)).all()
+    if len(projects) == 0:
+        raise NotFound("The specified project does not exist")
+    if len(projects) == total_elements:
+        deleted_experments = Experiment.__table__.delete().where(Experiment.project_id.in_(all_projects_ids))
+        db_session.execute(deleted_experments)
+        deleted_projects = Project.__table__.delete().where(Project.uuid.in_(all_projects_ids))
+        db_session.execute(deleted_projects)
+        db_session.commit()
+        return {"message": "Successfully removed projects"}
