@@ -157,8 +157,6 @@ def delete_projects(project_ids):
     projects = db_session.query(Project).filter(Project.uuid.in_(all_projects_ids)).all()
     if len(projects) == 0:
         raise NotFound("The specified project does not exist")
-    if len(all_projects_ids) != total_elements:
-        raise NotFound("The specified project does not exist")
     if len(projects) == total_elements:
         deleted_experments = Experiment.__table__.delete().where(Experiment.project_id.in_(all_projects_ids))
         db_session.execute(deleted_experments)
@@ -166,3 +164,5 @@ def delete_projects(project_ids):
         db_session.execute(deleted_projects)
         db_session.commit()
         return {"message": "Successfully removed projects"}
+    else:
+        raise NotFound("The specified project does not exist")

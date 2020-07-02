@@ -229,3 +229,12 @@ class TestProjects(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result['projects'], list)
             self.assertIsInstance(result['total'], int)
+
+
+    def test_delete_projects(self):
+        with app.test_client() as c:
+            rv = c.post("/projects/deleteprojects", json=[])
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
