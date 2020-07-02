@@ -21,6 +21,11 @@ def init_components(config_path):
             tags = component["tags"]
 
             try:
+                component_id = component["uuid"]
+            except KeyError:
+                component_id = None
+
+            try:
                 experiment_notebook = read_notebook(component["experimentNotebook"])
             except KeyError:
                 experiment_notebook = None
@@ -31,7 +36,8 @@ def init_components(config_path):
                 deployment_notebook = None
 
             try:
-                create_component(name=name,
+                create_component(component_id=component_id,
+                                 name=name,
                                  description=description,
                                  tags=tags,
                                  experiment_notebook=experiment_notebook,
