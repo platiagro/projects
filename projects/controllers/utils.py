@@ -95,7 +95,7 @@ def pagination_datasets(page, page_size, elements):
                 response = {
                     'columns': elements['columns'],
                     'data': new_elements,
-                    'pages': pages
+                    'pages': len(elements['data'])
                 }
                 return response
     except RuntimeError:
