@@ -204,5 +204,13 @@
         "tags": [
             "DESCRIPTIVE_STATISTICS"
         ]
+    },
+	{
+        "name": "Conjunto de dados",
+        "description": "Conjunto de dados",
+        "experimentNotebook": "/samples/datasets/Experiment.ipynb",
+        "tags": [
+            "DATASETS"
+        ]
     }
 ]
