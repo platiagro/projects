@@ -7,6 +7,7 @@ import requests
 from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
+from projects.controllers.components import get_components_by_tag
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.jupyter import JUPYTER_ENDPOINT, COOKIES, HEADERS
@@ -435,3 +436,7 @@ class TestComponents(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result['components'], list)
             self.assertIsInstance(result['total'], int)
+
+    def test_get_components_by_tag(self):
+        component = get_components_by_tag("PREDICTOR")
+        self.assertIsInstance(component, list)

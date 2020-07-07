@@ -10,7 +10,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Experiment, Template, Operator
 from ..object_storage import remove_objects
-from .components import get_component
+from .components import get_components_by_tag
 from .operators import create_operator
 from .utils import raise_if_project_does_not_exist, uuid_alpha
 
@@ -72,12 +72,11 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
                   experiment_id=experiment.uuid,
                   new_position=sys.maxsize)  # will add to end of list
 
-    try:
-        # create an operator with the dataset component
-        component = get_component("dataset")
+    # create an operator with the dataset component
+    components = get_components_by_tag("DATASETS")
+    if len(components) > 0:
+        component = components[0]
         create_operator(project_id, experiment.uuid, component_id=component['uuid'])
-    except NotFound:
-        pass
 
     return experiment.as_dict()
 

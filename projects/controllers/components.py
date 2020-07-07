@@ -39,7 +39,7 @@ def list_components():
 
 def create_component(component_id=None, name=None, description=None, tags=None,
                      experiment_notebook=None, deployment_notebook=None,
-                     is_default=False, copy_from=None, **kwargs):
+                     is_default=False, copy_from=None):
     """Creates a new component in our database/object storage.
 
     Args:
