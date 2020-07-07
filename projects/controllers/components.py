@@ -37,7 +37,7 @@ def list_components():
     return [component.as_dict() for component in components]
 
 
-def create_component(component_id=None, name=None, description=None, tags=None,
+def create_component(name=None, description=None, tags=None,
                      experiment_notebook=None, deployment_notebook=None,
                      is_default=False, copy_from=None):
     """Creates a new component in our database/object storage.
@@ -75,9 +75,7 @@ def create_component(component_id=None, name=None, description=None, tags=None,
     if copy_from:
         return copy_component(name, description, tags, copy_from)
 
-    # generate uuid if none was sent
-    if component_id is None:
-        component_id = str(uuid_alpha())
+    component_id = str(uuid_alpha())
 
     # loads a sample notebook if none was sent
     if experiment_notebook is None:
