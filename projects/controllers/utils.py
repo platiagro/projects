@@ -87,7 +87,6 @@ def pagination_datasets(page, page_size, elements):
 
         pages = int(((int(total_elements / page_size)) + (
             math.ceil((total_elements % float(page_size)) / float(page_size)))))
-        print(pages)
         page = (page * page_size) - page_size
         for i in range(page, total_elements):
             new_elements.append(elements['data'][i])
@@ -99,15 +98,6 @@ def pagination_datasets(page, page_size, elements):
                     'total': len(elements['data'])
                 }
                 return response
-        if len(new_elements) == 0:
-            raise NotFound("The informed page does not contain records")
-        else:
-            response = {
-                'columns': elements['columns'],
-                'data': new_elements,
-                'total': len(elements['data'])
-            }
-            return response
     except RuntimeError:
-        raise NotFound("The specified page does not exist")
+        return elements
 
