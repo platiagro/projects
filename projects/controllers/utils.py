@@ -98,6 +98,15 @@ def pagination_datasets(page, page_size, elements):
                     'total': len(elements['data'])
                 }
                 return response
+        if len(new_elements) == 0:
+            raise NotFound("The informed page does not contain records")
+        else:
+            response = {
+                'columns': elements['columns'],
+                'data': new_elements,
+                'total': len(elements['data'])
+            }
+            return response
     except RuntimeError:
-        return elements
+        raise NotFound("The specified page does not exist")
 
