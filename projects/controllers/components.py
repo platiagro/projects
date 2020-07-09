@@ -104,8 +104,8 @@ def create_component(name=None, description=None, tags=None,
                          experiment_notebook=dumps(experiment_notebook).encode())
 
     # create the commands to be executed on pipelines
-    commands = ["from platiagro import download_dataset;",
-                'download_dataset("$dataset", "$TRAINING_DATASETS_DIR/$dataset");']
+    commands = ['''from platiagro import download_dataset;
+                   download_dataset("$dataset", "$TRAINING_DATASETS_DIR/$dataset");''']
     if "DATASETS" not in tags:
         commands = [f'''papermill {experiment_notebook_path} output.ipynb -b $parameters;
                     status=$?;
