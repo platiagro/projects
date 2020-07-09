@@ -13,7 +13,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_NAME = "Novo experimento"
-DESCRIPTION= "Description"
+DESCRIPTION = "Description"
 
 PROJECT_ID_2 = str(uuid_alpha())
 NAME_2 = "foo 2"
