@@ -103,10 +103,20 @@ def create_component(name=None, description=None, tags=None,
                          deployment_notebook=dumps(deployment_notebook).encode(),
                          experiment_notebook=dumps(experiment_notebook).encode())
 
+    # create the commands to be executed on pipelines
+    commands = ["from platiagro import download_dataset;",
+                'download_dataset("$dataset", "$TRAINING_DATASETS_DIR/$dataset");']
+    if "DATASETS" not in tags:
+        commands = [f'''papermill {experiment_notebook_path} output.ipynb -b $parameters;
+                    status=$?;
+                    bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
+                    exit $status''']
+
     # saves component info to the database
     component = Component(uuid=component_id,
                           name=name,
                           description=description,
+                          commands=commands,
                           tags=tags,
                           experiment_notebook_path=experiment_notebook_path,
                           deployment_notebook_path=deployment_notebook_path,
