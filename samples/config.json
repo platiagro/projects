@@ -204,5 +204,13 @@
         "tags": [
             "DESCRIPTIVE_STATISTICS"
         ]
+    },
+	    {
+        "name": "Grouping High Cardinality Features",
+        "description": "Um componente que faz o agrupamento de features categóricas com elevado número de classes",
+        "experimentNotebook": "/samples/grouping-categorical-features/Experiment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ]
     }
 ]
