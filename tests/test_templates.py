@@ -19,6 +19,8 @@ POSITION = 0
 PARAMETERS = {"coef": 0.1}
 OPERATORS = [{"componentId": COMPONENT_ID, "position": POSITION}]
 DESCRIPTION = "long foo"
+COMMANDS = ["CMD"]
+COMMANDS_JSON = dumps(COMMANDS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 COMPONENTS_JSON = dumps([COMPONENT_ID])
@@ -36,8 +38,8 @@ class TestTemplates(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO components (uuid, name, description, commands, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 

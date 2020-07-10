@@ -20,6 +20,8 @@ DATASET = "mock.csv"
 TARGET = "col4"
 POSITION = 0
 PARAMETERS = {}
+COMMANDS = ["CMD"]
+COMMANDS_JSON = dumps(COMMANDS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
@@ -49,8 +51,8 @@ class TestDatasets(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, deployment_notebook_path, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO components (uuid, name, description, commands, tags, experiment_notebook_path, deployment_notebook_path, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 

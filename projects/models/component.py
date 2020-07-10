@@ -15,6 +15,7 @@ class Component(Base):
     uuid = Column(String(255), primary_key=True)
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
+    commands = Column(JSON, nullable=False, default=[])
     tags = Column(JSON, nullable=False, default=[])
     experiment_notebook_path = Column(String(255))
     deployment_notebook_path = Column(String(255))
