@@ -57,23 +57,23 @@ class GroupCatFeatures():
         total_target=[]
         class_correspondency = {}
         total_rows = X_.shape[0]
-        for j in range(y.shape[1]):
-            X_['y_'+ str(j)]=y[:,j]
-            total_target.append(sum(y[:,j]))
-            for col in X_res.columns:
+        for col in X_res.columns:
+            for j in range(y.shape[1]):
+                X_['y_'+ str(j)]=y[:,j]
+                total_target.append(sum(y[:,j]))
                 if self.task=="classification":
                     X_['Kmeans___agg_target'+ str(j)] = X_.groupby(col)['y_'+ str(j)].transform(lambda x: sum(x)/total_target[j])
                 else:
                     X_['Kmeans___agg_target'+ str(j)] = X_.groupby(col)['y_'+ str(j)].transform(lambda x: sum(x)/len(x))                    
                 X_['Kmeans_perc_rows'+ str(j)] = X_.groupby(col)['y_'+ str(j)].transform(lambda x: len(x)/total_rows) 
-                X_kmeans = X_.filter(regex='^Kmeans___',axis=1)
-                kmeans = self.kmeans_fit(X_kmeans,n)
-                X_res[col + '....grouped'] = np.char.add(['grupo_']*total_rows,kmeans.predict(X_kmeans).astype('str').tolist())
-                X_dict = X_res.loc[:,[col,str(col) + '....grouped']]
-                X_dict = X_dict.drop_duplicates().sort_values(by=col)
-                class_correspondency.update(X_dict.to_dict(orient='list'))
-                X_res.loc[:,col] = X_res[col + '....grouped']
-                X_res.drop(columns=col + '....grouped',inplace=True)           
+            X_kmeans = X_.filter(regex='^Kmeans___',axis=1)
+            kmeans = self.kmeans_fit(X_kmeans,n)
+            X_res[col + '....grouped'] = np.char.add(['grupo_']*total_rows,kmeans.predict(X_kmeans).astype('str').tolist())
+            X_dict = X_res.loc[:,[col,str(col) + '....grouped']]
+            X_dict = X_dict.drop_duplicates().sort_values(by=col)
+            class_correspondency.update(X_dict.to_dict(orient='list'))
+            X_res.loc[:,col] = X_res[col + '....grouped']
+            X_res.drop(columns=col + '....grouped',inplace=True)           
         return X_res,class_correspondency    
 
     def fit_transform(self,X,y):
