@@ -205,6 +205,14 @@
             "DESCRIPTIVE_STATISTICS"
         ]
     },
+		{
+        "name": "Conjunto de dados",
+        "description": "Conjunto de dados",
+        "experimentNotebook": "/samples/datasets/Experiment.ipynb",
+        "tags": [
+            "DATASETS"
+        ]
+    },
 	    {
         "name": "Grouping High Cardinality Features",
         "description": "Um componente que faz o agrupamento de features categóricas com elevado número de classes",
