@@ -20,7 +20,7 @@ from ..object_storage import BUCKET_NAME, get_object, put_object, \
 from .utils import uuid_alpha
 
 PREFIX = "components"
-VALID_TAGS = ["DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
+VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
 DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
 
@@ -39,7 +39,7 @@ def list_components():
 
 def create_component(name=None, description=None, tags=None,
                      experiment_notebook=None, deployment_notebook=None,
-                     is_default=False, copy_from=None, **kwargs):
+                     is_default=False, copy_from=None):
     """Creates a new component in our database/object storage.
 
     Args:
@@ -103,10 +103,20 @@ def create_component(name=None, description=None, tags=None,
                          deployment_notebook=dumps(deployment_notebook).encode(),
                          experiment_notebook=dumps(experiment_notebook).encode())
 
+    # create the commands to be executed on pipelines
+    commands = ['''from platiagro import download_dataset;
+                   download_dataset("$dataset", "$TRAINING_DATASETS_DIR/$dataset");''']
+    if "DATASETS" not in tags:
+        commands = [f'''papermill {experiment_notebook_path} output.ipynb -b $parameters;
+                    status=$?;
+                    bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
+                    exit $status''']
+
     # saves component info to the database
     component = Component(uuid=component_id,
                           name=name,
                           description=description,
+                          commands=commands,
                           tags=tags,
                           experiment_notebook_path=experiment_notebook_path,
                           deployment_notebook_path=deployment_notebook_path,
@@ -132,6 +142,16 @@ def get_component(uuid):
         raise NotFound("The specified component does not exist")
 
     return component.as_dict()
+
+
+def get_components_by_tag(tag):
+    """Get all components with a specific tag.
+
+    Returns:
+        A list of components.
+    """
+    components = db_session.query(Component).filter(Component.tags.contains([tag])).all()
+    return [component.as_dict() for component in components]
 
 
 def update_component(uuid, **kwargs):

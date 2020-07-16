@@ -7,6 +7,7 @@ import requests
 from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
+from projects.controllers.components import get_components_by_tag
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.jupyter import JUPYTER_ENDPOINT, COOKIES, HEADERS
@@ -15,6 +16,8 @@ from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 COMPONENT_ID = str(uuid_alpha())
 NAME = "foo"
 DESCRIPTION = "long foo"
+COMMANDS = ["CMD"]
+COMMANDS_JSON = dumps(COMMANDS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
@@ -37,13 +40,13 @@ class TestComponents(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO components (uuid, name, description, commands, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         text = (
-            f"INSERT INTO components (uuid, name, description, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID_2}', 'foo 2', '{DESCRIPTION}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH_2}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO components (uuid, name, description, commands, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID_2}', 'foo 2', '{DESCRIPTION}', '{COMMANDS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH_2}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -186,10 +189,11 @@ class TestComponents(TestCase):
                     {"default": "", "name": "dataset", "type": "string"},
                 ],
             }
-            # uuid, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
+            # uuid, commands, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
             # are machine-generated we assert they exist, but we don't assert their values
             machine_generated = [
                 "uuid",
+                "commands",
                 "experimentNotebookPath",
                 "deploymentNotebookPath",
                 "createdAt",
@@ -218,6 +222,7 @@ class TestComponents(TestCase):
             }
             machine_generated = [
                 "uuid",
+                "commands",
                 "experimentNotebookPath",
                 "deploymentNotebookPath",
                 "createdAt",
@@ -247,6 +252,7 @@ class TestComponents(TestCase):
             }
             machine_generated = [
                 "uuid",
+                "commands",
                 "experimentNotebookPath",
                 "deploymentNotebookPath",
                 "createdAt",
@@ -271,6 +277,7 @@ class TestComponents(TestCase):
                 "uuid": COMPONENT_ID,
                 "name": "foo",
                 "description": DESCRIPTION,
+                "commands": COMMANDS,
                 "tags": TAGS,
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -329,6 +336,7 @@ class TestComponents(TestCase):
                 "uuid": COMPONENT_ID,
                 "name": "bar",
                 "description": DESCRIPTION,
+                "commands": COMMANDS,
                 "tags": TAGS,
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -351,6 +359,7 @@ class TestComponents(TestCase):
                 "uuid": COMPONENT_ID,
                 "name": "bar",
                 "description": DESCRIPTION,
+                "commands": COMMANDS,
                 "tags": ["FEATURE_ENGINEERING"],
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -373,6 +382,7 @@ class TestComponents(TestCase):
                 "uuid": COMPONENT_ID,
                 "name": "bar",
                 "description": DESCRIPTION,
+                "commands": COMMANDS,
                 "tags": ["FEATURE_ENGINEERING"],
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -395,6 +405,7 @@ class TestComponents(TestCase):
                 "uuid": COMPONENT_ID,
                 "name": "bar",
                 "description": DESCRIPTION,
+                "commands": COMMANDS,
                 "tags": ["FEATURE_ENGINEERING"],
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -435,3 +446,7 @@ class TestComponents(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result['components'], list)
             self.assertIsInstance(result['total'], int)
+
+    def test_get_components_by_tag(self):
+        component = get_components_by_tag("PREDICTOR")
+        self.assertIsInstance(component, list)
