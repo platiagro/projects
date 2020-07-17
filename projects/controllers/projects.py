@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from os.path import join
 
-from sqlalchemy import func, select
+from sqlalchemy import func
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -155,7 +155,7 @@ def total_rows_projects(name):
 def delete_projects(project_ids):
     total_elements = len(project_ids)
     all_projects_ids = list_objects(project_ids)
-    if total_elements < 0:
+    if total_elements < 1:
         return {"message": "please inform the uuid of the project"}
     projects = db_session.query(Project).filter(Project.uuid.in_(all_projects_ids)).all()
     if len(projects) != total_elements:
@@ -171,7 +171,6 @@ def delete_projects(project_ids):
     db_session.execute(deleted_projects)
     db_session.commit()
     for uuid in experiments:
-        print(uuid)
         prefix = join("experiments", uuid)
         try:
             remove_objects(prefix=prefix)
