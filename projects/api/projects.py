@@ -51,8 +51,11 @@ def handle_delete_project(project_id):
 @bp.route("/", methods=["GET"])
 @bp.paginate()
 def handle_pagination_projects(pagination_parameters):
-    total_rows = total_rows_projects()
-    projects = pagination_projects(page=pagination_parameters.page, page_size=pagination_parameters.page_size)
+    name = request.args.get('name')
+    total_rows = total_rows_projects(name=name)
+    projects = pagination_projects(name=name,
+                                   page=pagination_parameters.page,
+                                   page_size=pagination_parameters.page_size)
     response = {
         'total': total_rows,
         'projects': projects
