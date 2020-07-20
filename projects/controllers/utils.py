@@ -3,7 +3,6 @@
 import random
 import uuid
 import math
-from flask import jsonify
 
 from werkzeug.exceptions import NotFound
 
@@ -109,4 +108,3 @@ def pagination_datasets(page, page_size, elements):
             return response
     except RuntimeError:
         raise NotFound("The specified page does not exist")
-

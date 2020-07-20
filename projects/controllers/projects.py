@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from os.path import join
 
-from sqlalchemy import func, select
+from sqlalchemy import func
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 

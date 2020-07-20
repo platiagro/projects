@@ -75,5 +75,3 @@ def get_dataset_pagination(project_id, experiment_id, operator_id, page, page_si
     except FileNotFoundError as e:
         raise NotFound(str(e))
     return pagination_datasets(page=page, page_size=page_size, elements=dataset)
-
-
