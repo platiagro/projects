@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from os.path import join
 
-from sqlalchemy import func, select
+from sqlalchemy import func
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -12,7 +12,7 @@ from .experiments import create_experiment
 from ..database import db_session
 from ..models import Project, Experiment, Operator
 from ..object_storage import remove_objects
-from .utils import uuid_alpha
+from .utils import uuid_alpha, list_objects, objects_uuid
 
 
 def list_projects():
@@ -154,19 +154,27 @@ def total_rows_projects(name):
 
 def delete_projects(project_ids):
     total_elements = len(project_ids)
-    all_projects_ids = []
-    if total_elements > 0:
-        for i in project_ids:
-            all_projects_ids.append(i['uuid'])
+    all_projects_ids = list_objects(project_ids)
+    if total_elements < 1:
+        return {"message": "please inform the uuid of the project"}
     projects = db_session.query(Project).filter(Project.uuid.in_(all_projects_ids)).all()
-    if len(projects) == 0:
+    if len(projects) != total_elements:
         raise NotFound("The specified project does not exist")
-    if len(projects) == total_elements:
-        deleted_experments = Experiment.__table__.delete().where(Experiment.project_id.in_(all_projects_ids))
-        db_session.execute(deleted_experments)
-        deleted_projects = Project.__table__.delete().where(Project.uuid.in_(all_projects_ids))
-        db_session.execute(deleted_projects)
-        db_session.commit()
-        return {"message": "Successfully removed projects"}
-    else:
-        raise NotFound("The specified project does not exist")
+
+    experiments = db_session.query(Experiment).filter(Experiment.project_id.in_(objects_uuid(projects))).all()
+    if len(experiments) > 0:
+        operators = Operator.__table__.delete().where(Operator.experiment_id.in_(objects_uuid(experiments)))
+        db_session.execute(operators)
+    deleted_experiments = Experiment.__table__.delete().where(Experiment.project_id.in_(all_projects_ids))
+    db_session.execute(deleted_experiments)
+    deleted_projects = Project.__table__.delete().where(Project.uuid.in_(all_projects_ids))
+    db_session.execute(deleted_projects)
+    db_session.commit()
+    for uuid in experiments:
+        prefix = join("experiments", uuid)
+        try:
+            remove_objects(prefix=prefix)
+        except Exception:
+            pass
+
+    return {"message": "Successfully removed projects"}
