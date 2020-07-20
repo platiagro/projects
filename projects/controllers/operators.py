@@ -29,7 +29,6 @@ def list_operators(project_id, experiment_id):
 
     operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
-        .order_by(Operator.position.asc()) \
         .all()
 
     response = []
@@ -90,7 +89,7 @@ def create_operator(project_id, experiment_id, component_id=None,
 
     # create dependencies of operator
     for dependency in dependencies:
-        create_dependency(operator.as_dict['uuid'], dependency)
+        create_dependency(operator.as_dict()["uuid"], dependency)
 
     return operator_as_dict
 
