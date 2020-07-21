@@ -36,8 +36,8 @@ class TestProjects(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID}', '{EXPERIMENT_NAME}', '{PROJECT_ID}', null, null, 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID}', '{EXPERIMENT_NAME}', '{PROJECT_ID}', 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
 
         conn.execute(text)
@@ -99,8 +99,6 @@ class TestProjects(TestCase):
 
             expected = {
                 "name": EXPERIMENT_NAME,
-                "dataset": None,
-                "target": None,
                 "position": 0,
                 "isActive": True,
                 "operators": [],
@@ -136,8 +134,6 @@ class TestProjects(TestCase):
                 "uuid": EXPERIMENT_ID,
                 "name": EXPERIMENT_NAME,
                 "projectId": PROJECT_ID,
-                "dataset": None,
-                "target": None,
                 "position": 0,
                 "isActive": True,
                 "operators": [],
@@ -197,8 +193,6 @@ class TestProjects(TestCase):
                 "uuid": EXPERIMENT_ID,
                 "name": EXPERIMENT_NAME,
                 "projectId": PROJECT_ID,
-                "dataset": None,
-                "target": None,
                 "position": 0,
                 "isActive": True,
                 "operators": [],
@@ -229,7 +223,6 @@ class TestProjects(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result['projects'], list)
             self.assertIsInstance(result['total'], int)
-
 
     def test_delete_projects(self):
         with app.test_client() as c:

@@ -16,8 +16,6 @@ class Experiment(Base):
     uuid = Column(String(255), primary_key=True)
     name = Column(Text, nullable=False)
     project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False)
-    dataset = Column(String(255))
-    target = Column(String(255))
     position = Column(Integer, nullable=False, default=-1)
     is_active = Column(Boolean, nullable=False, server_default=expression.true())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
