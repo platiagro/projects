@@ -8,7 +8,8 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Operator
 from .parameters import list_parameters
-from .dependencies import list_dependencies, create_dependency, delete_dependency
+from .dependencies import list_dependencies, list_next_operators, \
+    create_dependency, delete_dependency
 from .utils import raise_if_component_does_not_exist, \
     raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
     raise_if_operator_does_not_exist, uuid_alpha
@@ -155,6 +156,9 @@ def delete_operator(uuid, project_id, experiment_id):
     if operator is None:
         raise NotFound("The specified operator does not exist")
 
+    operator_as_dict = operator.as_dict()
+    delete_dependencies(operator_as_dict["uuid"], operator_as_dict["dependencies"])
+
     db_session.delete(operator)
     db_session.commit()
 
@@ -176,6 +180,21 @@ def update_dependencies(operator_id, new_dependencies):
             if dependency == dependency_object["dependency"]:
                 delete_dependency(dependency_object["uuid"])
                 break
+
+
+def delete_dependencies(operator_id, dependencies):
+    next_operators = list_next_operators(operator_id)
+
+    for op in next_operators:
+        op_dependencies_raw = list_dependencies(op)
+        op_dependencies = [d["dependency"] for d in op_dependencies_raw]
+
+        new_dependencies = dependencies + list(set(op_dependencies) - set(dependencies))
+        new_dependencies.remove(operator_id)
+
+        update_dependencies(op, new_dependencies)
+
+    update_dependencies(operator_id, [])
 
 
 def raise_if_parameters_are_invalid(parameters):

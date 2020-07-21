@@ -24,6 +24,17 @@ def list_dependencies(operator_id):
     return [dependency.as_dict() for dependency in dependencies]
 
 
+def list_next_operators(operator_id):
+    raise_if_operator_does_not_exist(operator_id)
+
+    dependencies = db_session.query(Dependency) \
+        .filter_by(dependency=operator_id) \
+        .order_by(Dependency.uuid.asc()) \
+        .all()
+
+    return [dependency.as_dict()["operatorId"] for dependency in dependencies]
+
+
 def create_dependency(operator_id, dependency):
     """Creates a new dependency in our database.
 
