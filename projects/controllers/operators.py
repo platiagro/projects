@@ -8,7 +8,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Operator
 from .parameters import list_parameters
-from .dependencies import create_dependency
+from .dependencies import list_dependencies, create_dependency, delete_dependency
 from .utils import raise_if_component_does_not_exist, \
     raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
     raise_if_operator_does_not_exist, uuid_alpha
@@ -86,10 +86,10 @@ def create_operator(project_id, experiment_id, component_id=None,
     check_status(operator)
 
     operator_as_dict = operator.as_dict()
+    
+    update_dependencies(operator_as_dict['uuid'], dependencies)
 
-    # create dependencies of operator
-    for dependency in dependencies:
-        create_dependency(operator.as_dict()["uuid"], dependency)
+    operator_as_dict["dependencies"] = dependencies
 
     return operator_as_dict
 
@@ -116,6 +116,10 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
 
     raise_if_parameters_are_invalid(kwargs.get("parameters", {}))
 
+    dependencies = kwargs.pop("dependencies", [])
+
+    raise_if_dependencies_are_invalid(dependencies, operator_id=uuid)
+
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
 
@@ -124,6 +128,8 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
+
+    update_dependencies(uuid, dependencies)
 
     check_status(operator)
 
@@ -155,6 +161,23 @@ def delete_operator(uuid, project_id, experiment_id):
     return {"message": "Operator deleted"}
 
 
+def update_dependencies(operator_id, new_dependencies):
+    dependencies_raw = list_dependencies(operator_id)
+    dependencies = [d['dependency'] for d in dependencies_raw]
+
+    dependencies_to_add = [d for d in new_dependencies if d not in dependencies]
+    dependencies_to_delete = [d for d in dependencies if d not in new_dependencies]
+
+    for dependency in dependencies_to_add:
+        create_dependency(operator_id, dependency)
+
+    for dependency in dependencies_to_delete:
+        for dependency_object in dependencies_raw:
+            if dependency == dependency_object["dependency"]:
+                delete_dependency(dependency_object["uuid"])
+                break
+
+
 def raise_if_parameters_are_invalid(parameters):
     """Raises an exception if the specified parameters are not valid.
 
@@ -169,11 +192,12 @@ def raise_if_parameters_are_invalid(parameters):
             raise BadRequest("The specified parameters are not valid")
 
 
-def raise_if_dependencies_are_invalid(dependencies):
+def raise_if_dependencies_are_invalid(dependencies, operator_id=None):
     """Raises an exception if the specified dependencies are not valid.
 
     Args:
         dependencies (list): the dependencies list.
+        operator_id (str): the operator uuid.
     """
     if not isinstance(dependencies, list):
         raise BadRequest("The specified dependencies are not valid.")
@@ -181,8 +205,10 @@ def raise_if_dependencies_are_invalid(dependencies):
     for d in dependencies:
         try:
             raise_if_operator_does_not_exist(d)
+            if d == operator_id:
+                raise BadRequest("The specified dependencies are not valid.")  
         except NotFound:
-            raise BadRequest("The specified dependencies are not valid.")
+            raise BadRequest("The specified dependencies are not valid.")        
 
 
 def check_status(operator):
