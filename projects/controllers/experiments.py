@@ -140,12 +140,11 @@ def update_experiment(uuid, project_id, **kwargs):
 
         Operator.query.filter(Operator.experiment_id == uuid).delete()
 
-        for index, component_id in enumerate(template.components):
+        for component_id in template.components:
             objects = [
                 Operator(uuid=uuid_alpha(),
                          experiment_id=uuid,
-                         component_id=component_id,
-                         position=index)
+                         component_id=component_id)
             ]
             db_session.bulk_save_objects(objects)
 

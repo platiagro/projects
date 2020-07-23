@@ -17,7 +17,7 @@ DATASET = "iris"
 TARGET = "col4"
 POSITION = 0
 PARAMETERS = {"coef": 0.1}
-OPERATORS = [{"componentId": COMPONENT_ID, "position": POSITION}]
+OPERATORS = [{"componentId": COMPONENT_ID}]
 DESCRIPTION = "long foo"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
@@ -56,8 +56,8 @@ class TestTemplates(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{POSITION}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 

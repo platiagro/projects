@@ -8,6 +8,11 @@ from projects.database import engine
 from projects.object_storage import BUCKET_NAME
 
 OPERATOR_ID = str(uuid_alpha())
+OPERATOR_ID_2 = str(uuid_alpha())
+OPERATOR_ID_3 = str(uuid_alpha())
+OPERATOR_ID_4 = str(uuid_alpha())
+DEPENDENCY_ID = str(uuid_alpha())
+DEPENDENCY_ID_2 = str(uuid_alpha())
 NAME = "foo"
 DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid_alpha())
@@ -54,14 +59,47 @@ class TestOperators(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{POSITION}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID_3}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID_4}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO dependencies (uuid, operator_id, dependency) "
+            f"VALUES ('{DEPENDENCY_ID}', '{OPERATOR_ID}', '{OPERATOR_ID_2}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO dependencies (uuid, operator_id, dependency) "
+            f"VALUES ('{DEPENDENCY_ID_2}', '{OPERATOR_ID_4}', '{OPERATOR_ID}')"
         )
         conn.execute(text)
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
+        text = f"DELETE FROM dependencies WHERE operator_id = '{OPERATOR_ID}' OR operator_id = '{OPERATOR_ID_4}'"
+        conn.execute(text)
+
         text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
@@ -141,12 +179,30 @@ class TestOperators(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "componentId": COMPONENT_ID,
+                "dependencies": "unk" #only lists are accepted
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified dependencies are not valid."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
+                "componentId": COMPONENT_ID,
+                "dependencies": ["unk"]
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified dependencies are not valid."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
+                "componentId": COMPONENT_ID,
             })
             result = rv.get_json()
             expected = {
                 "experimentId": EXPERIMENT_ID,
                 "componentId": COMPONENT_ID,
-                "position": 1,
+                "dependencies": [],
                 "parameters": {},
                 "status": "Setted up",
             }
@@ -166,7 +222,7 @@ class TestOperators(TestCase):
             expected = {
                 "experimentId": EXPERIMENT_ID,
                 "componentId": COMPONENT_ID,
-                "position": 2,
+                "dependencies": [],
                 "parameters": {"coef": 1.0},
                 "status": "Unset",
             }
@@ -177,6 +233,27 @@ class TestOperators(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
+                "componentId": COMPONENT_ID,
+                "dependencies": []
+            })
+            result = rv.get_json()
+            expected = {
+                "experimentId": EXPERIMENT_ID,
+                "componentId": COMPONENT_ID,
+                "dependencies": [],
+                "parameters": {},
+                "status": "Setted up",
+            }
+            # uuid, created_at, updated_at are machine-generated
+            # we assert they exist, but we don't assert their values
+            machine_generated = ["uuid", "createdAt", "updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
 
     def test_update_operator(self):
         with app.test_client() as c:
@@ -221,14 +298,20 @@ class TestOperators(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-                "position": 0,
+                "dependencies": [OPERATOR_ID],
             })
+            result = rv.get_json()
+            expected = {"message": "The specified dependencies are not valid."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={})
             result = rv.get_json()
             expected = {
                 "uuid": OPERATOR_ID,
                 "experimentId": EXPERIMENT_ID,
                 "componentId": COMPONENT_ID,
-                "position": 0,
+                "dependencies": [OPERATOR_ID_2],
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
                 "status": "Setted up",
@@ -247,7 +330,26 @@ class TestOperators(TestCase):
                 "uuid": OPERATOR_ID,
                 "experimentId": EXPERIMENT_ID,
                 "componentId": COMPONENT_ID,
-                "position": 0,
+                "dependencies": [OPERATOR_ID_2],
+                "parameters": {"coef": 0.2},
+                "createdAt": CREATED_AT_ISO,
+                "status": "Unset",
+            }
+            machine_generated = ["updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
+                "dependencies": [OPERATOR_ID_3],
+            })
+            result = rv.get_json()
+            expected = {
+                "uuid": OPERATOR_ID,
+                "experimentId": EXPERIMENT_ID,
+                "componentId": COMPONENT_ID,
+                "dependencies": [OPERATOR_ID_3],
                 "parameters": {"coef": 0.2},
                 "createdAt": CREATED_AT_ISO,
                 "status": "Unset",

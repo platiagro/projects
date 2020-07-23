@@ -117,10 +117,12 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
 
     raise_if_parameters_are_invalid(kwargs.get("parameters", {}))
 
-    dependencies = kwargs.pop("dependencies", [])
+    dependencies = kwargs.pop("dependencies", None)
 
-    raise_if_dependencies_are_invalid(dependencies, operator_id=uuid)
-
+    if dependencies != None:
+        raise_if_dependencies_are_invalid(dependencies, operator_id=uuid)
+        update_dependencies(uuid, dependencies)
+    
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
 
@@ -129,8 +131,6 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
-
-    update_dependencies(uuid, dependencies)
 
     check_status(operator)
 
