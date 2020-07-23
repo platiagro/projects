@@ -2,7 +2,6 @@
 """Shared functions."""
 import random
 import uuid
-import math
 
 from werkzeug.exceptions import NotFound
 
@@ -83,9 +82,6 @@ def pagination_datasets(page, page_size, elements):
         """The numbers of items to return maximum 100 """
         if page_size > 100:
             page_size = 100
-
-        pages = int(((int(total_elements / page_size)) + (
-            math.ceil((total_elements % float(page_size)) / float(page_size)))))
         page = (page * page_size) - page_size
         for i in range(page, total_elements):
             new_elements.append(elements['data'][i])
@@ -108,3 +104,17 @@ def pagination_datasets(page, page_size, elements):
             return response
     except RuntimeError:
         raise NotFound("The specified page does not exist")
+
+def list_objects(list_object):
+    all_projects_ids = []
+    for i in list_object:
+        all_projects_ids.append(i['uuid'])
+    return all_projects_ids
+
+
+def objects_uuid(list_object):
+    ids = []
+    for i in list_object:
+        ids.append(i.uuid)
+    return ids
+ 

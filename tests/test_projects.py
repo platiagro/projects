@@ -233,7 +233,7 @@ class TestProjects(TestCase):
 
     def test_delete_projects(self):
         with app.test_client() as c:
-            rv = c.post("/projects/deleteprojects", json=[])
+            rv = c.post("/projects/deleteprojects", json=[{"uuid": "1234"}])
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
