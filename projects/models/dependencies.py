@@ -17,7 +17,4 @@ class Dependency(Base):
 
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
-        status = getattr(self, 'status', None)
-        if status:
-            d["status"] = status
         return d

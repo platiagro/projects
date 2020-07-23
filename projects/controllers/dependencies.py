@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Dependency controller."""
+from werkzeug.exceptions import NotFound
+
 from ..database import db_session
 from ..models import Dependency
 from .utils import raise_if_operator_does_not_exist, uuid_alpha
