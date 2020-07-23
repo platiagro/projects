@@ -36,6 +36,7 @@ CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
+
 class TestDependencies(TestCase):
     def setUp(self):
         self.maxDiff = None
@@ -48,8 +49,8 @@ class TestDependencies(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{DATASET}', '{TARGET}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -127,14 +128,11 @@ class TestDependencies(TestCase):
             del result[attr]
         self.assertDictEqual(expected, result)
 
-
     def test_delete_dependency(self):
         with pytest.raises(NotFound) as e:
             assert delete_dependency("unk")
         assert str(e.value) == "404 Not Found: The specified dependency does not exist"
-        
+
         result = delete_dependency(DEPENDENCY_ID)
         expected = {"message": "Dependency deleted"}
         self.assertDictEqual(expected, result)
-
-        
