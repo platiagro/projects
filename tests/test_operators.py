@@ -19,8 +19,6 @@ PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 COMPONENT_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1}
-DATASET = "iris"
-TARGET = "col4"
 POSITION = 0
 PARAMETERS = {}
 COMMANDS = ["CMD"]
@@ -47,8 +45,8 @@ class TestOperators(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{DATASET}', '{TARGET}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 

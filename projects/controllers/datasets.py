@@ -5,9 +5,9 @@ import platiagro
 
 from werkzeug.exceptions import NotFound
 
-from .utils import raise_if_operator_does_not_exist, \
+from .utils import raise_if_experiment_does_not_exist, \
     raise_if_project_does_not_exist, pagination_datasets
-from ..models import Experiment
+from ..models import Operator
 
 
 def get_dataset(project_id, experiment_id, operator_id):
@@ -20,20 +20,22 @@ def get_dataset(project_id, experiment_id, operator_id):
     """
     raise_if_project_does_not_exist(project_id)
 
-    experiment = Experiment.query.get(experiment_id)
+    raise_if_experiment_does_not_exist(experiment_id)
 
-    if experiment is None:
-        raise NotFound("The specified experiment does not exist")
+    operator = Operator.query.get(operator_id)
+    if operator is None:
+        raise NotFound("The specified operator does not exist")
 
-    raise_if_operator_does_not_exist(operator_id)
-
+    # get dataset name
+    dataset = operator.parameters.get('dataset')
+    if dataset is None:
+        raise NotFound()
     try:
-        metadata = platiagro.stat_dataset(name=experiment.dataset,
-                                          operator_id=operator_id)
+        metadata = platiagro.stat_dataset(name=dataset, operator_id=operator_id)
         if "run_id" not in metadata:
             raise FileNotFoundError()
 
-        dataset = platiagro.load_dataset(name=experiment.dataset,
+        dataset = platiagro.load_dataset(name=dataset,
                                          run_id="latest",
                                          operator_id=operator_id)
         dataset = dataset.to_dict(orient="split")
@@ -54,20 +56,23 @@ def get_dataset_pagination(project_id, experiment_id, operator_id, page, page_si
     """
     raise_if_project_does_not_exist(project_id)
 
-    experiment = Experiment.query.get(experiment_id)
+    raise_if_experiment_does_not_exist(experiment_id)
 
-    if experiment is None:
-        raise NotFound("The specified experiment does not exist")
+    operator = Operator.query.get(operator_id)
+    if operator is None:
+        raise NotFound("The specified operator does not exist")
 
-    raise_if_operator_does_not_exist(operator_id)
+    # get dataset name
+    dataset = operator.parameters.get('dataset')
+    if dataset is None:
+        raise NotFound()
 
     try:
-        metadata = platiagro.stat_dataset(name=experiment.dataset,
-                                          operator_id=operator_id)
+        metadata = platiagro.stat_dataset(name=dataset, operator_id=operator_id)
         if "run_id" not in metadata:
             raise FileNotFoundError()
 
-        dataset = platiagro.load_dataset(name=experiment.dataset,
+        dataset = platiagro.load_dataset(name=dataset,
                                          run_id="latest",
                                          operator_id=operator_id)
         dataset = dataset.to_dict(orient="split")

@@ -13,8 +13,6 @@ PROJECT_ID = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
 COMPONENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
-DATASET = "iris"
-TARGET = "col4"
 POSITION = 0
 IS_ACTIVE = True
 PARAMETERS = {"coef": 0.1}
@@ -54,14 +52,14 @@ class TestExperiments(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{DATASET}', '{TARGET}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID_2}', '{NAME_2}', '{PROJECT_ID}', '{DATASET}', '{TARGET}', '{POSITION_2}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID_2}', '{NAME_2}', '{PROJECT_ID}', '{POSITION_2}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -135,15 +133,11 @@ class TestExperiments(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
                 "name": "test",
-                "dataset": DATASET,
-                "target": TARGET,
             })
             result = rv.get_json()
             expected = {
                 "name": "test",
                 "projectId": PROJECT_ID,
-                "dataset": DATASET,
-                "target": TARGET,
                 "position": 2,
                 "isActive": IS_ACTIVE,
                 "operators": [],
@@ -176,8 +170,6 @@ class TestExperiments(TestCase):
                 "uuid": EXPERIMENT_ID,
                 "name": NAME,
                 "projectId": PROJECT_ID,
-                "dataset": DATASET,
-                "target": TARGET,
                 "position": POSITION,
                 "isActive": IS_ACTIVE,
                 "operators": OPERATORS,
@@ -235,8 +227,6 @@ class TestExperiments(TestCase):
                 "uuid": EXPERIMENT_ID,
                 "name": "bar",
                 "projectId": PROJECT_ID,
-                "dataset": DATASET,
-                "target": TARGET,
                 "position": POSITION,
                 "isActive": IS_ACTIVE,
                 "operators": OPERATORS,
@@ -256,8 +246,6 @@ class TestExperiments(TestCase):
                 "uuid": EXPERIMENT_ID,
                 "name": "bar",
                 "projectId": PROJECT_ID,
-                "dataset": DATASET,
-                "target": TARGET,
                 "position": POSITION,
                 "isActive": IS_ACTIVE,
                 "createdAt": CREATED_AT_ISO,

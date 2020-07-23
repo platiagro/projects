@@ -895,10 +895,6 @@ components:
           type: integer
         isActive:
           type: boolean
-        dataset:
-          type: string
-        target:
-          type: string
         projectId:
           type: string
           format: uuid
@@ -1259,10 +1255,6 @@ components:
             properties:
               name:
                 type: string
-              dataset:
-                type: string
-              target:
-                type: string
     ExperimentPatch:
       content:
         application/json:
@@ -1270,10 +1262,6 @@ components:
             type: object
             properties:
               name:
-                type: string
-              dataset:
-                type: string
-              target:
                 type: string
               position:
                 type: integer

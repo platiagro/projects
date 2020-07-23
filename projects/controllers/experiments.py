@@ -33,8 +33,7 @@ def list_experiments(project_id):
     return [experiment.as_dict() for experiment in experiments]
 
 
-def create_experiment(name=None, project_id=None, dataset=None, target=None,
-                      **kwargs):
+def create_experiment(name=None, project_id=None):
     """Creates a new experiment in our database and adjusts the position of others.
 
     The new experiment is added to the end of the experiment list.
@@ -42,9 +41,6 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
     Args:
         name (str): the experiment name.
         project_id (str): the project uuid.
-        dataset (str, optional): the dataset uuid.
-        target (str, optional): the target column.
-
     Returns:
         The experiment info.
     """
@@ -62,9 +58,7 @@ def create_experiment(name=None, project_id=None, dataset=None, target=None,
 
     experiment = Experiment(uuid=uuid_alpha(),
                             name=name,
-                            project_id=project_id,
-                            dataset=dataset,
-                            target=target)
+                            project_id=project_id)
     db_session.add(experiment)
     db_session.commit()
 
@@ -108,7 +102,6 @@ def update_experiment(uuid, project_id, **kwargs):
         uuid (str): the experiment uuid to look for in our database.
         project_id (str): the project uuid.
         **kwargs: arbitrary keyword arguments.
-
     Returns:
         The experiment info.
     """

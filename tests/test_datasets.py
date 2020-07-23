@@ -19,7 +19,7 @@ DESCRIPTION = "long foo"
 DATASET = "mock.csv"
 TARGET = "col4"
 POSITION = 0
-PARAMETERS = {}
+PARAMETERS = {"dataset": DATASET}
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
 TAGS = ["PREDICTOR"]
@@ -45,8 +45,8 @@ class TestDatasets(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{DATASET}', '{TARGET}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
