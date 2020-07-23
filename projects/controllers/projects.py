@@ -158,23 +158,25 @@ def delete_projects(project_ids):
     if total_elements < 1:
         return {"message": "please inform the uuid of the project"}
     projects = db_session.query(Project).filter(Project.uuid.in_(all_projects_ids)).all()
+    experiments = db_session.query(Experiment).filter(Experiment.project_id.in_(objects_uuid(projects))).all()
+    operators = db_session.query(Experiment).filter(Operator.experiment_id.in_(objects_uuid(experiments))) \
+        .all()
     if len(projects) != total_elements:
         raise NotFound("The specified project does not exist")
-
-    experiments = db_session.query(Experiment).filter(Experiment.project_id.in_(objects_uuid(projects))).all()
-    if len(experiments) > 0:
-        operators = Operator.__table__.delete().where(Operator.experiment_id.in_(objects_uuid(experiments)))
+    if len(operators) != 0:
+        operators = Operator.__table__.delete().where(Operator.uuid.in_(objects_uuid(operators)))
         db_session.execute(operators)
-    deleted_experiments = Experiment.__table__.delete().where(Experiment.project_id.in_(all_projects_ids))
-    db_session.execute(deleted_experiments)
+    if len(experiments) != 0:
+        deleted_experiments = Experiment.__table__.delete().where(Experiment.uuid.in_(objects_uuid(experiments)))
+        db_session.execute(deleted_experiments)
     deleted_projects = Project.__table__.delete().where(Project.uuid.in_(all_projects_ids))
     db_session.execute(deleted_projects)
-    db_session.commit()
-    for uuid in experiments:
-        prefix = join("experiments", uuid)
+    for experiment in experiments:
+        prefix = join("experiments", experiment.uuid)
         try:
             remove_objects(prefix=prefix)
         except Exception:
             pass
+    db_session.commit()
 
     return {"message": "Successfully removed projects"}
