@@ -200,7 +200,6 @@ def check_status(operator):
 
     # get component parameters and remove dataset parameter
     comp_params = list_parameters(operator.component_id)
-    comp_params = [parameter for parameter in comp_params if parameter['name'] != 'dataset']
     total_comp_params = len(comp_params)
 
     if total_op_params == total_comp_params:

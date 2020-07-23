@@ -13,8 +13,6 @@ COMPONENT_ID = str(uuid_alpha())
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
-DATASET = "iris"
-TARGET = "col4"
 POSITION = 0
 PARAMETERS = {"coef": 0.1}
 OPERATORS = [{"componentId": COMPONENT_ID, "position": POSITION}]
@@ -50,8 +48,8 @@ class TestTemplates(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO experiments (uuid, name, project_id, dataset, target, position, is_active, created_at, updated_at) VALUES "
-            f"('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{DATASET}', '{TARGET}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) VALUES "
+            f"('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
