@@ -87,7 +87,7 @@ def create_operator(project_id, experiment_id, component_id=None,
     check_status(operator)
 
     operator_as_dict = operator.as_dict()
-    
+
     update_dependencies(operator_as_dict['uuid'], dependencies)
 
     operator_as_dict["dependencies"] = dependencies
@@ -119,10 +119,10 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
 
     dependencies = kwargs.pop("dependencies", None)
 
-    if dependencies != None:
+    if dependencies is not None:
         raise_if_dependencies_are_invalid(dependencies, operator_id=uuid)
         update_dependencies(uuid, dependencies)
-    
+
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
 
@@ -225,9 +225,9 @@ def raise_if_dependencies_are_invalid(dependencies, operator_id=None):
         try:
             raise_if_operator_does_not_exist(d)
             if d == operator_id:
-                raise BadRequest("The specified dependencies are not valid.")  
+                raise BadRequest("The specified dependencies are not valid.")
         except NotFound:
-            raise BadRequest("The specified dependencies are not valid.")        
+            raise BadRequest("The specified dependencies are not valid.")
 
 
 def check_status(operator):

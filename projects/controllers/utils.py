@@ -105,6 +105,7 @@ def pagination_datasets(page, page_size, elements):
     except RuntimeError:
         raise NotFound("The specified page does not exist")
 
+
 def list_objects(list_object):
     all_projects_ids = []
     for i in list_object:
@@ -117,4 +118,3 @@ def objects_uuid(list_object):
     for i in list_object:
         ids.append(i.uuid)
     return ids
- 
