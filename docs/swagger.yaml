@@ -532,8 +532,8 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  ? /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/datasets
-  : get:
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/dataset:
+    get:
       summary: "Retrieves a dataset."
       tags:
         - "Operators"
@@ -560,8 +560,8 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  ? /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/datasets/
-  : get:
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/datasets/:
+    get:
       summary: "List datasets paginated."
       tags:
         - "Operators"
@@ -598,8 +598,8 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  ? /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/figures
-  : get:
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/figures:
+    get:
       summary: "List all figures."
       tags:
         - "Operators"
@@ -626,8 +626,8 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  ? /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/metrics
-  : get:
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/metrics:
+    get:
       summary: "List all metrics."
       tags:
         - "Operators"
