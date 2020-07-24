@@ -15,6 +15,10 @@ from .utils import raise_if_component_does_not_exist, \
     raise_if_operator_does_not_exist, uuid_alpha
 
 
+PARAMETERS_EXCEPTION_MSG = "The specified parameters are not valid"
+DEPENDENCIES_EXCEPTION_MSG = "The specified dependencies are not valid."
+
+
 def list_operators(project_id, experiment_id):
     """Lists all operators under an experiment.
 
@@ -204,11 +208,11 @@ def raise_if_parameters_are_invalid(parameters):
         parameters (dict): the parameters dict.
     """
     if not isinstance(parameters, dict):
-        raise BadRequest("The specified parameters are not valid")
+        raise BadRequest(PARAMETERS_EXCEPTION_MSG)
 
     for key, value in parameters.items():
         if not isinstance(value, (str, int, float, bool, list, dict)):
-            raise BadRequest("The specified parameters are not valid")
+            raise BadRequest(PARAMETERS_EXCEPTION_MSG)
 
 
 def raise_if_dependencies_are_invalid(dependencies, operator_id=None):
@@ -219,15 +223,15 @@ def raise_if_dependencies_are_invalid(dependencies, operator_id=None):
         operator_id (str): the operator uuid.
     """
     if not isinstance(dependencies, list):
-        raise BadRequest("The specified dependencies are not valid.")
+        raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
 
     for d in dependencies:
         try:
             raise_if_operator_does_not_exist(d)
             if d == operator_id:
-                raise BadRequest("The specified dependencies are not valid.")
+                raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
         except NotFound:
-            raise BadRequest("The specified dependencies are not valid.")
+            raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
 
 
 def check_status(operator):
