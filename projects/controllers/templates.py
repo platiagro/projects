@@ -46,7 +46,6 @@ def create_template(name=None, experiment_id=None, **kwargs):
 
     operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
-        .order_by(Operator.position.asc()) \
         .all()
 
     # JSON array order of elements are preserved,

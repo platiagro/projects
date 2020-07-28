@@ -22,5 +22,5 @@ class Template(Base):
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
         del d["components"]
-        d["operators"] = [{"componentId": o, "position": i} for i, o in enumerate(self.components)]
+        d["operators"] = [{"componentId": o} for i, o in enumerate(self.components)]
         return d

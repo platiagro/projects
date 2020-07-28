@@ -57,14 +57,14 @@ class TestDatasets(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{POSITION}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, component_id, position, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID2}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{POSITION}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID2}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()

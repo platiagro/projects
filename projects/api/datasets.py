@@ -20,4 +20,5 @@ def handle_get_dataset_paginated(project_id, experiment_id, operator_id, paginat
     """Handles GET requests to /."""
     datasets = get_dataset_pagination(project_id=project_id, experiment_id=experiment_id, operator_id=operator_id,
                                       page=pagination_parameters.page, page_size=pagination_parameters.page_size)
+
     return datasets

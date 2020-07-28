@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Operator controller."""
-import sys
 from datetime import datetime
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
@@ -9,9 +8,15 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Operator
 from .parameters import list_parameters
+from .dependencies import list_dependencies, list_next_operators, \
+    create_dependency, delete_dependency
 from .utils import raise_if_component_does_not_exist, \
     raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
-    uuid_alpha
+    raise_if_operator_does_not_exist, uuid_alpha
+
+
+PARAMETERS_EXCEPTION_MSG = "The specified parameters are not valid"
+DEPENDENCIES_EXCEPTION_MSG = "The specified dependencies are not valid."
 
 
 def list_operators(project_id, experiment_id):
@@ -29,7 +34,6 @@ def list_operators(project_id, experiment_id):
 
     operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
-        .order_by(Operator.position.asc()) \
         .all()
 
     response = []
@@ -41,7 +45,7 @@ def list_operators(project_id, experiment_id):
 
 
 def create_operator(project_id, experiment_id, component_id=None,
-                    parameters=None, **kwargs):
+                    parameters=None, dependencies=None, **kwargs):
     """Creates a new operator in our database.
 
     The new operator is added to the end of the operator list.
@@ -51,6 +55,7 @@ def create_operator(project_id, experiment_id, component_id=None,
         experiment_id (str): the experiment uuid.
         component_id (str): the component uuid.
         parameters (dict): the parameters dict.
+        dependencies (list): the dependencies array.
 
     Returns:
         The operator info.
@@ -71,21 +76,27 @@ def create_operator(project_id, experiment_id, component_id=None,
 
     raise_if_parameters_are_invalid(parameters)
 
+    if dependencies is None:
+        dependencies = []
+
+    raise_if_dependencies_are_invalid(dependencies)
+
     operator = Operator(uuid=uuid_alpha(),
                         experiment_id=experiment_id,
                         component_id=component_id,
-                        position=-1,
-                        parameters=parameters)  # use temporary position -1, fix_position below
+                        parameters=parameters)
     db_session.add(operator)
     db_session.commit()
 
-    fix_positions(experiment_id=experiment_id,
-                  operator_id=operator.uuid,
-                  new_position=sys.maxsize)     # will add to end of list
-
     check_status(operator)
 
-    return operator.as_dict()
+    operator_as_dict = operator.as_dict()
+
+    update_dependencies(operator_as_dict['uuid'], dependencies)
+
+    operator_as_dict["dependencies"] = dependencies
+
+    return operator_as_dict
 
 
 def update_operator(uuid, project_id, experiment_id, **kwargs):
@@ -110,6 +121,12 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
 
     raise_if_parameters_are_invalid(kwargs.get("parameters", {}))
 
+    dependencies = kwargs.pop("dependencies", None)
+
+    if dependencies is not None:
+        raise_if_dependencies_are_invalid(dependencies, operator_id=uuid)
+        update_dependencies(uuid, dependencies)
+
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
 
@@ -118,10 +135,6 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
-
-    fix_positions(experiment_id=operator.experiment_id,
-                  operator_id=operator.uuid,
-                  new_position=operator.position)
 
     check_status(operator)
 
@@ -147,36 +160,45 @@ def delete_operator(uuid, project_id, experiment_id):
     if operator is None:
         raise NotFound("The specified operator does not exist")
 
+    operator_as_dict = operator.as_dict()
+    delete_dependencies(operator_as_dict["uuid"], operator_as_dict["dependencies"])
+
     db_session.delete(operator)
     db_session.commit()
-
-    fix_positions(experiment_id=operator.experiment_id)
 
     return {"message": "Operator deleted"}
 
 
-def fix_positions(experiment_id, operator_id=None, new_position=-1):
-    """Reorders the operators in an experiment when an operator is updated/deleted.
+def update_dependencies(operator_id, new_dependencies):
+    dependencies_raw = list_dependencies(operator_id)
+    dependencies = [d['dependency'] for d in dependencies_raw]
 
-    Args:
-        experiment_id (str): the experiment uuid.
-        operator_id (str): the operator uuid.
-        new_position (int): the position where the operator is shown.
-    """
-    other_operators = db_session.query(Operator) \
-        .filter_by(experiment_id=experiment_id) \
-        .filter(Operator.uuid != operator_id)\
-        .order_by(Operator.position.asc()) \
-        .all()
+    dependencies_to_add = [d for d in new_dependencies if d not in dependencies]
+    dependencies_to_delete = [d for d in dependencies if d not in new_dependencies]
 
-    if operator_id is not None:
-        operator = Operator.query.get(operator_id)
-        other_operators.insert(new_position, operator)
+    for dependency in dependencies_to_add:
+        create_dependency(operator_id, dependency)
 
-    for index, operator in enumerate(other_operators):
-        data = {"position": index}
-        db_session.query(Operator).filter_by(uuid=operator.uuid).update(data)
-    db_session.commit()
+    for dependency in dependencies_to_delete:
+        for dependency_object in dependencies_raw:
+            if dependency == dependency_object["dependency"]:
+                delete_dependency(dependency_object["uuid"])
+                break
+
+
+def delete_dependencies(operator_id, dependencies):
+    next_operators = list_next_operators(operator_id)
+
+    for op in next_operators:
+        op_dependencies_raw = list_dependencies(op)
+        op_dependencies = [d["dependency"] for d in op_dependencies_raw]
+
+        new_dependencies = dependencies + list(set(op_dependencies) - set(dependencies))
+        new_dependencies.remove(operator_id)
+
+        update_dependencies(op, new_dependencies)
+
+    update_dependencies(operator_id, [])
 
 
 def raise_if_parameters_are_invalid(parameters):
@@ -186,11 +208,30 @@ def raise_if_parameters_are_invalid(parameters):
         parameters (dict): the parameters dict.
     """
     if not isinstance(parameters, dict):
-        raise BadRequest("The specified parameters are not valid")
+        raise BadRequest(PARAMETERS_EXCEPTION_MSG)
 
     for key, value in parameters.items():
         if not isinstance(value, (str, int, float, bool, list, dict)):
-            raise BadRequest("The specified parameters are not valid")
+            raise BadRequest(PARAMETERS_EXCEPTION_MSG)
+
+
+def raise_if_dependencies_are_invalid(dependencies, operator_id=None):
+    """Raises an exception if the specified dependencies are not valid.
+
+    Args:
+        dependencies (list): the dependencies list.
+        operator_id (str): the operator uuid.
+    """
+    if not isinstance(dependencies, list):
+        raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+
+    for d in dependencies:
+        try:
+            raise_if_operator_does_not_exist(d)
+            if d == operator_id:
+                raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+        except NotFound:
+            raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
 
 
 def check_status(operator):
