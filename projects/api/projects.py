@@ -12,9 +12,18 @@ bp = Blueprint("projects", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_list_projects():
-    """Handles GET requests to /."""
-    return jsonify(list_projects())
+@bp.paginate(page=0, page_size=0)
+def handle_pagination_projects(pagination_parameters):
+    name = request.args.get('name')
+    total_rows = total_rows_projects(name=name)
+    projects = pagination_projects(name=name,
+                                   page=pagination_parameters.page,
+                                   page_size=pagination_parameters.page_size)
+    response = {
+        'total': total_rows,
+        'projects': projects
+    }
+    return jsonify(response)
 
 
 @bp.route("", methods=["POST"])
@@ -46,21 +55,6 @@ def handle_delete_project(project_id):
     """Handles DELETE requests to /<project_id>."""
     project = delete_project(uuid=project_id)
     return jsonify(project)
-
-
-@bp.route("/", methods=["GET"])
-@bp.paginate()
-def handle_pagination_projects(pagination_parameters):
-    name = request.args.get('name')
-    total_rows = total_rows_projects(name=name)
-    projects = pagination_projects(name=name,
-                                   page=pagination_parameters.page,
-                                   page_size=pagination_parameters.page_size)
-    response = {
-        'total': total_rows,
-        'projects': projects
-    }
-    return jsonify(response)
 
 
 @bp.route("/deleteprojects", methods=["POST"])

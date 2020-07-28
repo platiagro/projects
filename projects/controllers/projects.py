@@ -138,7 +138,9 @@ def pagination_projects(name, page, page_size):
     query = db_session.query(Project)
     if name:
         query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
-    query = query.order_by(Project.name).limit(page_size).offset((page - 1) * page_size)
+    if page != 0:
+        print(f'passoua aqui {page}')
+        query = query.order_by(Project.name).limit(page_size).offset((page - 1) * page_size)
     projects = query.all()
     projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [project.as_dict() for project in projects]
