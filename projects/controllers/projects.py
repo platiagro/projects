@@ -164,7 +164,7 @@ def delete_projects(project_ids):
     if len(projects) != total_elements:
         raise NotFound("The specified project does not exist")
     if len(operators) != 0:
-        operators = Operator.__table__.delete().where(Operator.uuid.in_(objects_uuid(operators)))
+        operators = Operator.__table__.delete().where(Operator.experiment_id.in_(objects_uuid(experiments)))
         db_session.execute(operators)
     if len(experiments) != 0:
         deleted_experiments = Experiment.__table__.delete().where(Experiment.uuid.in_(objects_uuid(experiments)))
