@@ -3,7 +3,7 @@
 
 from flask import jsonify, request
 from flask_smorest import Blueprint
-from ..controllers.projects import list_projects, create_project, \
+from ..controllers.projects import create_project, \
     get_project, update_project, delete_project, pagination_projects, \
     total_rows_projects, delete_projects
 from ..utils import to_snake_case
