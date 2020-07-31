@@ -857,11 +857,6 @@ components:
           type: string
           format: date-time
     Projects:
-      type: array
-      items:
-        oneOf:
-          - $ref: "#/components/schemas/Project"
-    ProjectsPaginated:
       type: object
       properties:
         projects:
@@ -1348,12 +1343,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Projects"
-    ProjectsPaginated:
-      description: ""
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ProjectsPaginated"
     Experiment:
       description: ""
       content:

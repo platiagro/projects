@@ -12,8 +12,8 @@ bp = Blueprint("projects", __name__)
 
 
 @bp.route("", methods=["GET"])
-@bp.paginate(page=0, page_size=0)
-def handle_pagination_projects(pagination_parameters):
+@bp.paginate(page=0)
+def handle_list_projects(pagination_parameters):
     name = request.args.get('name')
     total_rows = total_rows_projects(name=name)
     projects = pagination_projects(name=name,
