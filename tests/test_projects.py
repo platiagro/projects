@@ -59,7 +59,7 @@ class TestProjects(TestCase):
         with app.test_client() as c:
             rv = c.get("/projects")
             result = rv.get_json()
-            self.assertIsInstance(result, list)
+            self.assertIsInstance(result['projects'], list)
 
     def test_create_project(self):
         with app.test_client() as c:
@@ -219,7 +219,7 @@ class TestProjects(TestCase):
 
     def test_pagination_project(self):
         with app.test_client() as p:
-            rv = p.get("/projects/?page=1&page_size=1")
+            rv = p.get("/projects?page=1&page_size=1")
             result = rv.get_json()
             self.assertIsInstance(result['projects'], list)
             self.assertIsInstance(result['total'], int)

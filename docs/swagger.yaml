@@ -168,33 +168,6 @@ paths:
       summary: "List all projects sorted by name in natural sort order."
       tags:
         - "Projects"
-      responses:
-        "200":
-          $ref: "#/components/responses/Projects"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    post:
-      summary: "Create a new project."
-      tags:
-        - "Projects"
-      requestBody:
-        $ref: "#/components/requestBodies/Project"
-      responses:
-        "200":
-          $ref: "#/components/responses/Project"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/:
-    get:
-      summary: "List projects paginated."
-      tags:
-        - "Projects"
       parameters:
         - in: query
           name: name
@@ -213,7 +186,22 @@ paths:
           description: Page size
       responses:
         "200":
-          $ref: "#/components/responses/ProjectsPaginated"
+          $ref: "#/components/responses/Projects"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new project."
+      tags:
+        - "Projects"
+      requestBody:
+        $ref: "#/components/requestBodies/Project"
+      responses:
+        "200":
+          $ref: "#/components/responses/Project"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -869,11 +857,6 @@ components:
           type: string
           format: date-time
     Projects:
-      type: array
-      items:
-        oneOf:
-          - $ref: "#/components/schemas/Project"
-    ProjectsPaginated:
       type: object
       properties:
         projects:
@@ -1360,12 +1343,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Projects"
-    ProjectsPaginated:
-      description: ""
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ProjectsPaginated"
     Experiment:
       description: ""
       content:
