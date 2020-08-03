@@ -352,18 +352,23 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
     experiment_notebook["metadata"]["operator_id"] = operator_id
 
 
-def pagination_components(page, page_size):
+def pagination_components(name, page, page_size):
+    """The numbers of items to return maximum 100 """
     if page_size > 100:
         page_size = 100
-    components = db_session.query(Component) \
-        .order_by(Component.name) \
-        .limit(page_size) \
-        .offset((page - 1) * page_size) \
-        .all()
+    query = db_session.query(Component)
+    if name:
+        query = query.filter(Component.name.ilike(func.lower(f"%{name}%")))
+    if page != 0:
+        query = query.order_by(Component.name).limit(page_size).offset((page - 1) * page_size)
+    components = query.all()
     components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
     return [component.as_dict() for component in components]
 
 
-def total_rows_components():
-    rows = db_session.query(func.count(Component.uuid)).scalar()
+def total_rows_components(name):
+    query = db_session.query(func.count(Component.uuid))
+    if name:
+        query = query.filter(Component.name.ilike(func.lower(f"%{name}%")))
+    rows = query.scalar()
     return rows

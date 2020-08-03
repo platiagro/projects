@@ -4,17 +4,26 @@
 from flask import jsonify, request
 from flask_smorest import Blueprint
 
-from ..controllers.components import list_components, create_component, \
-    get_component, update_component, delete_component, pagination_components, total_rows_components
+from ..controllers.components import create_component, get_component, update_component, \
+     delete_component, pagination_components, total_rows_components
 from ..utils import to_snake_case
 
 bp = Blueprint("components", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_list_components():
-    """Handles GET requests to /."""
-    return jsonify(list_components())
+@bp.paginate(page=0)
+def handle_pagination(pagination_parameters):
+    name = request.args.get('name')
+    total_rows = total_rows_components(name=name)
+    components = pagination_components(name=name,
+                                       page=pagination_parameters.page,
+                                       page_size=pagination_parameters.page_size)
+    response = {
+        'total': total_rows,
+        'components': components
+    }
+    return jsonify(response)
 
 
 @bp.route("", methods=["POST"])
@@ -45,15 +54,3 @@ def handle_patch_component(component_id):
 def handle_delete_component(component_id):
     """Handles DELETE requests to /<component_id>."""
     return jsonify(delete_component(uuid=component_id))
-
-
-@bp.route("/", methods=["GET"])
-@bp.paginate()
-def handle_pagination(pagination_parameters):
-    total_rows = total_rows_components()
-    components = pagination_components(page=pagination_parameters.page, page_size=pagination_parameters.page_size)
-    response = {
-        'total': total_rows,
-        'components': components
-    }
-    return jsonify(response)
