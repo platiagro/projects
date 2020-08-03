@@ -13,7 +13,7 @@ bp = Blueprint("components", __name__)
 
 @bp.route("", methods=["GET"])
 @bp.paginate(page=0)
-def handle_pagination(pagination_parameters):
+def handle_list_components(pagination_parameters):
     name = request.args.get('name')
     total_rows = total_rows_components(name=name)
     components = pagination_components(name=name,
