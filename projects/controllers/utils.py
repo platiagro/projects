@@ -51,18 +51,22 @@ def raise_if_experiment_does_not_exist(experiment_id):
         raise NotFound("The specified experiment does not exist")
 
 
-def raise_if_operator_does_not_exist(operator_id):
+def raise_if_operator_does_not_exist(operator_id, experiment_id=None):
     """Raises an exception if the specified operator does not exist.
 
     Args:
         operator_id (str): the operator uuid.
     """
-    exists = db_session.query(Operator.uuid) \
-        .filter_by(uuid=operator_id) \
-        .scalar() is not None
+    operator = db_session.query(Operator) \
+        .filter_by(uuid=operator_id)
 
-    if not exists:
+    if operator.scalar() is None:
         raise NotFound("The specified operator does not exist")
+    else:
+        # verify if operator is from the provided experiment
+        if experiment_id:
+            if operator.one().as_dict()["experimentId"] != experiment_id:
+                raise NotFound("The specified operator is from another experiment")
 
 
 def uuid_alpha() -> str:
