@@ -36,6 +36,22 @@ paths:
       summary: "List all components sorted by name in natural sort order."
       tags:
         - "Components"
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+          description: Name filter
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+          description: Page size
       responses:
         "200":
           $ref: "#/components/responses/Components"
@@ -54,29 +70,6 @@ paths:
           $ref: "#/components/responses/Component"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /components/:
-    get:
-      summary: "List components paginated."
-      tags:
-        - "Components"
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-          description: Page number
-        - in: query
-          name: page_size
-          schema:
-            type: integer
-          description: Page size
-      responses:
-        "200":
-          $ref: "#/components/responses/ComponentsPaginated"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -766,11 +759,6 @@ components:
           type: string
           format: date-time
     Components:
-      type: array
-      items:
-        oneOf:
-          - $ref: "#/components/schemas/Component"
-    ComponentsPaginated:
       type: object
       properties:
         components:
@@ -1319,12 +1307,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Components"
-    ComponentsPaginated:
-      description: ""
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ComponentsPaginated"
     Parameters:
       description: ""
       content:
