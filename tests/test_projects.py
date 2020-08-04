@@ -55,6 +55,12 @@ class TestProjects(TestCase):
         conn.execute(text)
         conn.close()
 
+    def test_list_projects(self):
+        with app.test_client() as c:
+            rv = c.get("/projects")
+            result = rv.get_json()
+            self.assertIsInstance(result['projects'], list)
+
     def test_create_project(self):
         with app.test_client() as c:
             rv = c.post("/projects", json={})
