@@ -10,7 +10,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from .experiments import create_experiment
 from ..database import db_session
-from ..models import Project, Experiment, Operator
+from ..models import Dependency, Experiment, Operator, Project
 from ..object_storage import remove_objects
 from .utils import uuid_alpha, list_objects, objects_uuid
 
@@ -118,6 +118,12 @@ def delete_project(uuid):
 
     experiments = Experiment.query.filter(Experiment.project_id == uuid).all()
     for experiment in experiments:
+        # remove dependencies
+        operators = db_session.query(Operator).filter(Operator.experiment_id == experiment.uuid).all()
+        for operator in operators:
+            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
+
+        # remove operators
         Operator.query.filter(Operator.experiment_id == experiment.uuid).delete()
 
     Experiment.query.filter(Experiment.project_id == uuid).delete()
@@ -160,11 +166,15 @@ def delete_projects(project_ids):
         return {"message": "please inform the uuid of the project"}
     projects = db_session.query(Project).filter(Project.uuid.in_(all_projects_ids)).all()
     experiments = db_session.query(Experiment).filter(Experiment.project_id.in_(objects_uuid(projects))).all()
-    operators = db_session.query(Experiment).filter(Operator.experiment_id.in_(objects_uuid(experiments))) \
+    operators = db_session.query(Operator).filter(Operator.experiment_id.in_(objects_uuid(experiments))) \
         .all()
     if len(projects) != total_elements:
         raise NotFound("The specified project does not exist")
     if len(operators) != 0:
+        # remove dependencies
+        for operator in operators:
+            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
+        # remove operators
         operators = Operator.__table__.delete().where(Operator.experiment_id.in_(objects_uuid(experiments)))
         db_session.execute(operators)
     if len(experiments) != 0:

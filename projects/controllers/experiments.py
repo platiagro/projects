@@ -8,7 +8,7 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
-from ..models import Experiment, Template, Operator
+from ..models import Dependency, Experiment, Template, Operator
 from ..object_storage import remove_objects
 from .components import get_components_by_tag
 from .operators import create_operator
@@ -174,6 +174,11 @@ def delete_experiment(uuid, project_id):
     if experiment is None:
         raise NotFound("The specified experiment does not exist")
 
+    # remove dependencies
+    operators = db_session.query(Operator).filter(Operator.experiment_id == uuid).all()
+    for operator in operators:
+        Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
+    # remove operators
     Operator.query.filter(Operator.experiment_id == uuid).delete()
 
     db_session.delete(experiment)
