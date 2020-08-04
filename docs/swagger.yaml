@@ -546,7 +546,7 @@ paths:
           description: Page size
       responses:
         "200":
-          $ref: "#/components/responses/DatasetsPaginated"
+          $ref: "#/components/responses/Datasets"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -920,32 +920,7 @@ components:
                             example: 5.1
                           - type: string
                             example: "Iris-setosa"
-    DatasetsPaginated:
-      type: array
-      items:
-        oneOf:
-          - type: object
-            properties:
-              columns:
-                type: array
-                items:
-                  oneOf:
-                    - type: string
-                      example: "SepalLengthCm"
-                    - type: string
-                      example: "Species"
-              data:
-                type: array
-                items:
-                  oneOf:
-                    - type: array
-                      items:
-                        oneOf:
-                          - type: number
-                            example: 5.1
-                          - type: string
-                            example: "Iris-setosa"
-              pages:
+              total:
                 type: number
                 example: 2
     Figures:
@@ -1327,12 +1302,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Datasets"
-    DatasetsPaginated:
-      description: ""
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/DatasetsPaginated"
     Figures:
       description: ""
       content:
