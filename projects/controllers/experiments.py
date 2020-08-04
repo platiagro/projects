@@ -8,9 +8,10 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
-from ..models import Experiment, Template, Operator
+from ..models import Dependency, Experiment, Template, Operator
 from ..object_storage import remove_objects
 from .components import get_components_by_tag
+from .dependencies import create_dependency
 from .operators import create_operator
 from .utils import raise_if_project_does_not_exist, uuid_alpha
 
@@ -131,15 +132,26 @@ def update_experiment(uuid, project_id, **kwargs):
         if template is None:
             raise BadRequest("The specified template does not exist")
 
+        # remove dependencies
+        operators = db_session.query(Operator).filter(Operator.experiment_id == uuid).all()
+        for operator in operators:
+            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
+        # remove operators
         Operator.query.filter(Operator.experiment_id == uuid).delete()
 
+        # save the last operator id created to create dependency on next operator
+        last_operator_id = None
         for component_id in template.components:
+            operator_id = uuid_alpha()
             objects = [
-                Operator(uuid=uuid_alpha(),
+                Operator(uuid=operator_id,
                          experiment_id=uuid,
                          component_id=component_id)
             ]
             db_session.bulk_save_objects(objects)
+            if last_operator_id is not None:
+                create_dependency(operator_id, last_operator_id)
+            last_operator_id = operator_id
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
