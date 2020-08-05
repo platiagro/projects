@@ -38,13 +38,17 @@ def list_components():
 
 
 def create_component(name=None, description=None, tags=None,
+                     commands=None, image=None,
                      experiment_notebook=None, deployment_notebook=None,
                      is_default=False, copy_from=None):
     """Creates a new component in our database/object storage.
 
     Args:
         name (str): the component name.
+        description (str): the component description.
         tags (list): the list of tags.
+        commands (list): the list of commands to run on image.
+        image (str): the component image.
         experiment_notebook (str, optional): the notebook content.
         deployment_notebook (str, optional): the notebook content.
         is_default (bool, optional): whether it is a built-in component.
@@ -65,6 +69,12 @@ def create_component(name=None, description=None, tags=None,
     if any(tag not in VALID_TAGS for tag in tags):
         valid_str = ",".join(VALID_TAGS)
         raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
+
+    # check if image is a valid docker image
+    if image:
+        pattern = re.compile('[a-z]+/[a-z-]+:[0-9.]+$')
+        if pattern.match(image) is None:
+            raise BadRequest("invalid docker image name")
 
     check_comp_name = db_session.query(Component).filter_by(name=name).first()
     if check_comp_name:
@@ -104,19 +114,21 @@ def create_component(name=None, description=None, tags=None,
                          experiment_notebook=dumps(experiment_notebook).encode())
 
     # create the commands to be executed on pipelines
-    commands = ['''from platiagro import download_dataset;
-                   download_dataset("$dataset", "$TRAINING_DATASETS_DIR/$dataset");''']
-    if "DATASETS" not in tags:
-        commands = [f'''papermill {experiment_notebook_path} output.ipynb -b $parameters;
-                    status=$?;
-                    bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
-                    exit $status''']
+    if commands is None or len(commands) == 0:
+        commands = ['''from platiagro import download_dataset;
+                    download_dataset("$dataset", "$TRAINING_DATASETS_DIR/$dataset");''']
+        if "DATASETS" not in tags:
+            commands = [f'''papermill {experiment_notebook_path} output.ipynb -b $parameters;
+                        status=$?;
+                        bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
+                        exit $status''']
 
     # saves component info to the database
     component = Component(uuid=component_id,
                           name=name,
                           description=description,
                           commands=commands,
+                          image=image,
                           tags=tags,
                           experiment_notebook_path=experiment_notebook_path,
                           deployment_notebook_path=deployment_notebook_path,
