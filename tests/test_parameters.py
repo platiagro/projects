@@ -15,6 +15,7 @@ NAME = "foo"
 DESCRIPTION = "long foo"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
+IMAGE = "platiagro/platiagro-notebook-image-test:0.1.0"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
@@ -29,8 +30,8 @@ class TestParameters(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO components (uuid, name, description, commands, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO components (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
