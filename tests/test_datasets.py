@@ -170,8 +170,9 @@ class TestDatasets(TestCase):
                 "data": [
                     ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
                     ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                ]
+                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
+                ],
+                "total": 3
             }
             self.assertDictEqual(expected, result)
 
@@ -182,7 +183,8 @@ class TestDatasets(TestCase):
                 "data": [
                     ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
                     ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                ]
+                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
+                ],
+                "total": 3
             }
             self.assertDictEqual(result, expected)
