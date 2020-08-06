@@ -47,7 +47,7 @@ def create_project(name=None, **kwargs):
     project = Project(uuid=uuid_alpha(), name=name, description=kwargs.get("description"))
     db_session.add(project)
     db_session.commit()
-    create_experiment(name="Novo experimento", project_id=project.uuid)
+    create_experiment(name="Experimento 1", project_id=project.uuid)
     return project.as_dict()
 
 
