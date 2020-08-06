@@ -37,26 +37,25 @@ def list_components():
     return [component.as_dict() for component in components]
 
 
-def create_component(name=None, description=None, tags=None,
-                     commands=None, image=None,
-                     experiment_notebook=None, deployment_notebook=None,
-                     is_default=False, copy_from=None):
+def create_component(**kwargs):
     """Creates a new component in our database/object storage.
 
     Args:
-        name (str): the component name.
-        description (str): the component description.
-        tags (list): the list of tags.
-        commands (list): the list of commands to run on image.
-        image (str): the component image.
-        experiment_notebook (str, optional): the notebook content.
-        deployment_notebook (str, optional): the notebook content.
-        is_default (bool, optional): whether it is a built-in component.
-        copy_from (str, optional): the component to copy the notebooks from.
+        **kwargs: arbitrary keyword arguments.
 
     Returns:
         The component info.
     """
+    name = kwargs.get('name', None)
+    description = kwargs.get('description', None)
+    tags = kwargs.get('tags', None)
+    commands = kwargs.get('commands', None)
+    image = kwargs.get('image', None)
+    experiment_notebook = kwargs.get('experiment_notebook', None)
+    deployment_notebook = kwargs.get('deployment_notebook', None)
+    is_default = kwargs.get('is_default', None)
+    copy_from = kwargs.get('copy_from', None)
+
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
@@ -72,7 +71,7 @@ def create_component(name=None, description=None, tags=None,
 
     # check if image is a valid docker image
     if image:
-        pattern = re.compile('[a-z]+/[a-z-]+:[0-9.]+$')
+        pattern = re.compile('[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+){0,1}$')
         if pattern.match(image) is None:
             raise BadRequest("invalid docker image name")
 
@@ -127,9 +126,9 @@ def create_component(name=None, description=None, tags=None,
     component = Component(uuid=component_id,
                           name=name,
                           description=description,
+                          tags=tags,
                           commands=commands,
                           image=image,
-                          tags=tags,
                           experiment_notebook_path=experiment_notebook_path,
                           deployment_notebook_path=deployment_notebook_path,
                           is_default=is_default)
