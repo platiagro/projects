@@ -36,7 +36,8 @@ class FeatureTools():
         self.names = names
 
         if date_var is not None:
-            self.data[date_var] = pd.to_datetime(self.data[date_var])
+            self.data[date_var] = self.data[date_var].astype(str)
+            self.data[date_var] = pd.to_datetime(self.data[date_var], infer_datetime_format=True)
 
         warnings.filterwarnings("ignore")
 
