@@ -18,6 +18,7 @@ NAME = "foo"
 DESCRIPTION = "long foo"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
+IMAGE = "platiagro/platiagro-notebook-image-test:0.1.0"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
@@ -40,13 +41,13 @@ class TestComponents(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO components (uuid, name, description, commands, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO components (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         text = (
-            f"INSERT INTO components (uuid, name, description, commands, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID_2}', 'foo 2', '{DESCRIPTION}', '{COMMANDS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH_2}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO components (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{COMPONENT_ID_2}', 'foo 2', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH_2}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -195,6 +196,7 @@ class TestComponents(TestCase):
             machine_generated = [
                 "uuid",
                 "commands",
+                "image",
                 "experimentNotebookPath",
                 "deploymentNotebookPath",
                 "createdAt",
@@ -224,6 +226,7 @@ class TestComponents(TestCase):
             machine_generated = [
                 "uuid",
                 "commands",
+                "image",
                 "experimentNotebookPath",
                 "deploymentNotebookPath",
                 "createdAt",
@@ -254,6 +257,7 @@ class TestComponents(TestCase):
             machine_generated = [
                 "uuid",
                 "commands",
+                "image",
                 "experimentNotebookPath",
                 "deploymentNotebookPath",
                 "createdAt",
@@ -263,6 +267,49 @@ class TestComponents(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+            # when image and commands are sent
+            # should create a component using their values as source
+            rv = c.post("/components", json={
+                "name": "test components with image and command",
+                "description": "long test",
+                "commands": COMMANDS,
+                "image": IMAGE,
+                "tags": TAGS
+            })
+            result = rv.get_json()
+            expected = {
+                "name": "test components with image and command",
+                "description": "long test",
+                "commands": COMMANDS,
+                "image": IMAGE,
+                "tags": TAGS,
+                "isDefault": IS_DEFAULT,
+                "parameters": [
+                    {"default": "", "name": "dataset", "type": "string"},
+                ],
+            }
+            machine_generated = [
+                "uuid",
+                "experimentNotebookPath",
+                "deploymentNotebookPath",
+                "createdAt",
+                "updatedAt",
+            ]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            # when image is invalid should receive bad request
+            rv = c.post("/components", json={
+                "name": "test invalid image name",
+                "image": "invalid name",
+            })
+            result = rv.get_json()
+            expected = {"message": "invalid docker image name"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
     def test_get_component(self):
         with app.test_client() as c:
@@ -279,6 +326,7 @@ class TestComponents(TestCase):
                 "name": "foo",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
+                "image": IMAGE,
                 "tags": TAGS,
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -338,6 +386,7 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
+                "image": IMAGE,
                 "tags": TAGS,
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -361,6 +410,7 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
+                "image": IMAGE,
                 "tags": ["FEATURE_ENGINEERING"],
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -384,6 +434,7 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
+                "image": IMAGE,
                 "tags": ["FEATURE_ENGINEERING"],
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -407,6 +458,7 @@ class TestComponents(TestCase):
                 "name": "bar",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
+                "image": IMAGE,
                 "tags": ["FEATURE_ENGINEERING"],
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
