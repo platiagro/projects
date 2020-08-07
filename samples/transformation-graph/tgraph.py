@@ -86,7 +86,8 @@ class TGraph:
         self.date = None
         if self.date_name is not None:
             date_indx = list(self.solution.columns).index(self.date_name)
-            self.date = pd.to_datetime(self.solution.pop(self.date_name))
+            self.solution[self.date_name] = self.solution[self.date_name].astype(str)
+            self.date = pd.to_datetime(self.solution.pop(self.date_name), infer_datetime_format=True)
             self.ftypes_list.pop(date_indx)
 
         # Encode all categorical and datetime features
@@ -360,7 +361,7 @@ class TGraph:
         solution = solution[list(set(selected_feats))]
 
 
-    def apply_transformation(self, solution, transformation='select', trans_type='select'):
+    def apply_transformation(self, solution, transformation=None, trans_type=None):
         """
         Apply a transformation to a solution.
         Parameters
@@ -386,8 +387,8 @@ class TGraph:
         elif trans_type == 'time':
             self.apply_timely(solution, transformation)
 
-        else:
-            self.apply_select(solution)
+        # else:
+        #     self.apply_select(solution)
 
         return solution
 
@@ -414,10 +415,10 @@ class TGraph:
                 self.add_to_graph(0, new_solution, trans)
 
         # Apply the transformation
-        new_solution = self.apply_transformation(self.G.nodes[0]['solution'].copy())
+        # new_solution = self.apply_transformation(self.G.nodes[0]['solution'].copy())
 
         # Add solution to graph
-        self.add_to_graph(0, new_solution, 'select')
+        # self.add_to_graph(0, new_solution, 'select')
 
 
     def search_best_node(self):
@@ -542,8 +543,8 @@ class TGraph:
                     trans_type = 'grouped'
                 elif trans in self.transformations['time']:
                     trans_type = 'time'
-                else:
-                    trans_type = 'select'
+                # else:
+                #     trans_type = 'select'
 
                 # Apply the transformation
                 new_solution = self.apply_transformation(self.G.nodes[node_id]['solution'].copy(), trans, trans_type)
