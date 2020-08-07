@@ -3,8 +3,6 @@
 [![Build Status](https://github.com/platiagro/projects/workflows/Python%20application/badge.svg)](https://github.com/platiagro/projects/actions?query=workflow%3A%22Python+application%22)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=platiagro_projects&metric=alert_status)](https://sonarcloud.io/dashboard?id=platiagro_projects)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Gitter](https://badges.gitter.im/platiagro/community.svg)](https://gitter.im/platiagro/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Known Vulnerabilities](https://snyk.io/test/github/platiagro/projects/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/platiagro/projects?targetFile=requirements.txt)
 
 ## Requirements
 
@@ -27,14 +25,25 @@ Make sure you have all requirements installed on your computer. Then, you may st
 Export these environment variables:
 
 ```bash
-export MINIO_ENDPOINT=play.min.io
-export MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F
-export MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
-export MYSQL_DB_HOST=localhost
+export MINIO_ENDPOINT=localhost:9000
+export MINIO_ACCESS_KEY=minio
+export MINIO_SECRET_KEY=minio123
+export MYSQL_DB_HOST=mysql
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
 export JUPYTER_ENDPOINT=http://localhost:8888
+```
+
+(Optional) Start a MinIO instance:
+
+```bash
+docker run -d -p 9000:9000 \
+  --name minio \
+  --env "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
+  --env "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+  minio/minio:RELEASE.2018-02-09T22-40-05Z \
+  server /data
 ```
 
 (Optional) Start a MySQL server instance:
@@ -84,9 +93,9 @@ docker run -it -p 8080:8080 \
 Export these environment variables:
 
 ```bash
-export MINIO_ENDPOINT=play.min.io
-export MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F
-export MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+export MINIO_ENDPOINT=localhost:9000
+export MINIO_ACCESS_KEY=minio
+export MINIO_SECRET_KEY=minio123
 export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
@@ -130,9 +139,9 @@ pip install .[testing]
 Export these environment variables:
 
 ```bash
-export MINIO_ENDPOINT=play.min.io
-export MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F
-export MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+export MINIO_ENDPOINT=localhost:9000
+export MINIO_ACCESS_KEY=minio
+export MINIO_SECRET_KEY=minio123
 export MYSQL_DB_HOST=localhost
 export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
