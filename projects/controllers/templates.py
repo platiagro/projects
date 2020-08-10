@@ -51,9 +51,9 @@ def create_template(name=None, experiment_id=None, **kwargs):
 
     # JSON array order of elements are preserved,
     # so there is no need to save positions
-    components = [operator.component_id for operator in operators]
+    tasks = [operator.task_id for operator in operators]
 
-    template = Template(uuid=uuid_alpha(), name=name, components=components)
+    template = Template(uuid=uuid_alpha(), name=name, tasks=tasks)
     db_session.add(template)
     db_session.commit()
     return template.as_dict()

@@ -9,6 +9,6 @@ bp = Blueprint("parameters", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_list_parameters(component_id):
+def handle_list_parameters(task_id):
     """Handles GET requests to /."""
-    return jsonify(list_parameters(component_id=component_id))
+    return jsonify(list_parameters(task_id=task_id))

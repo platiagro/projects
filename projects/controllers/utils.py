@@ -6,21 +6,21 @@ import uuid
 from werkzeug.exceptions import NotFound
 
 from ..database import db_session
-from ..models import Component, Experiment, Operator, Project
+from ..models import Experiment, Operator, Project, Task
 
 
-def raise_if_component_does_not_exist(component_id):
-    """Raises an exception if the specified component does not exist.
+def raise_if_task_does_not_exist(task_id):
+    """Raises an exception if the specified task does not exist.
 
     Args:
-        component_id (str): the component uuid.
+        task_id (str): the task uuid.
     """
-    exists = db_session.query(Component.uuid) \
-        .filter_by(uuid=component_id) \
+    exists = db_session.query(Task.uuid) \
+        .filter_by(uuid=task_id) \
         .scalar() is not None
 
     if not exists:
-        raise NotFound("The specified component does not exist")
+        raise NotFound("The specified task does not exist")
 
 
 def raise_if_project_does_not_exist(project_id):
