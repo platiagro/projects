@@ -23,6 +23,7 @@ PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
 DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
+TASK_NOT_EXIST_MSG = "The specified task does not exist"
 
 
 def list_tasks():
@@ -150,7 +151,7 @@ def get_task(uuid):
     task = Task.query.get(uuid)
 
     if task is None:
-        raise NotFound("The specified task does not exist")
+        raise NotFound(TASK_NOT_EXIST_MSG)
 
     return task.as_dict()
 
@@ -178,7 +179,7 @@ def update_task(uuid, **kwargs):
     task = Task.query.get(uuid)
 
     if task is None:
-        raise NotFound("The specified task does not exist")
+        raise NotFound(TASK_NOT_EXIST_MSG)
 
     if "name" in kwargs:
         name = kwargs["name"]
@@ -227,7 +228,7 @@ def delete_task(uuid):
     task = Task.query.get(uuid)
 
     if task is None:
-        raise NotFound("The specified task does not exist")
+        raise NotFound(TASK_NOT_EXIST_MSG)
 
     try:
         source_name = f"{PREFIX}/{uuid}"
