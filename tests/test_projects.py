@@ -231,3 +231,10 @@ class TestProjects(TestCase):
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
+
+    def test_pagination_project(self):
+        with app.test_client() as p:
+            rv = p.get("/projects")
+            result = rv.get_json()
+            self.assertIsInstance(result['projects'], list)
+            self.assertIsInstance(result['total'], int)

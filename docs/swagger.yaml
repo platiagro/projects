@@ -177,6 +177,11 @@ paths:
           schema:
             type: integer
           description: Page size
+        - in: query
+          name: order
+          schema:
+            type: string
+          description: order by column Ex:name asc
       responses:
         "200":
           $ref: "#/components/responses/Projects"

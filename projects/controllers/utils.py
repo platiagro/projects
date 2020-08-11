@@ -2,6 +2,7 @@
 """Shared functions."""
 import random
 import uuid
+import re
 
 from werkzeug.exceptions import NotFound
 
@@ -118,3 +119,15 @@ def objects_uuid(list_object):
     for i in list_object:
         ids.append(i.uuid)
     return ids
+
+
+def text_to_list(order):
+    order_by = []
+    regex = re.compile(r'\[(.*?)\]|(\S+)')
+    matches = regex.finditer(order)
+    for match in matches:
+        if match.group(1) is None:
+            order_by.append(match.group(2))
+        else:
+            order_by.append(match.group(1))
+    return order_by

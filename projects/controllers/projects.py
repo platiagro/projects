@@ -5,6 +5,10 @@ from datetime import datetime
 from os.path import join
 
 from sqlalchemy import func
+from sqlalchemy import asc
+from sqlalchemy import desc
+from sqlalchemy import text
+
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -12,7 +16,7 @@ from .experiments import create_experiment
 from ..database import db_session
 from ..models import Dependency, Experiment, Operator, Project
 from ..object_storage import remove_objects
-from .utils import uuid_alpha, list_objects, objects_uuid
+from .utils import uuid_alpha, list_objects, objects_uuid, text_to_list
 
 
 def list_projects():
@@ -137,17 +141,25 @@ def delete_project(uuid):
     return {"message": "Project deleted"}
 
 
-def pagination_projects(name, page, page_size):
-    """The numbers of items to return maximum 100 """
+def pagination_projects(name, page, page_size, order):
+    """Pagination ordering
+
+        Args:
+            name (str): name of the project to be searched
+            page (int): page number
+            page_size(int) : record numbers
+            order(str): order by Ex: uuid asc
+
+        Returns:
+            A list of projects.
+        """
+    # The numbers of items to return maximum 100s
     if page_size > 100:
         page_size = 100
     query = db_session.query(Project)
     if name:
         query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
-    if page != 0:
-        query = query.order_by(Project.name).limit(page_size).offset((page - 1) * page_size)
-    projects = query.all()
-    projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
+    projects = pagination_ordering(query, page_size, page, order)
     return [project.as_dict() for project in projects]
 
 
@@ -191,3 +203,38 @@ def delete_projects(project_ids):
     db_session.commit()
 
     return {"message": "Successfully removed projects"}
+
+
+def pagination_ordering(query, page_size, page, order_by):
+    """Pagination ordering
+
+    Args:
+        query (str): the project uuid.
+        page_size(int) : record numbers
+        page (int): page number
+        order_by (str): order by Ex: uuid asc
+
+    Returns:
+        A list of projects.
+    """
+    if order_by:
+        order = text_to_list(order_by)
+        if page != 0:
+            if order[1]:
+                if 'asc' == order[1].lower():
+                    query = query.order_by(asc(text(f'projects.{order[0]}')))\
+                        .limit(page_size).offset((page - 1) * page_size)
+                if 'desc' == order[1].lower():
+                    query = query.order_by(asc(text(f'projects.{order[0]}')))\
+                        .limit(page_size).offset((page - 1) * page_size)
+        else:
+            if order[1]:
+                if 'asc' == order[1].lower():
+                    query = query.order_by(asc(text(f'projects.{order[0]}')))
+                if 'desc' == order[1].lower():
+                    query = query.order_by(desc(text(f'projects.{order[0]}')))
+    if page == 0 and order_by is None:
+        query = query.order_by(text('projects.name'))
+    if page and order_by is None:
+        query = query.order_by(text('projects.name')).limit(page_size).offset((page - 1) * page_size)
+    return query.all()
