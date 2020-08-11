@@ -17,8 +17,8 @@ def handle_list_tasks(pagination_parameters):
     name = request.args.get('name')
     total_rows = total_rows_tasks(name=name)
     tasks = pagination_tasks(name=name,
-                                       page=pagination_parameters.page,
-                                       page_size=pagination_parameters.page_size)
+                             page=pagination_parameters.page,
+                             page_size=pagination_parameters.page_size)
     response = {
         'total': total_rows,
         'tasks': tasks
