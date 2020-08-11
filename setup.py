@@ -20,6 +20,7 @@ extras = {
         "pytest-xdist==1.31.0",
         "pytest-cov==2.8.1",
         "flake8==3.7.9",
+        "papermill[s3]==2.1.1"
     ]
 }
 
