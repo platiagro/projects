@@ -234,7 +234,7 @@ class TestProjects(TestCase):
 
     def test_pagination_project(self):
         with app.test_client() as p:
-            rv = p.get("/projects")
+            rv = p.get("/projects?page=2&order=uuid desc")
             result = rv.get_json()
             self.assertIsInstance(result['projects'], list)
             self.assertIsInstance(result['total'], int)
