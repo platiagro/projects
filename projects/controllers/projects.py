@@ -19,7 +19,7 @@ from ..object_storage import remove_objects
 from .utils import uuid_alpha, list_objects, objects_uuid, text_to_list
 
 
-notFound = NotFound("The specified project does not exist")
+notFound = 'The specified project does not exist'
 
 
 def list_projects():
@@ -70,7 +70,7 @@ def get_project(uuid):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise notFound
+        raise NotFound(notFound)
 
     return project.as_dict()
 
@@ -88,7 +88,7 @@ def update_project(uuid, **kwargs):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise notFound
+        raise NotFound(notFound)
 
     if "name" in kwargs:
         name = kwargs["name"]
@@ -121,7 +121,7 @@ def delete_project(uuid):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise NotFound("The specified project does not exist")
+        raise NotFound(notFound)
 
     experiments = Experiment.query.filter(Experiment.project_id == uuid).all()
     for experiment in experiments:
@@ -173,6 +173,13 @@ def pagination_projects(name, page, page_size, order):
 
 
 def total_rows_projects(name):
+    """Returns the total number of records
+    Args:
+        name (str):name to be searched
+
+    Returns:
+        total records.
+    """
     query = db_session.query(func.count(Project.uuid))
     if name:
         query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
@@ -181,6 +188,9 @@ def total_rows_projects(name):
 
 
 def delete_projects(project_ids):
+    """ Removing multiple projects
+     project_ids (str): list of projects
+    """
     total_elements = len(project_ids)
     all_projects_ids = list_objects(project_ids)
     if total_elements < 1:
@@ -190,7 +200,7 @@ def delete_projects(project_ids):
     operators = db_session.query(Operator).filter(Operator.experiment_id.in_(objects_uuid(experiments))) \
         .all()
     if len(projects) != total_elements:
-        raise NotFound("The specified project does not exist")
+        raise NotFound(notFound)
     if len(operators) != 0:
         # remove dependencies
         for operator in operators:
@@ -218,7 +228,7 @@ def pagination_ordering(query, page_size, page, order_by):
     """Pagination ordering
 
     Args:
-        query (str): the project uuid.
+        query (str): query
         page_size(int) : record numbers
         page (int): page number
         order_by (str): order by Ex: uuid asc
@@ -235,9 +245,19 @@ def pagination_ordering(query, page_size, page, order_by):
                 if 'desc' == order[1].lower():
                     query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
         else:
-            if order[1]:
-                if 'asc' == order[1].lower():
-                    query = query.order_by(asc(text(f'projects.{order[0]}')))
-                if 'desc' == order[1].lower():
-                    query = query.order_by(desc(text(f'projects.{order[0]}')))
+            query = uninformed_page(query, order)
     return query
+
+
+def uninformed_page(query, order):
+    """If the page number was not informed just sort by the column name entered
+        query (str): query
+        order_by (str): order by Ex: uuid asc
+    """
+    if order[1]:
+        if 'asc' == order[1].lower():
+            query = query.order_by(asc(text(f'projects.{order[0]}')))
+        if 'desc' == order[1].lower():
+            query = query.order_by(desc(text(f'projects.{order[0]}')))
+    return query
+
