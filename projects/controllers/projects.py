@@ -19,7 +19,7 @@ from ..object_storage import remove_objects
 from .utils import uuid_alpha, list_objects, objects_uuid, text_to_list
 
 
-notFound = 'The specified project does not exist'
+notFound = NotFound("The specified project does not exist")
 
 
 def list_projects():
