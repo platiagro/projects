@@ -19,6 +19,9 @@ from ..object_storage import remove_objects
 from .utils import uuid_alpha, list_objects, objects_uuid, text_to_list
 
 
+notFound = 'The specified project does not exist'
+
+
 def list_projects():
     """Lists all projects from our database.
 
@@ -67,7 +70,7 @@ def get_project(uuid):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise NotFound("The specified project does not exist")
+        raise notFound
 
     return project.as_dict()
 
@@ -85,7 +88,7 @@ def update_project(uuid, **kwargs):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise NotFound("The specified project does not exist")
+        raise notFound
 
     if "name" in kwargs:
         name = kwargs["name"]
@@ -159,7 +162,13 @@ def pagination_projects(name, page, page_size, order):
     query = db_session.query(Project)
     if name:
         query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
-    projects = pagination_ordering(query, page_size, page, order)
+    if page == 0 and order is None:
+        query = query.order_by(text('projects.name'))
+    elif page and order is None:
+        query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
+    else:
+        query = pagination_ordering(query, page_size, page, order)
+    projects = query.all()
     return [project.as_dict() for project in projects]
 
 
@@ -222,19 +231,13 @@ def pagination_ordering(query, page_size, page, order_by):
         if page != 0:
             if order[1]:
                 if 'asc' == order[1].lower():
-                    query = query.order_by(asc(text(f'projects.{order[0]}')))\
-                        .limit(page_size).offset((page - 1) * page_size)
+                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
                 if 'desc' == order[1].lower():
-                    query = query.order_by(asc(text(f'projects.{order[0]}')))\
-                        .limit(page_size).offset((page - 1) * page_size)
+                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
         else:
             if order[1]:
                 if 'asc' == order[1].lower():
                     query = query.order_by(asc(text(f'projects.{order[0]}')))
                 if 'desc' == order[1].lower():
                     query = query.order_by(desc(text(f'projects.{order[0]}')))
-    if page == 0 and order_by is None:
-        query = query.order_by(text('projects.name'))
-    if page and order_by is None:
-        query = query.order_by(text('projects.name')).limit(page_size).offset((page - 1) * page_size)
-    return query.all()
+    return query
