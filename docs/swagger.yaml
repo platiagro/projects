@@ -52,6 +52,12 @@ paths:
           schema:
             type: integer
           description: Page size
+        - in: query
+          name: order
+          schema:
+            type: string
+          description: order by column
+
       responses:
         "200":
           $ref: "#/components/responses/Components"
@@ -177,6 +183,11 @@ paths:
           schema:
             type: integer
           description: Page size
+        - in: query
+          name: order
+          schema:
+            type: string
+          description: order by column
       responses:
         "200":
           $ref: "#/components/responses/Projects"

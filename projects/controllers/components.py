@@ -17,7 +17,7 @@ from ..jupyter import create_new_file, set_workspace, list_files, delete_file
 from ..models import Component
 from ..object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
-from .utils import uuid_alpha
+from .utils import uuid_alpha, ordination_pagination
 
 PREFIX = "components"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
@@ -352,17 +352,14 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
     experiment_notebook["metadata"]["operator_id"] = operator_id
 
 
-def pagination_components(name, page, page_size):
+def pagination_components(name, page, page_size, order):
     """The numbers of items to return maximum 100 """
     if page_size > 100:
         page_size = 100
     query = db_session.query(Component)
     if name:
         query = query.filter(Component.name.ilike(func.lower(f"%{name}%")))
-    if page != 0:
-        query = query.order_by(Component.name).limit(page_size).offset((page - 1) * page_size)
-    components = query.all()
-    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
+    components = ordination_pagination(query, page_size, page, order, 'name')
     return [component.as_dict() for component in components]
 
 

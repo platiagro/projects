@@ -12,7 +12,7 @@ from .experiments import create_experiment
 from ..database import db_session
 from ..models import Dependency, Experiment, Operator, Project
 from ..object_storage import remove_objects
-from .utils import uuid_alpha, list_objects, objects_uuid
+from .utils import uuid_alpha, list_objects, objects_uuid, ordination_pagination
 
 
 def list_projects():
@@ -137,17 +137,14 @@ def delete_project(uuid):
     return {"message": "Project deleted"}
 
 
-def pagination_projects(name, page, page_size):
+def pagination_projects(name, page, page_size, order):
     """The numbers of items to return maximum 100 """
     if page_size > 100:
         page_size = 100
     query = db_session.query(Project)
     if name:
         query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
-    if page != 0:
-        query = query.order_by(Project.name).limit(page_size).offset((page - 1) * page_size)
-    projects = query.all()
-    projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
+    projects = ordination_pagination(query, page_size, page, order, 'name')
     return [project.as_dict() for project in projects]
 
 
@@ -191,3 +188,6 @@ def delete_projects(project_ids):
     db_session.commit()
 
     return {"message": "Successfully removed projects"}
+
+
+

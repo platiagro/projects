@@ -444,3 +444,10 @@ class TestComponents(TestCase):
     def test_get_components_by_tag(self):
         component = get_components_by_tag("PREDICTOR")
         self.assertIsInstance(component, list)
+
+    def test_pagination_project(self):
+        with app.test_client() as p:
+            rv = p.get("/components?page=2")
+            result = rv.get_json()
+            self.assertIsInstance(result['components'], list)
+            self.assertIsInstance(result['total'], int)

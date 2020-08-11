@@ -2,9 +2,10 @@
 """Shared functions."""
 import random
 import uuid
+import re
 
 from werkzeug.exceptions import NotFound
-
+from sqlalchemy import asc, desc, text
 from ..database import db_session
 from ..models import Component, Experiment, Operator, Project
 
@@ -118,3 +119,37 @@ def objects_uuid(list_object):
     for i in list_object:
         ids.append(i.uuid)
     return ids
+
+
+def text_to_list(text):
+    order_by = []
+    regex = re.compile('\[(.*?)\]|(\S+)')
+    matches = regex.finditer(text)
+    for match in matches:
+        if (match.group(1) is None):
+            order_by.append(match.group(2))
+        else:
+            order_by.append(match.group(1))
+    return order_by
+
+
+def ordination_pagination(query, page_size, page, order_by, column):
+    if order_by:
+        order = text_to_list(order_by)
+        if page != 0:
+            if order[1]:
+                if 'asc' == order[1].lower():
+                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+                if 'desc' == order[1].lower():
+                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+        else:
+            if order[1]:
+                if 'asc' == order[1].lower():
+                    query = query.order_by(asc(text({order[0]})))
+                if 'desc' == order[1].lower():
+                    query = query.order_by(desc(text(order[0])))
+    if page:
+        query = query.order_by(text(column)).limit(page_size).offset((page - 1) * page_size)
+    else:
+        query = query.order_by(text(column))
+    return query.all()

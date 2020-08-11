@@ -15,10 +15,11 @@ bp = Blueprint("projects", __name__)
 @bp.paginate(page=0)
 def handle_list_projects(pagination_parameters):
     name = request.args.get('name')
+    order = request.args.get('order')
     total_rows = total_rows_projects(name=name)
     projects = pagination_projects(name=name,
                                    page=pagination_parameters.page,
-                                   page_size=pagination_parameters.page_size)
+                                   page_size=pagination_parameters.page_size, order=order)
     response = {
         'total': total_rows,
         'projects': projects
