@@ -156,9 +156,6 @@ def pagination_projects(name, page, page_size, order):
         Returns:
             A list of projects.
         """
-    # The numbers of items to return maximum 100s
-    if page_size > 100:
-        page_size = 100
     query = db_session.query(Project)
     if name:
         query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
@@ -187,8 +184,8 @@ def total_rows_projects(name):
     return rows
 
 
-def delete_projects(project_ids):
-    """ Removing multiple projects
+def delete_multiple_projects(project_ids):
+    """ Delete multiple projects
      project_ids (str): list of projects
     """
     total_elements = len(project_ids)
@@ -199,29 +196,33 @@ def delete_projects(project_ids):
     experiments = db_session.query(Experiment).filter(Experiment.project_id.in_(objects_uuid(projects))).all()
     operators = db_session.query(Operator).filter(Operator.experiment_id.in_(objects_uuid(experiments))) \
         .all()
-    if len(projects) != total_elements:
-        raise NotFound(notFound)
-    if len(operators) != 0:
-        # remove dependencies
-        for operator in operators:
-            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
-        # remove operators
-        operators = Operator.__table__.delete().where(Operator.experiment_id.in_(objects_uuid(experiments)))
-        db_session.execute(operators)
-    if len(experiments) != 0:
-        deleted_experiments = Experiment.__table__.delete().where(Experiment.uuid.in_(objects_uuid(experiments)))
-        db_session.execute(deleted_experiments)
-    deleted_projects = Project.__table__.delete().where(Project.uuid.in_(all_projects_ids))
-    db_session.execute(deleted_projects)
+    session = pre_delete(db_session, projects, total_elements, operators, experiments, all_projects_ids)
     for experiment in experiments:
         prefix = join("experiments", experiment.uuid)
         try:
             remove_objects(prefix=prefix)
         except Exception:
             pass
-    db_session.commit()
-
+    session.commit()
     return {"message": "Successfully removed projects"}
+
+
+def pre_delete(db_session, projects, total_elements, operators, experiments, all_projects_ids):
+    if len(projects) != total_elements:
+        raise NotFound(notFound)
+    if len(operators):
+        # remove dependencies
+        for operator in operators:
+            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
+        # remove operators
+        operators = Operator.__table__.delete().where(Operator.experiment_id.in_(objects_uuid(experiments)))
+        db_session.execute(operators)
+    if len(experiments):
+        deleted_experiments = Experiment.__table__.delete().where(Experiment.uuid.in_(objects_uuid(experiments)))
+        db_session.execute(deleted_experiments)
+    deleted_projects = Project.__table__.delete().where(Project.uuid.in_(all_projects_ids))
+    db_session.execute(deleted_projects)
+    return db_session
 
 
 def pagination_ordering(query, page_size, page, order_by):
@@ -238,26 +239,12 @@ def pagination_ordering(query, page_size, page, order_by):
     """
     if order_by:
         order = text_to_list(order_by)
-        if page != 0:
+        if page:
             if order[1]:
-                if 'asc' == order[1].lower():
-                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
-                if 'desc' == order[1].lower():
-                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+                query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)\
+                    if 'desc' == order[1].lower() \
+                    else query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
         else:
-            query = uninformed_page(query, order)
+            query = query.order_by(desc(text(f'projects.{order[0]}'))) if 'desc' == order[1].lower()\
+                else query.order_by(asc(text(f'projects.{order[0]}')))
     return query
-
-
-def uninformed_page(query, order):
-    """If the page number was not informed just sort by the column name entered
-        query (str): query
-        order_by (str): order by Ex: uuid asc
-    """
-    if order[1]:
-        if 'asc' == order[1].lower():
-            query = query.order_by(asc(text(f'projects.{order[0]}')))
-        if 'desc' == order[1].lower():
-            query = query.order_by(desc(text(f'projects.{order[0]}')))
-    return query
-

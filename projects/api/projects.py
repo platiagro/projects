@@ -5,7 +5,7 @@ from flask import jsonify, request
 from flask_smorest import Blueprint
 from ..controllers.projects import create_project, \
     get_project, update_project, delete_project, pagination_projects, \
-    total_rows_projects, delete_projects
+    total_rows_projects, delete_multiple_projects
 from ..utils import to_snake_case
 
 bp = Blueprint("projects", __name__)
@@ -61,4 +61,4 @@ def handle_delete_project(project_id):
 @bp.route("/deleteprojects", methods=["POST"])
 def handle_delete_projects():
     kwargs = request.get_json(force=True)
-    return jsonify(delete_projects(kwargs))
+    return jsonify(delete_multiple_projects(kwargs))

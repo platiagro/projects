@@ -76,13 +76,11 @@ def uuid_alpha() -> str:
 
 
 def pagination_datasets(page, page_size, elements):
+    """pagination of datasets"""
     try:
         count = 0
         new_elements = []
         total_elements = len(elements['data'])
-        """The numbers of items to return maximum 100 """
-        if page_size > 100:
-            page_size = 100
         page = (page * page_size) - page_size
         for i in range(page, total_elements):
             new_elements.append(elements['data'][i])
@@ -108,6 +106,12 @@ def pagination_datasets(page, page_size, elements):
 
 
 def list_objects(list_object):
+    """ Extracting uuids from informed json
+    Args:
+        list_object(json): String containing the project's uuid
+    Returns:
+        all uuids
+    """
     all_projects_ids = []
     for i in list_object:
         all_projects_ids.append(i['uuid'])
@@ -115,19 +119,28 @@ def list_objects(list_object):
 
 
 def objects_uuid(list_object):
-    ids = []
+    """Recovering uuids from information projects
+    Args:
+        list_object(projects): list of projects
+    Returns:
+        all uuids
+    """
+    uuids = []
     for i in list_object:
-        ids.append(i.uuid)
-    return ids
+        uuids.append(i.uuid)
+    return uuids
 
 
 def text_to_list(order):
+    """Turn text into list
+    Args:
+        order(str): oreder Ex: uuid asc
+    Returns:
+        ['uuid','asc']
+    """
     order_by = []
     regex = re.compile(r'\[(.*?)\]|(\S+)')
     matches = regex.finditer(order)
     for match in matches:
-        if match.group(1) is None:
-            order_by.append(match.group(2))
-        else:
-            order_by.append(match.group(1))
+        order_by.append(match.group(2)) if match.group(1) is None else order_by.append(match.group(1))
     return order_by
