@@ -40,16 +40,14 @@ def setup(request):
 
     os.makedirs('/tmp/data', exist_ok=True)
 
-    # BOSTON_DATASET = 'boston.csv'
-    with open('/tmp/data/boston.csv', 'wb') as f:
+    with open(f'/tmp/data/{BOSTON_DATASET}', 'wb') as f:
         f.write(boston_content)
 
     # Creates mock titanic dataset
     creates_mock_dataset(TITANIC_DATASET, titanic_content)
     creates_titanic_metadata(TITANIC_DATASET)
 
-    # TITANIC_DATASET = 'titanic.csv'
-    with open('/tmp/data/titanic.csv', 'wb') as f:
+    with open(f'/tmp/data/{TITANIC_DATASET}', 'wb') as f:
         f.write(titanic_content)
 
     def delete_datasets():

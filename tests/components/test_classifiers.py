@@ -40,8 +40,7 @@ def setup(request):
 
     os.makedirs('/tmp/data', exist_ok=True)
 
-    # IRIS_DATASET = 'iris.csv'
-    with open('/tmp/data/iris.csv', 'wb') as f:
+    with open(f'/tmp/data/{IRIS_DATASET}', 'wb') as f:
         f.write(iris_content)
 
     # Creates mock titanic dataset
@@ -49,7 +48,7 @@ def setup(request):
     creates_titanic_metadata(TITANIC_DATASET)
 
     # TITANIC_DATASET = 'titanic.csv'
-    with open('/tmp/data/titanic.csv', 'wb') as f:
+    with open(f'/tmp/data/{TITANIC_DATASET}', 'wb') as f:
         f.write(titanic_content)
 
     def delete_datasets():

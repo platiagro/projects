@@ -33,16 +33,14 @@ def setup(request):
 
     os.makedirs('/tmp/data', exist_ok=True)
 
-    # IRIS_DATASET = 'iris.csv'
-    with open('/tmp/data/iris.csv', 'wb') as f:
+    with open(f'/tmp/data/{IRIS_DATASET}', 'wb') as f:
         f.write(iris_content)
 
     # Creates iris dataset
     creates_mock_dataset(IRIS_DATASET, iris_content)
     creates_iris_metadata(IRIS_DATASET)
 
-    # TITANIC_DATASET = 'titanic.csv'
-    with open('/tmp/data/titanic.csv', 'wb') as f:
+    with open(f'/tmp/data/{TITANIC_DATASET}', 'wb') as f:
         f.write(titanic_content)
 
     # Creates titanic dataset
