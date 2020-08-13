@@ -115,7 +115,27 @@ class TestComponents(TestCase):
             rv = c.get("/components")
             result = rv.get_json()
             self.assertIsInstance(result["components"], list)
-            self.assertEqual(result["total"], 2)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get("/components?order=uuid asc")
+            result = rv.get_json()
+            self.assertIsInstance(result["components"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get("/components?page=1&order=uuid asc")
+            result = rv.get_json()
+            self.assertIsInstance(result["components"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get(f"/components?name={NAME}&page=1&order=uuid asc")
+            result = rv.get_json()
+            self.assertIsInstance(result["components"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get(f"/components?name={NAME}&page=1&page_size=10&order=name desc")
+            result = rv.get_json()
+            self.assertIsInstance(result["components"], list)
+            self.assertIsInstance(result["total"], int)
 
     def test_create_component(self):
         with app.test_client() as c:

@@ -15,10 +15,11 @@ bp = Blueprint("components", __name__)
 @bp.paginate(page=0)
 def handle_list_components(pagination_parameters):
     name = request.args.get('name')
+    order = request.args.get('order')
     total_rows = total_rows_components(name=name)
     components = pagination_components(name=name,
                                        page=pagination_parameters.page,
-                                       page_size=pagination_parameters.page_size)
+                                       page_size=pagination_parameters.page_size, order=order)
     response = {
         'total': total_rows,
         'components': components

@@ -8,6 +8,7 @@ from pkgutil import get_data
 
 from minio.error import ResponseError
 from sqlalchemy import func
+from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError
 from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
@@ -17,12 +18,14 @@ from ..jupyter import create_new_file, set_workspace, list_files, delete_file
 from ..models import Component
 from ..object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
-from .utils import uuid_alpha
+from .utils import uuid_alpha, text_to_list
 
 PREFIX = "components"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
 DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
+
+NOT_FOUND = NotFound("The specified component does not exist")
 
 
 def list_components():
@@ -150,7 +153,7 @@ def get_component(uuid):
     component = Component.query.get(uuid)
 
     if component is None:
-        raise NotFound("The specified component does not exist")
+        raise NOT_FOUND
 
     return component.as_dict()
 
@@ -178,7 +181,7 @@ def update_component(uuid, **kwargs):
     component = Component.query.get(uuid)
 
     if component is None:
-        raise NotFound("The specified component does not exist")
+        raise NOT_FOUND
 
     if "name" in kwargs:
         name = kwargs["name"]
@@ -227,7 +230,7 @@ def delete_component(uuid):
     component = Component.query.get(uuid)
 
     if component is None:
-        raise NotFound("The specified component does not exist")
+        raise NOT_FOUND
 
     try:
         source_name = f"{PREFIX}/{uuid}"
@@ -363,18 +366,19 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
     experiment_notebook["metadata"]["operator_id"] = operator_id
 
 
-def pagination_components(name, page, page_size):
+def pagination_components(name, page, page_size, order):
     """The numbers of items to return maximum 100 """
-    if page_size > 100:
-        page_size = 100
     query = db_session.query(Component)
     if name:
         query = query.filter(Component.name.ilike(func.lower(f"%{name}%")))
-    if page != 0:
-        query = query.order_by(Component.name).limit(page_size).offset((page - 1) * page_size)
-    components = query.all()
-    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
-    return [component.as_dict() for component in components]
+    if page == 0 and order is None:
+        query = query.order_by(Component.name)
+    elif page and order is None:
+        query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
+    else:
+        query = pagination_ordering(query, page_size, page, order)
+    projects = query.all()
+    return [project.as_dict() for project in projects]
 
 
 def total_rows_components(name):
@@ -383,3 +387,40 @@ def total_rows_components(name):
         query = query.filter(Component.name.ilike(func.lower(f"%{name}%")))
     rows = query.scalar()
     return rows
+
+
+def pagination_ordering(query, page_size, page, order_by):
+    """Pagination ordering
+    Args:
+        query (str): the project uuid.
+        page_size(int) : record numbers
+        page (int): page number
+        order_by (str): order by Ex: uuid asc
+    Returns:
+        A list of projects.
+    """
+    if order_by:
+        order = text_to_list(order_by)
+
+        if page:
+            if order[1]:
+                if 'asc' == order[1].lower():
+                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+                if 'desc' == order[1].lower():
+                    query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+        else:
+            query = uninformed_page(query, order)
+        return query
+
+
+def uninformed_page(query, order):
+    """If the page number was not informed just sort by the column name entered
+            query (str): query
+            order_by (str): order by Ex: uuid asc
+        """
+    if order[1]:
+        if 'asc' == order[1].lower():
+            query.order_by(asc(text(f'{order[0]}')))
+        if 'desc' == order[1].lower():
+            query.order_by(desc(text(f'{order[0]}')))
+    return query
