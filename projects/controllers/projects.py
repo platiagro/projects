@@ -244,8 +244,18 @@ def pagination_ordering(query, page_size, page, order_by):
                 if 'asc' == order[1].lower():
                     query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
         else:
-            if 'desc' == order[1].lower():
-                query.order_by(desc(text(f'projects.{order[0]}')))
-            if 'asc' == order[1].lower():
-                query.order_by(asc(text(f'projects.{order[0]}')))
+            query = uninformed_page(query, order)
+    return query
+
+
+def uninformed_page(query, order):
+    """If the page number was not informed just sort by the column name entered
+            query (str): query
+            order_by (str): order by Ex: uuid asc
+        """
+    if order[1]:
+        if 'asc' == order[1].lower():
+            query.order_by(asc(text(f'projects.{order[0]}')))
+        if 'desc' == order[1].lower():
+            query.order_by(desc(text(f'projects.{order[0]}')))
     return query
