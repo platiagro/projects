@@ -1,3 +1,4 @@
+import os
 from os import environ, path, remove
 from requests import get
 
@@ -7,8 +8,6 @@ from papermill import execute_notebook
 from .utils import creates_iris_metadata, creates_titanic_metadata, \
     creates_mock_dataset, delete_mock_dataset
 from projects.controllers.utils import uuid_alpha
-
-import os
 
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
