@@ -8,14 +8,16 @@ from .utils import creates_iris_metadata, creates_titanic_metadata, \
     creates_mock_dataset, delete_mock_dataset
 from projects.controllers.utils import uuid_alpha
 
+import os
+
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 
-IRIS_DATASET = "iris_mock"
+IRIS_DATASET = "iris.csv"
 IRIS_TARGET = "Species"
 
-TITANIC_DATASET = "titanic_mock"
+TITANIC_DATASET = "titanic.csv"
 TITANIC_TARGET = "Survived"
 
 
@@ -36,9 +38,19 @@ def setup(request):
     creates_mock_dataset(IRIS_DATASET, iris_content)
     creates_iris_metadata(IRIS_DATASET)
 
+    os.makedirs('/tmp/data', exist_ok=True)
+
+    # IRIS_DATASET = 'iris.csv'
+    with open('/tmp/data/iris.csv', 'wb') as f:
+        f.write(iris_content)
+
     # Creates mock titanic dataset
     creates_mock_dataset(TITANIC_DATASET, titanic_content)
     creates_titanic_metadata(TITANIC_DATASET)
+
+    # TITANIC_DATASET = 'titanic.csv'
+    with open('/tmp/data/titanic.csv', 'wb') as f:
+        f.write(titanic_content)
 
     def delete_datasets():
         files_after_executed = ["Model.py", "contract.json"]
@@ -53,62 +65,62 @@ def setup(request):
 
     request.addfinalizer(delete_datasets)
 
-
+# Teste OK
 def test_run_automl_classifier(setup):
     experiment_path = "samples/automl-classifier/Experiment.ipynb"
     deployment_path = "samples/automl-classifier/Deployment.ipynb"
 
     # Run with iris and titanic datasets
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
     # Deploy component
-    execute_notebook(deployment_path, "-")
+    execute_notebook(deployment_path, "/dev/null")
 
-
+# Teste OK
 def test_run_logistic_regression(setup):
     experiment_path = "samples/logistic-regression/Experiment.ipynb"
     deployment_path = "samples/logistic-regression/Deployment.ipynb"
 
     # Run test with iris and titanic datasets
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
     # Deploy component
-    execute_notebook(deployment_path, "-")
+    execute_notebook(deployment_path, "/dev/null")
 
-
+# Teste OK
 def test_run_mlp_classifier(setup):
     experiment_path = "samples/mlp-classifier/Experiment.ipynb"
     deployment_path = "samples/mlp-classifier/Deployment.ipynb"
 
     # Run test with iris and titanic datasets
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
     # Deploy component
-    execute_notebook(deployment_path, "-")
+    execute_notebook(deployment_path, "/dev/null")
 
-
+# Teste OK
 def test_run_random_forest_classifier(setup):
     experiment_path = "samples/random-forest-classifier/Experiment.ipynb"
     deployment_path = "samples/random-forest-classifier/Deployment.ipynb"
 
     # Run test with iris and titanic datasets
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
+    execute_notebook(experiment_path, '/dev/null', parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+    execute_notebook(experiment_path, '/dev/null', parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
     # Deploy component
-    execute_notebook(deployment_path, "-")
+    execute_notebook(deployment_path, '/dev/null')
 
-
+# Teste OK
 def test_run_svc(setup):
     experiment_path = "samples/svc/Experiment.ipynb"
     deployment_path = "samples/svc/Deployment.ipynb"
 
     # Run test with iris and titanic datasets
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
+    execute_notebook(experiment_path, '/dev/null', parameters=dict(dataset=IRIS_DATASET, target=IRIS_TARGET))
+    execute_notebook(experiment_path, '/dev/null', parameters=dict(dataset=TITANIC_DATASET, target=TITANIC_TARGET))
 
     # Deploy component
-    execute_notebook(deployment_path, "-")
+    execute_notebook(deployment_path, '/dev/null')

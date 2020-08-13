@@ -8,12 +8,14 @@ from .utils import creates_iris_metadata, creates_titanic_metadata, \
     creates_mock_dataset, delete_mock_dataset
 from projects.controllers.utils import uuid_alpha
 
+import os
+
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 
-IRIS_DATASET = "iris_mock"
-TITANIC_DATASET = "titanic_mock"
+IRIS_DATASET = "iris.csv"
+TITANIC_DATASET = "titanic.csv"
 
 
 @fixture(scope="module", autouse=True)
@@ -29,9 +31,19 @@ def setup(request):
     titanic_content = \
         get('https://raw.githubusercontent.com/platiagro/datasets/master/samples/titanic.csv').content
 
+    os.makedirs('/tmp/data', exist_ok=True)
+
+    # IRIS_DATASET = 'iris.csv'
+    with open('/tmp/data/iris.csv', 'wb') as f:
+        f.write(iris_content)
+
     # Creates iris dataset
     creates_mock_dataset(IRIS_DATASET, iris_content)
     creates_iris_metadata(IRIS_DATASET)
+
+    # TITANIC_DATASET = 'titanic.csv'
+    with open('/tmp/data/titanic.csv', 'wb') as f:
+        f.write(titanic_content)
 
     # Creates titanic dataset
     creates_mock_dataset(TITANIC_DATASET, titanic_content)
@@ -50,26 +62,26 @@ def setup(request):
 
     request.addfinalizer(delete_datasets)
 
-
+# Teste OK
 def test_kmeans(setup):
     experiment_path = "samples/kmeans-clustering/Experiment.ipynb"
     deployment_path = "samples/kmeans-clustering/Deployment.ipynb"
 
     # Run test with iris and titanic datasets
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET))
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET))
 
     # Deploy component
-    execute_notebook(deployment_path, "-")
+    execute_notebook(deployment_path, "/dev/null")
 
-
+# Teste OK
 def test_isolation_foresting(setup):
     experiment_path = "samples/isolation-forest-clustering/Experiment.ipynb"
     deployment_path = "samples/isolation-forest-clustering/Deployment.ipynb"
-
+ 
     # Run test with iris and titanic datasets
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=IRIS_DATASET))
-    execute_notebook(experiment_path, "-", parameters=dict(dataset=TITANIC_DATASET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET))
+    execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET))
 
     # Deploy component
-    execute_notebook(deployment_path, "-")
+    execute_notebook(deployment_path, "/dev/null")
