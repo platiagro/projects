@@ -9,6 +9,8 @@ from ..database import Base
 from ..jupyter import read_parameters
 from ..utils import to_camel_case
 
+DEFAULT_IMAGE = 'platiagro/platiagro-notebook-image:0.1.0'
+
 
 class Component(Base):
     __tablename__ = "components"
@@ -16,6 +18,7 @@ class Component(Base):
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     commands = Column(JSON, nullable=False, default=[])
+    image = Column(String(255), nullable=False, default=DEFAULT_IMAGE)
     tags = Column(JSON, nullable=False, default=[])
     experiment_notebook_path = Column(String(255))
     deployment_notebook_path = Column(String(255))

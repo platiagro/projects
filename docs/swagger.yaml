@@ -751,6 +751,12 @@ components:
           type: array
           items:
             type: string
+        commands:
+          type: array
+          items:
+            type: string
+        image:
+          type: string
     ComponentCopyFrom:
       type: object
       properties:
@@ -762,6 +768,12 @@ components:
           type: array
           items:
             type: string
+        commands:
+          type: array
+          items:
+            type: string
+        image:
+          type: string
         copyFrom:
           type: string
           format: uuid
@@ -776,6 +788,12 @@ components:
           type: array
           items:
             type: string
+        commands:
+          type: array
+          items:
+            type: string
+        image:
+          type: string
         deploymentNotebook:
           type: object
         experimentNotebook:
@@ -984,12 +1002,16 @@ components:
                 name: string
                 description: string
                 tags: ["DEFAULT"]
+                commands: ["cmd"]
+                image: platiagro/platiagro-notebook-image:0.1.0
             copyFrom:
               summary: Notebooks from another component
               value:
                 name: string
                 description: string
                 tags: ["DEFAULT"]
+                commands: ["cmd"]
+                image: platiagro/platiagro-notebook-image:0.1.0
                 copyFrom: 3fa85f64-5717-4562-b3fc-2c963f66afa6
             notebook:
               summary: Notebooks from request body
@@ -997,6 +1019,8 @@ components:
                 name: string
                 description: string
                 tags: ["DEFAULT"]
+                commands: ["cmd"]
+                image: platiagro/platiagro-notebook-image:0.1.0
                 deploymentNotebook:
                   {
                     "cells":
