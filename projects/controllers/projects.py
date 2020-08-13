@@ -5,9 +5,7 @@ from datetime import datetime
 from os.path import join
 
 from sqlalchemy import func
-from sqlalchemy import asc
-from sqlalchemy import desc
-from sqlalchemy import text
+from sqlalchemy import asc, desc, text
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
@@ -19,7 +17,7 @@ from ..object_storage import remove_objects
 from .utils import uuid_alpha, list_objects, objects_uuid, text_to_list
 
 
-notFound = 'The specified project does not exist'
+NOT_FOUND = NotFound('The specified project does not exist')
 
 
 def list_projects():
@@ -70,7 +68,7 @@ def get_project(uuid):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise NotFound(notFound)
+        raise NOT_FOUND
 
     return project.as_dict()
 
@@ -88,7 +86,7 @@ def update_project(uuid, **kwargs):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise NotFound(notFound)
+        raise NOT_FOUND
 
     if "name" in kwargs:
         name = kwargs["name"]
@@ -121,7 +119,7 @@ def delete_project(uuid):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise NotFound(notFound)
+        raise NOT_FOUND
 
     experiments = Experiment.query.filter(Experiment.project_id == uuid).all()
     for experiment in experiments:
@@ -209,7 +207,7 @@ def delete_multiple_projects(project_ids):
 
 def pre_delete(db_session, projects, total_elements, operators, experiments, all_projects_ids):
     if len(projects) != total_elements:
-        raise NotFound(notFound)
+        raise NOT_FOUND
     if len(operators):
         # remove dependencies
         for operator in operators:
@@ -241,10 +239,13 @@ def pagination_ordering(query, page_size, page, order_by):
         order = text_to_list(order_by)
         if page:
             if order[1]:
-                query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)\
-                    if 'desc' == order[1].lower() \
-                    else query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+                if 'desc' == order[1].lower():
+                    query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+                if 'asc' == order[1].lower():
+                    query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
         else:
-            query = query.order_by(desc(text(f'projects.{order[0]}'))) if 'desc' == order[1].lower()\
-                else query.order_by(asc(text(f'projects.{order[0]}')))
+            if 'desc' == order[1].lower():
+                query.order_by(desc(text(f'projects.{order[0]}')))
+            if 'asc' == order[1].lower():
+                query.order_by(asc(text(f'projects.{order[0]}')))
     return query

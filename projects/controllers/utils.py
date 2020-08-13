@@ -106,7 +106,7 @@ def pagination_datasets(page, page_size, elements):
 
 
 def list_objects(list_object):
-    """ Extracting uuids from informed json
+    """Extracting uuids from informed json
     Args:
         list_object(json): String containing the project's uuid
     Returns:

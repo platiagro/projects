@@ -181,7 +181,7 @@ paths:
           name: order
           schema:
             type: string
-          description: order by column Ex:name asc
+          example: name asc
       responses:
         "200":
           $ref: "#/components/responses/Projects"
