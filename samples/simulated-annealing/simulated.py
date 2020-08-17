@@ -103,7 +103,8 @@ class SimulatedAnnealing:
 
         if self.date_name is not None:
             date_indx = list(self.best_solution.columns).index(self.date_name)
-            self.date_var = pd.to_datetime(self.best_solution.pop(self.date_name))
+            self.best_solution[self.date_name] = self.best_solution[self.date_name].astype(str)
+            self.date_var = pd.to_datetime(self.best_solution.pop(self.date_name), infer_datetime_format=True)
             self.ftypes_list.pop(date_indx)
 
         # Convert all categorical columns to numerical
