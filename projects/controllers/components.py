@@ -26,6 +26,7 @@ DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
 
 NOT_FOUND = NotFound("The specified component does not exist")
+NOT_BAD_REQUEST = BadRequest('It was not possible to sort with the specified parameter')
 
 
 def list_components():
@@ -367,6 +368,17 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
 
 
 def pagination_components(name, page, page_size, order):
+    """ Component Paging.
+
+    Args:
+        name(str):
+        page(int):
+        page_size(int):
+        order(str):
+
+    Returns:
+        List of projects
+    """
     """The numbers of items to return maximum 100 """
     query = db_session.query(Component)
     if name:
@@ -382,6 +394,15 @@ def pagination_components(name, page, page_size, order):
 
 
 def total_rows_components(name):
+    """Counts the total number of records.
+
+    Args:
+        name(str): name
+
+    Returns:
+        rows
+
+    """
     query = db_session.query(func.count(Component.uuid))
     if name:
         query = query.filter(Component.name.ilike(func.lower(f"%{name}%")))
@@ -390,37 +411,48 @@ def total_rows_components(name):
 
 
 def pagination_ordering(query, page_size, page, order_by):
-    """Pagination ordering
-    Args:
-        query (str): the project uuid.
-        page_size(int) : record numbers
-        page (int): page number
-        order_by (str): order by Ex: uuid asc
-    Returns:
-        A list of projects.
-    """
-    if order_by:
-        order = text_to_list(order_by)
+    """Pagination ordering.
 
+    Args:
+        query (query): the project uuid.
+        page(int): page number
+        page_size(int) : record numbers
+        order_by(str): order by
+
+    Returns:
+        query
+
+    """
+    try:
+        order = text_to_list(order_by)
         if page:
-            if order[1]:
-                if 'asc' == order[1].lower():
-                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
-                if 'desc' == order[1].lower():
-                    query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+            if 'asc' == order[1].lower():
+                query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+            if 'desc' == order[1].lower():
+                query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
         else:
             query = uninformed_page(query, order)
         return query
+    except Exception:
+        raise NOT_BAD_REQUEST
 
 
 def uninformed_page(query, order):
     """If the page number was not informed just sort by the column name entered
-            query (str): query
-            order_by (str): order by Ex: uuid asc
-        """
-    if order[1]:
+
+    Args:
+        query(query): query
+        order(str): order
+
+    Returns:
+        query
+
+    """
+    try:
         if 'asc' == order[1].lower():
             query.order_by(asc(text(f'{order[0]}')))
-        if 'desc' == order[1].lower():
+        elif 'desc' == order[1].lower():
             query.order_by(desc(text(f'{order[0]}')))
-    return query
+        return query
+    except Exception:
+        raise NOT_BAD_REQUEST
