@@ -10,7 +10,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Dependency, Experiment, Template, Operator
 from ..object_storage import remove_objects
-from .components import get_components_by_tag
+from .tasks import get_tasks_by_tag
 from .dependencies import create_dependency
 from .operators import create_operator
 from .utils import raise_if_project_does_not_exist, uuid_alpha
@@ -67,11 +67,11 @@ def create_experiment(name=None, project_id=None):
                   experiment_id=experiment.uuid,
                   new_position=sys.maxsize)  # will add to end of list
 
-    # create an operator with the dataset component
-    components = get_components_by_tag("DATASETS")
-    if len(components) > 0:
-        component = components[0]
-        create_operator(project_id, experiment.uuid, component_id=component['uuid'])
+    # create an operator with the dataset task
+    tasks = get_tasks_by_tag("DATASETS")
+    if len(tasks) > 0:
+        task = tasks[0]
+        create_operator(project_id, experiment.uuid, task_id=task['uuid'])
 
     return experiment.as_dict()
 
@@ -141,12 +141,12 @@ def update_experiment(uuid, project_id, **kwargs):
 
         # save the last operator id created to create dependency on next operator
         last_operator_id = None
-        for component_id in template.components:
+        for task_id in template.tasks:
             operator_id = uuid_alpha()
             objects = [
                 Operator(uuid=operator_id,
                          experiment_id=uuid,
-                         component_id=component_id)
+                         task_id=task_id)
             ]
             db_session.bulk_save_objects(objects)
             if last_operator_id is not None:

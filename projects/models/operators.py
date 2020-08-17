@@ -14,7 +14,7 @@ class Operator(Base):
     __tablename__ = "operators"
     uuid = Column(String(255), primary_key=True)
     experiment_id = Column(String(255), ForeignKey("experiments.uuid"), nullable=False)
-    component_id = Column(String(255), ForeignKey("components.uuid"), nullable=False)
+    task_id = Column(String(255), ForeignKey("tasks.uuid"), nullable=False)
     parameters = Column(JSON, nullable=False, default={})
     dependencies = relationship("Dependency", primaryjoin=uuid == Dependency.operator_id)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)

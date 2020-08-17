@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Components controller."""
+"""Tasks controller."""
 import re
 from datetime import datetime
 from json import dumps, loads
@@ -14,37 +14,38 @@ from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
 from ..database import db_session
 from ..jupyter import create_new_file, set_workspace, list_files, delete_file
-from ..models import Component
+from ..models import Task
 from ..object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
 from .utils import uuid_alpha
 
-PREFIX = "components"
+PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
 DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
+TASK_NOT_EXIST_MSG = "The specified task does not exist"
 
 
-def list_components():
-    """Lists all components from our database.
+def list_tasks():
+    """Lists all tasks from our database.
 
     Returns:
-        A list of all components sorted by name in natural sort order.
+        A list of all tasks sorted by name in natural sort order.
     """
-    components = db_session.query(Component).all()
+    tasks = db_session.query(Task).all()
     # sort the list in place, using natural sort
-    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
-    return [component.as_dict() for component in components]
+    tasks.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
+    return [task.as_dict() for task in tasks]
 
 
-def create_component(**kwargs):
-    """Creates a new component in our database/object storage.
+def create_task(**kwargs):
+    """Creates a new task in our database/object storage.
 
     Args:
         **kwargs: arbitrary keyword arguments.
 
     Returns:
-        The component info.
+        The task info.
     """
     name = kwargs.get('name', None)
     description = kwargs.get('description', None)
@@ -60,7 +61,7 @@ def create_component(**kwargs):
         raise BadRequest("name is required")
 
     if copy_from and (experiment_notebook or deployment_notebook):
-        raise BadRequest("Either provide notebooks or a component to copy from")
+        raise BadRequest("Either provide notebooks or a task to copy from")
 
     if tags is None or len(tags) == 0:
         tags = ["DEFAULT"]
@@ -75,16 +76,16 @@ def create_component(**kwargs):
         if pattern.match(image) is None:
             raise BadRequest("invalid docker image name")
 
-    check_comp_name = db_session.query(Component).filter_by(name=name).first()
+    check_comp_name = db_session.query(Task).filter_by(name=name).first()
     if check_comp_name:
-        raise BadRequest("a component with that name already exists")
+        raise BadRequest("a task with that name already exists")
 
-    # creates a component with specified name,
-    # but copies notebooks from a source component
+    # creates a task with specified name,
+    # but copies notebooks from a source task
     if copy_from:
-        return copy_component(name, description, tags, copy_from)
+        return copy_task(name, description, tags, copy_from)
 
-    component_id = str(uuid_alpha())
+    task_id = str(uuid_alpha())
 
     # loads a sample notebook if none was sent
     if experiment_notebook is None:
@@ -93,22 +94,22 @@ def create_component(**kwargs):
     if deployment_notebook is None:
         deployment_notebook = DEPLOYMENT_NOTEBOOK
 
-    # The new component must have its own experiment_id and operator_id.
+    # The new task must have its own experiment_id and operator_id.
     # Notice these values are ignored when a notebook is run in a pipeline.
     # They are only used by JupyterLab interface.
     init_notebook_metadata(deployment_notebook, experiment_notebook)
 
     # saves new notebooks to object storage
-    obj_name = f"{PREFIX}/{component_id}/Deployment.ipynb"
+    obj_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
     deployment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
     put_object(obj_name, dumps(deployment_notebook).encode())
 
-    obj_name = f"{PREFIX}/{component_id}/Experiment.ipynb"
+    obj_name = f"{PREFIX}/{task_id}/Experiment.ipynb"
     experiment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
     put_object(obj_name, dumps(experiment_notebook).encode())
 
     # create deployment notebook and experiment_notebook on jupyter
-    create_jupyter_files(component_id=component_id,
+    create_jupyter_files(task_id=task_id,
                          deployment_notebook=dumps(deployment_notebook).encode(),
                          experiment_notebook=dumps(experiment_notebook).encode())
 
@@ -122,70 +123,70 @@ def create_component(**kwargs):
                         bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
                         exit $status''']
 
-    # saves component info to the database
-    component = Component(uuid=component_id,
-                          name=name,
-                          description=description,
-                          tags=tags,
-                          commands=commands,
-                          image=image,
-                          experiment_notebook_path=experiment_notebook_path,
-                          deployment_notebook_path=deployment_notebook_path,
-                          is_default=is_default)
-    db_session.add(component)
+    # saves task info to the database
+    task = Task(uuid=task_id,
+                name=name,
+                description=description,
+                tags=tags,
+                commands=commands,
+                image=image,
+                experiment_notebook_path=experiment_notebook_path,
+                deployment_notebook_path=deployment_notebook_path,
+                is_default=is_default)
+    db_session.add(task)
     db_session.commit()
 
-    return component.as_dict()
+    return task.as_dict()
 
 
-def get_component(uuid):
-    """Details a component from our database.
-
-    Args:
-        uuid (str): the component uuid to look for in our database.
-
-    Returns:
-        The component info.
-    """
-    component = Component.query.get(uuid)
-
-    if component is None:
-        raise NotFound("The specified component does not exist")
-
-    return component.as_dict()
-
-
-def get_components_by_tag(tag):
-    """Get all components with a specific tag.
-
-    Returns:
-        A list of components.
-    """
-    components = db_session.query(Component).filter(Component.tags.contains([tag])).all()
-    return [component.as_dict() for component in components]
-
-
-def update_component(uuid, **kwargs):
-    """Updates a component in our database/object storage.
+def get_task(uuid):
+    """Details a task from our database.
 
     Args:
-        uuid (str): the component uuid to look for in our database.
+        uuid (str): the task uuid to look for in our database.
+
+    Returns:
+        The task info.
+    """
+    task = Task.query.get(uuid)
+
+    if task is None:
+        raise NotFound(TASK_NOT_EXIST_MSG)
+
+    return task.as_dict()
+
+
+def get_tasks_by_tag(tag):
+    """Get all tasks with a specific tag.
+
+    Returns:
+        A list of tasks.
+    """
+    tasks = db_session.query(Task).filter(Task.tags.contains([tag])).all()
+    return [task.as_dict() for task in tasks]
+
+
+def update_task(uuid, **kwargs):
+    """Updates a task in our database/object storage.
+
+    Args:
+        uuid (str): the task uuid to look for in our database.
         **kwargs: arbitrary keyword arguments.
 
     Returns:
-        The component info.
+        The task info.
     """
-    component = Component.query.get(uuid)
+    task = Task.query.get(uuid)
 
-    if component is None:
-        raise NotFound("The specified component does not exist")
+    if task is None:
+        raise NotFound(TASK_NOT_EXIST_MSG)
 
     if "name" in kwargs:
         name = kwargs["name"]
-        if name != component.name:
-            check_comp_name = db_session.query(Component).filter_by(name=name).first()
+        if name != task.name:
+            check_comp_name = db_session.query(Task).filter_by(name=name).first()
             if check_comp_name:
-                raise BadRequest("a component with that name already exists")
+                raise BadRequest("a task with that name already exists")
 
     if "tags" in kwargs:
         tags = kwargs["tags"]
@@ -207,32 +208,32 @@ def update_component(uuid, **kwargs):
     data.update(kwargs)
 
     try:
-        db_session.query(Component).filter_by(uuid=uuid).update(data)
+        db_session.query(Task).filter_by(uuid=uuid).update(data)
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
 
-    return component.as_dict()
+    return task.as_dict()
 
 
-def delete_component(uuid):
-    """Delete a component in our database/object storage.
+def delete_task(uuid):
+    """Delete a task in our database/object storage.
 
     Args:
-        uuid (str): the component uuid to look for in our database.
+        uuid (str): the task uuid to look for in our database.
 
     Returns:
-        The component info.
+        The task info.
     """
-    component = Component.query.get(uuid)
+    task = Task.query.get(uuid)
 
-    if component is None:
-        raise NotFound("The specified component does not exist")
+    if task is None:
+        raise NotFound(TASK_NOT_EXIST_MSG)
 
     try:
         source_name = f"{PREFIX}/{uuid}"
 
-        db_session.query(Component).filter_by(uuid=uuid).delete()
+        db_session.query(Task).filter_by(uuid=uuid).delete()
 
         # remove files and directory from jupyter notebook server
         jupyter_files = list_files(source_name)
@@ -253,27 +254,27 @@ def delete_component(uuid):
     except (InvalidRequestError, ProgrammingError, ResponseError) as e:
         raise BadRequest(str(e))
 
-    return {"message": "Component deleted"}
+    return {"message": "Task deleted"}
 
 
-def copy_component(name, description, tags, copy_from):
-    """Makes a copy of a component in our database/object storage.
+def copy_task(name, description, tags, copy_from):
+    """Makes a copy of a task in our database/object storage.
 
     Args:
-        name (str): the component name.
-        description (str): the component description.
-        tags (list): the component tags list.
-        copy_from (str): the component_id from which the notebooks are copied.
+        name (str): the task name.
+        description (str): the task description.
+        tags (list): the task tags list.
+        copy_from (str): the task_id from which the notebooks are copied.
 
     Returns:
-        The component info.
+        The task info.
     """
-    component = Component.query.get(copy_from)
+    task = Task.query.get(copy_from)
 
-    if component is None:
-        raise BadRequest("Source component does not exist")
+    if task is None:
+        raise BadRequest("Source task does not exist")
 
-    component_id = uuid_alpha()
+    task_id = uuid_alpha()
 
     # reads source notebooks from object storage
     source_name = f"{PREFIX}/{copy_from}/Deployment.ipynb"
@@ -282,53 +283,53 @@ def copy_component(name, description, tags, copy_from):
     source_name = f"{PREFIX}/{copy_from}/Experiment.ipynb"
     experiment_notebook = loads(get_object(source_name))
 
-    # Even though we are creating 'copies', the new component must have
+    # Even though we are creating 'copies', the new task must have
     # its own experiment_id and operator_id. We don't want to mix models and
-    # metrics of different components.
+    # metrics of different tasks.
     # Notice these values are ignored when a notebook is run in a pipeline.
     # They are only used by JupyterLab interface.
     init_notebook_metadata(deployment_notebook, experiment_notebook)
 
     # saves new notebooks to object storage
-    destination_name = f"{PREFIX}/{component_id}/Deployment.ipynb"
+    destination_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
     deployment_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
     put_object(destination_name, dumps(deployment_notebook).encode())
 
-    destination_name = f"{PREFIX}/{component_id}/Experiment.ipynb"
+    destination_name = f"{PREFIX}/{task_id}/Experiment.ipynb"
     experiment_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
     put_object(destination_name, dumps(experiment_notebook).encode())
 
     # create deployment notebook and eperiment notebook on jupyter
-    create_jupyter_files(component_id=component_id,
+    create_jupyter_files(task_id=task_id,
                          deployment_notebook=dumps(deployment_notebook).encode(),
                          experiment_notebook=dumps(experiment_notebook).encode())
 
-    # saves component info to the database
-    component = Component(uuid=component_id,
-                          name=name,
-                          description=description,
-                          tags=tags,
-                          deployment_notebook_path=deployment_notebook_path,
-                          experiment_notebook_path=experiment_notebook_path,
-                          is_default=False)
-    db_session.add(component)
+    # saves task info to the database
+    task = Task(uuid=task_id,
+                name=name,
+                description=description,
+                tags=tags,
+                deployment_notebook_path=deployment_notebook_path,
+                experiment_notebook_path=experiment_notebook_path,
+                is_default=False)
+    db_session.add(task)
     db_session.commit()
 
-    return component.as_dict()
+    return task.as_dict()
 
 
-def create_jupyter_files(component_id, deployment_notebook, experiment_notebook):
+def create_jupyter_files(task_id, deployment_notebook, experiment_notebook):
     """Creates jupyter notebook files on jupyter server.
 
     Args:
-        component_id (str): the component uuid.
+        task_id (str): the task uuid.
         deployment_notebook (bytes): the notebook content.
         experiment_notebook (bytes): the notebook content.
     """
-    # always try to create components folder to guarantee its existence
+    # always try to create tasks folder to guarantee its existence
     create_new_file(PREFIX, is_folder=True)
 
-    path = f"{PREFIX}/{component_id}"
+    path = f"{PREFIX}/{task_id}"
     create_new_file(path=path, is_folder=True)
 
     deployment_notebook_path = join(path, "Deployment.ipynb")
@@ -363,23 +364,23 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
     experiment_notebook["metadata"]["operator_id"] = operator_id
 
 
-def pagination_components(name, page, page_size):
+def pagination_tasks(name, page, page_size):
     """The numbers of items to return maximum 100 """
     if page_size > 100:
         page_size = 100
-    query = db_session.query(Component)
+    query = db_session.query(Task)
     if name:
-        query = query.filter(Component.name.ilike(func.lower(f"%{name}%")))
+        query = query.filter(Task.name.ilike(func.lower(f"%{name}%")))
     if page != 0:
-        query = query.order_by(Component.name).limit(page_size).offset((page - 1) * page_size)
-    components = query.all()
-    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
-    return [component.as_dict() for component in components]
+        query = query.order_by(Task.name).limit(page_size).offset((page - 1) * page_size)
+    tasks = query.all()
+    tasks.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
+    return [task.as_dict() for task in tasks]
 
 
-def total_rows_components(name):
-    query = db_session.query(func.count(Component.uuid))
+def total_rows_tasks(name):
+    query = db_session.query(func.count(Task.uuid))
     if name:
-        query = query.filter(Component.name.ilike(func.lower(f"%{name}%")))
+        query = query.filter(Task.name.ilike(func.lower(f"%{name}%")))
     rows = query.scalar()
     return rows
