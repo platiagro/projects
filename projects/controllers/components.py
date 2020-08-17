@@ -29,18 +29,6 @@ NOT_FOUND = NotFound("The specified component does not exist")
 NOT_BAD_REQUEST = BadRequest('It was not possible to sort with the specified parameter')
 
 
-def list_components():
-    """Lists all components from our database.
-
-    Returns:
-        A list of all components sorted by name in natural sort order.
-    """
-    components = db_session.query(Component).all()
-    # sort the list in place, using natural sort
-    components.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
-    return [component.as_dict() for component in components]
-
-
 def create_component(**kwargs):
     """Creates a new component in our database/object storage.
 
