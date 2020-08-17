@@ -75,30 +75,40 @@ def uuid_alpha() -> str:
     return uuid_
 
 
-def pagination_datasets(page, page_size, elements):
-    """pagination of datasets"""
+def pagination_datasets(page, page_size, dataset):
+    """pagination of datasets.
+
+    Args:
+        page_size(int) : record numbers
+        page(int): page number
+        dataset(json): data to be paged
+
+    Returns:
+        Paged dataset
+
+    """
     try:
         count = 0
-        new_elements = []
-        total_elements = len(elements['data'])
+        new_datasets = []
+        total_elements = len(dataset['data'])
         page = (page * page_size) - page_size
         for i in range(page, total_elements):
-            new_elements.append(elements['data'][i])
+            new_datasets.append(dataset['data'][i])
             count += 1
             if page_size == count:
                 response = {
-                    'columns': elements['columns'],
-                    'data': new_elements,
-                    'total': len(elements['data'])
+                    'columns': dataset['columns'],
+                    'data': new_datasets,
+                    'total': len(dataset['data'])
                 }
                 return response
-        if len(new_elements) == 0:
+        if len(new_datasets) == 0:
             raise NotFound("The informed page does not contain records")
         else:
             response = {
-                'columns': elements['columns'],
-                'data': new_elements,
-                'total': len(elements['data'])
+                'columns': dataset['columns'],
+                'data': new_datasets,
+                'total': len(dataset['data'])
             }
             return response
     except RuntimeError:
@@ -106,11 +116,14 @@ def pagination_datasets(page, page_size, elements):
 
 
 def list_objects(list_object):
-    """Extracting uuids from informed json
+    """Extracting uuids from informed json.
+
     Args:
-        list_object(json): String containing the project's uuid
+        list_object(json): string containing the project's uuid
+
     Returns:
         all uuids
+
     """
     all_projects_ids = []
     for i in list_object:
@@ -119,11 +132,14 @@ def list_objects(list_object):
 
 
 def objects_uuid(list_object):
-    """Recovering uuids from information projects
+    """Recovering uuids from information projects.
+
     Args:
         list_object(projects): list of projects
+
     Returns:
         all uuids
+
     """
     uuids = []
     for i in list_object:
@@ -132,11 +148,14 @@ def objects_uuid(list_object):
 
 
 def text_to_list(order):
-    """Turn text into list
+    """Turn text into list.
+
     Args:
-        order(str): oreder Ex: uuid asc
+        order(str): column name and order
+
     Returns:
-        ['uuid','asc']
+        list
+
     """
     order_by = []
     regex = re.compile(r'\[(.*?)\]|(\S+)')

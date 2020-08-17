@@ -20,19 +20,6 @@ from .utils import uuid_alpha, list_objects, objects_uuid, text_to_list
 NOT_FOUND = NotFound('The specified project does not exist')
 
 
-def list_projects():
-    """Lists all projects from our database.
-
-    Returns:
-        A list of all projects sorted by name in natural sort order.
-    """
-
-    projects = db_session.query(Project).all()
-    # sort the list in place, using natural sort
-    projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
-    return [project.as_dict() for project in projects]
-
-
 def create_project(name=None, **kwargs):
     """Creates a new project in our database.
 
@@ -77,7 +64,7 @@ def update_project(uuid, **kwargs):
     """Updates a project in our database.
 
     Args:
-        uuid (str): the project uuid to look for in our database.
+        uuid(str): the project uuid to look for in our database.
         **kwargs: arbitrary keyword arguments.
 
     Returns:
@@ -115,6 +102,7 @@ def delete_project(uuid):
 
     Returns:
         The deletion result.
+
     """
     project = Project.query.get(uuid)
 
@@ -144,36 +132,46 @@ def delete_project(uuid):
 
 def pagination_projects(name, page, page_size, order):
     """Pagination ordering
+    Args:
+        name(str): name of the project to be searched
+        page(int): page number
+        page_size(int) : record numbers
+        order(str): order by Ex: uuid asc
 
-        Args:
-            name (str): name of the project to be searched
-            page (int): page number
-            page_size(int) : record numbers
-            order(str): order by Ex: uuid asc
+    Returns:
+        A list of projects.
 
-        Returns:
-            A list of projects.
-        """
-    query = db_session.query(Project)
-    if name:
-        query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
-    if page == 0 and order is None:
-        query = query.order_by(text('projects.name'))
-    elif page and order is None:
-        query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
-    else:
-        query = pagination_ordering(query, page_size, page, order)
-    projects = query.all()
-    return [project.as_dict() for project in projects]
+    """
+    try:
+        query = db_session.query(Project)
+        if name:
+            query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
+        if page == 0 and order is None:
+            query = query.order_by(text('projects.name'))
+        elif page and order is None:
+            query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
+        else:
+            query = pagination_ordering(query, page_size, page, order)
+        projects = query.all()
+        total_rows = total_rows_projects(name)
+        response = {
+            'total': total_rows,
+            'projects': [project.as_dict() for project in projects]
+        }
+    except Exception:
+        raise BadRequest('It was not possible to sort with the specified parameter')
+    return response
 
 
 def total_rows_projects(name):
-    """Returns the total number of records
+    """Returns the total number of records.
+
     Args:
-        name (str):name to be searched
+        name(str):name to be searched
 
     Returns:
         total records.
+
     """
     query = db_session.query(func.count(Project.uuid))
     if name:
@@ -183,8 +181,14 @@ def total_rows_projects(name):
 
 
 def delete_multiple_projects(project_ids):
-    """ Delete multiple projects
-     project_ids (str): list of projects
+    """Delete multiple projects.
+
+    Args:
+        project_ids(str): list of projects
+
+    Returns:
+        message
+
     """
     total_elements = len(project_ids)
     all_projects_ids = list_objects(project_ids)
@@ -206,6 +210,20 @@ def delete_multiple_projects(project_ids):
 
 
 def pre_delete(db_session, projects, total_elements, operators, experiments, all_projects_ids):
+    """SQL form for deleting multiple projects.
+
+    Args:
+        db_session(db_session): db_session
+        projects(projects): list projects
+        total_elements(int): total elements found in projects
+        operators:(operators): list operators
+        experiments(experiments): list experiments
+        all_projects_ids(str): uuids of projects to be excluded
+
+    Returns:
+        db_session
+
+    """
     if len(projects) != total_elements:
         raise NOT_FOUND
     if len(operators):
@@ -224,38 +242,45 @@ def pre_delete(db_session, projects, total_elements, operators, experiments, all
 
 
 def pagination_ordering(query, page_size, page, order_by):
-    """Pagination ordering
+    """Pagination ordering.
 
     Args:
-        query (str): query
+        query(str): query
         page_size(int) : record numbers
-        page (int): page number
-        order_by (str): order by Ex: uuid asc
+        page(int): page number
+        order_by(str): order by
 
     Returns:
         A list of projects.
+
     """
     if order_by:
         order = text_to_list(order_by)
         if page:
             if order[1]:
                 if 'desc' == order[1].lower():
-                    query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+                    query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
                 if 'asc' == order[1].lower():
-                    query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
         else:
             query = uninformed_page(query, order)
     return query
 
 
 def uninformed_page(query, order):
-    """If the page number was not informed just sort by the column name entered
-            query (str): query
-            order_by (str): order by Ex: uuid asc
-        """
+    """If the page number was not informed just sort by the column name entered.
+
+    Args:
+        query(str): query
+        order(str): order by
+
+    Returns:
+        query
+
+    """
     if order[1]:
         if 'asc' == order[1].lower():
-            query.order_by(asc(text(f'projects.{order[0]}')))
+            query = query.order_by(asc(text(f'projects.{order[0]}')))
         if 'desc' == order[1].lower():
-            query.order_by(desc(text(f'projects.{order[0]}')))
+            query = query.order_by(desc(text(f'projects.{order[0]}')))
     return query

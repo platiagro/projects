@@ -71,11 +71,6 @@ class TestProjects(TestCase):
             self.assertIsInstance(result["projects"], list)
             self.assertIsInstance(result["total"], int)
 
-            rv = c.get("/projects?page=1&order=uuid asc")
-            result = rv.get_json()
-            self.assertIsInstance(result["projects"], list)
-            self.assertIsInstance(result["total"], int)
-
             rv = c.get(f"/projects?name={NAME}&page=1&order=uuid asc")
             result = rv.get_json()
             self.assertIsInstance(result["projects"], list)
@@ -85,6 +80,17 @@ class TestProjects(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result["projects"], list)
             self.assertIsInstance(result["total"], int)
+
+            rv = c.get("/projects?order=name desc")
+            result = rv.get_json()
+            self.assertIsInstance(result["projects"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get("/projects?order=name")
+            result = rv.get_json()
+            expected = {"message": "It was not possible to sort with the specified parameter"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
     def test_create_project(self):
         with app.test_client() as c:
