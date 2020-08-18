@@ -52,6 +52,11 @@ paths:
           schema:
             type: integer
           description: Page size
+        - in: query
+          name: order
+          schema:
+            type: string
+          example: uuid asc
       responses:
         "200":
           $ref: "#/components/responses/Tasks"

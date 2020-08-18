@@ -137,10 +137,8 @@ def pagination_projects(name, page, page_size, order):
         page(int): page number
         page_size(int) : record numbers
         order(str): order by Ex: uuid asc
-
     Returns:
         A list of projects.
-
     """
     try:
         query = db_session.query(Project)
