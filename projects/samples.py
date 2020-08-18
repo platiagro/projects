@@ -3,40 +3,40 @@ from json import load
 
 from werkzeug.exceptions import BadRequest
 
-from .controllers.components import create_component
+from .controllers.tasks import create_task
 
 
-def init_components(config_path):
-    """Installs the components from a config file. Avoids duplicates.
+def init_tasks(config_path):
+    """Installs the tasks from a config file. Avoids duplicates.
 
     Args:
         config_path (str): the path to the config file.
     """
     with open(config_path) as f:
-        components = load(f)
+        tasks = load(f)
 
-        for component in components:
-            name = component["name"]
-            description = component["description"]
-            tags = component["tags"]
+        for task in tasks:
+            name = task["name"]
+            description = task["description"]
+            tags = task["tags"]
 
             try:
-                experiment_notebook = read_notebook(component["experimentNotebook"])
+                experiment_notebook = read_notebook(task["experimentNotebook"])
             except KeyError:
                 experiment_notebook = None
 
             try:
-                deployment_notebook = read_notebook(component["deploymentNotebook"])
+                deployment_notebook = read_notebook(task["deploymentNotebook"])
             except KeyError:
                 deployment_notebook = None
 
             try:
-                create_component(name=name,
-                                 description=description,
-                                 tags=tags,
-                                 experiment_notebook=experiment_notebook,
-                                 deployment_notebook=deployment_notebook,
-                                 is_default=True)
+                create_task(name=name,
+                            description=description,
+                            tags=tags,
+                            experiment_notebook=experiment_notebook,
+                            deployment_notebook=deployment_notebook,
+                            is_default=True)
             except BadRequest:
                 pass
 

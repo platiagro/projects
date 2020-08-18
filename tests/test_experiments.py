@@ -11,7 +11,7 @@ EXPERIMENT_ID = str(uuid_alpha())
 NAME = "foo"
 PROJECT_ID = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
-COMPONENT_ID = str(uuid_alpha())
+TASK_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 POSITION = 0
 IS_ACTIVE = True
@@ -23,26 +23,27 @@ COMMANDS_JSON = dumps(COMMANDS)
 IMAGE = "platiagro/platiagro-notebook-image-test:0.1.0"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
-COMPONENTS_JSON = dumps([COMPONENT_ID])
-EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Deployment.ipynb"
+TASKS_JSON = dumps([TASK_ID])
+EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
-OPERATORS = [{"uuid": OPERATOR_ID, "componentId": COMPONENT_ID, "dependencies": [],"parameters": PARAMETERS, "experimentId": EXPERIMENT_ID, "createdAt": CREATED_AT_ISO, "updatedAt": UPDATED_AT_ISO}]
+OPERATORS = [{"uuid": OPERATOR_ID, "taskId": TASK_ID, "dependencies": [],"parameters": PARAMETERS, "experimentId": EXPERIMENT_ID, "createdAt": CREATED_AT_ISO, "updatedAt": UPDATED_AT_ISO}]
 
 EXPERIMENT_ID_2 = str(uuid_alpha())
 NAME_2 = "foo 2"
 POSITION_2 = 1
+
 
 class TestExperiments(TestCase):
     def setUp(self):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO components (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -65,14 +66,14 @@ class TestExperiments(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO templates (uuid, name, components, created_at, updated_at) "
-            f"VALUES ('{TEMPLATE_ID}', '{NAME}', '{COMPONENTS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
+            f"VALUES ('{TEMPLATE_ID}', '{NAME}', '{TASKS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -94,7 +95,7 @@ class TestExperiments(TestCase):
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM components WHERE uuid = '{COMPONENT_ID}'"
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
         conn.execute(text)
         conn.close()
 
@@ -258,7 +259,7 @@ class TestExperiments(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
             expected = [{
-                "componentId": COMPONENT_ID,
+                "taskId": TASK_ID,
                 "experimentId": EXPERIMENT_ID,
                 "parameters": {},
                 "dependencies": []
