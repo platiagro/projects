@@ -438,9 +438,9 @@ def uninformed_page(query, order):
     """
     try:
         if 'asc' == order[1].lower():
-            query.order_by(asc(text(f'{order[0]}')))
+            query = query.order_by(asc(text(f'{order[0]}')))
         elif 'desc' == order[1].lower():
-            query.order_by(desc(text(f'{order[0]}')))
+            query = query.order_by(desc(text(f'{order[0]}')))
         return query
     except Exception:
         raise BAD_REQUEST
