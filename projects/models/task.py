@@ -21,7 +21,7 @@ class Task(Base):
     image = Column(String(255), nullable=False, default=DEFAULT_IMAGE)
     tags = Column(JSON, nullable=False, default=[])
     experiment_notebook_path = Column(String(255))
-    deployment_notebook_path = Column(String(255))
+    deployment_notebook_path = Column(String(255), nullable=True)
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)

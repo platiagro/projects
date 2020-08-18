@@ -91,7 +91,7 @@ def create_task(**kwargs):
     if experiment_notebook is None:
         experiment_notebook = EXPERIMENT_NOTEBOOK
 
-    if deployment_notebook is None:
+    if deployment_notebook is None and "DATSETS" not in tags:
         deployment_notebook = DEPLOYMENT_NOTEBOOK
 
     # The new task must have its own experiment_id and operator_id.
@@ -100,9 +100,12 @@ def create_task(**kwargs):
     init_notebook_metadata(deployment_notebook, experiment_notebook)
 
     # saves new notebooks to object storage
-    obj_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
-    deployment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
-    put_object(obj_name, dumps(deployment_notebook).encode())
+    if "DATASETS" not in tags:
+        obj_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
+        deployment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
+        put_object(obj_name, dumps(deployment_notebook).encode())
+    else:
+        deployment_notebook_path = None
 
     obj_name = f"{PREFIX}/{task_id}/Experiment.ipynb"
     experiment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
@@ -332,10 +335,11 @@ def create_jupyter_files(task_id, deployment_notebook, experiment_notebook):
     path = f"{PREFIX}/{task_id}"
     create_new_file(path=path, is_folder=True)
 
-    deployment_notebook_path = join(path, "Deployment.ipynb")
-    create_new_file(path=deployment_notebook_path,
-                    is_folder=False,
-                    content=deployment_notebook)
+    if deployment_notebook is not None:
+        deployment_notebook_path = join(path, "Deployment.ipynb")
+        create_new_file(path=deployment_notebook_path,
+                        is_folder=False,
+                        content=deployment_notebook)
 
     experiment_notebook_path = join(path, "Experiment.ipynb")
     create_new_file(path=experiment_notebook_path,
@@ -358,10 +362,12 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
     operator_id = uuid_alpha()
 
     # sets these values to notebooks
-    deployment_notebook["metadata"]["experiment_id"] = experiment_id
-    deployment_notebook["metadata"]["operator_id"] = operator_id
-    experiment_notebook["metadata"]["experiment_id"] = experiment_id
-    experiment_notebook["metadata"]["operator_id"] = operator_id
+    if deployment_notebook is not None:
+        deployment_notebook["metadata"]["experiment_id"] = experiment_id
+        deployment_notebook["metadata"]["operator_id"] = operator_id
+    if experiment_notebook is not None:
+        experiment_notebook["metadata"]["experiment_id"] = experiment_id
+        experiment_notebook["metadata"]["operator_id"] = operator_id
 
 
 def pagination_tasks(name, page, page_size):
