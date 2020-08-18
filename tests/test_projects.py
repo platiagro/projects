@@ -61,6 +61,37 @@ class TestProjects(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result['projects'], list)
 
+            rv = c.get("/projects?order=uuid asc")
+            result = rv.get_json()
+            self.assertIsInstance(result["projects"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get("/projects?page=1")
+            result = rv.get_json()
+            self.assertIsInstance(result["projects"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get(f"/projects?name={NAME}&page=1&order=uuid asc")
+            result = rv.get_json()
+            self.assertIsInstance(result["projects"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get(f"/projects?name={NAME}&page=1&page_size=10&order=name desc")
+            result = rv.get_json()
+            self.assertIsInstance(result["projects"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get("/projects?order=name desc")
+            result = rv.get_json()
+            self.assertIsInstance(result["projects"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get("/projects?order=name")
+            result = rv.get_json()
+            expected = {"message": "It was not possible to sort with the specified parameter"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
     def test_create_project(self):
         with app.test_client() as c:
             rv = c.post("/projects", json={})
@@ -217,13 +248,6 @@ class TestProjects(TestCase):
             expected = {"message": "Project deleted"}
             self.assertDictEqual(expected, result)
 
-    def test_pagination_project(self):
-        with app.test_client() as p:
-            rv = p.get("/projects?page=1&page_size=1")
-            result = rv.get_json()
-            self.assertIsInstance(result['projects'], list)
-            self.assertIsInstance(result['total'], int)
-
     def test_delete_projects(self):
         with app.test_client() as c:
             rv = c.post("/projects/deleteprojects", json=[{"uuid": "1234"}])
@@ -231,3 +255,9 @@ class TestProjects(TestCase):
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
+
+            rv = c.post("/projects/deleteprojects", json=[{"uuid": f"{PROJECT_ID_2}"}])
+            result = rv.get_json()
+            expected = {"message": "Successfully removed projects"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
