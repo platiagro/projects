@@ -85,10 +85,10 @@ def create_task(**kwargs):
     if deployment_notebook is None and "DATSETS" not in tags:
         deployment_notebook = DEPLOYMENT_NOTEBOOK
 
-    # The new task must have its own experiment_id and operator_id.
+    # The new task must have its own task_id, experiment_id and operator_id.
     # Notice these values are ignored when a notebook is run in a pipeline.
     # They are only used by JupyterLab interface.
-    init_notebook_metadata(deployment_notebook, experiment_notebook)
+    init_notebook_metadata(task_id, deployment_notebook, experiment_notebook)
 
     # saves new notebooks to object storage
     if "DATASETS" not in tags:
@@ -103,7 +103,7 @@ def create_task(**kwargs):
     put_object(obj_name, dumps(experiment_notebook).encode())
 
     # create deployment notebook and experiment_notebook on jupyter
-    create_jupyter_files(task_id=task_id,
+    create_jupyter_files(task_name=name,
                          deployment_notebook=dumps(deployment_notebook).encode(),
                          experiment_notebook=dumps(experiment_notebook).encode())
 
@@ -278,11 +278,11 @@ def copy_task(name, description, tags, copy_from):
     experiment_notebook = loads(get_object(source_name))
 
     # Even though we are creating 'copies', the new task must have
-    # its own experiment_id and operator_id. We don't want to mix models and
-    # metrics of different tasks.
+    # its own task_id, experiment_id and operator_id.
+    # We don't want to mix models and metrics of different tasks.
     # Notice these values are ignored when a notebook is run in a pipeline.
     # They are only used by JupyterLab interface.
-    init_notebook_metadata(deployment_notebook, experiment_notebook)
+    init_notebook_metadata(task_id, deployment_notebook, experiment_notebook)
 
     # saves new notebooks to object storage
     destination_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
@@ -294,7 +294,7 @@ def copy_task(name, description, tags, copy_from):
     put_object(destination_name, dumps(experiment_notebook).encode())
 
     # create deployment notebook and eperiment notebook on jupyter
-    create_jupyter_files(task_id=task_id,
+    create_jupyter_files(task_name=name,
                          deployment_notebook=dumps(deployment_notebook).encode(),
                          experiment_notebook=dumps(experiment_notebook).encode())
 
@@ -312,18 +312,18 @@ def copy_task(name, description, tags, copy_from):
     return task.as_dict()
 
 
-def create_jupyter_files(task_id, deployment_notebook, experiment_notebook):
+def create_jupyter_files(task_name, deployment_notebook, experiment_notebook):
     """Creates jupyter notebook files on jupyter server.
 
     Args:
-        task_id (str): the task uuid.
+        task_name (str): the task name.
         deployment_notebook (bytes): the notebook content.
         experiment_notebook (bytes): the notebook content.
     """
     # always try to create tasks folder to guarantee its existence
     create_new_file(PREFIX, is_folder=True)
 
-    path = f"{PREFIX}/{task_id}"
+    path = f"{PREFIX}/{task_name}"
     create_new_file(path=path, is_folder=True)
 
     if deployment_notebook is not None:
@@ -340,12 +340,13 @@ def create_jupyter_files(task_id, deployment_notebook, experiment_notebook):
     set_workspace(deployment_notebook_path, experiment_notebook_path)
 
 
-def init_notebook_metadata(deployment_notebook, experiment_notebook):
+def init_notebook_metadata(task_id, deployment_notebook, experiment_notebook):
     """Sets random experiment_id and operator_id to notebooks metadata.
 
     Dicts are passed by reference, so no need to return.
 
     Args:
+        task_id (str): the task uuid.
         deployment_notebook (dict): the deployment notebook content.
         experiment_notebook (dict): the experiment notebook content.
     """
@@ -356,9 +357,11 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
     if deployment_notebook is not None:
         deployment_notebook["metadata"]["experiment_id"] = experiment_id
         deployment_notebook["metadata"]["operator_id"] = operator_id
+        deployment_notebook["metadata"]["task_id"] = task_id
     if experiment_notebook is not None:
         experiment_notebook["metadata"]["experiment_id"] = experiment_id
         experiment_notebook["metadata"]["operator_id"] = operator_id
+        experiment_notebook["metadata"]["task_id"] = task_id
 
 
 def pagination_tasks(name, page, page_size, order):
