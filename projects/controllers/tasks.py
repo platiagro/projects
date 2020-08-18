@@ -362,29 +362,34 @@ def init_notebook_metadata(deployment_notebook, experiment_notebook):
 
 
 def pagination_tasks(name, page, page_size, order):
-    """ Component Paging.
-
+    """ Tasks Paging.
     Args:
-        name(str):
-        page(int):
-        page_size(int):
-        order(str):
-
+        name(str): name of the task to be searched
+        page(int): page number
+        page_size(int) : record numbers
+        order(str): order by Ex: uuid asc
     Returns:
-        List of projects
+        List of tasks
     """
-    """The numbers of items to return maximum 100 """
-    query = db_session.query(Task)
-    if name:
-        query = query.filter(Task.name.ilike(func.lower(f"%{name}%")))
-    if page == 0 and order is None:
-        query = query.order_by(Task.name)
-    elif page and order is None:
-        query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
-    else:
-        query = pagination_ordering(query, page_size, page, order)
-    projects = query.all()
-    return [project.as_dict() for project in projects]
+    try:
+        query = db_session.query(Task)
+        if name:
+            query = query.filter(Task.name.ilike(func.lower(f"%{name}%")))
+        if page == 0 and order is None:
+            query = query.order_by(Task.name)
+        elif page and order is None:
+            query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
+        else:
+            query = pagination_ordering(query, page_size, page, order)
+        tasks = query.all()
+        total_rows = total_rows_tasks(name)
+        response = {
+            'total': total_rows,
+            'tasks': [task.as_dict() for task in tasks]
+        }
+    except Exception:
+        raise BadRequest('It was not possible to sort with the specified parameter')
+    return response
 
 
 def total_rows_tasks(name):
