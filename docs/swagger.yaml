@@ -11,31 +11,31 @@ info:
 servers:
   - url: http://localhost:8080
 tags:
-  - name: "Components"
+  - name: "Tasks"
     description: >
-      Components are tools and algorithms that a data-scientist writes in Jupyter Notebooks.
-      You may use these components as a step of an experiment to perform model training or inference.
+      Tasks are tools and algorithms that a data-scientist writes in Jupyter Notebooks.
+      You may use these tasks as a step of an experiment to perform model training or inference.
   - name: "Projects"
     description: >
       Projects are a way to organize the problems a data-scientist is trying to solve.
       In a project, you may test different experiments (hypothesis/solutions/models) that address the business question you are trying to answer.
   - name: "Experiments"
     description: >
-      Experiments allow data-scientists to draw sequential workflows using the components.
+      Experiments allow data-scientists to draw sequential workflows using the tasks.
       These workflows may describe the steps of data-preparation, data-modeling, or even a real-time inference service.
   - name: "Operators"
     description: >
       An Operator is a single unit in an experiment flow.
-      When a data-scientist runs an experiment, the operator runs a Jupyter Notebook of its component.
+      When a data-scientist runs an experiment, the operator runs a Jupyter Notebook of its task.
   - name: "Templates"
     description: >
       Templates are reusable workflows that a data-scientist may use to draw an experiment quickly.
 paths:
-  /components:
+  /tasks:
     get:
-      summary: "List all components sorted by name in natural sort order."
+      summary: "List all tasks sorted by name in natural sort order."
       tags:
-        - "Components"
+        - "Tasks"
       parameters:
         - in: query
           name: name
@@ -54,40 +54,40 @@ paths:
           description: Page size
       responses:
         "200":
-          $ref: "#/components/responses/Components"
+          $ref: "#/components/responses/Tasks"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
     post:
-      summary: "Create a new component."
+      summary: "Create a new task."
       tags:
-        - "Components"
+        - "Tasks"
       requestBody:
-        $ref: "#/components/requestBodies/ComponentPost"
+        $ref: "#/components/requestBodies/TaskPost"
       responses:
         "200":
-          $ref: "#/components/responses/Component"
+          $ref: "#/components/responses/Task"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /components/{componentId}:
+  /tasks/{taskId}:
     get:
-      summary: "Detail a specific component by ID."
+      summary: "Detail a specific task by ID."
       tags:
-        - "Components"
+        - "Tasks"
       parameters:
-        - name: componentId
+        - name: taskId
           in: path
           required: true
           schema:
             type: string
       responses:
         "200":
-          $ref: "#/components/responses/Component"
+          $ref: "#/components/responses/Task"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -95,20 +95,20 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
     patch:
-      summary: "Update a component by ID."
+      summary: "Update a task by ID."
       tags:
-        - "Components"
+        - "Tasks"
       parameters:
-        - name: componentId
+        - name: taskId
           in: path
           required: true
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/ComponentPatch"
+        $ref: "#/components/requestBodies/TaskPatch"
       responses:
         "200":
-          $ref: "#/components/responses/Component"
+          $ref: "#/components/responses/Task"
         "400":
           $ref: "#/components/responses/BadRequest"
         "404":
@@ -118,11 +118,11 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
     delete:
-      summary: "Delete a component by ID."
+      summary: "Delete a task by ID."
       tags:
-        - "Components"
+        - "Tasks"
       parameters:
-        - name: componentId
+        - name: taskId
           in: path
           required: true
           schema:
@@ -136,13 +136,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /components/{componentId}/parameters:
+  /tasks/{taskId}/parameters:
     get:
       summary: "List all parameters."
       tags:
-        - "Components"
+        - "Tasks"
       parameters:
-        - name: componentId
+        - name: taskId
           in: path
           required: true
           schema:
@@ -177,6 +177,11 @@ paths:
           schema:
             type: integer
           description: Page size
+        - in: query
+          name: order
+          schema:
+            type: string
+          example: name asc
       responses:
         "200":
           $ref: "#/components/responses/Projects"
@@ -700,7 +705,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
-    Component:
+    Task:
       type: object
       properties:
         uuid:
@@ -730,17 +735,17 @@ components:
         updatedAt:
           type: string
           format: date-time
-    Components:
+    Tasks:
       type: object
       properties:
-        components:
+        tasks:
           type: array
           items:
             oneOf:
-              - $ref: "#/components/schemas/Component"
+              - $ref: "#/components/schemas/Task"
         total:
           type: integer
-    ComponentEmpty:
+    TaskEmpty:
       type: object
       properties:
         name:
@@ -757,7 +762,7 @@ components:
             type: string
         image:
           type: string
-    ComponentCopyFrom:
+    TaskCopyFrom:
       type: object
       properties:
         name:
@@ -777,7 +782,7 @@ components:
         copyFrom:
           type: string
           format: uuid
-    ComponentNotebooks:
+    TaskNotebooks:
       type: object
       properties:
         name:
@@ -881,7 +886,7 @@ components:
         uuid:
           type: string
           format: uuid
-        componentId:
+        taskId:
           type: string
           format: uuid
         dependencies:
@@ -967,7 +972,7 @@ components:
           items:
             type: object
             properties:
-              componentId:
+              taskId:
                 type: string
                 format: uuid
               dependencies:
@@ -987,14 +992,14 @@ components:
         oneOf:
           - $ref: "#/components/schemas/Template"
   requestBodies:
-    ComponentPost:
+    TaskPost:
       content:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/ComponentEmpty"
-              - $ref: "#/components/schemas/ComponentCopyFrom"
-              - $ref: "#/components/schemas/ComponentNotebooks"
+              - $ref: "#/components/schemas/TaskEmpty"
+              - $ref: "#/components/schemas/TaskCopyFrom"
+              - $ref: "#/components/schemas/TaskNotebooks"
           examples:
             empty:
               summary: Empty notebooks
@@ -1005,7 +1010,7 @@ components:
                 commands: ["cmd"]
                 image: platiagro/platiagro-notebook-image:0.1.0
             copyFrom:
-              summary: Notebooks from another component
+              summary: Notebooks from another task
               value:
                 name: string
                 description: string
@@ -1091,11 +1096,11 @@ components:
                     "nbformat": 4,
                     "nbformat_minor": 4,
                   }
-    ComponentPatch:
+    TaskPatch:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ComponentNotebooks"
+            $ref: "#/components/schemas/TaskNotebooks"
           example:
             name: string
             description: string
@@ -1218,7 +1223,7 @@ components:
           schema:
             type: object
             properties:
-              componentId:
+              taskId:
                 type: string
               dependencies:
                 type: array
@@ -1235,7 +1240,7 @@ components:
           schema:
             type: object
             properties:
-              componentId:
+              taskId:
                 type: string
               dependencies:
                 type: array
@@ -1266,18 +1271,18 @@ components:
               name:
                 type: string
   responses:
-    Component:
+    Task:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Component"
-    Components:
+            $ref: "#/components/schemas/Task"
+    Tasks:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Components"
+            $ref: "#/components/schemas/Tasks"
     Parameters:
       description: ""
       content:

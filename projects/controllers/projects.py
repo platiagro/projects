@@ -5,6 +5,8 @@ from datetime import datetime
 from os.path import join
 
 from sqlalchemy import func
+from sqlalchemy import asc, desc, text
+
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -12,20 +14,10 @@ from .experiments import create_experiment
 from ..database import db_session
 from ..models import Dependency, Experiment, Operator, Project
 from ..object_storage import remove_objects
-from .utils import uuid_alpha, list_objects, objects_uuid
+from .utils import uuid_alpha, list_objects, objects_uuid, text_to_list
 
 
-def list_projects():
-    """Lists all projects from our database.
-
-    Returns:
-        A list of all projects sorted by name in natural sort order.
-    """
-
-    projects = db_session.query(Project).all()
-    # sort the list in place, using natural sort
-    projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
-    return [project.as_dict() for project in projects]
+NOT_FOUND = NotFound('The specified project does not exist')
 
 
 def create_project(name=None, **kwargs):
@@ -63,7 +55,7 @@ def get_project(uuid):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise NotFound("The specified project does not exist")
+        raise NOT_FOUND
 
     return project.as_dict()
 
@@ -72,7 +64,7 @@ def update_project(uuid, **kwargs):
     """Updates a project in our database.
 
     Args:
-        uuid (str): the project uuid to look for in our database.
+        uuid(str): the project uuid to look for in our database.
         **kwargs: arbitrary keyword arguments.
 
     Returns:
@@ -81,7 +73,7 @@ def update_project(uuid, **kwargs):
     project = Project.query.get(uuid)
 
     if project is None:
-        raise NotFound("The specified project does not exist")
+        raise NOT_FOUND
 
     if "name" in kwargs:
         name = kwargs["name"]
@@ -110,11 +102,12 @@ def delete_project(uuid):
 
     Returns:
         The deletion result.
+
     """
     project = Project.query.get(uuid)
 
     if project is None:
-        raise NotFound("The specified project does not exist")
+        raise NOT_FOUND
 
     experiments = Experiment.query.filter(Experiment.project_id == uuid).all()
     for experiment in experiments:
@@ -137,21 +130,49 @@ def delete_project(uuid):
     return {"message": "Project deleted"}
 
 
-def pagination_projects(name, page, page_size):
-    """The numbers of items to return maximum 100 """
-    if page_size > 100:
-        page_size = 100
-    query = db_session.query(Project)
-    if name:
-        query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
-    if page != 0:
-        query = query.order_by(Project.name).limit(page_size).offset((page - 1) * page_size)
-    projects = query.all()
-    projects.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
-    return [project.as_dict() for project in projects]
+def pagination_projects(name, page, page_size, order):
+    """Pagination ordering
+    Args:
+        name(str): name of the project to be searched
+        page(int): page number
+        page_size(int) : record numbers
+        order(str): order by Ex: uuid asc
+
+    Returns:
+        A list of projects.
+
+    """
+    try:
+        query = db_session.query(Project)
+        if name:
+            query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
+        if page == 0 and order is None:
+            query = query.order_by(text('projects.name'))
+        elif page and order is None:
+            query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
+        else:
+            query = pagination_ordering(query, page_size, page, order)
+        projects = query.all()
+        total_rows = total_rows_projects(name)
+        response = {
+            'total': total_rows,
+            'projects': [project.as_dict() for project in projects]
+        }
+    except Exception:
+        raise BadRequest('It was not possible to sort with the specified parameter')
+    return response
 
 
 def total_rows_projects(name):
+    """Returns the total number of records.
+
+    Args:
+        name(str):name to be searched
+
+    Returns:
+        total records.
+
+    """
     query = db_session.query(func.count(Project.uuid))
     if name:
         query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
@@ -159,7 +180,16 @@ def total_rows_projects(name):
     return rows
 
 
-def delete_projects(project_ids):
+def delete_multiple_projects(project_ids):
+    """Delete multiple projects.
+
+    Args:
+        project_ids(str): list of projects
+
+    Returns:
+        message
+
+    """
     total_elements = len(project_ids)
     all_projects_ids = list_objects(project_ids)
     if total_elements < 1:
@@ -168,26 +198,89 @@ def delete_projects(project_ids):
     experiments = db_session.query(Experiment).filter(Experiment.project_id.in_(objects_uuid(projects))).all()
     operators = db_session.query(Operator).filter(Operator.experiment_id.in_(objects_uuid(experiments))) \
         .all()
-    if len(projects) != total_elements:
-        raise NotFound("The specified project does not exist")
-    if len(operators) != 0:
-        # remove dependencies
-        for operator in operators:
-            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
-        # remove operators
-        operators = Operator.__table__.delete().where(Operator.experiment_id.in_(objects_uuid(experiments)))
-        db_session.execute(operators)
-    if len(experiments) != 0:
-        deleted_experiments = Experiment.__table__.delete().where(Experiment.uuid.in_(objects_uuid(experiments)))
-        db_session.execute(deleted_experiments)
-    deleted_projects = Project.__table__.delete().where(Project.uuid.in_(all_projects_ids))
-    db_session.execute(deleted_projects)
+    session = pre_delete(db_session, projects, total_elements, operators, experiments, all_projects_ids)
     for experiment in experiments:
         prefix = join("experiments", experiment.uuid)
         try:
             remove_objects(prefix=prefix)
         except Exception:
             pass
-    db_session.commit()
-
+    session.commit()
     return {"message": "Successfully removed projects"}
+
+
+def pre_delete(db_session, projects, total_elements, operators, experiments, all_projects_ids):
+    """SQL form for deleting multiple projects.
+
+    Args:
+        db_session(db_session): db_session
+        projects(projects): list projects
+        total_elements(int): total elements found in projects
+        operators:(operators): list operators
+        experiments(experiments): list experiments
+        all_projects_ids(str): uuids of projects to be excluded
+
+    Returns:
+        db_session
+
+    """
+    if len(projects) != total_elements:
+        raise NOT_FOUND
+    if len(operators):
+        # remove dependencies
+        for operator in operators:
+            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
+        # remove operators
+        operators = Operator.__table__.delete().where(Operator.experiment_id.in_(objects_uuid(experiments)))
+        db_session.execute(operators)
+    if len(experiments):
+        deleted_experiments = Experiment.__table__.delete().where(Experiment.uuid.in_(objects_uuid(experiments)))
+        db_session.execute(deleted_experiments)
+    deleted_projects = Project.__table__.delete().where(Project.uuid.in_(all_projects_ids))
+    db_session.execute(deleted_projects)
+    return db_session
+
+
+def pagination_ordering(query, page_size, page, order_by):
+    """Pagination ordering.
+
+    Args:
+        query(str): query
+        page_size(int) : record numbers
+        page(int): page number
+        order_by(str): order by
+
+    Returns:
+        A list of projects.
+
+    """
+    if order_by:
+        order = text_to_list(order_by)
+        if page:
+            if order[1]:
+                if 'desc' == order[1].lower():
+                    query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+                if 'asc' == order[1].lower():
+                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+        else:
+            query = uninformed_page(query, order)
+    return query
+
+
+def uninformed_page(query, order):
+    """If the page number was not informed just sort by the column name entered.
+
+    Args:
+        query(str): query
+        order(str): order by
+
+    Returns:
+        query
+
+    """
+    if order[1]:
+        if 'asc' == order[1].lower():
+            query = query.order_by(asc(text(f'projects.{order[0]}')))
+        if 'desc' == order[1].lower():
+            query = query.order_by(desc(text(f'projects.{order[0]}')))
+    return query

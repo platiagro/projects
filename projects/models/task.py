@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Component model."""
+"""Task model."""
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, JSON, String, Text
@@ -12,8 +12,8 @@ from ..utils import to_camel_case
 DEFAULT_IMAGE = 'platiagro/platiagro-notebook-image:0.1.0'
 
 
-class Component(Base):
-    __tablename__ = "components"
+class Task(Base):
+    __tablename__ = "tasks"
     uuid = Column(String(255), primary_key=True)
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
@@ -27,7 +27,7 @@ class Component(Base):
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
-        return f"<Component {self.name}>"
+        return f"<Task {self.name}>"
 
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}

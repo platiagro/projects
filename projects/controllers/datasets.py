@@ -9,13 +9,20 @@ from .utils import raise_if_experiment_does_not_exist, \
     raise_if_project_does_not_exist, pagination_datasets
 from ..models import Operator
 
+
 def get_dataset_pagination(project_id, experiment_id, operator_id, page, page_size):
     """Retrieves a dataset as json.
 
     Args:
-        project_id (str): the project uuid.
-        experiment_id (str): the experiment uuid.
-        operator_id (str): the operator uuid.
+        project_id(str): the project uuid
+        experiment_id(str): the experiment uuid
+        operator_id(str): the operator uuid
+        page_size(int) : record numbers
+        page(int): page number
+
+    Returns:
+        Paged dataset
+
     """
     raise_if_project_does_not_exist(project_id)
 
@@ -42,4 +49,4 @@ def get_dataset_pagination(project_id, experiment_id, operator_id, page, page_si
         del dataset["index"]
     except FileNotFoundError as e:
         raise NotFound(str(e))
-    return pagination_datasets(page=page, page_size=page_size, elements=dataset)
+    return pagination_datasets(page=page, page_size=page_size, dataset=dataset)
