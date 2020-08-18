@@ -8,6 +8,7 @@ from pkgutil import get_data
 
 from minio.error import ResponseError
 from sqlalchemy import func
+from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError
 from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
@@ -17,25 +18,15 @@ from ..jupyter import create_new_file, set_workspace, list_files, delete_file
 from ..models import Task
 from ..object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
-from .utils import uuid_alpha
+from .utils import uuid_alpha, text_to_list
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
 DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
-TASK_NOT_EXIST_MSG = "The specified task does not exist"
 
-
-def list_tasks():
-    """Lists all tasks from our database.
-
-    Returns:
-        A list of all tasks sorted by name in natural sort order.
-    """
-    tasks = db_session.query(Task).all()
-    # sort the list in place, using natural sort
-    tasks.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
-    return [task.as_dict() for task in tasks]
+NOT_FOUND = NotFound("The specified task does not exist")
+BAD_REQUEST = BadRequest('It was not possible to sort with the specified parameter')
 
 
 def create_task(**kwargs):
@@ -91,7 +82,7 @@ def create_task(**kwargs):
     if experiment_notebook is None:
         experiment_notebook = EXPERIMENT_NOTEBOOK
 
-    if deployment_notebook is None:
+    if deployment_notebook is None and "DATSETS" not in tags:
         deployment_notebook = DEPLOYMENT_NOTEBOOK
 
     # The new task must have its own task_id, experiment_id and operator_id.
@@ -100,9 +91,12 @@ def create_task(**kwargs):
     init_notebook_metadata(task_id, deployment_notebook, experiment_notebook)
 
     # saves new notebooks to object storage
-    obj_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
-    deployment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
-    put_object(obj_name, dumps(deployment_notebook).encode())
+    if "DATASETS" not in tags:
+        obj_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
+        deployment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
+        put_object(obj_name, dumps(deployment_notebook).encode())
+    else:
+        deployment_notebook_path = None
 
     obj_name = f"{PREFIX}/{task_id}/Experiment.ipynb"
     experiment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
@@ -151,7 +145,7 @@ def get_task(uuid):
     task = Task.query.get(uuid)
 
     if task is None:
-        raise NotFound(TASK_NOT_EXIST_MSG)
+        raise NOT_FOUND
 
     return task.as_dict()
 
@@ -179,7 +173,7 @@ def update_task(uuid, **kwargs):
     task = Task.query.get(uuid)
 
     if task is None:
-        raise NotFound(TASK_NOT_EXIST_MSG)
+        raise NOT_FOUND
 
     if "name" in kwargs:
         name = kwargs["name"]
@@ -228,7 +222,7 @@ def delete_task(uuid):
     task = Task.query.get(uuid)
 
     if task is None:
-        raise NotFound(TASK_NOT_EXIST_MSG)
+        raise NOT_FOUND
 
     try:
         source_name = f"{PREFIX}/{uuid}"
@@ -332,10 +326,11 @@ def create_jupyter_files(task_name, deployment_notebook, experiment_notebook):
     path = f"{PREFIX}/{task_name}"
     create_new_file(path=path, is_folder=True)
 
-    deployment_notebook_path = join(path, "Deployment.ipynb")
-    create_new_file(path=deployment_notebook_path,
-                    is_folder=False,
-                    content=deployment_notebook)
+    if deployment_notebook is not None:
+        deployment_notebook_path = join(path, "Deployment.ipynb")
+        create_new_file(path=deployment_notebook_path,
+                        is_folder=False,
+                        content=deployment_notebook)
 
     experiment_notebook_path = join(path, "Experiment.ipynb")
     create_new_file(path=experiment_notebook_path,
@@ -359,31 +354,107 @@ def init_notebook_metadata(task_id, deployment_notebook, experiment_notebook):
     operator_id = uuid_alpha()
 
     # sets these values to notebooks
-    deployment_notebook["metadata"]["experiment_id"] = experiment_id
-    deployment_notebook["metadata"]["operator_id"] = operator_id
-    deployment_notebook["metadata"]["task_id"] = task_id
-    experiment_notebook["metadata"]["experiment_id"] = experiment_id
-    experiment_notebook["metadata"]["operator_id"] = operator_id
-    experiment_notebook["metadata"]["task_id"] = task_id
+    if deployment_notebook is not None:
+        deployment_notebook["metadata"]["experiment_id"] = experiment_id
+        deployment_notebook["metadata"]["operator_id"] = operator_id
+        deployment_notebook["metadata"]["task_id"] = task_id
+    if experiment_notebook is not None:
+        experiment_notebook["metadata"]["experiment_id"] = experiment_id
+        experiment_notebook["metadata"]["operator_id"] = operator_id
+        experiment_notebook["metadata"]["task_id"] = task_id
 
 
-def pagination_tasks(name, page, page_size):
-    """The numbers of items to return maximum 100 """
-    if page_size > 100:
-        page_size = 100
-    query = db_session.query(Task)
-    if name:
-        query = query.filter(Task.name.ilike(func.lower(f"%{name}%")))
-    if page != 0:
-        query = query.order_by(Task.name).limit(page_size).offset((page - 1) * page_size)
-    tasks = query.all()
-    tasks.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
-    return [task.as_dict() for task in tasks]
+def pagination_tasks(name, page, page_size, order):
+    """ Tasks Paging.
+    Args:
+        name(str): name of the task to be searched
+        page(int): page number
+        page_size(int) : record numbers
+        order(str): order by Ex: uuid asc
+    Returns:
+        List of tasks
+    """
+    try:
+        query = db_session.query(Task)
+        if name:
+            query = query.filter(Task.name.ilike(func.lower(f"%{name}%")))
+        if page == 0 and order is None:
+            query = query.order_by(Task.name)
+        elif page and order is None:
+            query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
+        else:
+            query = pagination_ordering(query, page_size, page, order)
+        tasks = query.all()
+        total_rows = total_rows_tasks(name)
+        response = {
+            'total': total_rows,
+            'tasks': [task.as_dict() for task in tasks]
+        }
+    except Exception:
+        raise BadRequest('It was not possible to sort with the specified parameter')
+    return response
 
 
 def total_rows_tasks(name):
+    """Counts the total number of records.
+
+    Args:
+        name(str): name
+
+    Returns:
+        rows
+
+    """
     query = db_session.query(func.count(Task.uuid))
     if name:
         query = query.filter(Task.name.ilike(func.lower(f"%{name}%")))
     rows = query.scalar()
     return rows
+
+
+def pagination_ordering(query, page_size, page, order_by):
+    """Pagination ordering.
+
+    Args:
+        query (query): the project uuid.
+        page(int): page number
+        page_size(int) : record numbers
+        order_by(str): order by
+
+    Returns:
+        query
+
+    """
+    try:
+        order = text_to_list(order_by)
+        if page:
+            if 'asc' == order[1].lower():
+                query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+            if 'desc' == order[1].lower():
+                query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+        else:
+            query = uninformed_page(query, order)
+        return query
+    except Exception:
+        raise BAD_REQUEST
+
+
+def uninformed_page(query, order):
+    """If the page number was not informed just sort by the column name entered
+
+    Args:
+        query(query): query
+        order(str): order
+
+    Returns:
+        query
+
+    """
+    try:
+        if 'asc' == order[1].lower():
+            query = query.order_by(asc(text(f'{order[0]}')))
+        elif 'desc' == order[1].lower():
+            query = query.order_by(desc(text(f'{order[0]}')))
+        return query
+    except Exception:
+        raise BAD_REQUEST

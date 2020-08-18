@@ -115,7 +115,27 @@ class TestTasks(TestCase):
             rv = c.get("/tasks")
             result = rv.get_json()
             self.assertIsInstance(result["tasks"], list)
-            self.assertEqual(result["total"], 2)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get("/tasks?order=uuid asc")
+            result = rv.get_json()
+            self.assertIsInstance(result["tasks"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get("/tasks?page=1&order=uuid asc")
+            result = rv.get_json()
+            self.assertIsInstance(result["tasks"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get(f"/tasks?name={NAME}&page=1&order=uuid asc")
+            result = rv.get_json()
+            self.assertIsInstance(result["tasks"], list)
+            self.assertIsInstance(result["total"], int)
+
+            rv = c.get(f"/tasks?name={NAME}&page=1&page_size=10&order=name desc")
+            result = rv.get_json()
+            self.assertIsInstance(result["tasks"], list)
+            self.assertIsInstance(result["total"], int)
 
     def test_create_task(self):
         with app.test_client() as c:

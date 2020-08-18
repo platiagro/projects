@@ -2,6 +2,7 @@
 """Shared functions."""
 import random
 import uuid
+import re
 
 from werkzeug.exceptions import NotFound
 
@@ -74,32 +75,40 @@ def uuid_alpha() -> str:
     return uuid_
 
 
-def pagination_datasets(page, page_size, elements):
+def pagination_datasets(page, page_size, dataset):
+    """pagination of datasets.
+
+    Args:
+        page_size(int) : record numbers
+        page(int): page number
+        dataset(json): data to be paged
+
+    Returns:
+        Paged dataset
+
+    """
     try:
         count = 0
-        new_elements = []
-        total_elements = len(elements['data'])
-        """The numbers of items to return maximum 100 """
-        if page_size > 100:
-            page_size = 100
+        new_datasets = []
+        total_elements = len(dataset['data'])
         page = (page * page_size) - page_size
         for i in range(page, total_elements):
-            new_elements.append(elements['data'][i])
+            new_datasets.append(dataset['data'][i])
             count += 1
             if page_size == count:
                 response = {
-                    'columns': elements['columns'],
-                    'data': new_elements,
-                    'total': len(elements['data'])
+                    'columns': dataset['columns'],
+                    'data': new_datasets,
+                    'total': len(dataset['data'])
                 }
                 return response
-        if len(new_elements) == 0:
+        if len(new_datasets) == 0:
             raise NotFound("The informed page does not contain records")
         else:
             response = {
-                'columns': elements['columns'],
-                'data': new_elements,
-                'total': len(elements['data'])
+                'columns': dataset['columns'],
+                'data': new_datasets,
+                'total': len(dataset['data'])
             }
             return response
     except RuntimeError:
@@ -107,6 +116,15 @@ def pagination_datasets(page, page_size, elements):
 
 
 def list_objects(list_object):
+    """Extracting uuids from informed json.
+
+    Args:
+        list_object(json): string containing the project's uuid
+
+    Returns:
+        all uuids
+
+    """
     all_projects_ids = []
     for i in list_object:
         all_projects_ids.append(i['uuid'])
@@ -114,7 +132,34 @@ def list_objects(list_object):
 
 
 def objects_uuid(list_object):
-    ids = []
+    """Recovering uuids from information projects.
+
+    Args:
+        list_object(projects): list of projects
+
+    Returns:
+        all uuids
+
+    """
+    uuids = []
     for i in list_object:
-        ids.append(i.uuid)
-    return ids
+        uuids.append(i.uuid)
+    return uuids
+
+
+def text_to_list(order):
+    """Turn text into list.
+
+    Args:
+        order(str): column name and order
+
+    Returns:
+        list
+
+    """
+    order_by = []
+    regex = re.compile(r'\[(.*?)\]|(\S+)')
+    matches = regex.finditer(order)
+    for match in matches:
+        order_by.append(match.group(2)) if match.group(1) is None else order_by.append(match.group(1))
+    return order_by

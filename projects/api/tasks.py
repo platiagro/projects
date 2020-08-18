@@ -15,15 +15,12 @@ bp = Blueprint("tasks", __name__)
 @bp.paginate(page=0)
 def handle_list_tasks(pagination_parameters):
     name = request.args.get('name')
-    total_rows = total_rows_tasks(name=name)
+    order = request.args.get('order')
+    pagination_parameters.item_count = 0
     tasks = pagination_tasks(name=name,
                              page=pagination_parameters.page,
-                             page_size=pagination_parameters.page_size)
-    response = {
-        'total': total_rows,
-        'tasks': tasks
-    }
-    return jsonify(response)
+                             page_size=pagination_parameters.page_size, order=order)
+    return jsonify(tasks)
 
 
 @bp.route("", methods=["POST"])
