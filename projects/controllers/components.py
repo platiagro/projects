@@ -26,7 +26,7 @@ DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
 
 NOT_FOUND = NotFound("The specified component does not exist")
-NOT_BAD_REQUEST = BadRequest('It was not possible to sort with the specified parameter')
+BAD_REQUEST = BadRequest('It was not possible to sort with the specified parameter')
 
 
 def create_component(**kwargs):
@@ -422,7 +422,7 @@ def pagination_ordering(query, page_size, page, order_by):
             query = uninformed_page(query, order)
         return query
     except Exception:
-        raise NOT_BAD_REQUEST
+        raise BAD_REQUEST
 
 
 def uninformed_page(query, order):
@@ -443,4 +443,4 @@ def uninformed_page(query, order):
             query.order_by(desc(text(f'{order[0]}')))
         return query
     except Exception:
-        raise NOT_BAD_REQUEST
+        raise BAD_REQUEST
