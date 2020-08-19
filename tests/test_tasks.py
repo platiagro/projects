@@ -14,7 +14,7 @@ from projects.jupyter import JUPYTER_ENDPOINT, COOKIES, HEADERS
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 TASK_ID = str(uuid_alpha())
-NAME = "foo"
+NAME = "name foo"
 DESCRIPTION = "long foo"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
@@ -160,7 +160,7 @@ class TestTasks(TestCase):
 
             # task name already exists
             rv = c.post("/tasks", json={
-                "name": "foo",
+                "name": "name foo",
             })
             result = rv.get_json()
             expected = {"message": "a task with that name already exists"}
@@ -343,7 +343,7 @@ class TestTasks(TestCase):
             result = rv.get_json()
             expected = {
                 "uuid": TASK_ID,
-                "name": "foo",
+                "name": "name foo",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
                 "image": IMAGE,
@@ -391,19 +391,19 @@ class TestTasks(TestCase):
 
             # update task using the same name
             rv = c.patch(f"/tasks/{TASK_ID}", json={
-                "name": "foo",
+                "name": "name foo",
             })
             result = rv.get_json()
             self.assertEqual(rv.status_code, 200)
 
             # update task name
             rv = c.patch(f"/tasks/{TASK_ID}", json={
-                "name": "bar",
+                "name": "new name foo",
             })
             result = rv.get_json()
             expected = {
                 "uuid": TASK_ID,
-                "name": "bar",
+                "name": "new name foo",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
                 "image": IMAGE,
@@ -427,7 +427,7 @@ class TestTasks(TestCase):
             result = rv.get_json()
             expected = {
                 "uuid": TASK_ID,
-                "name": "bar",
+                "name": "new name foo",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
                 "image": IMAGE,
@@ -451,7 +451,7 @@ class TestTasks(TestCase):
             result = rv.get_json()
             expected = {
                 "uuid": TASK_ID,
-                "name": "bar",
+                "name": "new name foo",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
                 "image": IMAGE,
@@ -475,7 +475,7 @@ class TestTasks(TestCase):
             result = rv.get_json()
             expected = {
                 "uuid": TASK_ID,
-                "name": "bar",
+                "name": "new name foo",
                 "description": DESCRIPTION,
                 "commands": COMMANDS,
                 "image": IMAGE,
