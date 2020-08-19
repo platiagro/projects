@@ -86,22 +86,22 @@ class TestTasks(TestCase):
         )
 
         session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks/{TASK_ID}",
+            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks/{NAME}",
             data=dumps({"type": "directory", "content": None}),
         )
 
         session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks/{TASK_ID}/Deployment.ipynb",
+            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks/{NAME}/Deployment.ipynb",
             data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
         )
 
         session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks/{TASK_ID}/Experiment.ipynb",
+            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks/{NAME}/Experiment.ipynb",
             data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
         )
 
     def tearDown(self):
-        prefix = f"tasks/{TASK_ID}"
+        prefix = f"tasks/{NAME}"
         for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
             MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
