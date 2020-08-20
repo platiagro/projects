@@ -14,7 +14,7 @@ from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
 
 from ..database import db_session
-from ..jupyter import create_new_file, set_workspace, list_files, delete_file
+from ..jupyter import create_new_file, list_files, delete_file, update_folder_name
 from ..models import Task
 from ..object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
@@ -198,14 +198,20 @@ def update_task(uuid, **kwargs):
         put_object(obj_name, dumps(kwargs["deployment_notebook"]).encode())
         del kwargs["deployment_notebook"]
 
-    data = {"updated_at": datetime.utcnow()}
-    data.update(kwargs)
+    # store the name to use it after update
+    old_name = task.name
 
     try:
+        data = {"updated_at": datetime.utcnow()}
+        data.update(kwargs)
         db_session.query(Task).filter_by(uuid=uuid).update(data)
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
+
+    # update jupyter folder name if name changed
+    if old_name != task.name:
+        update_folder_name(f"{PREFIX}/{old_name}", f"{PREFIX}/{task.name}")
 
     return task.as_dict()
 
@@ -336,8 +342,6 @@ def create_jupyter_files(task_name, deployment_notebook, experiment_notebook):
     create_new_file(path=experiment_notebook_path,
                     is_folder=False,
                     content=experiment_notebook)
-
-    set_workspace(deployment_notebook_path, experiment_notebook_path)
 
 
 def init_notebook_metadata(task_id, deployment_notebook, experiment_notebook):
