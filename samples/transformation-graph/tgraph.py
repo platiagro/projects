@@ -370,6 +370,12 @@ class TGraph:
 
         for trans_type in ['numeric', 'grouped', 'time']:
 
+            if trans_type == 'grouped' and (self.group_var is None or self.group_var not in list(self.G.nodes[0]['solution'].columns)):
+                continue
+
+            elif trans_type == 'time' and self.date_name is None:
+                continue
+
             for trans in self.transformations[trans_type]:
 
                 # Apply the transformation
