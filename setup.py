@@ -16,15 +16,16 @@ with open("requirements.txt") as f:
 
 extras = {
     "testing": [
-        "pytest>=4.4.0",
-        "pytest-xdist==1.31.0",
-        "pytest-cov==2.8.1",
-        "flake8==3.7.9",
-        "papermill[s3]==2.1.1",
-        "scikit-learn==0.22.2.post1",
-        "category-encoders==2.2.2",
         "auto-sklearn==0.7.0",
+        "category-encoders==2.2.2",
+        "flake8==3.7.9",
+        "matplotlib===3.3.0",
         "networkx==2.4"
+        "papermill[s3]==2.1.1",
+        "pytest>=4.4.0",
+        "pytest-cov==2.8.1",
+        "pytest-xdist==1.31.0",
+        "scikit-learn==0.22.2.post1",
     ]
 }
 
