@@ -15,9 +15,11 @@ OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 
 IRIS_DATASET = "iris.csv"
+IRIS_DATASET_FULL_PATH = f"/tmp/data/{IRIS_DATASET}"
 IRIS_TARGET = "Species"
 
 TITANIC_DATASET = "titanic.csv"
+TITANIC_DATASET_FULL_PATH = f"/tmp/data/{TITANIC_DATASET}"
 TITANIC_TARGET = "Survived"
 
 
@@ -41,14 +43,14 @@ class TestClassifiers(TestCase):
 
         makedirs("/tmp/data", exist_ok=True)
 
-        with open(f"/tmp/data/{IRIS_DATASET}", "wb") as f:
+        with open(IRIS_DATASET_FULL_PATH, "wb") as f:
             f.write(iris_content)
 
         # Creates mock titanic dataset
         creates_mock_dataset(TITANIC_DATASET, titanic_content)
         creates_titanic_metadata(TITANIC_DATASET)
 
-        with open(f"/tmp/data/{TITANIC_DATASET}", "wb") as f:
+        with open(TITANIC_DATASET_FULL_PATH, "wb") as f:
             f.write(titanic_content)
 
     def tearDown(self):
@@ -67,9 +69,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/automl-classifier/Deployment.ipynb"
 
         # Run with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -80,9 +82,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/logistic-regression/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -93,9 +95,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/mlp-classifier/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -106,9 +108,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/random-forest-classifier/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -119,9 +121,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/svc/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component

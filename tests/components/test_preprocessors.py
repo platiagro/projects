@@ -14,15 +14,19 @@ OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 
 IRIS_DATASET = "iris.csv"
+IRIS_DATASET_FULL_PATH = f"/tmp/data/{IRIS_DATASET}"
 IRIS_TARGET = "Species"
 
 TITANIC_DATASET = "titanic.csv"
+TITANIC_DATASET_FULL_PATH = f"/tmp/data/{TITANIC_DATASET}"
 TITANIC_TARGET = "Survived"
 
 EUCALYPTUS_DATASET = "eucalyptus.csv"
+EUCALYPTUS_DATASET_FULL_PATH = f"/tmp/data/{EUCALYPTUS_DATASET}"
 EUCALYPTUS_TARGET = "Utility"
 
 BOSTON_DATASET = "boston.csv"
+BOSTON_DATASET_FULL_PATH = f"/tmp/data/{BOSTON_DATASET}"
 BOSTON_TARGET = "medv"
 
 
@@ -52,28 +56,28 @@ class TestClassifiers(TestCase):
 
         makedirs("/tmp/data", exist_ok=True)
 
-        with open(f"/tmp/data/{IRIS_DATASET}", "wb") as f:
+        with open(IRIS_DATASET_FULL_PATH, "wb") as f:
             f.write(iris_content)
 
         # Creates mock titanic dataset
         creates_mock_dataset(TITANIC_DATASET, titanic_content)
         creates_titanic_metadata(TITANIC_DATASET)
 
-        with open(f"/tmp/data/{TITANIC_DATASET}", "wb") as f:
+        with open(TITANIC_DATASET_FULL_PATH, "wb") as f:
             f.write(titanic_content)
 
         # Creates mock eucalyptus dataset
         creates_mock_dataset(EUCALYPTUS_DATASET, eucalyptus_content)
         creates_eucalyptus_metadata(EUCALYPTUS_DATASET)
 
-        with open(f"/tmp/data/{EUCALYPTUS_DATASET}", "wb") as f:
+        with open(EUCALYPTUS_DATASET_FULL_PATH, "wb") as f:
             f.write(eucalyptus_content)
 
         # Creates mock boston dataset
         creates_mock_dataset(BOSTON_DATASET, boston_content)
         creates_boston_metadata(BOSTON_DATASET)
 
-        with open(f"/tmp/data/{BOSTON_DATASET}", "wb") as f:
+        with open(BOSTON_DATASET_FULL_PATH, "wb") as f:
             f.write(boston_content)
 
     def tearDown(self):
@@ -95,9 +99,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/filter-selection/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET,
                                                                        features_to_filter=["PassengerId"]))
 
@@ -109,9 +113,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/imputer/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -122,9 +126,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/normalizer/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -135,9 +139,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/pre-selection/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -148,9 +152,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/robust-scaler/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -161,9 +165,9 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/variance-threshold/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH,
                                                                        target=IRIS_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -174,7 +178,7 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/rfe-selector/Deployment.ipynb"
 
         # Run test with boston dataset
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET_FULL_PATH,
                                                                        target=BOSTON_TARGET))
 
         # Deploy component
@@ -185,7 +189,7 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/simulated-annealing/Deployment.ipynb"
 
         # Run test with eucalyptus dataset
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=EUCALYPTUS_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=EUCALYPTUS_DATASET_FULL_PATH,
                                                                        target=EUCALYPTUS_TARGET))
 
         # Deploy component
@@ -196,8 +200,8 @@ class TestClassifiers(TestCase):
         deployment_path = "samples/transformation-graph/Deployment.ipynb"
 
         # Run test with eucalyptus dataset
-        execute_notebook(experiment_path, "/dev/null",
-                         parameters=dict(dataset=EUCALYPTUS_DATASET, target=EUCALYPTUS_TARGET))
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=EUCALYPTUS_DATASET_FULL_PATH,
+                                                                       target=EUCALYPTUS_TARGET))
 
         # Deploy component
         execute_notebook(deployment_path, "/dev/null")

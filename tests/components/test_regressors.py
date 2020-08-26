@@ -14,9 +14,11 @@ OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 
 BOSTON_DATASET = "boston.csv"
+BOSTON_DATASET_FULL_PATH = f"/tmp/data/{BOSTON_DATASET}"
 BOSTON_TARGET = "medv"
 
 TITANIC_DATASET = "titanic.csv"
+TITANIC_DATASET_FULL_PATH = f"/tmp/data/{TITANIC_DATASET}"
 TITANIC_TARGET = "Fare"
 
 
@@ -40,14 +42,14 @@ class TestRegressors(TestCase):
 
         makedirs("/tmp/data", exist_ok=True)
 
-        with open(f"/tmp/data/{BOSTON_DATASET}", "wb") as f:
+        with open(BOSTON_DATASET_FULL_PATH, "wb") as f:
             f.write(boston_content)
 
         # Creates mock titanic dataset
         creates_mock_dataset(TITANIC_DATASET, titanic_content)
         creates_titanic_metadata(TITANIC_DATASET)
 
-        with open(f"/tmp/data/{TITANIC_DATASET}", "wb") as f:
+        with open(TITANIC_DATASET_FULL_PATH, "wb") as f:
             f.write(titanic_content)
 
     def tearDown(self):
@@ -66,9 +68,9 @@ class TestRegressors(TestCase):
         deployment_path = "samples/automl-regressor/Deployment.ipynb"
 
         # Run test with boston and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET_FULL_PATH,
                                                                        target=BOSTON_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -79,10 +81,10 @@ class TestRegressors(TestCase):
         deployment_path = "samples/linear-regression/Deployment.ipynb"
 
         # Run test with boston and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET_FULL_PATH,
                                                                        target=BOSTON_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET,
-                                                                       target=BOSTON_TARGET))
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
+                                                                       target=TITANIC_TARGET))
 
         # Deploy component
         execute_notebook(deployment_path, "/dev/null")
@@ -92,9 +94,9 @@ class TestRegressors(TestCase):
         deployment_path = "samples/mlp-regressor/Deployment.ipynb"
 
         # Run test with boston and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET_FULL_PATH,
                                                                        target=BOSTON_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -105,9 +107,9 @@ class TestRegressors(TestCase):
         deployment_path = "samples/random-forest-regressor/Deployment.ipynb"
 
         # Run test with boston and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET_FULL_PATH,
                                                                        target=BOSTON_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component
@@ -118,9 +120,9 @@ class TestRegressors(TestCase):
         deployment_path = "samples/svr/Deployment.ipynb"
 
         # Run test with boston and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=BOSTON_DATASET_FULL_PATH,
                                                                        target=BOSTON_TARGET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET,
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH,
                                                                        target=TITANIC_TARGET))
 
         # Deploy component

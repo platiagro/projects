@@ -14,7 +14,9 @@ OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 
 IRIS_DATASET = "iris.csv"
+IRIS_DATASET_FULL_PATH = f"/tmp/data/{IRIS_DATASET}"
 TITANIC_DATASET = "titanic.csv"
+TITANIC_DATASET_FULL_PATH = f"/tmp/data/{TITANIC_DATASET}"
 
 
 class TestClusterers(TestCase):
@@ -33,14 +35,14 @@ class TestClusterers(TestCase):
 
         makedirs("/tmp/data", exist_ok=True)
 
-        with open(f"/tmp/data/{IRIS_DATASET}", "wb") as f:
+        with open(IRIS_DATASET_FULL_PATH, "wb") as f:
             f.write(iris_content)
 
         # Creates iris dataset
         creates_mock_dataset(IRIS_DATASET, iris_content)
         creates_iris_metadata(IRIS_DATASET)
 
-        with open(f"/tmp/data/{TITANIC_DATASET}", "wb") as f:
+        with open(TITANIC_DATASET_FULL_PATH, "wb") as f:
             f.write(titanic_content)
 
         # Creates titanic dataset
@@ -63,8 +65,8 @@ class TestClusterers(TestCase):
         deployment_path = "samples/kmeans-clustering/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET))
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH))
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH))
 
         # Deploy component
         execute_notebook(deployment_path, "/dev/null")
@@ -74,8 +76,8 @@ class TestClusterers(TestCase):
         deployment_path = "samples/isolation-forest-clustering/Deployment.ipynb"
 
         # Run test with iris and titanic datasets
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET))
-        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET))
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IRIS_DATASET_FULL_PATH))
+        execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=TITANIC_DATASET_FULL_PATH))
 
         # Deploy component
         execute_notebook(deployment_path, "/dev/null")
