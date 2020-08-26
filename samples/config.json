@@ -1,6 +1,6 @@
 [
     {
-        "name": "AutoML Classifier",
+        "name": "Classificador AutoML",
         "description": "Utiliza o auto-sklearn para obter um ou mais modelos classificadores já otimizados",
         "experimentNotebook": "/samples/automl-classifier/Experiment.ipynb",
         "deploymentNotebook": "/samples/automl-classifier/Deployment.ipynb",
@@ -9,7 +9,7 @@
         ]
     },
     {
-        "name": "AutoML Regressor",
+        "name": "Regressor AutoML",
         "description": "Utiliza o auto-sklearn para obter um ou mais modelos regressores já otimizados",
         "experimentNotebook": "/samples/automl-regressor/Experiment.ipynb",
         "deploymentNotebook": "/samples/automl-regressor/Deployment.ipynb",
@@ -18,7 +18,7 @@
         ]
     },
     {
-        "name": "Linear Regression",
+        "name": "Regressão Linear",
         "description": "Treina um modelo de Regressão Linear para regressão usando scikit-learn",
         "experimentNotebook": "/samples/linear-regression/Experiment.ipynb",
         "deploymentNotebook": "/samples/linear-regression/Deployment.ipynb",
@@ -27,7 +27,7 @@
         ]
     },
     {
-        "name": "Logistic Regression",
+        "name": "Regressão Logística",
         "description": "Treina um modelo de Regressão Logística para classificação usando scikit-learn",
         "experimentNotebook": "/samples/logistic-regression/Experiment.ipynb",
         "deploymentNotebook": "/samples/logistic-regression/Deployment.ipynb",
@@ -36,7 +36,7 @@
         ]
     },
     {
-        "name": "MLP Classifier",
+        "name": "Classificador MLP",
         "description": "Treina um modelo classificador Multi-layer Perceptron (MLP) usando scikit-learn",
         "experimentNotebook": "/samples/mlp-classifier/Experiment.ipynb",
         "deploymentNotebook": "/samples/mlp-classifier/Deployment.ipynb",
@@ -45,7 +45,7 @@
         ]
     },
     {
-        "name": "MLP Regressor",
+        "name": "Regressor MLP",
         "description": "Treina um modelo regressor Multi-layer Perceptron (MLP) usando scikit-learn",
         "experimentNotebook": "/samples/mlp-regressor/Experiment.ipynb",
         "deploymentNotebook": "/samples/mlp-regressor/Deployment.ipynb",
@@ -54,7 +54,7 @@
         ]
     },
     {
-        "name": "Random Forest Classifier",
+        "name": "Classificador Random Forest",
         "description": "Treina um modelo classificador Random Forest usando scikit-learn",
         "experimentNotebook": "/samples/random-forest-classifier/Experiment.ipynb",
         "deploymentNotebook": "/samples/random-forest-classifier/Deployment.ipynb",
@@ -63,7 +63,7 @@
         ]
     },
     {
-        "name": "Random Forest Regressor",
+        "name": "Regressor Random Forest",
         "description": "Treina um modelo regressor Random Forest usando scikit-learn",
         "experimentNotebook": "/samples/random-forest-regressor/Experiment.ipynb",
         "deploymentNotebook": "/samples/random-forest-regressor/Deployment.ipynb",
@@ -72,7 +72,7 @@
         ]
     },
     {
-        "name": "SVC",
+        "name": "Classificador SVM",
         "description": "Treina um modelo Support Vector Classification usando scikit-learn",
         "experimentNotebook": "/samples/svc/Experiment.ipynb",
         "deploymentNotebook": "/samples/svc/Deployment.ipynb",
@@ -81,7 +81,7 @@
         ]
     },
     {
-        "name": "SVR",
+        "name": "Regressor SVM",
         "description": "Treina um modelo Support Vector Regression usando scikit-learn",
         "experimentNotebook": "/samples/svr/Experiment.ipynb",
         "deploymentNotebook": "/samples/svr/Deployment.ipynb",
@@ -90,7 +90,7 @@
         ]
     },
     {
-        "name": "KMeans",
+        "name": "Clusterização KMeans",
         "description": "Treina um modelo KMeans para clusterização usando scikit-learn",
         "experimentNotebook": "/samples/kmeans-clustering/Experiment.ipynb",
         "deploymentNotebook": "/samples/kmeans-clustering/Deployment.ipynb",
@@ -99,7 +99,7 @@
         ]
     },
     {
-        "name": "Isolation Forest",
+        "name": "Detecção de Anomalias por Isolation Forest",
         "description": "Treina um modelo Isolation Forest para detecção de anomalias usando scikit-learn",
         "experimentNotebook": "/samples/isolation-forest-clustering/Experiment.ipynb",
         "deploymentNotebook": "/samples/isolation-forest-clustering/Deployment.ipynb",
@@ -108,7 +108,7 @@
         ]
     },
     {
-        "name": "Normalizer",
+        "name": "Normalizador de Amostras",
         "description": "Normaliza amostras individualmente para o modelo de norma de unidade usando scikit-learn",
         "experimentNotebook": "/samples/normalizer/Experiment.ipynb",
         "deploymentNotebook": "/samples/normalizer/Deployment.ipynb",
@@ -117,7 +117,7 @@
         ]
     },
     {
-        "name": "Imputer",
+        "name": "Imputação de Valores Faltantes",
         "description": "Imputa valores ausentes usando média, mediana ou mais frequente",
         "experimentNotebook": "/samples/imputer/Experiment.ipynb",
         "deploymentNotebook": "/samples/imputer/Deployment.ipynb",
@@ -126,8 +126,8 @@
         ]
     },
     {
-        "name": "Variance Threshold",
-        "description": "Remove todos os recursos de baixa variação",
+        "name": "Seleção de Atributos por Limiar de Variância",
+        "description": "Remove todos os atributos de baixa variância",
         "experimentNotebook": "/samples/variance-threshold/Experiment.ipynb",
         "deploymentNotebook": "/samples/variance-threshold/Deployment.ipynb",
         "tags": [
@@ -135,7 +135,7 @@
         ]
     },
     {
-        "name": "Robust Scaler",
+        "name": "Scaler Robusto",
         "description": "Dimensiona features usando estatísticas robustas para outliers",
         "experimentNotebook": "/samples/robust-scaler/Experiment.ipynb",
         "deploymentNotebook": "/samples/robust-scaler/Deployment.ipynb",
@@ -153,7 +153,7 @@
         ]
     },
     {
-        "name": "Pre Selection",
+        "name": "Seleção de Atributos por Correlação",
         "description": "Remove todas as features de baixa variação e altamente correlacionadas",
         "experimentNotebook": "/samples/pre-selection/Experiment.ipynb",
         "deploymentNotebook": "/samples/pre-selection/Deployment.ipynb",
@@ -180,7 +180,7 @@
         ]
     },
     {
-        "name": "Filter Selection",
+        "name": "Seleção Manual de Atributos",
         "description": "Remove as features específicas do conjunto de dados",
         "experimentNotebook": "/samples/filter-selection/Experiment.ipynb",
         "deploymentNotebook": "/samples/filter-selection/Deployment.ipynb",
@@ -189,7 +189,7 @@
         ]
     },
     {
-        "name": "Recursive Feature Elimination",
+        "name": "Seleção de Atributos por Método de Eliminação Recursiva",
         "description": "Realiza a seleção de features baseado no método de eliminação recursiva usando um estimador Random Forest",
         "experimentNotebook": "/samples/rfe-selector/Experiment.ipynb",
         "deploymentNotebook": "/samples/rfe-selector/Deployment.ipynb",
@@ -198,7 +198,7 @@
         ]
     },
     {
-        "name": "Descriptive Analysis",
+        "name": "Análise Descritiva",
         "description": "Gera estatísticas descritivas para um determinado conjunto de dados",
         "experimentNotebook": "/samples/descriptive-analysis/Experiment.ipynb",
         "tags": [
@@ -206,15 +206,15 @@
         ]
     },
 		{
-        "name": "Conjunto de dados",
-        "description": "Conjunto de dados",
+        "name": "Conjunto de Dados",
+        "description": "Importa arquivos para utilização em experimentos.",
         "experimentNotebook": "/samples/datasets/Experiment.ipynb",
         "tags": [
             "DATASETS"
         ]
     },
 	    {
-        "name": "Grouping High Cardinality Features",
+        "name": "Agrupamento de Atributos Categóricos",
         "description": "Faz o agrupamento de features categóricas com elevado número de classes",
         "experimentNotebook": "/samples/grouping-categorical-features/Experiment.ipynb",
         "tags": [
