@@ -25,7 +25,7 @@ extras = {
         "category-encoders==2.2.2",
         "auto-sklearn==0.7.0",
         "networkx==2.4",
-        "matplotlib===3.3.0"
+        "matplotlib==3.3.0"
     ]
 }
 
