@@ -170,3 +170,28 @@ def read_parameters_from_source(source):
                 pass
 
     return parameters
+
+
+def get_notebook_output(experiment_id: str, operator_id: str):
+    """Get Experiment notebook output.
+
+    Args:
+        experiment_id (str): experiment id
+        operator_id (str): operator id
+
+    Returns:
+        dict: a dictonary with output.
+    """
+    operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
+    r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
+
+    notebook_content = loads(r.decode("utf-8"))["content"]
+
+    for cell in notebook_content["cells"]:
+        try:
+            metadata = cell["metadata"]["papermill"]
+
+            if metadata["exception"] and metadata["status"] == "failed":
+                return next(iter(cell["outputs"]))
+        except KeyError:
+            pass
