@@ -184,9 +184,14 @@ def get_notebook_output(experiment_id: str, operator_id: str):
         dict: a dictonary with output.
     """
     operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
-    r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
 
-    notebook_content = loads(r.decode("utf-8"))["content"]
+    try:
+        r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
+        notebook_content = loads(r.decode("utf-8"))["content"]
+    except HTTPError as e:
+        status_code = e.response.status_code
+        if status_code == 404:
+            raise FileNotFoundError("The specified notebook does not exist")
 
     for cell in notebook_content["cells"]:
         try:
@@ -196,16 +201,14 @@ def get_notebook_output(experiment_id: str, operator_id: str):
                 output = cell["outputs"][0]
                 traceback = remove_ansi_escapes(output["traceback"])
 
-                response = {
+                return {
                     "cellType": cell["cell_type"],
-                    "executionCount": cell["executionCount"],
+                    "executionCount": cell["execution_count"],
                     "output": {
                         "errorName": output["ename"],
                         "errorValue": output["evalue"],
                         "traceback": traceback,
                     }
                 }
-
-                return response
         except KeyError:
             pass
