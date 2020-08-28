@@ -1,5 +1,21 @@
 # -*- coding: utf-8 -*-
 import re
+from string import Template
+
+JUPYTER_OUTPUT = Template("""{
+    "cellType":  $cell_type,
+    "executionCount": $count,
+    "output": {
+        "errorName": $type,
+        "errorValue": $value,
+        "traceback": $traceback,
+    }
+}""")
+
+
+def remove_ansi_escapes(traceback):
+    compiler = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    return [compiler.sub('', line) for line in traceback]
 
 
 def to_camel_case(snake_str):

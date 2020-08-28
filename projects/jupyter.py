@@ -11,6 +11,7 @@ from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 
 from .object_storage import BUCKET_NAME, get_object
+from .utils import JUPYTER_OUTPUT, remove_ansi_escapes
 
 JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
@@ -192,6 +193,17 @@ def get_notebook_output(experiment_id: str, operator_id: str):
             metadata = cell["metadata"]["papermill"]
 
             if metadata["exception"] and metadata["status"] == "failed":
-                return next(iter(cell["outputs"]))
+                output = next(iter(cell["outputs"]))
+                traceback = remove_ansi_escapes(output["traceback"])
+
+                response = JUPYTER_OUTPUT.substitute({
+                    "cell_type": metadata["cell_type"],
+                    "count": cell["executionCount"],
+                    "errorName": output["ename"],
+                    "errorValue": output["evalue"],
+                    "traceback": traceback,
+                })
+
+                return response
         except KeyError:
             pass

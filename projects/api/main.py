@@ -38,7 +38,7 @@ app.register_blueprint(metrics_blueprint,
                        url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/metrics")
 app.register_blueprint(templates_blueprint, url_prefix="/templates")
 app.register_blueprint(logs_blueprint,
-                       url_prefix="/projects/<projects_id>/experiments/<experiment_id>/operators/<operator_id>/logs")
+                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/logs")
 
 
 @app.teardown_appcontext
