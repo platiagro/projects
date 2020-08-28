@@ -1,21 +1,13 @@
 # -*- coding: utf-8 -*-
 import re
-from string import Template
-
-JUPYTER_OUTPUT = Template("""{
-    "cellType":  $cell_type,
-    "executionCount": $count,
-    "output": {
-        "errorName": $type,
-        "errorValue": $value,
-        "traceback": $traceback,
-    }
-}""")
+from itertools import chain
 
 
 def remove_ansi_escapes(traceback):
     compiler = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
-    return [compiler.sub('', line) for line in traceback]
+    readable_text = [compiler.sub('', line).split('\n') for line in traceback]
+
+    return list(chain.from_iterable(readable_text))
 
 
 def to_camel_case(snake_str):
