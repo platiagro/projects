@@ -13,7 +13,7 @@ from requests.packages.urllib3.util.retry import Retry
 from .object_storage import BUCKET_NAME, get_object
 from .utils import remove_ansi_escapes
 
-JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://localhost:8888")
+JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
 
 COOKIES = {"_xsrf": "token"}
