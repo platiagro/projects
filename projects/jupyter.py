@@ -13,7 +13,7 @@ from requests.packages.urllib3.util.retry import Retry
 from .object_storage import BUCKET_NAME, get_object
 from .utils import remove_ansi_escapes
 
-JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
+JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://localhost:8888")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
 
 COOKIES = {"_xsrf": "token"}
@@ -174,14 +174,14 @@ def read_parameters_from_source(source):
 
 
 def get_notebook_output(experiment_id: str, operator_id: str):
-    """Get Experiment notebook output.
+    """Get notebook logs from Jupyter Api.
 
     Args:
         experiment_id (str): experiment id
         operator_id (str): operator id
 
-    Returns:
-        dict: a dictonary with output.
+    Raises:
+        FileNotFoundError: notebook does not exist
     """
     operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
 
@@ -212,3 +212,5 @@ def get_notebook_output(experiment_id: str, operator_id: str):
                 }
         except KeyError:
             pass
+
+    return {"message": "Notebook finished with status completed"}
