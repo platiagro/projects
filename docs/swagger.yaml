@@ -619,6 +619,36 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/logs:
+    get:
+      summary: "Get logs from Jupyter Notebook"
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Logs"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /templates:
     get:
       summary: "List all templates sorted by name in natural sort order."
@@ -964,6 +994,43 @@ components:
           - type: object
             example:
               metric_name: metric_value
+    Logs:
+      type: object
+      properties:
+        cellType:
+          type: string
+          example: "code"
+        executionCount:
+          type: integer
+          example: 6
+        output:
+          type: object
+          properties:
+            errorName:
+              type: string
+              example: "KeyError"
+            errorValue:
+              type: string
+              example: "['species']"
+            traceback:
+              type: array
+              items:
+                type: string
+                example:
+                  - "---------------------------------------------------------------------------"
+                  - "KeyError                                  Traceback (most recent call last)"
+                  - "<ipython-input-6-3c08f8d95ae4> in <module>"
+                  - "----> 1 df.dropna(subset = [target],inplace=True)"
+                  - "      2 y = df[target].to_numpy()"
+                  - ""
+                  - "/opt/conda/lib/python3.7/site-packages/pandas/core/frame.py in dropna(self, axis, how, thresh, subset, inplace)"
+                  - "   4857                 check = indices == -1"
+                  - "   4858                 if check.any():"
+                  - "-> 4859                     raise KeyError(list(np.compress(check, subset)))"
+                  - "   4860                 agg_obj = self.take(indices, axis=agg_axis)"
+                  - "   4861 "
+                  - ""
+                  - "KeyError: ['species']"
     Template:
       type: object
       properties:
@@ -1348,6 +1415,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Metrics"
+    Logs:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Logs"
     Template:
       description: ""
       content:

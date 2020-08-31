@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 import re
+from itertools import chain
+
+
+def remove_ansi_escapes(traceback):
+    compiler = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    readable_text = [compiler.sub('', line).split('\n') for line in traceback]
+
+    return list(chain.from_iterable(readable_text))
 
 
 def to_camel_case(snake_str):
