@@ -20,6 +20,8 @@ EXPERIMENT_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1}
 POSITION = 0
+POSITION_X = 0.3
+POSITION_Y = 0.5
 PARAMETERS = {}
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
@@ -58,26 +60,30 @@ class TestOperators(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
+            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}',"
+            f" '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID_3}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID_3}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}',"
+            f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID_4}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID_4}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}',"
+            f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -196,6 +202,8 @@ class TestOperators(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
+                "position_x": 3.4,
+                "position_y": 5.9,
             })
             result = rv.get_json()
             expected = {
@@ -203,6 +211,8 @@ class TestOperators(TestCase):
                 "taskId": TASK_ID,
                 "dependencies": [],
                 "parameters": {},
+                "positionX": 3.4,
+                "positionY": 5.9,
                 "status": "Setted up",
             }
             # uuid, created_at, updated_at are machine-generated
@@ -223,6 +233,8 @@ class TestOperators(TestCase):
                 "taskId": TASK_ID,
                 "dependencies": [],
                 "parameters": {"coef": 1.0},
+                "positionX": None,
+                "positionY": None,
                 "status": "Unset",
             }
             # uuid, created_at, updated_at are machine-generated
@@ -242,6 +254,8 @@ class TestOperators(TestCase):
                 "experimentId": EXPERIMENT_ID,
                 "taskId": TASK_ID,
                 "dependencies": [],
+                "positionX": None,
+                "positionY": None,
                 "parameters": {},
                 "status": "Setted up",
             }
