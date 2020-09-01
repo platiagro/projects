@@ -325,6 +325,8 @@ class TestOperators(TestCase):
                 "taskId": TASK_ID,
                 "dependencies": [OPERATOR_ID_2],
                 "parameters": PARAMETERS,
+                "positionX": POSITION_X,
+                "positionY": POSITION_Y,
                 "createdAt": CREATED_AT_ISO,
                 "status": "Setted up",
             }
@@ -344,6 +346,8 @@ class TestOperators(TestCase):
                 "taskId": TASK_ID,
                 "dependencies": [OPERATOR_ID_2],
                 "parameters": {"coef": 0.2},
+                "positionX": POSITION_X,
+                "positionY": POSITION_Y,
                 "createdAt": CREATED_AT_ISO,
                 "status": "Unset",
             }
@@ -363,6 +367,8 @@ class TestOperators(TestCase):
                 "taskId": TASK_ID,
                 "dependencies": [OPERATOR_ID_3],
                 "parameters": {"coef": 0.2},
+                "positionX": POSITION_X,
+                "positionY": POSITION_Y,
                 "createdAt": CREATED_AT_ISO,
                 "status": "Unset",
             }
