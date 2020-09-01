@@ -264,7 +264,9 @@ class TestExperiments(TestCase):
                 "taskId": TASK_ID,
                 "experimentId": EXPERIMENT_ID,
                 "parameters": {},
-                "dependencies": []
+                "dependencies": [],
+                "positionX":None,
+                "positionY":None
             }]
             machine_generated = ["uuid", "createdAt", "updatedAt"]
             for attr in machine_generated:
