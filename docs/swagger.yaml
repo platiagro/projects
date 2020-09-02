@@ -906,6 +906,12 @@ components:
         experimentId:
           type: string
           format: uuid
+        positionX:
+          type: number
+          format: float
+        positionY:
+          type: number
+          format: float
         createdAt:
           type: string
           format: date-time
@@ -1262,6 +1268,12 @@ components:
                 type: object
                 additionalProperties:
                   type: string
+              positionX:
+                type: number
+                format: float
+              positionY:
+                type: number
+                format: float
     TemplatePost:
       content:
         application/json:
