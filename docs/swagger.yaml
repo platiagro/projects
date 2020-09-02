@@ -1239,6 +1239,12 @@ components:
                 type: object
                 additionalProperties:
                   type: string
+              positionX:
+                type: number
+                format: float
+              positionY:
+                type: number
+                format: float
     OperatorPatch:
       content:
         application/json:

@@ -202,8 +202,8 @@ class TestOperators(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
-                "position_x": 3.4,
-                "position_y": 5.9,
+                "positionX": 3.4,
+                "positionY": 5.9,
             })
             result = rv.get_json()
             expected = {
