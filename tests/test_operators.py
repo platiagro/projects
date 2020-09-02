@@ -338,6 +338,8 @@ class TestOperators(TestCase):
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "parameters": {"coef": 0.2},
+                "positionX": 100,
+                "positionY": 200,
             })
             result = rv.get_json()
             expected = {
@@ -346,8 +348,8 @@ class TestOperators(TestCase):
                 "taskId": TASK_ID,
                 "dependencies": [OPERATOR_ID_2],
                 "parameters": {"coef": 0.2},
-                "positionX": POSITION_X,
-                "positionY": POSITION_Y,
+                "positionX": 100.0,
+                "positionY": 200.0,
                 "createdAt": CREATED_AT_ISO,
                 "status": "Unset",
             }
@@ -367,8 +369,8 @@ class TestOperators(TestCase):
                 "taskId": TASK_ID,
                 "dependencies": [OPERATOR_ID_3],
                 "parameters": {"coef": 0.2},
-                "positionX": POSITION_X,
-                "positionY": POSITION_Y,
+                "positionX": 100.0,
+                "positionY": 200.0,
                 "createdAt": CREATED_AT_ISO,
                 "status": "Unset",
             }
