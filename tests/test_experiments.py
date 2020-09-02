@@ -30,7 +30,9 @@ CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
-OPERATORS = [{"uuid": OPERATOR_ID, "taskId": TASK_ID, "dependencies": [],"parameters": PARAMETERS, "experimentId": EXPERIMENT_ID, "createdAt": CREATED_AT_ISO, "updatedAt": UPDATED_AT_ISO}]
+OPERATORS = [{"uuid": OPERATOR_ID, "taskId": TASK_ID, "dependencies": [],"parameters": PARAMETERS,
+              "positionX": None, "positionY":None, "experimentId": EXPERIMENT_ID, "createdAt": CREATED_AT_ISO,
+              "updatedAt": UPDATED_AT_ISO}]
 
 EXPERIMENT_ID_2 = str(uuid_alpha())
 NAME_2 = "foo 2"
@@ -262,7 +264,9 @@ class TestExperiments(TestCase):
                 "taskId": TASK_ID,
                 "experimentId": EXPERIMENT_ID,
                 "parameters": {},
-                "dependencies": []
+                "dependencies": [],
+                "positionX":None,
+                "positionY":None
             }]
             machine_generated = ["uuid", "createdAt", "updatedAt"]
             for attr in machine_generated:
