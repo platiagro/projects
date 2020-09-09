@@ -198,8 +198,11 @@ def get_notebook_output(experiment_id: str, operator_id: str):
             metadata = cell["metadata"]["papermill"]
 
             if metadata["exception"] and metadata["status"] == "failed":
-                output = cell["outputs"][0]
-                traceback = remove_ansi_escapes(output["traceback"])
+                for output in cell["outputs"]:
+                    if output["output_type"] == "error":
+                        error_log = output["traceback"]
+
+                traceback = remove_ansi_escapes(error_log)
 
                 return {
                     "cellType": cell["cell_type"],
