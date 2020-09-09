@@ -79,8 +79,8 @@ def create_experiment(name=None, project_id=None, copy_from=None):
                 "task_id": operator.task_id,
                 "parameters": operator.parameters,
                 "dependencies": operator.dependencies,
-                "positionX": operator.position_x,
-                "positionY": operator.position_y
+                "position_x": operator.position_x,
+                "position_y": operator.position_y
             }
             create_operator(project_id, experiment.uuid, **kwargs)
     # create an operator with the dataset task

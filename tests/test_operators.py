@@ -211,8 +211,8 @@ class TestOperators(TestCase):
                 "taskId": TASK_ID,
                 "dependencies": [],
                 "parameters": {},
-                "positionX": None,
-                "positionY": None,
+                "positionX": 3.4,
+                "positionY": 5.9,
                 "status": "Setted up",
             }
             # uuid, created_at, updated_at are machine-generated
