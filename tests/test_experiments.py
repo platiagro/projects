@@ -154,6 +154,20 @@ class TestExperiments(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
+            """Copy operators for a given experiment"""
+            with app.test_client() as c:
+                rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
+                    "name": "test3",
+                    "copy_from": f"{EXPERIMENT_ID_2}"
+                })
+                self.assertEqual(rv.status_code, 200)
+
+                rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
+                    "name": "test3",
+                    "copy_from": f"4555"
+                })
+                self.assertEqual(rv.status_code, 400)
+
     def test_get_experiment(self):
         with app.test_client() as c:
             rv = c.get(f"/projects/foo/experiments/{EXPERIMENT_ID}")

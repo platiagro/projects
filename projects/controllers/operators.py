@@ -45,7 +45,7 @@ def list_operators(project_id, experiment_id):
 
 
 def create_operator(project_id, experiment_id, task_id=None,
-                    parameters=None, dependencies=None, position_x=None, position_y=None , **kwargs):
+                    parameters=None, dependencies=None, positionX=None, positionY=None , **kwargs):
     """Creates a new operator in our database.
 
     The new operator is added to the end of the operator list.
@@ -56,51 +56,54 @@ def create_operator(project_id, experiment_id, task_id=None,
         task_id (str): the task uuid.
         parameters (dict): the parameters dict.
         dependencies (list): the dependencies array.
-        position_x (float): position x.
-        position_y (float): position y.
+        positionX (float): position x.
+        positionY (float): position y.
 
 
     Returns:
         The operator info.
     """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_experiment_does_not_exist(experiment_id)
-
-    if not isinstance(task_id, str):
-        raise BadRequest("taskId is required")
-
     try:
-        raise_if_task_does_not_exist(task_id)
-    except NotFound as e:
-        raise BadRequest(e.description)
+        raise_if_project_does_not_exist(project_id)
+        raise_if_experiment_does_not_exist(experiment_id)
 
-    if parameters is None:
-        parameters = {}
+        if not isinstance(task_id, str):
+            raise BadRequest("taskId is required")
 
-    raise_if_parameters_are_invalid(parameters)
+        try:
+            raise_if_task_does_not_exist(task_id)
+        except NotFound as e:
+            raise BadRequest(e.description)
 
-    if dependencies is None:
-        dependencies = []
+        if parameters is None:
+            parameters = {}
 
-    raise_if_dependencies_are_invalid(dependencies)
+        raise_if_parameters_are_invalid(parameters)
 
-    operator = Operator(uuid=uuid_alpha(),
-                        experiment_id=experiment_id,
-                        task_id=task_id,
-                        parameters=parameters,
-                        position_x=position_x,
-                        position_y=position_y)
-    db_session.add(operator)
-    db_session.commit()
+        if dependencies is None:
+            dependencies = []
 
-    check_status(operator)
+        raise_if_dependencies_are_invalid(dependencies)
 
-    operator_as_dict = operator.as_dict()
+        operator = Operator(uuid=uuid_alpha(),
+                            experiment_id=experiment_id,
+                            task_id=task_id,
+                            parameters=parameters,
+                            position_x=positionX,
+                            position_y=positionY)
+        db_session.add(operator)
+        db_session.commit()
 
-    update_dependencies(operator_as_dict['uuid'], dependencies)
+        check_status(operator)
 
-    operator_as_dict["dependencies"] = dependencies
+        operator_as_dict = operator.as_dict()
 
+        update_dependencies(operator_as_dict['uuid'], dependencies)
+
+        if dependencies:
+            operator_as_dict["dependencies"] = dependencies
+    except Exception as e:
+        raise e
     return operator_as_dict
 
 
