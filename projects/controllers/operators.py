@@ -99,8 +99,7 @@ def create_operator(project_id, experiment_id, task_id=None,
 
     update_dependencies(operator_as_dict['uuid'], dependencies)
 
-    if dependencies:
-        operator_as_dict["dependencies"] = dependencies
+    operator_as_dict["dependencies"] = dependencies
     return operator_as_dict
 
 
