@@ -1280,7 +1280,7 @@ components:
             properties:
               name:
                 type: string
-              copy_from:
+              copyFrom:
                 type: string
     ExperimentPatch:
       content:
