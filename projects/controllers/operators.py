@@ -45,7 +45,7 @@ def list_operators(project_id, experiment_id):
 
 
 def create_operator(project_id, experiment_id, task_id=None,
-                    parameters=None, dependencies=None, position_x=None, position_y=None , **kwargs):
+                    parameters=None, dependencies=None, position_x=None, position_y=None, **kwargs):
     """Creates a new operator in our database.
 
     The new operator is added to the end of the operator list.
@@ -100,7 +100,6 @@ def create_operator(project_id, experiment_id, task_id=None,
     update_dependencies(operator_as_dict['uuid'], dependencies)
 
     operator_as_dict["dependencies"] = dependencies
-
     return operator_as_dict
 
 

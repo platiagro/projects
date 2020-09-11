@@ -37,6 +37,7 @@ OPERATORS = [{"uuid": OPERATOR_ID, "taskId": TASK_ID, "dependencies": [],"parame
 EXPERIMENT_ID_2 = str(uuid_alpha())
 NAME_2 = "foo 2"
 POSITION_2 = 1
+NAME_COPYFROM = 'TEST3'
 
 
 class TestExperiments(TestCase):
@@ -85,13 +86,13 @@ class TestExperiments(TestCase):
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
+        text = f"DELETE FROM operators WHERE experiment_id in ('{EXPERIMENT_ID}','{EXPERIMENT_ID_2}')"
         conn.execute(text)
 
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_2}'"
+        text = f"DELETE FROM operators WHERE experiment_id = (SELECT uuid  FROM experiments where name = '{NAME_COPYFROM}')"
         conn.execute(text)
 
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
+        text = f"DELETE FROM experiments WHERE project_id in ('{PROJECT_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
@@ -153,6 +154,20 @@ class TestExperiments(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+            """Copy operators for a given experiment"""
+            with app.test_client() as c:
+                rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
+                    "name": f"{NAME_COPYFROM}",
+                    "copy_from": f"{EXPERIMENT_ID}"
+                })
+                self.assertEqual(rv.status_code, 200)
+
+                rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
+                    "name": f"{NAME_COPYFROM}",
+                    "copy_from": f"4555"
+                })
+                self.assertEqual(rv.status_code, 400)
 
     def test_get_experiment(self):
         with app.test_client() as c:

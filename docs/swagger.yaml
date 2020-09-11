@@ -1280,6 +1280,8 @@ components:
             properties:
               name:
                 type: string
+              copyFrom:
+                type: string
     ExperimentPatch:
       content:
         application/json:

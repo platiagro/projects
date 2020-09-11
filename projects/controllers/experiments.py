@@ -16,6 +16,9 @@ from .operators import create_operator
 from .utils import raise_if_project_does_not_exist, uuid_alpha
 
 
+NOTFOUND = NotFound("The specified experiment does not exist")
+
+
 def list_experiments(project_id):
     """Lists all experiments under a project.
 
@@ -34,7 +37,7 @@ def list_experiments(project_id):
     return [experiment.as_dict() for experiment in experiments]
 
 
-def create_experiment(name=None, project_id=None):
+def create_experiment(name=None, project_id=None, copy_from=None):
     """Creates a new experiment in our database and adjusts the position of others.
 
     The new experiment is added to the end of the experiment list.
@@ -42,6 +45,7 @@ def create_experiment(name=None, project_id=None):
     Args:
         name (str): the experiment name.
         project_id (str): the project uuid.
+        copy_from (str): the copy_from uuid.
     Returns:
         The experiment info.
     """
@@ -67,9 +71,20 @@ def create_experiment(name=None, project_id=None):
                   experiment_id=experiment.uuid,
                   new_position=sys.maxsize)  # will add to end of list
 
-    # create an operator with the dataset task
     tasks = get_tasks_by_tag("DATASETS")
-    if len(tasks) > 0:
+    if copy_from:
+        experiment_find = find_by_experiment_id(experiment_id=copy_from)
+        for operator in experiment_find['operators']:
+            kwargs = {
+                "task_id": operator.task_id,
+                "parameters": operator.parameters,
+                "dependencies": operator.dependencies,
+                "position_x": operator.position_x,
+                "position_y": operator.position_y
+            }
+            create_operator(project_id, experiment.uuid, **kwargs)
+    # create an operator with the dataset task
+    elif len(tasks) > 0:
         task = tasks[0]
         create_operator(project_id, experiment.uuid, task_id=task['uuid'])
 
@@ -91,7 +106,7 @@ def get_experiment(uuid, project_id):
     experiment = Experiment.query.get(uuid)
 
     if experiment is None:
-        raise NotFound("The specified experiment does not exist")
+        raise NOTFOUND
 
     return experiment.as_dict()
 
@@ -111,7 +126,7 @@ def update_experiment(uuid, project_id, **kwargs):
     experiment = Experiment.query.get(uuid)
 
     if experiment is None:
-        raise NotFound("The specified experiment does not exist")
+        raise NOTFOUND
 
     if "name" in kwargs:
         name = kwargs["name"]
@@ -184,7 +199,7 @@ def delete_experiment(uuid, project_id):
     experiment = Experiment.query.get(uuid)
 
     if experiment is None:
-        raise NotFound("The specified experiment does not exist")
+        raise NOTFOUND
 
     # remove dependencies
     operators = db_session.query(Operator).filter(Operator.experiment_id == uuid).all()
@@ -236,3 +251,19 @@ def fix_positions(project_id, experiment_id=None, new_position=None):
 
         db_session.query(Experiment).filter_by(uuid=experiment.uuid).update(data)
     db_session.commit()
+
+
+def find_by_experiment_id(experiment_id):
+    """Search the experiment by id
+    Args:
+        experiment_id (str): the experiment uuid
+
+    Returns:
+        List of experiment
+    """
+    experiment = Experiment.query.get(experiment_id)
+
+    if experiment is None:
+        raise NOTFOUND
+
+    return experiment.as_dict()
