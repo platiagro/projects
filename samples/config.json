@@ -206,7 +206,7 @@
         ]
     },
 	{
-        "name": "Conjunto de Dados",
+        "name": "Upload de arquivo",
         "description": "Importa arquivos para utilização em experimentos.",
         "experimentNotebook": "/samples/datasets/Experiment.ipynb",
         "tags": [

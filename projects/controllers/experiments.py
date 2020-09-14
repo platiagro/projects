@@ -85,7 +85,7 @@ def create_experiment(name=None, project_id=None, copy_from=None):
             create_operator(project_id, experiment.uuid, **kwargs)
     # create an operator with the dataset task
     elif len(tasks) > 0:
-        task = [t for t in tasks if t['name'] == "Conjunto de Dados"][0]
+        task = [t for t in tasks if t['name'] == "Upload de arquivo"][0]
         create_operator(project_id, experiment.uuid, task_id=task['uuid'])
 
     return experiment.as_dict()
