@@ -205,15 +205,21 @@
             "DESCRIPTIVE_STATISTICS"
         ]
     },
-		{
-        "name": "Conjunto de Dados",
+	{
+        "name": "Upload de arquivo",
         "description": "Importa arquivos para utilização em experimentos.",
-        "experimentNotebook": "/samples/datasets/Experiment.ipynb",
         "tags": [
             "DATASETS"
         ]
     },
-	    {
+	{
+        "name": "Google Drive",
+        "description": "Importa arquivos do Google Drive para utilização em experimentos.",
+        "tags": [
+            "DATASETS"
+        ]
+    },
+	{
         "name": "Agrupamento de Atributos Categóricos",
         "description": "Faz o agrupamento de features categóricas com elevado número de classes",
         "experimentNotebook": "/samples/grouping-categorical-features/Experiment.ipynb",

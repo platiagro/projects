@@ -71,7 +71,6 @@ def create_experiment(name=None, project_id=None, copy_from=None):
                   experiment_id=experiment.uuid,
                   new_position=sys.maxsize)  # will add to end of list
 
-    tasks = get_tasks_by_tag("DATASETS")
     if copy_from:
         experiment_find = find_by_experiment_id(experiment_id=copy_from)
         for operator in experiment_find['operators']:
@@ -83,10 +82,6 @@ def create_experiment(name=None, project_id=None, copy_from=None):
                 "position_y": operator.position_y
             }
             create_operator(project_id, experiment.uuid, **kwargs)
-    # create an operator with the dataset task
-    elif len(tasks) > 0:
-        task = tasks[0]
-        create_operator(project_id, experiment.uuid, task_id=task['uuid'])
 
     return experiment.as_dict()
 
