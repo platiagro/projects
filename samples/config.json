@@ -208,7 +208,6 @@
 	{
         "name": "Upload de arquivo",
         "description": "Importa arquivos para utilização em experimentos.",
-        "experimentNotebook": "/samples/datasets/Experiment.ipynb",
         "tags": [
             "DATASETS"
         ]
@@ -216,7 +215,6 @@
 	{
         "name": "Google Drive",
         "description": "Importa arquivos do Google Drive para utilização em experimentos.",
-        "experimentNotebook": "/samples/datasets-google/Experiment.ipynb",
         "tags": [
             "DATASETS"
         ]

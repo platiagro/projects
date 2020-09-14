@@ -39,13 +39,6 @@ NAME_2 = "foo 2"
 POSITION_2 = 1
 NAME_COPYFROM = 'TEST3'
 
-TASK_DATASET_ID = str(uuid_alpha())
-TASK_DATASET_NAME = "Upload de arquivo"
-TASK_DATASET_EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_DATASET_ID}/Experiment.ipynb"
-TASK_DATASET_DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_DATASET_ID}/Deployment.ipynb"
-TASK_DATASET_TAGS = ["DATASETS"]
-TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
-
 
 class TestExperiments(TestCase):
     def setUp(self):
@@ -54,12 +47,6 @@ class TestExperiments(TestCase):
         text = (
             f"INSERT INTO tasks (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
-        )
-        conn.execute(text)
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_DATASET_ID}', '{TASK_DATASET_NAME}', '{COMMANDS_JSON}', '{IMAGE}', '{TASK_DATASET_TAGS_JSON}', '{TASK_DATASET_EXPERIMENT_NOTEBOOK_PATH}', '{TASK_DATASET_DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -102,7 +89,7 @@ class TestExperiments(TestCase):
         text = f"DELETE FROM operators WHERE experiment_id in ('{EXPERIMENT_ID}','{EXPERIMENT_ID_2}')"
         conn.execute(text)
 
-        text = f"DELETE FROM operators WHERE 1 = 1"
+        text = f"DELETE FROM operators WHERE experiment_id = (SELECT uuid  FROM experiments where name = '{NAME_COPYFROM}')"
         conn.execute(text)
 
         text = f"DELETE FROM experiments WHERE project_id in ('{PROJECT_ID}')"
@@ -111,7 +98,7 @@ class TestExperiments(TestCase):
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM tasks WHERE uuid in ('{TASK_ID}','{TASK_DATASET_ID}')"
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
         conn.execute(text)
         conn.close()
 
@@ -157,11 +144,12 @@ class TestExperiments(TestCase):
                 "name": "test",
                 "projectId": PROJECT_ID,
                 "position": 2,
-                "isActive": IS_ACTIVE
+                "isActive": IS_ACTIVE,
+                "operators": [],
             }
-            # uuid, created_at, updated_at, operators are machine-generated
+            # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
-            machine_generated = ["uuid", "createdAt", "updatedAt", "operators"]
+            machine_generated = ["uuid", "createdAt", "updatedAt"]
             for attr in machine_generated:
                 self.assertIn(attr, result)
                 del result[attr]
