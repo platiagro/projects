@@ -231,11 +231,10 @@ def delete_task(uuid):
         raise NOT_FOUND
 
     try:
-        source_name = f"{PREFIX}/{uuid}"
-
         db_session.query(Task).filter_by(uuid=uuid).delete()
 
         # remove files and directory from jupyter notebook server
+        source_name = f"{PREFIX}/{task.name}"
         jupyter_files = list_files(source_name)
         if jupyter_files is not None:
             for jupyter_file in jupyter_files["content"]:
@@ -243,6 +242,7 @@ def delete_task(uuid):
             delete_file(source_name)
 
         # remove MinIO files and directory
+        source_name = f"{PREFIX}/{uuid}"
         minio_files = list_objects(source_name)
         for minio_file in minio_files:
             remove_object(minio_file.object_name)
