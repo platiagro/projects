@@ -79,10 +79,10 @@ def create_task(**kwargs):
     task_id = str(uuid_alpha())
 
     # loads a sample notebook if none was sent
-    if experiment_notebook is None:
+    if experiment_notebook is None and "DATASETS" not in tags:
         experiment_notebook = EXPERIMENT_NOTEBOOK
 
-    if deployment_notebook is None and "DATSETS" not in tags:
+    if deployment_notebook is None and "DATASETS" not in tags:
         deployment_notebook = DEPLOYMENT_NOTEBOOK
 
     # The new task must have its own task_id, experiment_id and operator_id.
@@ -92,20 +92,21 @@ def create_task(**kwargs):
 
     # saves new notebooks to object storage
     if "DATASETS" not in tags:
+        obj_name = f"{PREFIX}/{task_id}/Experiment.ipynb"
+        experiment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
+        put_object(obj_name, dumps(experiment_notebook).encode())
+
         obj_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
         deployment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
         put_object(obj_name, dumps(deployment_notebook).encode())
+
+        # create deployment notebook and experiment_notebook on jupyter
+        create_jupyter_files(task_name=name,
+                             deployment_notebook=dumps(deployment_notebook).encode(),
+                             experiment_notebook=dumps(experiment_notebook).encode())
     else:
+        experiment_notebook_path = None
         deployment_notebook_path = None
-
-    obj_name = f"{PREFIX}/{task_id}/Experiment.ipynb"
-    experiment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
-    put_object(obj_name, dumps(experiment_notebook).encode())
-
-    # create deployment notebook and experiment_notebook on jupyter
-    create_jupyter_files(task_name=name,
-                         deployment_notebook=dumps(deployment_notebook).encode(),
-                         experiment_notebook=dumps(experiment_notebook).encode())
 
     # create the commands to be executed on pipelines
     if commands is None or len(commands) == 0:
@@ -338,10 +339,11 @@ def create_jupyter_files(task_name, deployment_notebook, experiment_notebook):
                         is_folder=False,
                         content=deployment_notebook)
 
-    experiment_notebook_path = join(path, "Experiment.ipynb")
-    create_new_file(path=experiment_notebook_path,
-                    is_folder=False,
-                    content=experiment_notebook)
+    if experiment_notebook is not None:
+        experiment_notebook_path = join(path, "Experiment.ipynb")
+        create_new_file(path=experiment_notebook_path,
+                        is_folder=False,
+                        content=experiment_notebook)
 
 
 def init_notebook_metadata(task_id, deployment_notebook, experiment_notebook):

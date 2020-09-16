@@ -331,6 +331,33 @@ class TestTasks(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            # dataset task that has null notebooks
+            rv = c.post("/tasks", json={
+                "name": "fake dataset task",
+                "tags": ["DATASETS"],
+            })
+            result = rv.get_json()
+            expected = {
+                "name": "fake dataset task",
+                "description": None,
+                "tags": ["DATASETS"],
+                "isDefault": IS_DEFAULT,
+                "parameters": [],
+                "experimentNotebookPath": None,
+                "deploymentNotebookPath": None,
+                "image": 'platiagro/platiagro-notebook-image:0.1.0',
+            }
+            machine_generated = [
+                "uuid",
+                "createdAt",
+                "updatedAt",
+                "commands",
+            ]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
     def test_get_task(self):
         with app.test_client() as c:
             rv = c.get("/tasks/foo")

@@ -106,6 +106,9 @@ def read_parameters(path):
     Returns:
         list: a list of parameters (name, default, type, label, description).
     """
+    if not path:
+        return []
+
     object_name = path[len(f"minio://{BUCKET_NAME}/"):]
     try:
         experiment_notebook = loads(get_object(object_name).decode("utf-8"))
