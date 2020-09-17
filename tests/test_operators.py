@@ -36,6 +36,10 @@ CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
+TASK_DATASET_ID = str(uuid_alpha())
+TASK_DATASET_TAGS = ["DATASETS"]
+TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
+
 
 class TestOperators(TestCase):
     def setUp(self):
@@ -56,6 +60,12 @@ class TestOperators(TestCase):
         text = (
             f"INSERT INTO tasks (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_DATASET_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TASK_DATASET_TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -108,7 +118,7 @@ class TestOperators(TestCase):
         text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
+        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
@@ -257,6 +267,51 @@ class TestOperators(TestCase):
                 "positionX": None,
                 "positionY": None,
                 "parameters": {},
+                "status": "Setted up",
+            }
+            # uuid, created_at, updated_at are machine-generated
+            # we assert they exist, but we don't assert their values
+            machine_generated = ["uuid", "createdAt", "updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            # Test operator status Unset with dataset task withou params
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
+                "taskId": TASK_DATASET_ID
+            })
+            result = rv.get_json()
+            expected = {
+                "experimentId": EXPERIMENT_ID,
+                "taskId": TASK_DATASET_ID,
+                "dependencies": [],
+                "parameters": {},
+                "positionX": None,
+                "positionY": None,
+                "status": "Unset",
+            }
+            # uuid, created_at, updated_at are machine-generated
+            # we assert they exist, but we don't assert their values
+            machine_generated = ["uuid", "createdAt", "updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
+            # Test operator status Setted up with dataset task with param
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
+                "taskId": TASK_DATASET_ID,
+                "parameters": {"dataset": 'iris.csv'}
+            })
+            result = rv.get_json()
+            expected = {
+                "experimentId": EXPERIMENT_ID,
+                "taskId": TASK_DATASET_ID,
+                "dependencies": [],
+                "parameters": {"dataset": 'iris.csv'},
+                "positionX": None,
+                "positionY": None,
                 "status": "Setted up",
             }
             # uuid, created_at, updated_at are machine-generated
