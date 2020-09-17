@@ -6,7 +6,7 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
-from ..models import Operator
+from ..models import Operator, Task
 from .parameters import list_parameters
 from .dependencies import list_dependencies, list_next_operators, \
     create_dependency, delete_dependency
@@ -243,11 +243,19 @@ def check_status(operator):
     op_params_keys = [key for key in operator.parameters.keys() if operator.parameters[key] != '']
     total_op_params = len(op_params_keys)
 
-    # get task parameters and remove dataset parameter
-    comp_params = list_parameters(operator.task_id)
-    total_comp_params = len(comp_params)
+    task = Task.query.get(operator.task_id)
+    if "DATASETS" not in task.tags:
+        # get task parameters and remove dataset parameter
+        comp_params = list_parameters(operator.task_id)
+        comp_params = [parameter for parameter in comp_params if parameter['name'] != 'dataset']
+        total_comp_params = len(comp_params)
 
-    if total_op_params == total_comp_params:
-        operator.status = 'Setted up'
+        if total_op_params == total_comp_params:
+            operator.status = 'Setted up'
+        else:
+            operator.status = 'Unset'
     else:
-        operator.status = 'Unset'
+        if total_op_params == 1:
+            operator.status = 'Setted up'
+        else:
+            operator.status = 'Unset'
