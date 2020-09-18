@@ -66,22 +66,26 @@ def create_experiment(name=None, project_id=None, copy_from=None):
                             project_id=project_id)
     db_session.add(experiment)
     db_session.commit()
+    if copy_from:
+        try:
+            experiment_find = find_by_experiment_id(experiment_id=copy_from)
+            """experiment_find = order_by_dependence(experiment_find)"""
+            for operator in experiment_find['operators']:
+                kwargs = {
+                    "task_id": operator.task_id,
+                    "parameters": operator.parameters,
+                    "dependencies": operator.dependencies,
+                    "position_x": operator.position_x,
+                    "position_y": operator.position_y
+                }
+                create_operator(project_id, experiment.uuid, **kwargs)
+        except Exception:
+            delete_experiment(experiment.uuid, project_id)
+            raise BadRequest('The experiment could not be duplicated')
 
     fix_positions(project_id=project_id,
                   experiment_id=experiment.uuid,
                   new_position=sys.maxsize)  # will add to end of list
-
-    if copy_from:
-        experiment_find = find_by_experiment_id(experiment_id=copy_from)
-        for operator in experiment_find['operators']:
-            kwargs = {
-                "task_id": operator.task_id,
-                "parameters": operator.parameters,
-                "dependencies": operator.dependencies,
-                "position_x": operator.position_x,
-                "position_y": operator.position_y
-            }
-            create_operator(project_id, experiment.uuid, **kwargs)
 
     return experiment.as_dict()
 
