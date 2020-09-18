@@ -230,7 +230,7 @@ def raise_if_dependencies_are_invalid(dependencies, operator_id=None):
         raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
 
     for d in dependencies:
-        if isinstance(d, object):
+        if not isinstance(d, str):
             try:
                 raise_if_operator_does_not_exist(d.operator_id)
                 if d.operator_id == operator_id:

@@ -51,14 +51,12 @@ def create_dependency(operator_id, dependency):
         dependency = Dependency(uuid=uuid_alpha(),
                                 operator_id=dependency.operator_id,
                                 dependency=dependency.dependency)
-        db_session.add(dependency)
-        db_session.commit()
     else:
         dependency = Dependency(uuid=uuid_alpha(),
                                 operator_id=operator_id,
                                 dependency=dependency)
-        db_session.add(dependency)
-        db_session.commit()
+    db_session.add(dependency)
+    db_session.commit()
     return dependency.as_dict()
 
 
