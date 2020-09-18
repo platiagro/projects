@@ -47,7 +47,7 @@ def create_dependency(operator_id, dependency):
     Returns:
         Dependency info.
     """
-    if isinstance(dependency, object):
+    if not isinstance(dependency, str):
         dependency = Dependency(uuid=uuid_alpha(),
                                 operator_id=dependency.operator_id,
                                 dependency=dependency.dependency)
