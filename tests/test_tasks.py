@@ -345,7 +345,7 @@ class TestTasks(TestCase):
                 "parameters": [],
                 "experimentNotebookPath": None,
                 "deploymentNotebookPath": None,
-                "image": 'platiagro/platiagro-notebook-image:0.1.0',
+                "image": 'platiagro/datasets:0.1.0',
             }
             machine_generated = [
                 "uuid",
