@@ -281,6 +281,8 @@ def copy_task(name, description, tags, copy_from):
         raise BadRequest("Source task does not exist")
 
     task_id = uuid_alpha()
+    commands = task.commands
+    image = task.image
 
     # reads source notebooks from object storage
     source_name = f"{PREFIX}/{copy_from}/Deployment.ipynb"
@@ -315,6 +317,8 @@ def copy_task(name, description, tags, copy_from):
                 name=name,
                 description=description,
                 tags=tags,
+                commands=commands,
+                image=image,
                 deployment_notebook_path=deployment_notebook_path,
                 experiment_notebook_path=experiment_notebook_path,
                 is_default=False)
