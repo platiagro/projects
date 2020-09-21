@@ -110,13 +110,18 @@ def create_task(**kwargs):
 
     # create the commands to be executed on pipelines
     if commands is None or len(commands) == 0:
-        commands = ['''from platiagro import download_dataset;
-                    download_dataset("$dataset", "$TRAINING_DATASETS_DIR/$dataset");''']
-        if "DATASETS" not in tags:
-            commands = [f'''papermill {experiment_notebook_path} output.ipynb -b $parameters;
-                        status=$?;
-                        bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
-                        exit $status''']
+        commands = ['''papermill $notebookPath output.ipynb -b $parameters;
+                       status=$?;
+                       bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
+                       exit $status''']
+        if "DATASETS" in tags:
+            commands = ['from platiagro import download_dataset;download_dataset("$dataset", "$trainingDatasetDir/$dataset");']
+
+    # set the image to be used on pipelines
+    if image is None:
+        image = 'platiagro/platiagro-notebook-image:0.1.0'
+        if "DATASETS" in tags:
+            image = 'platiagro/datasets:0.1.0'
 
     # saves task info to the database
     task = Task(uuid=task_id,
