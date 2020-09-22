@@ -193,10 +193,10 @@ class TestExperiments(TestCase):
                 self.assertEqual(rv.status_code, 200)
 
                 rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
-                    "name": f"{NAME_COPYFROM}",
+                    "name": f"TESCOPY",
                     "copy_from": f"4555"
                 })
-                self.assertEqual(rv.status_code, 400)
+                self.assertEqual(rv.status_code, 404)
 
     def test_get_experiment(self):
         with app.test_client() as c:
@@ -213,7 +213,18 @@ class TestExperiments(TestCase):
             self.assertEqual(rv.status_code, 404)
 
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}")
-            self.assertEqual(rv.status_code, 200)
+            result = rv.get_json()
+            expected = {
+                "uuid": EXPERIMENT_ID,
+                "name": NAME,
+                "projectId": PROJECT_ID,
+                "position": POSITION,
+                "isActive": IS_ACTIVE,
+                "operators": result['operators'],
+                "createdAt": CREATED_AT_ISO,
+                "updatedAt": UPDATED_AT_ISO,
+            }
+            self.assertDictEqual(expected, result)
 
     def test_update_experiment(self):
         with app.test_client() as c:
@@ -260,10 +271,20 @@ class TestExperiments(TestCase):
                 "name": "bar",
             })
             result = rv.get_json()
+            expected = {
+                "uuid": EXPERIMENT_ID,
+                "name": "bar",
+                "projectId": PROJECT_ID,
+                "position": POSITION,
+                "isActive": IS_ACTIVE,
+                "operators": result['operators'],
+                "createdAt": CREATED_AT_ISO,
+            }
             machine_generated = ["updatedAt"]
             for attr in machine_generated:
                 self.assertIn(attr, result)
                 del result[attr]
+            self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={

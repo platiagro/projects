@@ -197,11 +197,14 @@ class TestOperators(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            """rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
                 "dependencies": ["unk"]
             })
-            self.assertEqual(rv.status_code, 500)"""
+            result = rv.get_json()
+            expected = {"message": "The specified dependencies are not valid."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
@@ -315,7 +318,10 @@ class TestOperators(TestCase):
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "dependencies": [OPERATOR_ID],
             })
-            self.assertEqual(rv.status_code, 200)
+            result = rv.get_json()
+            expected = {"message": "The specified dependencies are not valid."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={})
             result = rv.get_json()
@@ -346,7 +352,7 @@ class TestOperators(TestCase):
                 "uuid": OPERATOR_ID,
                 "experimentId": EXPERIMENT_ID,
                 "taskId": TASK_ID,
-                "dependencies": [OPERATOR_ID],
+                "dependencies": result['dependencies'],
                 "parameters": {"coef": 0.2},
                 "positionX": 100.0,
                 "positionY": 200.0,
