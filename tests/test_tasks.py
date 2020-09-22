@@ -335,6 +335,7 @@ class TestTasks(TestCase):
             rv = c.post("/tasks", json={
                 "name": "fake dataset task",
                 "tags": ["DATASETS"],
+                "image": IMAGE,
             })
             result = rv.get_json()
             expected = {
@@ -345,7 +346,7 @@ class TestTasks(TestCase):
                 "parameters": [],
                 "experimentNotebookPath": None,
                 "deploymentNotebookPath": None,
-                "image": 'platiagro/datasets:0.1.0',
+                "image": IMAGE,
             }
             machine_generated = [
                 "uuid",

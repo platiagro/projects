@@ -19,6 +19,8 @@ def init_tasks(config_path):
             name = task["name"]
             description = task["description"]
             tags = task["tags"]
+            commands = task["commands"]
+            image = task["image"]
 
             try:
                 experiment_notebook = read_notebook(task["experimentNotebook"])
@@ -34,6 +36,8 @@ def init_tasks(config_path):
                 create_task(name=name,
                             description=description,
                             tags=tags,
+                            commands=commands,
+                            image=image,
                             experiment_notebook=experiment_notebook,
                             deployment_notebook=deployment_notebook,
                             is_default=True)
