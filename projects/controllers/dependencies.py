@@ -47,14 +47,9 @@ def create_dependency(operator_id, dependency):
     Returns:
         Dependency info.
     """
-    if not isinstance(dependency, str):
-        dependency = Dependency(uuid=uuid_alpha(),
-                                operator_id=dependency.operator_id,
-                                dependency=dependency.dependency)
-    else:
-        dependency = Dependency(uuid=uuid_alpha(),
-                                operator_id=operator_id,
-                                dependency=dependency)
+    dependency = Dependency(uuid=uuid_alpha(),
+                            operator_id=operator_id,
+                            dependency=dependency)
     db_session.add(dependency)
     db_session.commit()
     return dependency.as_dict()

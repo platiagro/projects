@@ -11,6 +11,8 @@ from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME
 
+from projects.api.main import app
+
 DEPENDENCY_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
@@ -80,10 +82,12 @@ class TestDependencies(TestCase):
 
     def tearDown(self):
         conn = engine.connect()
-        text = f"DELETE FROM dependencies WHERE operator_id = '{OPERATOR_ID}'"
+        text = f"DELETE FROM dependencies WHERE operator_id in" \
+               f" (SELECT uuid  FROM operators where task_id = '{TASK_ID}')"
         conn.execute(text)
 
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
+        text = f"DELETE FROM operators WHERE experiment_id in" \
+               f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
@@ -126,6 +130,14 @@ class TestDependencies(TestCase):
             self.assertIn(attr, result)
             del result[attr]
         self.assertDictEqual(expected, result)
+
+    def test_update_dependencies(self):
+        with app.test_client() as c:
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
+                "name": "test2",
+                "copy_from": f"{EXPERIMENT_ID}"
+            })
+            self.assertEqual(rv.status_code, 200)
 
     def test_delete_dependency(self):
         with pytest.raises(NotFound) as e:

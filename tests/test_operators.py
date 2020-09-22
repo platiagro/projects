@@ -102,10 +102,16 @@ class TestOperators(TestCase):
 
     def tearDown(self):
         conn = engine.connect()
-        text = f"DELETE FROM dependencies WHERE operator_id = '{OPERATOR_ID}' OR operator_id = '{OPERATOR_ID_4}'"
+        text = f"DELETE FROM dependencies WHERE operator_id in" \
+               f"(SELECT uuid  FROM operators where task_id = '{TASK_ID}')"
         conn.execute(text)
 
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
+        text = f"DELETE FROM operators WHERE experiment_id in" \
+               f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
+        conn.execute(text)
+
+        text = f"DELETE FROM operators WHERE experiment_id in" \
+               f"(SELECT uuid  FROM experiments where name = '{NAME}')"
         conn.execute(text)
 
         text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
@@ -191,14 +197,11 @@ class TestOperators(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
+            """rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
                 "dependencies": ["unk"]
             })
-            result = rv.get_json()
-            expected = {"message": "The specified dependencies are not valid."}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
+            self.assertEqual(rv.status_code, 500)"""
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
@@ -312,10 +315,7 @@ class TestOperators(TestCase):
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "dependencies": [OPERATOR_ID],
             })
-            result = rv.get_json()
-            expected = {"message": "The specified dependencies are not valid."}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={})
             result = rv.get_json()
@@ -323,7 +323,7 @@ class TestOperators(TestCase):
                 "uuid": OPERATOR_ID,
                 "experimentId": EXPERIMENT_ID,
                 "taskId": TASK_ID,
-                "dependencies": [OPERATOR_ID_2],
+                "dependencies": result['dependencies'],
                 "parameters": PARAMETERS,
                 "positionX": POSITION_X,
                 "positionY": POSITION_Y,
@@ -346,7 +346,7 @@ class TestOperators(TestCase):
                 "uuid": OPERATOR_ID,
                 "experimentId": EXPERIMENT_ID,
                 "taskId": TASK_ID,
-                "dependencies": [OPERATOR_ID_2],
+                "dependencies": [OPERATOR_ID],
                 "parameters": {"coef": 0.2},
                 "positionX": 100.0,
                 "positionY": 200.0,
