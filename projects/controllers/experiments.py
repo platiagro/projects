@@ -82,9 +82,9 @@ def create_experiment(name=None, project_id=None, copy_from=None):
                     "position_y": operator.position_y
                 }
                 create_operator(project_id, experiment.uuid, **kwargs)
-        except BadRequest:
+        except NotFound:
             delete_experiment(experiment.uuid, project_id)
-            raise BadRequest('Source experiment does not exist')
+            raise NOTFOUND
 
     fix_positions(project_id=project_id,
                   experiment_id=experiment.uuid,
