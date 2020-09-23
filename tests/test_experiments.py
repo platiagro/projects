@@ -196,7 +196,7 @@ class TestExperiments(TestCase):
                     "name": f"TESCOPY",
                     "copy_from": f"4555"
                 })
-                self.assertEqual(rv.status_code, 404)
+                self.assertEqual(rv.status_code, 500)
 
     def test_get_experiment(self):
         with app.test_client() as c:
