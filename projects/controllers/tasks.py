@@ -16,6 +16,7 @@ from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 from ..database import db_session
 from ..jupyter import create_new_file, list_files, delete_file, update_folder_name
 from ..models import Task
+from ..models.task import DEFAULT_COMMANDS, DEFAULT_ARGUMENTS
 from ..object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
 from .utils import uuid_alpha, text_to_list
@@ -41,8 +42,9 @@ def create_task(**kwargs):
     name = kwargs.get('name', None)
     description = kwargs.get('description', None)
     tags = kwargs.get('tags', None)
-    commands = kwargs.get('commands', None)
     image = kwargs.get('image', None)
+    commands = kwargs.get('commands', None)
+    arguments = kwargs.get('arguments', None)
     experiment_notebook = kwargs.get('experiment_notebook', None)
     deployment_notebook = kwargs.get('deployment_notebook', None)
     is_default = kwargs.get('is_default', None)
@@ -108,13 +110,20 @@ def create_task(**kwargs):
         experiment_notebook_path = None
         deployment_notebook_path = None
 
+    if commands is None or len(commands) == 0:
+        commands = DEFAULT_COMMANDS
+
+    if arguments is None or len(arguments) == 0:
+        arguments = DEFAULT_ARGUMENTS
+
     # saves task info to the database
     task = Task(uuid=task_id,
                 name=name,
                 description=description,
                 tags=tags,
-                commands=commands,
                 image=image,
+                commands=commands,
+                arguments=arguments,
                 experiment_notebook_path=experiment_notebook_path,
                 deployment_notebook_path=deployment_notebook_path,
                 is_default=is_default)
@@ -266,8 +275,9 @@ def copy_task(name, description, tags, copy_from):
         raise BadRequest("Source task does not exist")
 
     task_id = uuid_alpha()
-    commands = task.commands
     image = task.image
+    commands = task.commands
+    arguments = task.arguments
 
     # reads source notebooks from object storage
     source_name = f"{PREFIX}/{copy_from}/Deployment.ipynb"
@@ -302,8 +312,9 @@ def copy_task(name, description, tags, copy_from):
                 name=name,
                 description=description,
                 tags=tags,
-                commands=commands,
                 image=image,
+                commands=commands,
+                arguments=arguments,
                 deployment_notebook_path=deployment_notebook_path,
                 experiment_notebook_path=experiment_notebook_path,
                 is_default=False)

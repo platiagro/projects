@@ -16,9 +16,11 @@ from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 TASK_ID = str(uuid_alpha())
 NAME = "name foo"
 DESCRIPTION = "long foo"
+IMAGE = "platiagro/platiagro-notebook-image-test:0.1.0"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
-IMAGE = "platiagro/platiagro-notebook-image-test:0.1.0"
+ARGUMENTS = ["ARG"]
+ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
@@ -41,13 +43,13 @@ class TestTasks(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         text = (
-            f"INSERT INTO tasks (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID_2}', 'foo 2', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH_2}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID_2}', 'foo 2', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH_2}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -215,8 +217,9 @@ class TestTasks(TestCase):
             # are machine-generated we assert they exist, but we don't assert their values
             machine_generated = [
                 "uuid",
-                "commands",
                 "image",
+                "commands",
+                "arguments",
                 "experimentNotebookPath",
                 "deploymentNotebookPath",
                 "createdAt",
@@ -245,8 +248,9 @@ class TestTasks(TestCase):
             }
             machine_generated = [
                 "uuid",
-                "commands",
                 "image",
+                "commands",
+                "arguments",
                 "experimentNotebookPath",
                 "deploymentNotebookPath",
                 "createdAt",
@@ -276,8 +280,9 @@ class TestTasks(TestCase):
             }
             machine_generated = [
                 "uuid",
-                "commands",
                 "image",
+                "commands",
+                "arguments",
                 "experimentNotebookPath",
                 "deploymentNotebookPath",
                 "createdAt",
@@ -293,16 +298,18 @@ class TestTasks(TestCase):
             rv = c.post("/tasks", json={
                 "name": "test tasks with image and command",
                 "description": "long test",
-                "commands": COMMANDS,
                 "image": IMAGE,
+                "commands": COMMANDS,
+                "arguments": ARGUMENTS,
                 "tags": TAGS
             })
             result = rv.get_json()
             expected = {
                 "name": "test tasks with image and command",
                 "description": "long test",
-                "commands": COMMANDS,
                 "image": IMAGE,
+                "commands": COMMANDS,
+                "arguments": ARGUMENTS,
                 "tags": TAGS,
                 "isDefault": IS_DEFAULT,
                 "parameters": [
@@ -353,6 +360,7 @@ class TestTasks(TestCase):
                 "createdAt",
                 "updatedAt",
                 "commands",
+                "arguments",
             ]
             for attr in machine_generated:
                 self.assertIn(attr, result)
@@ -373,8 +381,9 @@ class TestTasks(TestCase):
                 "uuid": TASK_ID,
                 "name": "name foo",
                 "description": DESCRIPTION,
-                "commands": COMMANDS,
                 "image": IMAGE,
+                "commands": COMMANDS,
+                "arguments": ARGUMENTS,
                 "tags": TAGS,
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -433,8 +442,9 @@ class TestTasks(TestCase):
                 "uuid": TASK_ID,
                 "name": "new name foo",
                 "description": DESCRIPTION,
-                "commands": COMMANDS,
                 "image": IMAGE,
+                "commands": COMMANDS,
+                "arguments": ARGUMENTS,
                 "tags": TAGS,
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -457,8 +467,9 @@ class TestTasks(TestCase):
                 "uuid": TASK_ID,
                 "name": "new name foo",
                 "description": DESCRIPTION,
-                "commands": COMMANDS,
                 "image": IMAGE,
+                "commands": COMMANDS,
+                "arguments": ARGUMENTS,
                 "tags": ["FEATURE_ENGINEERING"],
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -481,8 +492,9 @@ class TestTasks(TestCase):
                 "uuid": TASK_ID,
                 "name": "new name foo",
                 "description": DESCRIPTION,
-                "commands": COMMANDS,
                 "image": IMAGE,
+                "commands": COMMANDS,
+                "arguments": ARGUMENTS,
                 "tags": ["FEATURE_ENGINEERING"],
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
@@ -505,8 +517,9 @@ class TestTasks(TestCase):
                 "uuid": TASK_ID,
                 "name": "new name foo",
                 "description": DESCRIPTION,
-                "commands": COMMANDS,
                 "image": IMAGE,
+                "commands": COMMANDS,
+                "arguments": ARGUMENTS,
                 "tags": ["FEATURE_ENGINEERING"],
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,

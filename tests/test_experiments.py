@@ -18,9 +18,11 @@ IS_ACTIVE = True
 PARAMETERS = {"coef": 0.1}
 PARAMETERS_JSON = dumps(PARAMETERS)
 DESCRIPTION = "long foo"
+IMAGE = "platiagro/platiagro-notebook-image-test:0.1.0"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
-IMAGE = "platiagro/platiagro-notebook-image-test:0.1.0"
+ARGUMENTS = ["ARG"]
+ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 TASKS_JSON = dumps([TASK_ID])
@@ -45,8 +47,8 @@ class TestExperiments(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, commands, image, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{IMAGE}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
