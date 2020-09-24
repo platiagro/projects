@@ -15,6 +15,7 @@ DEFAULT_ARGUMENTS = ['''papermill $notebookPath output.ipynb -b $parameters;
                         status=$?;
                         bash save-dataset.sh;
                         bash save-figure.sh;
+                        bash make-cells-read-only.sh
                         bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
                         exit $status''']
 
