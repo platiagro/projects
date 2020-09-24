@@ -66,11 +66,9 @@ class TestDatasets(TestCase):
         conn.execute(text)
 
         text = (
-<< << << < HEAD
-            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID2}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
-== == == =
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID2}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
         conn.close()
 
         try:
@@ -78,7 +76,7 @@ class TestDatasets(TestCase):
         except BucketAlreadyOwnedByYou:
             pass
 
-        file=BytesIO((
+        file = BytesIO((
             b'col0,col1,col2,col3,col4,col5\n'
             b'01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
             b'01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
@@ -90,13 +88,13 @@ class TestDatasets(TestCase):
             data=file,
             length=file.getbuffer().nbytes,
         )
-        metadata={
+        metadata = {
             "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
             "featuretypes": [DATETIME, NUMERICAL, NUMERICAL, NUMERICAL, NUMERICAL, CATEGORICAL],
             "filename": DATASET,
             "run_id": RUN_ID,
         }
-        buffer=BytesIO(dumps(metadata).encode())
+        buffer = BytesIO(dumps(metadata).encode())
         MINIO_CLIENT.put_object(
             bucket_name=BUCKET_NAME,
             object_name=f"datasets/{DATASET}/{DATASET}.metadata",
@@ -132,43 +130,43 @@ class TestDatasets(TestCase):
             object_name=f"datasets/{DATASET}/{DATASET}",
         )
 
-        conn=engine.connect()
-        text=f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
+        conn = engine.connect()
+        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
-        text=f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
         conn.execute(text)
 
-        text=f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
+        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
-        text=f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
         conn.close()
 
     def test_get_dataset(self):
         with app.test_client() as c:
-            rv=c.get(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/datasets")
-            result=rv.get_json()
-            expected={"message": "The specified project does not exist"}
+            rv = c.get(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/datasets")
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv=c.get(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID}/datasets")
-            result=rv.get_json()
-            expected={"message": "The specified experiment does not exist"}
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID}/datasets")
+            result = rv.get_json()
+            expected = {"message": "The specified experiment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv=c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/unk/datasets")
-            result=rv.get_json()
-            expected={"message": "The specified operator does not exist"}
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/unk/datasets")
+            result = rv.get_json()
+            expected = {"message": "The specified operator does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv=c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID2}/datasets")
-            result=rv.get_json()
-            expected={
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID2}/datasets")
+            result = rv.get_json()
+            expected = {
                 "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
                 "data": [
                     ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
@@ -179,9 +177,9 @@ class TestDatasets(TestCase):
             }
             self.assertDictEqual(expected, result)
 
-            rv=c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/datasets")
-            result=rv.get_json()
-            expected={
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/datasets")
+            result = rv.get_json()
+            expected = {
                 "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
                 "data": [
                     ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],

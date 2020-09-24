@@ -429,7 +429,6 @@ class TestOperators(TestCase):
             expected = {
                 "uuid": OPERATOR_ID,
                 "experimentId": EXPERIMENT_ID,
-                "componentId": COMPONENT_ID,
                 "taskId": TASK_ID,
                 "dependencies": [OPERATOR_ID_3],
                 "parameters": {"coef": 0.2},

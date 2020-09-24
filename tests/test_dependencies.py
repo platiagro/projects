@@ -70,51 +70,35 @@ class TestDependencies(TestCase):
         conn.execute(text)
 
         text = (
-<< << << < HEAD
-            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
-== == == =
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-
-        text=(
             f"VALUES ('{DEPENDENCY_ID}', '{OPERATOR_ID}', '{OPERATOR_ID_2}')"
         )
         conn.execute(text)
         conn.close()
 
     def tearDown(self):
-        conn=engine.connect()
-<< << << < HEAD
-        text=f"DELETE FROM dependencies WHERE operator_id = '{OPERATOR_ID}'"
+        conn = engine.connect()
+        text = f"DELETE FROM dependencies WHERE operator_id in"
+          f" (SELECT uuid  FROM operators where task_id = '{TASK_ID}')"
         conn.execute(text)
 
-        text=f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
+        text = f"DELETE FROM operators WHERE experiment_id in"
+          f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
         conn.execute(text)
 
-        text=f"DELETE FROM components WHERE uuid = '{COMPONENT_ID}'"
-== == == =
-        text=f"DELETE FROM dependencies WHERE operator_id in"
-               f" (SELECT uuid  FROM operators where task_id = '{TASK_ID}')"
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
         conn.execute(text)
 
-        text=f"DELETE FROM operators WHERE experiment_id in"
-               f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
+        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
-        text=f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
->> >>>> > master
-        conn.execute(text)
-
-        text=f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text=f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
         conn.close()
 
     def test_list_dependencies(self):
-        result=list_dependencies(OPERATOR_ID)
-        expected=[
+        result = list_dependencies(OPERATOR_ID)
+        expected = [
             {
                 "uuid": DEPENDENCY_ID,
                 "operatorId": OPERATOR_ID,
@@ -124,41 +108,38 @@ class TestDependencies(TestCase):
         self.assertListEqual(expected, result)
 
     def test_list_next_operators(self):
-        result=list_next_operators(OPERATOR_ID_2)
-        expected=[OPERATOR_ID]
+        result = list_next_operators(OPERATOR_ID_2)
+        expected = [OPERATOR_ID]
         self.assertListEqual(expected, result)
 
     def test_create_dependency(self):
-        result=create_dependency(OPERATOR_ID, OPERATOR_ID_2)
-        expected={
+        result = create_dependency(OPERATOR_ID, OPERATOR_ID_2)
+        expected = {
             "operatorId": OPERATOR_ID,
             "dependency": OPERATOR_ID_2
         }
 
         # uuid are machine-generated
         # we assert it exist, but we don't assert your values
-        machine_generated=["uuid"]
+        machine_generated = ["uuid"]
         for attr in machine_generated:
             self.assertIn(attr, result)
             del result[attr]
         self.assertDictEqual(expected, result)
 
-<< << << < HEAD
-== == == =
-    def test_update_dependencies(self):
-        with app.test_client() as c:
-            rv=c.post(f"/projects/{PROJECT_ID}/experiments", json={
+  def test_update_dependencies(self):
+       with app.test_client() as c:
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
                 "name": "test2",
                 "copy_from": f"{EXPERIMENT_ID}"
             })
             self.assertEqual(rv.status_code, 200)
 
->> >>>> > master
-    def test_delete_dependency(self):
-        with pytest.raises(NotFound) as e:
+  def test_delete_dependency(self):
+       with pytest.raises(NotFound) as e:
             assert delete_dependency("unk")
         assert str(e.value) == "404 Not Found: The specified dependency does not exist"
 
-        result=delete_dependency(DEPENDENCY_ID)
-        expected={"message": "Dependency deleted"}
+        result = delete_dependency(DEPENDENCY_ID)
+        expected = {"message": "Dependency deleted"}
         self.assertDictEqual(expected, result)

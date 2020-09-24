@@ -523,7 +523,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/dataset:
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/datasets:
     get:
       summary: "List datasets paginated."
       tags:

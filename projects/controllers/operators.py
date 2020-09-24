@@ -128,13 +128,7 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
     dependencies = kwargs.pop("dependencies", None)
 
     if dependencies is not None:
-
-
-<< << << < HEAD
         raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=uuid)
-== == == =
-        raise_if_dependencies_are_invalid(dependencies, operator_id=uuid)
->>>>>> > master
         update_dependencies(uuid, dependencies)
 
     data = {"updated_at": datetime.utcnow()}
@@ -249,7 +243,8 @@ def raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, o
     if not isinstance(dependencies, list):
         raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
 
-    raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies)
+    if operator_id:
+        raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies)
 
     # check if dependencies has duplicates
     if len(dependencies) != len(set(dependencies)):
