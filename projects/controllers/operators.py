@@ -241,6 +241,10 @@ def raise_if_dependencies_are_invalid(experiment_id, dependencies, operator_id=N
     if not isinstance(dependencies, list):
         raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
 
+    # check if dependencies has duplicates
+    if len(dependencies) != len(set(dependencies)):
+        raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+
     for d in dependencies:
         try:
             raise_if_operator_does_not_exist(d, experiment_id)
