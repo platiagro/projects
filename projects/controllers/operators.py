@@ -79,7 +79,7 @@ def create_operator(project_id, experiment_id, component_id=None,
     if dependencies is None:
         dependencies = []
 
-    raise_if_dependencies_are_invalid(experiment_id, dependencies)
+    raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies)
 
     operator = Operator(uuid=uuid_alpha(),
                         experiment_id=experiment_id,
@@ -124,7 +124,7 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
     dependencies = kwargs.pop("dependencies", None)
 
     if dependencies is not None:
-        raise_if_dependencies_are_invalid(experiment_id, dependencies, operator_id=uuid)
+        raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=uuid)
         update_dependencies(uuid, dependencies)
 
     data = {"updated_at": datetime.utcnow()}
@@ -170,6 +170,12 @@ def delete_operator(uuid, project_id, experiment_id):
 
 
 def update_dependencies(operator_id, new_dependencies):
+    """Merge new_dependencies to current dependencies of operator.
+
+    Args:
+        operator_id (str): the operator uuid.
+        new_dependencies (list): list of dependencies to add or delete from operator.
+    """
     dependencies_raw = list_dependencies(operator_id)
     dependencies = [d['dependency'] for d in dependencies_raw]
 
@@ -187,6 +193,12 @@ def update_dependencies(operator_id, new_dependencies):
 
 
 def delete_dependencies(operator_id, dependencies):
+    """Delete dependencies from operator.
+
+    Args:
+        operator_id (str): the operator uuid.
+        dependencies (str): dependencies to delete.
+    """
     next_operators = list_next_operators(operator_id)
 
     for op in next_operators:
@@ -215,15 +227,19 @@ def raise_if_parameters_are_invalid(parameters):
             raise BadRequest(PARAMETERS_EXCEPTION_MSG)
 
 
-def raise_if_dependencies_are_invalid(experiment_id, dependencies, operator_id=None):
+def raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=None):
     """Raises an exception if the specified dependencies are not valid.
 
     Args:
+        project_id (str): the project uuid.
+        experiment_id (str): the experiment uuid.
         dependencies (list): the dependencies list.
         operator_id (str): the operator uuid.
     """
     if not isinstance(dependencies, list):
         raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+
+    raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies)
 
     for d in dependencies:
         try:
@@ -232,6 +248,51 @@ def raise_if_dependencies_are_invalid(experiment_id, dependencies, operator_id=N
                 raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
         except NotFound:
             raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+
+
+def has_cycles_util(operator_id, visited, recursion_stack, new_dependencies, new_dependencies_op):
+    visited[operator_id] = True
+    recursion_stack[operator_id] = True
+
+    dependencies_raw = list_dependencies(operator_id)
+    dependencies = [d['dependency'] for d in dependencies_raw]
+
+    if (operator_id == new_dependencies_op):
+        dependencies = dependencies + list(set(new_dependencies) - set(dependencies))
+
+    # Recur for all neighbours
+    # if any neighbour is visited and in
+    # recursion_stack then graph is cyclic
+    for neighbour in dependencies:
+        if ((visited[neighbour] is False and
+             has_cycles_util(neighbour, visited, recursion_stack, new_dependencies, new_dependencies_op,) is True) or
+                recursion_stack[neighbour] is True):
+            return True
+
+    recursion_stack[operator_id] = False
+    return False
+
+
+def raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies):
+    """Raises an exception if the dependencies of operators from experiment are cyclical.
+
+    Args:
+        project_id (str): the project uuid.
+        experiment_id (str): the experiment uuid.
+        operator_id (str): the operator uuid.
+        dependencies (list): the dependencies list.
+    """
+    operators = list_operators(project_id, experiment_id)
+
+    visited = dict.fromkeys([op['uuid'] for op in operators], False)
+    recursion_stack = dict.fromkeys([op['uuid'] for op in operators], False)
+
+    for op in operators:
+        op_uuid = op["uuid"]
+        if (visited[op_uuid] is False and
+                has_cycles_util(op_uuid, visited, recursion_stack, dependencies, operator_id) is True):
+            raise BadRequest("Cyclical dependencies.")
+    return False
 
 
 def check_status(operator):
