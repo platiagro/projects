@@ -66,22 +66,29 @@ def create_experiment(name=None, project_id=None, copy_from=None):
                             project_id=project_id)
     db_session.add(experiment)
     db_session.commit()
+    if copy_from:
+        try:
+            experiment_find = find_by_experiment_id(experiment_id=copy_from)
+            for operator in experiment_find['operators']:
+
+                dependencies = []
+                for dependency in operator.dependencies:
+                    dependencies.append(dependency.dependency)
+                kwargs = {
+                    "task_id": operator.task_id,
+                    "parameters": operator.parameters,
+                    "dependencies": dependencies,
+                    "position_x": operator.position_x,
+                    "position_y": operator.position_y
+                }
+                create_operator(project_id, experiment.uuid, **kwargs)
+        except NotFound:
+            delete_experiment(experiment.uuid, project_id)
+            raise BadRequest('Source experiment does not exist')
 
     fix_positions(project_id=project_id,
                   experiment_id=experiment.uuid,
                   new_position=sys.maxsize)  # will add to end of list
-
-    if copy_from:
-        experiment_find = find_by_experiment_id(experiment_id=copy_from)
-        for operator in experiment_find['operators']:
-            kwargs = {
-                "task_id": operator.task_id,
-                "parameters": operator.parameters,
-                "dependencies": operator.dependencies,
-                "position_x": operator.position_x,
-                "position_y": operator.position_y
-            }
-            create_operator(project_id, experiment.uuid, **kwargs)
 
     return experiment.as_dict()
 

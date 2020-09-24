@@ -114,10 +114,16 @@ class TestOperators(TestCase):
 
     def tearDown(self):
         conn = engine.connect()
-        text = f"DELETE FROM dependencies WHERE operator_id = '{OPERATOR_ID}' OR operator_id = '{OPERATOR_ID_4}'"
+        text = f"DELETE FROM dependencies WHERE operator_id in" \
+               f"(SELECT uuid  FROM operators where task_id = '{TASK_ID}')"
         conn.execute(text)
 
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
+        text = f"DELETE FROM operators WHERE experiment_id in" \
+               f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
+        conn.execute(text)
+
+        text = f"DELETE FROM operators WHERE experiment_id in" \
+               f"(SELECT uuid  FROM experiments where name = '{NAME}')"
         conn.execute(text)
 
         text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}')"
@@ -380,7 +386,7 @@ class TestOperators(TestCase):
                 "uuid": OPERATOR_ID,
                 "experimentId": EXPERIMENT_ID,
                 "taskId": TASK_ID,
-                "dependencies": [OPERATOR_ID_2],
+                "dependencies": result['dependencies'],
                 "parameters": PARAMETERS,
                 "positionX": POSITION_X,
                 "positionY": POSITION_Y,
@@ -403,7 +409,7 @@ class TestOperators(TestCase):
                 "uuid": OPERATOR_ID,
                 "experimentId": EXPERIMENT_ID,
                 "taskId": TASK_ID,
-                "dependencies": [OPERATOR_ID_2],
+                "dependencies": result['dependencies'],
                 "parameters": {"coef": 0.2},
                 "positionX": 100.0,
                 "positionY": 200.0,
