@@ -174,6 +174,12 @@ def delete_operator(uuid, project_id, experiment_id):
 
 
 def update_dependencies(operator_id, new_dependencies):
+    """Merge new_dependencies to current dependencies of operator.
+
+    Args:
+        operator_id (str): the operator uuid.
+        new_dependencies (list): list of dependencies to add or delete from operator.
+    """
     dependencies_raw = list_dependencies(operator_id)
     dependencies = [d['dependency'] for d in dependencies_raw]
 
@@ -191,6 +197,12 @@ def update_dependencies(operator_id, new_dependencies):
 
 
 def delete_dependencies(operator_id, dependencies):
+    """Delete dependencies from operator.
+
+    Args:
+        operator_id (str): the operator uuid.
+        dependencies (str): dependencies to delete.
+    """
     next_operators = list_next_operators(operator_id)
 
     for op in next_operators:
