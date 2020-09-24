@@ -5,7 +5,13 @@
     └── automl-regressor
     │   ├── Experiment.ipynb
     │   └── Deployment.ipynb
+    └── descriptive-analysis
+    |   ├── Experiment.ipynb
+    |   └── Deployment.ipynb
     └── filter-selection
+    |   ├── Experiment.ipynb
+    |   └── Deployment.ipynb
+    └── grouping-categorical-features
     |   ├── Experiment.ipynb
     |   └── Deployment.ipynb
     └── kmeans-clustering
@@ -28,16 +34,31 @@
     │   └── Deployment.ipynb
     └── pre-selection
     |   ├── Experiment.ipynb
-    |   └── Deployment.ipynb 
+    |   └── Deployment.ipynb
     └── random-forest-classifier
     │   ├── Experiment.ipynb
     │   └── Deployment.ipynb
     └── random-forest-regressor
     │   ├── Experiment.ipynb
     │   └── Deployment.ipynb
+    └── rfe-selector
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
+    └── robust-scaler
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
+    └── simulated-annealing
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
     └── svc
     │   ├── Experiment.ipynb
     │   └── Deployment.ipynb
     └── svr
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
+    └── transformation-graph
+    │   ├── Experiment.ipynb
+    │   └── Deployment.ipynb
+    └── variance-threshold
         ├── Experiment.ipynb
         └── Deployment.ipynb

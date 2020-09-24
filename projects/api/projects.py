@@ -3,18 +3,24 @@
 
 from flask import jsonify, request
 from flask_smorest import Blueprint
-from ..controllers.projects import list_projects, create_project, \
+from ..controllers.projects import create_project, \
     get_project, update_project, delete_project, pagination_projects, \
-    total_rows_projects, delete_projects
+    delete_multiple_projects
 from ..utils import to_snake_case
 
 bp = Blueprint("projects", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_list_projects():
-    """Handles GET requests to /."""
-    return jsonify(list_projects())
+@bp.paginate(page=0)
+def handle_list_projects(pagination_parameters):
+    name = request.args.get('name')
+    order = request.args.get('order')
+    pagination_parameters.item_count = 0
+    projects = pagination_projects(name=name,
+                                   page=pagination_parameters.page,
+                                   page_size=pagination_parameters.page_size, order=order)
+    return jsonify(projects)
 
 
 @bp.route("", methods=["POST"])
@@ -48,22 +54,7 @@ def handle_delete_project(project_id):
     return jsonify(project)
 
 
-@bp.route("/", methods=["GET"])
-@bp.paginate()
-def handle_pagination_projects(pagination_parameters):
-    name = request.args.get('name')
-    total_rows = total_rows_projects(name=name)
-    projects = pagination_projects(name=name,
-                                   page=pagination_parameters.page,
-                                   page_size=pagination_parameters.page_size)
-    response = {
-        'total': total_rows,
-        'projects': projects
-    }
-    return jsonify(response)
-
-
 @bp.route("/deleteprojects", methods=["POST"])
 def handle_delete_projects():
     kwargs = request.get_json(force=True)
-    return jsonify(delete_projects(kwargs))
+    return jsonify(delete_multiple_projects(kwargs))

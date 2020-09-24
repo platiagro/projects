@@ -39,6 +39,15 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.6
+    - name: Run MinIO image
+      run: |
+        docker run -d -p 9000:9000 \
+        -e "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
+        -e "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+        minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
+      env:
+        MINIO_ACCESS_KEY: minio
+        MINIO_SECRET_KEY: minio123
     - name: Run jupyter image
       run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
     - name: Install dependencies
@@ -54,9 +63,9 @@ jobs:
         coverage run --branch --source=projects -m pytest --ignore=./tests/components
         coverage xml -i
       env:
-        MINIO_ENDPOINT: play.min.io
-        MINIO_ACCESS_KEY: Q3AM3UQ867SPQQA43P2F
-        MINIO_SECRET_KEY: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+        MINIO_ENDPOINT: localhost:9000
+        MINIO_ACCESS_KEY: minio
+        MINIO_SECRET_KEY: minio123
         MYSQL_DB_HOST: localhost
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
@@ -78,19 +87,33 @@ jobs:
   integration:
     runs-on: ubuntu-latest
 
-    container:
-      image: docker://platiagro/platiagro-notebook-image:0.1.0
-
     steps:
       - uses: actions/checkout@v2
-      - name: Component integration testing
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.6
+      - name: Run MinIO image
+        run: |
+          docker run -d -p 9000:9000 \
+          -e "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
+          -e "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+          minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
+        env:
+          MINIO_ACCESS_KEY: minio
+          MINIO_SECRET_KEY: minio123
+      - name: Run jupyter image
+        run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
+      - name: Installing dependencies
         run: |
           pip install .[testing]
+      - name: Component integration pytest
+        run: |
           pytest tests/components
         env:
-          MINIO_ENDPOINT: play.min.io
-          MINIO_ACCESS_KEY: Q3AM3UQ867SPQQA43P2F
-          MINIO_SECRET_KEY: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+          MINIO_ENDPOINT: localhost:9000
+          MINIO_ACCESS_KEY: minio
+          MINIO_SECRET_KEY: minio123
           MYSQL_DB_HOST: localhost
           MYSQL_DB_NAME: platiagro
           MYSQL_DB_USER: root

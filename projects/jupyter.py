@@ -2,7 +2,6 @@
 """Functions that access Jupyter Notebook API."""
 from json import dumps, loads, JSONDecodeError
 from os import getenv
-from os.path import dirname
 from re import compile, sub
 
 from minio.error import NoSuchKey
@@ -12,10 +11,10 @@ from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 
 from .object_storage import BUCKET_NAME, get_object
+from .utils import remove_ansi_escapes
 
 JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
-URL_WORKSPACES = f"{JUPYTER_ENDPOINT}/lab/api/workspaces/lab"
 
 COOKIES = {"_xsrf": "token"}
 HEADERS = {"content-type": "application/json", "X-XSRFToken": "token"}
@@ -74,6 +73,19 @@ def create_new_file(path, is_folder, content=None):
     )
 
 
+def update_folder_name(path, new_path):
+    """Update folder name.
+    Args:
+        path (str): path folder.
+        new_path (str): new path to the folder.
+    """
+    payload = {"path": new_path}
+    SESSION.patch(
+        url=f"{URL_CONTENTS}/{path}",
+        data=dumps(payload),
+    )
+
+
 def delete_file(path):
     """Deletes a file or directory in the given path.
 
@@ -82,49 +94,6 @@ def delete_file(path):
     """
     SESSION.delete(
         url=f"{URL_CONTENTS}/{path}",
-    )
-
-
-def set_workspace(*args):
-    """Sets the notebooks that are open in the default workspace.
-
-    Args:
-        *args: list of notebook paths.
-    """
-    r = SESSION.get(url=URL_WORKSPACES)
-    resp = r.json()
-
-    prefixed_args = [f"notebook:{arg}" for arg in args]
-
-    data = resp["data"]
-    data["layout-restorer:data"] = {
-        "main": {
-            "dock": {
-                "type": "tab-area",
-                "currentIndex": 0,
-                "widgets": prefixed_args,
-            },
-            "mode": "multiple-document",
-            "current": next(iter(prefixed_args), None),
-        }
-    }
-
-    if len(args) > 0:
-        data["file-browser-filebrowser:cwd"] = {
-            "path": dirname(args[-1]),
-        }
-
-    for path, prefix_path in zip(args, prefixed_args):
-        data[prefix_path] = {
-            "data": {
-                "path": path,
-                "factory": "Notebook",
-            }
-        }
-
-    SESSION.put(
-        url=URL_WORKSPACES,
-        data=dumps(resp),
     )
 
 
@@ -137,6 +106,9 @@ def read_parameters(path):
     Returns:
         list: a list of parameters (name, default, type, label, description).
     """
+    if not path:
+        return []
+
     object_name = path[len(f"minio://{BUCKET_NAME}/"):]
     try:
         experiment_notebook = loads(get_object(object_name).decode("utf-8"))
@@ -202,3 +174,49 @@ def read_parameters_from_source(source):
                 pass
 
     return parameters
+
+
+def get_notebook_output(experiment_id: str, operator_id: str):
+    """Get notebook logs from Jupyter Api.
+
+    Args:
+        experiment_id (str): experiment id
+        operator_id (str): operator id
+
+    Raises:
+        FileNotFoundError: notebook does not exist
+    """
+    operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
+
+    try:
+        r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
+        notebook_content = loads(r.decode("utf-8"))["content"]
+    except HTTPError as e:
+        status_code = e.response.status_code
+        if status_code == 404:
+            raise FileNotFoundError("The specified notebook does not exist")
+
+    for cell in notebook_content["cells"]:
+        try:
+            metadata = cell["metadata"]["papermill"]
+
+            if metadata["exception"] and metadata["status"] == "failed":
+                for output in cell["outputs"]:
+                    if output["output_type"] == "error":
+                        error_log = output["traceback"]
+
+                traceback = remove_ansi_escapes(error_log)
+
+                return {
+                    "cellType": cell["cell_type"],
+                    "executionCount": cell["execution_count"],
+                    "output": {
+                        "errorName": output["ename"],
+                        "errorValue": output["evalue"],
+                        "traceback": traceback,
+                    }
+                }
+        except KeyError:
+            pass
+
+    return {"message": "Notebook finished with status completed"}

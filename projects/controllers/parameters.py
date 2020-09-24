@@ -3,21 +3,21 @@
 
 from werkzeug.exceptions import NotFound
 
-from ..models import Component
+from ..models import Task
 from ..jupyter import read_parameters
 
 
-def list_parameters(component_id, is_checked=False):
-    """Lists all parameters from the experiment notebook of a component.
+def list_parameters(task_id, is_checked=False):
+    """Lists all parameters from the experiment notebook of a task.
 
     Args:
-        component_id (str): the component uuid to look for in our database.
+        task_id (str): the task uuid to look for in our database.
 
     Returns:
         A list of all parameters.
     """
-    component = Component.query.get(component_id)
-    if component is None:
-        raise NotFound("The specified component does not exist")
+    task = Task.query.get(task_id)
+    if task is None:
+        raise NotFound("The specified task does not exist")
 
-    return read_parameters(component.experiment_notebook_path)
+    return read_parameters(task.experiment_notebook_path)

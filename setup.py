@@ -20,6 +20,12 @@ extras = {
         "pytest-xdist==1.31.0",
         "pytest-cov==2.8.1",
         "flake8==3.7.9",
+        "papermill[s3]==2.1.1",
+        "scikit-learn==0.22.2.post1",
+        "category-encoders==2.2.2",
+        "auto-sklearn==0.7.0",
+        "networkx==2.4",
+        "matplotlib==3.3.0"
     ]
 }
 

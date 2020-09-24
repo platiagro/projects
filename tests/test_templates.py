@@ -9,22 +9,25 @@ from projects.object_storage import BUCKET_NAME
 
 TEMPLATE_ID = str(uuid_alpha())
 NAME = "foo"
-COMPONENT_ID = str(uuid_alpha())
+TASK_ID = str(uuid_alpha())
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 POSITION = 0
 PARAMETERS = {"coef": 0.1}
-OPERATORS = [{"componentId": COMPONENT_ID}]
+OPERATORS = [{"taskId": TASK_ID}]
 DESCRIPTION = "long foo"
+IMAGE = "platiagro/platiagro-notebook-image-test:0.1.0"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
+ARGUMENTS = ["ARG"]
+ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
-COMPONENTS_JSON = dumps([COMPONENT_ID])
+TASKS_JSON = dumps([TASK_ID])
 PARAMETERS_JSON = dumps(PARAMETERS)
-EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/components/{COMPONENT_ID}/Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -36,8 +39,8 @@ class TestTemplates(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO components (uuid, name, description, commands, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{COMPONENT_ID}', '{NAME}', '{DESCRIPTION}', '{COMMANDS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -54,12 +57,12 @@ class TestTemplates(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, component_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
-        text = f"INSERT INTO templates (uuid, name, components, created_at, updated_at) VALUES ('{TEMPLATE_ID}', '{NAME}', '{COMPONENTS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+        text = f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) VALUES ('{TEMPLATE_ID}', '{NAME}', '{TASKS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         conn.execute(text)
         conn.close()
 
@@ -77,7 +80,7 @@ class TestTemplates(TestCase):
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM components WHERE uuid = '{COMPONENT_ID}'"
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
         conn.execute(text)
         conn.close()
 

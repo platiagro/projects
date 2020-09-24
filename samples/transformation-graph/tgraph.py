@@ -21,7 +21,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import KFold, cross_val_score
-from sklearn.decomposition import PCA
 from sklearn.metrics import matthews_corrcoef, make_scorer
 
 
@@ -86,7 +85,8 @@ class TGraph:
         self.date = None
         if self.date_name is not None:
             date_indx = list(self.solution.columns).index(self.date_name)
-            self.date = pd.to_datetime(self.solution.pop(self.date_name))
+            self.solution[self.date_name] = self.solution[self.date_name].astype(str)
+            self.date = pd.to_datetime(self.solution.pop(self.date_name), infer_datetime_format=True)
             self.ftypes_list.pop(date_indx)
 
         # Encode all categorical and datetime features
@@ -328,39 +328,7 @@ class TGraph:
                 solution['{0}---{1}'.format(transformation, self.date.name)] = new_feature
 
 
-    def apply_select(self, solution):
-        """
-        Apply PCA to select principal features.
-        Parameters
-        ----------
-        solution: pandas.DataFrame
-            A solution to be applied numeric transformations.
-        Returns
-        ----------
-        Nothing
-        """
-
-        solution = solution.fillna(method='ffill').fillna(method='bfill')
-
-        only_num = set(solution.columns).intersection(self.num_feats)
-
-        # Execute PCA to obtain a sub group of features
-        model = PCA(n_components=0.98).fit(solution[only_num])
-
-        # Obtain only the important features
-        num_components = model.components_.shape[0]
-        important_feats = [np.abs(model.components_[i]).argmax() for i in range(num_components)]
-
-        # Discover which features are
-        initial_feats = list(solution.columns)
-        selected_feats = [initial_feats[important_feats[i]] for i in range(num_components)]
-
-        selected_feats.extend(self.group_var)
-
-        solution = solution[list(set(selected_feats))]
-
-
-    def apply_transformation(self, solution, transformation='select', trans_type='select'):
+    def apply_transformation(self, solution, transformation=None, trans_type=None):
         """
         Apply a transformation to a solution.
         Parameters
@@ -386,9 +354,6 @@ class TGraph:
         elif trans_type == 'time':
             self.apply_timely(solution, transformation)
 
-        else:
-            self.apply_select(solution)
-
         return solution
 
 
@@ -405,6 +370,12 @@ class TGraph:
 
         for trans_type in ['numeric', 'grouped', 'time']:
 
+            if trans_type == 'grouped' and (self.group_var is None or self.group_var not in list(self.G.nodes[0]['solution'].columns)):
+                continue
+
+            elif trans_type == 'time' and self.date_name is None:
+                continue
+
             for trans in self.transformations[trans_type]:
 
                 # Apply the transformation
@@ -412,12 +383,6 @@ class TGraph:
 
                 # Add solution to graph
                 self.add_to_graph(0, new_solution, trans)
-
-        # Apply the transformation
-        new_solution = self.apply_transformation(self.G.nodes[0]['solution'].copy())
-
-        # Add solution to graph
-        self.add_to_graph(0, new_solution, 'select')
 
 
     def search_best_node(self):
@@ -542,8 +507,6 @@ class TGraph:
                     trans_type = 'grouped'
                 elif trans in self.transformations['time']:
                     trans_type = 'time'
-                else:
-                    trans_type = 'select'
 
                 # Apply the transformation
                 new_solution = self.apply_transformation(self.G.nodes[node_id]['solution'].copy(), trans, trans_type)

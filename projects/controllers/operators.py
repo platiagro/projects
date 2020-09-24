@@ -6,11 +6,11 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
-from ..models import Operator
+from ..models import Operator, Task
 from .parameters import list_parameters
 from .dependencies import list_dependencies, list_next_operators, \
     create_dependency, delete_dependency
-from .utils import raise_if_component_does_not_exist, \
+from .utils import raise_if_task_does_not_exist, \
     raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
     raise_if_operator_does_not_exist, uuid_alpha
 
@@ -44,8 +44,8 @@ def list_operators(project_id, experiment_id):
     return response
 
 
-def create_operator(project_id, experiment_id, component_id=None,
-                    parameters=None, dependencies=None, **kwargs):
+def create_operator(project_id, experiment_id, task_id=None,
+                    parameters=None, dependencies=None, position_x=None, position_y=None, **kwargs):
     """Creates a new operator in our database.
 
     The new operator is added to the end of the operator list.
@@ -53,9 +53,12 @@ def create_operator(project_id, experiment_id, component_id=None,
     Args:
         project_id (str): the project uuid.
         experiment_id (str): the experiment uuid.
-        component_id (str): the component uuid.
+        task_id (str): the task uuid.
         parameters (dict): the parameters dict.
         dependencies (list): the dependencies array.
+        position_x (float): position x.
+        position_y (float): position y.
+
 
     Returns:
         The operator info.
@@ -63,11 +66,11 @@ def create_operator(project_id, experiment_id, component_id=None,
     raise_if_project_does_not_exist(project_id)
     raise_if_experiment_does_not_exist(experiment_id)
 
-    if not isinstance(component_id, str):
-        raise BadRequest("componentId is required")
+    if not isinstance(task_id, str):
+        raise BadRequest("taskId is required")
 
     try:
-        raise_if_component_does_not_exist(component_id)
+        raise_if_task_does_not_exist(task_id)
     except NotFound as e:
         raise BadRequest(e.description)
 
@@ -79,12 +82,14 @@ def create_operator(project_id, experiment_id, component_id=None,
     if dependencies is None:
         dependencies = []
 
-    raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies)
+    raise_if_dependencies_are_invalid(dependencies)
 
     operator = Operator(uuid=uuid_alpha(),
                         experiment_id=experiment_id,
-                        component_id=component_id,
-                        parameters=parameters)
+                        task_id=task_id,
+                        parameters=parameters,
+                        position_x=position_x,
+                        position_y=position_y)
     db_session.add(operator)
     db_session.commit()
 
@@ -95,7 +100,6 @@ def create_operator(project_id, experiment_id, component_id=None,
     update_dependencies(operator_as_dict['uuid'], dependencies)
 
     operator_as_dict["dependencies"] = dependencies
-
     return operator_as_dict
 
 
@@ -124,7 +128,13 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
     dependencies = kwargs.pop("dependencies", None)
 
     if dependencies is not None:
+
+
+<< << << < HEAD
         raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=uuid)
+== == == =
+        raise_if_dependencies_are_invalid(dependencies, operator_id=uuid)
+>>>>>> > master
         update_dependencies(uuid, dependencies)
 
     data = {"updated_at": datetime.utcnow()}
@@ -304,11 +314,19 @@ def check_status(operator):
     op_params_keys = [key for key in operator.parameters.keys() if operator.parameters[key] != '']
     total_op_params = len(op_params_keys)
 
-    # get component parameters and remove dataset parameter
-    comp_params = list_parameters(operator.component_id)
-    total_comp_params = len(comp_params)
+    task = Task.query.get(operator.task_id)
+    if "DATASETS" not in task.tags:
+        # get task parameters and remove dataset parameter
+        comp_params = list_parameters(operator.task_id)
+        comp_params = [parameter for parameter in comp_params if parameter['name'] != 'dataset']
+        total_comp_params = len(comp_params)
 
-    if total_op_params == total_comp_params:
-        operator.status = 'Setted up'
+        if total_op_params == total_comp_params:
+            operator.status = 'Setted up'
+        else:
+            operator.status = 'Unset'
     else:
-        operator.status = 'Unset'
+        if total_op_params == 1:
+            operator.status = 'Setted up'
+        else:
+            operator.status = 'Unset'
