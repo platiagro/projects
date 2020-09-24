@@ -82,7 +82,7 @@ def create_operator(project_id, experiment_id, task_id=None,
     if dependencies is None:
         dependencies = []
 
-    raise_if_dependencies_are_invalid(dependencies)
+    raise_if_dependencies_are_invalid(experiment_id, dependencies)
 
     operator = Operator(uuid=uuid_alpha(),
                         experiment_id=experiment_id,
@@ -128,7 +128,7 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
     dependencies = kwargs.pop("dependencies", None)
 
     if dependencies is not None:
-        raise_if_dependencies_are_invalid(dependencies, operator_id=uuid)
+        raise_if_dependencies_are_invalid(experiment_id, dependencies, operator_id=uuid)
         update_dependencies(uuid, dependencies)
 
     data = {"updated_at": datetime.utcnow()}
@@ -219,7 +219,7 @@ def raise_if_parameters_are_invalid(parameters):
             raise BadRequest(PARAMETERS_EXCEPTION_MSG)
 
 
-def raise_if_dependencies_are_invalid(dependencies, operator_id=None):
+def raise_if_dependencies_are_invalid(experiment_id, dependencies, operator_id=None):
     """Raises an exception if the specified dependencies are not valid.
 
     Args:
@@ -231,7 +231,7 @@ def raise_if_dependencies_are_invalid(dependencies, operator_id=None):
 
     for d in dependencies:
         try:
-            raise_if_operator_does_not_exist(d)
+            raise_if_operator_does_not_exist(d, experiment_id)
             if d == operator_id:
                 raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
         except NotFound:
