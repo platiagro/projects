@@ -67,10 +67,12 @@ class TestDatasets(TestCase):
 
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID2}', '{EXPERIMENT_ID}', '{COMPONENT_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES ('{OPERATOR_ID2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
+        conn.execute(text)
         conn.close()
 
+        # uploads mock dataset
         try:
             MINIO_CLIENT.make_bucket(BUCKET_NAME)
         except BucketAlreadyOwnedByYou:

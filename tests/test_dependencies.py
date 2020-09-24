@@ -71,6 +71,12 @@ class TestDependencies(TestCase):
 
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO dependencies (uuid, operator_id, dependency) "
             f"VALUES ('{DEPENDENCY_ID}', '{OPERATOR_ID}', '{OPERATOR_ID_2}')"
         )
         conn.execute(text)
@@ -79,11 +85,11 @@ class TestDependencies(TestCase):
     def tearDown(self):
         conn = engine.connect()
         text = f"DELETE FROM dependencies WHERE operator_id in"
-          f" (SELECT uuid  FROM operators where task_id = '{TASK_ID}')"
+        f" (SELECT uuid  FROM operators where task_id = '{TASK_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM operators WHERE experiment_id in"
-          f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
+        f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
@@ -127,16 +133,16 @@ class TestDependencies(TestCase):
             del result[attr]
         self.assertDictEqual(expected, result)
 
-  def test_update_dependencies(self):
-       with app.test_client() as c:
+    def test_update_dependencies(self):
+        with app.test_client() as c:
             rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
                 "name": "test2",
                 "copy_from": f"{EXPERIMENT_ID}"
             })
             self.assertEqual(rv.status_code, 200)
 
-  def test_delete_dependency(self):
-       with pytest.raises(NotFound) as e:
+    def test_delete_dependency(self):
+        with pytest.raises(NotFound) as e:
             assert delete_dependency("unk")
         assert str(e.value) == "404 Not Found: The specified dependency does not exist"
 
