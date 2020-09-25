@@ -241,8 +241,6 @@ def raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, o
     if not isinstance(dependencies, list):
         raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
 
-    raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies)
-
     # check if dependencies has duplicates
     if len(dependencies) != len(set(dependencies)):
         raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
@@ -254,6 +252,8 @@ def raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, o
                 raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
         except NotFound:
             raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+
+    raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies)
 
 
 def has_cycles_util(operator_id, visited, recursion_stack, new_dependencies, new_dependencies_op):
