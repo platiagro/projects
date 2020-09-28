@@ -8,7 +8,7 @@ from sqlalchemy import func
 from sqlalchemy import asc, desc, text
 
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
-from werkzeug.exceptions import BadRequest, NotFound
+from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
 from .experiments import create_experiment
 from ..database import db_session
@@ -53,6 +53,8 @@ def get_project(uuid):
         The project info.
     """
     project = Project.query.get(uuid)
+
+    # print(project)
 
     if project is None:
         raise NOT_FOUND
@@ -157,7 +159,7 @@ def pagination_projects(name, page, page_size, order):
             'projects': [project.as_dict() for project in projects]
         }
     except Exception:
-        raise BadRequest('It was not possible to sort with the specified parameter')
+        raise InternalServerError('The service is unavailable. Try your call again.')
     return response
 
 
