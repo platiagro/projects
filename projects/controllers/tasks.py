@@ -10,7 +10,7 @@ from minio.error import ResponseError
 from sqlalchemy import func
 from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError
-from werkzeug.exceptions import BadRequest, Forbidden, NotFound
+from werkzeug.exceptions import BadRequest, Forbidden, NotFound, InternalServerError
 
 
 from ..database import db_session
@@ -402,7 +402,7 @@ def pagination_tasks(name, page, page_size, order):
             'tasks': [task.as_dict() for task in tasks]
         }
     except Exception:
-        raise BadRequest('It was not possible to sort with the specified parameter')
+        raise InternalServerError('The service is unavailable. Try your call again.')
     return response
 
 
