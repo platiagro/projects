@@ -54,8 +54,6 @@ def get_project(uuid):
     """
     project = Project.query.get(uuid)
 
-    # print(project)
-
     if project is None:
         raise NOT_FOUND
 
