@@ -444,10 +444,10 @@ def pagination_ordering(query, page_size, page, order_by):
     Returns:
         list: a list of projects
     """
-    if len(order_by) < 1 or order_by[1] not in ["asc", "desc"]:
-        raise BadRequest("It was not possible to sort with the specified parameter.")
-
     order = text_to_list(order_by)
+
+    if len(order) <= 1 or order[1] not in ["asc", "desc"]:
+        raise BadRequest("It was not possible to sort with the specified parameter")
 
     if page:
         if 'asc' == order[1].lower():
