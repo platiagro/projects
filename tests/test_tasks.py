@@ -124,6 +124,11 @@ class TestTasks(TestCase):
             self.assertIsInstance(result["tasks"], list)
             self.assertIsInstance(result["total"], int)
 
+            rv = c.get("/tasks?order=uuid desc")
+            result = rv.get_json()
+            self.assertIsInstance(result["tasks"], list)
+            self.assertIsInstance(result["total"], int)
+
             rv = c.get("/tasks?page=1&order=uuid asc")
             result = rv.get_json()
             self.assertIsInstance(result["tasks"], list)
@@ -138,6 +143,18 @@ class TestTasks(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result["tasks"], list)
             self.assertIsInstance(result["total"], int)
+
+            rv = c.get(f"/tasks?order=foo")
+            result = rv.get_json()
+            expected = {"message": "It was not possible to sort with the specified parameter"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.get(f"/tasks?order=foo bar")
+            result = rv.get_json()
+            expected = {"message": "It was not possible to sort with the specified parameter"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
     def test_create_task(self):
         with app.test_client() as c:
