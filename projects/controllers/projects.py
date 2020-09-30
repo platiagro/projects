@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 """Projects controller."""
-import re
 from datetime import datetime
 from os.path import join
 
 from sqlalchemy import func
 from sqlalchemy import asc, desc, text
 
-from sqlalchemy.exc import InvalidRequestError, ProgrammingError
-from werkzeug.exceptions import BadRequest, NotFound
+from sqlalchemy.exc import InvalidRequestError, ProgrammingError, OperationalError, InternalError
+from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
 from .experiments import create_experiment
 from ..database import db_session
@@ -131,34 +130,40 @@ def delete_project(uuid):
 
 
 def pagination_projects(name, page, page_size, order):
-    """Pagination ordering
+    """Projects pagination.
+
     Args:
-        name(str): name of the project to be searched
-        page(int): page number
-        page_size(int) : record numbers
-        order(str): order by Ex: uuid asc
+        name (str): project name
+        page (int): records size
+        page_size (int): page number
+        order (str): order by
+
+    Raises:
+        InternalServerError: MySQL error
+
     Returns:
-        A list of projects.
+        dict: query response
     """
     try:
         query = db_session.query(Project)
+
         if name:
             query = query.filter(Project.name.ilike(func.lower(f"%{name}%")))
-        if page == 0 and order is None:
-            query = query.order_by(text('projects.name'))
-        elif page and order is None:
-            query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
+
+        if page is not None and order is None:
+            if page == 0:
+                query = query.order_by(text('projects.name'))
+            else:
+                query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
         else:
             query = pagination_ordering(query, page_size, page, order)
+
         projects = query.all()
         total_rows = total_rows_projects(name)
-        response = {
-            'total': total_rows,
-            'projects': [project.as_dict() for project in projects]
-        }
-    except Exception:
-        raise BadRequest('It was not possible to sort with the specified parameter')
-    return response
+
+        return {'total': total_rows, 'projects': [project.as_dict() for project in projects]}
+    except (OperationalError, InternalError):
+        raise InternalServerError("The service is unavailable. Try your call again.")
 
 
 def total_rows_projects(name):
@@ -243,25 +248,31 @@ def pagination_ordering(query, page_size, page, order_by):
     """Pagination ordering.
 
     Args:
-        query(str): query
-        page_size(int) : record numbers
-        page(int): page number
-        order_by(str): order by
+        query (string): query to be used
+        page_size (int): record numbers
+        page (int): page number
+        order_by (str): order by
+
+    Raises:
+        BadRequest: the parameters are not the same as expected.
 
     Returns:
-        A list of projects.
-
+        list: a list of projects
     """
-    if order_by:
-        order = text_to_list(order_by)
-        if page:
-            if order[1]:
-                if 'desc' == order[1].lower():
-                    query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
-                if 'asc' == order[1].lower():
-                    query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
-        else:
-            query = uninformed_page(query, order)
+    order = text_to_list(order_by)
+
+    if len(order) <= 1 or order[1] not in ["asc", "desc"]:
+        raise BadRequest("It was not possible to sort with the specified parameter")
+
+    if page:
+        if order[1]:
+            if 'desc' == order[1].lower():
+                query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+            if 'asc' == order[1].lower():
+                query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+    else:
+        query = uninformed_page(query, order)
+
     return query
 
 
