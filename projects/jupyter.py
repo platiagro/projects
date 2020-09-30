@@ -11,7 +11,6 @@ from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 
 from .object_storage import BUCKET_NAME, get_object
-from .utils import remove_ansi_escapes
 
 JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
@@ -174,49 +173,3 @@ def read_parameters_from_source(source):
                 pass
 
     return parameters
-
-
-def get_notebook_output(experiment_id: str, operator_id: str):
-    """Get notebook logs from Jupyter Api.
-
-    Args:
-        experiment_id (str): experiment id
-        operator_id (str): operator id
-
-    Raises:
-        FileNotFoundError: notebook does not exist
-    """
-    operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
-
-    try:
-        r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
-        notebook_content = loads(r.decode("utf-8"))["content"]
-    except HTTPError as e:
-        status_code = e.response.status_code
-        if status_code == 404:
-            raise FileNotFoundError("The specified notebook does not exist")
-
-    for cell in notebook_content["cells"]:
-        try:
-            metadata = cell["metadata"]["papermill"]
-
-            if metadata["exception"] and metadata["status"] == "failed":
-                for output in cell["outputs"]:
-                    if output["output_type"] == "error":
-                        error_log = output["traceback"]
-
-                traceback = remove_ansi_escapes(error_log)
-
-                return {
-                    "cellType": cell["cell_type"],
-                    "executionCount": cell["execution_count"],
-                    "output": {
-                        "errorName": output["ename"],
-                        "errorValue": output["evalue"],
-                        "traceback": traceback,
-                    }
-                }
-        except KeyError:
-            pass
-
-    return {"message": "Notebook finished with status completed"}
