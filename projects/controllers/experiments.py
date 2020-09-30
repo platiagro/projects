@@ -10,9 +10,8 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ..database import db_session
 from ..models import Dependency, Experiment, Template, Operator
 from ..object_storage import remove_objects
-from .tasks import get_tasks_by_tag
 from .dependencies import create_dependency
-from .operators import create_operator
+from .operators import create_operator, update_operator
 from .utils import raise_if_project_does_not_exist, uuid_alpha
 
 
@@ -69,19 +68,32 @@ def create_experiment(name=None, project_id=None, copy_from=None):
     if copy_from:
         try:
             experiment_find = find_by_experiment_id(experiment_id=copy_from)
-            for operator in experiment_find['operators']:
 
-                dependencies = []
-                for dependency in operator.dependencies:
-                    dependencies.append(dependency.dependency)
+            source_operators = {}
+            for source_operator in experiment_find['operators']:
+
+                source_dependencies = [d.dependency for d in source_operator.dependencies]
+
                 kwargs = {
-                    "task_id": operator.task_id,
-                    "parameters": operator.parameters,
-                    "dependencies": dependencies,
-                    "position_x": operator.position_x,
-                    "position_y": operator.position_y
+                    "task_id": source_operator.task_id,
+                    "parameters": source_operator.parameters,
+                    "dependencies": [],
+                    "position_x": source_operator.position_x,
+                    "position_y": source_operator.position_y
                 }
-                create_operator(project_id, experiment.uuid, **kwargs)
+                operator = create_operator(project_id, experiment.uuid, **kwargs)
+
+                source_operators[source_operator.uuid] = {
+                    "copy_uuid": operator["uuid"],
+                    "dependencies": source_dependencies
+                }
+
+            # update dependencies on new operators
+            for _, value in source_operators.items():
+                dependencies = [source_operators[d]['copy_uuid'] for d in value['dependencies']]
+
+                update_operator(value['copy_uuid'], project_id, experiment.uuid, dependencies=dependencies)
+
         except NotFound:
             delete_experiment(experiment.uuid, project_id)
             raise BadRequest('Source experiment does not exist')
