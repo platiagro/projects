@@ -9,8 +9,8 @@ from pkgutil import get_data
 from minio.error import ResponseError
 from sqlalchemy import func
 from sqlalchemy import asc, desc, text
-from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError
-from werkzeug.exceptions import BadRequest, Forbidden, NotFound
+from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError, OperationalError, InternalError
+from werkzeug.exceptions import BadRequest, Forbidden, NotFound, InternalServerError
 
 
 from ..database import db_session
@@ -376,34 +376,40 @@ def init_notebook_metadata(task_id, deployment_notebook, experiment_notebook):
 
 
 def pagination_tasks(name, page, page_size, order):
-    """ Tasks Paging.
+    """Task pagination.
+
     Args:
-        name(str): name of the task to be searched
-        page(int): page number
-        page_size(int) : record numbers
-        order(str): order by Ex: uuid asc
+        name (str): task name
+        page (int): records size
+        page_size (int): page number
+        order (str): order by
+
+    Raises:
+        InternalServerError: MySQL error
+
     Returns:
-        List of tasks
+        dict: query response
     """
     try:
         query = db_session.query(Task)
+
         if name:
             query = query.filter(Task.name.ilike(func.lower(f"%{name}%")))
-        if page == 0 and order is None:
-            query = query.order_by(Task.name)
-        elif page and order is None:
-            query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
+
+        if page is not None and order is None:
+            if page == 0:
+                query = query.order_by(Task.name)
+            else:
+                query = query.order_by(text('name')).limit(page_size).offset((page - 1) * page_size)
         else:
             query = pagination_ordering(query, page_size, page, order)
+
         tasks = query.all()
         total_rows = total_rows_tasks(name)
-        response = {
-            'total': total_rows,
-            'tasks': [task.as_dict() for task in tasks]
-        }
-    except Exception:
-        raise BadRequest('It was not possible to sort with the specified parameter')
-    return response
+
+        return {'total': total_rows, 'tasks': [task.as_dict() for task in tasks]}
+    except (OperationalError, InternalError):
+        raise InternalServerError("The service is unavailable. Try your call again.")
 
 
 def total_rows_tasks(name):
@@ -427,27 +433,31 @@ def pagination_ordering(query, page_size, page, order_by):
     """Pagination ordering.
 
     Args:
-        query (query): the project uuid.
-        page(int): page number
-        page_size(int) : record numbers
-        order_by(str): order by
+        query (string): query to be used
+        page_size (int): records size
+        page (int): page number
+        order_by (str): order by
+
+    Raises:
+        BadRequest: the parameters are not the same as expected.
 
     Returns:
-        query
-
+        list: a list of projects
     """
-    try:
-        order = text_to_list(order_by)
-        if page:
-            if 'asc' == order[1].lower():
-                query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
-            if 'desc' == order[1].lower():
-                query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
-        else:
-            query = uninformed_page(query, order)
-        return query
-    except Exception:
-        raise BAD_REQUEST
+    order = text_to_list(order_by)
+
+    if len(order) <= 1 or order[1] not in ["asc", "desc"]:
+        raise BadRequest("It was not possible to sort with the specified parameter")
+
+    if page:
+        if 'asc' == order[1].lower():
+            query = query.order_by(asc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+        if 'desc' == order[1].lower():
+            query = query.order_by(desc(text(order[0]))).limit(page_size).offset((page - 1) * page_size)
+    else:
+        query = uninformed_page(query, order)
+
+    return query
 
 
 def uninformed_page(query, order):
@@ -461,11 +471,9 @@ def uninformed_page(query, order):
         query
 
     """
-    try:
-        if 'asc' == order[1].lower():
-            query = query.order_by(asc(text(f'{order[0]}')))
-        elif 'desc' == order[1].lower():
-            query = query.order_by(desc(text(f'{order[0]}')))
-        return query
-    except Exception:
-        raise BAD_REQUEST
+    if 'asc' == order[1].lower():
+        query = query.order_by(asc(text(f'{order[0]}')))
+    elif 'desc' == order[1].lower():
+        query = query.order_by(desc(text(f'{order[0]}')))
+    
+    return query
