@@ -19,9 +19,7 @@ import networkx as nx
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import KFold, cross_val_score
-from sklearn.metrics import matthews_corrcoef, make_scorer
 
 
 class TGraph:
@@ -151,22 +149,20 @@ class TGraph:
             Mean result of kfold cross validation
         """
 
-        # solution = solution.dropna()
         solution = solution.fillna(method='ffill').fillna(method='bfill')
 
         # Machine Learning Parameters
-        model = None
-        scoring = None
+        model, scoring = None, None
 
         if self.target_type == 'Categorical':
-            model = RandomForestClassifier()
-            scoring = make_scorer(matthews_corrcoef)
+            model = RandomForestClassifier(random_state=0)
+            scoring = 'f1_macro'
         else:
-            model = RandomForestRegressor()
+            model = RandomForestRegressor(random_state=0)
             scoring = 'neg_mean_absolute_error'
 
         # Kfold and obtain energy
-        kf = KFold(n_splits=n_splits, shuffle=True, random_state=12345678)
+        kf = KFold(n_splits=n_splits, shuffle=True, random_state=0)
         results = cross_val_score(model, solution, self.target, cv=kf, scoring=scoring)
 
         return results.mean()

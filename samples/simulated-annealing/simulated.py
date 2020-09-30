@@ -23,12 +23,7 @@ import networkx as nx
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
-from sklearn.compose import ColumnTransformer
-from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold, cross_val_score
-from sklearn.metrics import matthews_corrcoef, make_scorer
 
 from scipy import constants
 
@@ -426,18 +421,17 @@ class SimulatedAnnealing:
         solution = solution.fillna(method='ffill').fillna(method='bfill')
 
         # Machine Learning Parameters
-        model = None
-        scoring = None
+        model, scoring = None, None
 
         if self.target_type == 'Categorical':
-            model = RandomForestClassifier()
-            scoring = make_scorer(matthews_corrcoef)
+            model = RandomForestClassifier(random_state=0)
+            scoring = 'f1_macro'
         else:
-            model = RandomForestRegressor()
+            model = RandomForestRegressor(random_state=0)
             scoring = 'neg_mean_absolute_error'
 
         # Kfold and obtain energy
-        kf = KFold(n_splits=n_splits, shuffle=True, random_state=12345678)
+        kf = KFold(n_splits=n_splits, shuffle=True, random_state=0)
         results = cross_val_score(model, solution, self.target_var, cv=kf, scoring=scoring)
 
         return results.mean()
@@ -767,6 +761,7 @@ class SimulatedAnnealing:
 
         # Calculate energy of first solution
         self.best_solution_energy = self.energy(self.best_solution.copy())
+        default_energy = self.best_solution_energy
 
         try:
 
@@ -792,5 +787,8 @@ class SimulatedAnnealing:
 
         except:
             pass
+
+        if self.energy(self.best_solution.copy()) < default_energy:
+            self.best_solution = self.data
 
         return self.format_output()
