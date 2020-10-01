@@ -47,11 +47,8 @@ class TestNLP(TestCase):
 
     def test_nlp_text_pre_processor(self):
         experiment_path = "samples/nlp-text-pre-processor/Experiment.ipynb"
-        deployment_path = "samples/nlp-text-pre-processor/Deployment.ipynb"
 
         # Run test with IMDB dataset
         execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=IMDB_DATASET_FULL_PATH,
-                                                                       target=IMDB_TARGET))
-
-        # Deploy component
-        execute_notebook(deployment_path, "/dev/null")
+                                                                       target=IMDB_TARGET,
+                                                                       model_features="text"))
