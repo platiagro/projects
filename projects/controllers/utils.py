@@ -65,9 +65,8 @@ def raise_if_operator_does_not_exist(operator_id, experiment_id=None):
         raise NotFound("The specified operator does not exist")
     else:
         # verify if operator is from the provided experiment
-        if experiment_id:
-            if operator.one().as_dict()["experimentId"] != experiment_id:
-                raise NotFound("The specified operator is from another experiment")
+        if experiment_id and operator.one().as_dict()["experimentId"] != experiment_id:
+            raise NotFound("The specified operator is from another experiment")
 
 
 def uuid_alpha() -> str:
