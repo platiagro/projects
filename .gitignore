@@ -130,4 +130,5 @@ dmypy.json
 
 # Docker volumes
 /data
-/data-minio
+/data-minio.DS_Store
+.DS_Store
