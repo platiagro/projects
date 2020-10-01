@@ -13,7 +13,6 @@ from .experiments import bp as experiments_blueprint
 from .datasets import bp as datasets_blueprint
 from .figures import bp as figures_blueprint
 from .json_encoder import CustomJSONEncoder
-from .logs import bp as logs_blueprint
 from .operators import bp as operators_blueprint
 from .parameters import bp as parameters_blueprint
 from .projects import bp as projects_blueprint
@@ -37,8 +36,6 @@ app.register_blueprint(figures_blueprint,
 app.register_blueprint(metrics_blueprint,
                        url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/metrics")
 app.register_blueprint(templates_blueprint, url_prefix="/templates")
-app.register_blueprint(logs_blueprint,
-                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/logs")
 
 
 @app.teardown_appcontext
