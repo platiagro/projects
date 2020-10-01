@@ -11,15 +11,19 @@ OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 OPERATOR_ID_3 = str(uuid_alpha())
 OPERATOR_ID_4 = str(uuid_alpha())
+OPERATOR_ID_5 = str(uuid_alpha())
 DEPENDENCY_ID = str(uuid_alpha())
 DEPENDENCY_ID_2 = str(uuid_alpha())
 NAME = "foo"
+NAME_2 = "bar"
 DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
+EXPERIMENT_ID_2 = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1}
 POSITION = 0
+POSITION_2 = 1
 POSITION_X = 0.3
 POSITION_Y = 0.5
 PARAMETERS = {}
@@ -60,6 +64,12 @@ class TestOperators(TestCase):
         conn.execute(text)
 
         text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID_2}', '{NAME_2}', '{PROJECT_ID}', '{POSITION_2}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
@@ -95,6 +105,13 @@ class TestOperators(TestCase):
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
             f"VALUES ('{OPERATOR_ID_4}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}',"
+            f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"VALUES ('{OPERATOR_ID_5}', '{EXPERIMENT_ID_2}', '{TASK_ID}', '{PARAMETERS_JSON}',"
             f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
@@ -212,6 +229,15 @@ class TestOperators(TestCase):
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
                 "dependencies": ["unk"]
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified dependencies are not valid."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
+                "taskId": TASK_ID,
+                "dependencies": [OPERATOR_ID, OPERATOR_ID]
             })
             result = rv.get_json()
             expected = {"message": "The specified dependencies are not valid."}
@@ -377,6 +403,22 @@ class TestOperators(TestCase):
             })
             result = rv.get_json()
             expected = {"message": "The specified dependencies are not valid."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
+                "dependencies": [OPERATOR_ID_5],
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified dependencies are not valid."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_2}", json={
+                "dependencies": [OPERATOR_ID],
+            })
+            result = rv.get_json()
+            expected = {"message": "Cyclical dependencies."}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
