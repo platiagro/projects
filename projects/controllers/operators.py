@@ -233,6 +233,9 @@ def raise_if_parameters_are_invalid(parameters):
 
 def raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=None):
     """Raises an exception if the specified dependencies are not valid.
+    The invalid dependencies are duplicate elements on the dependencies,
+    dependencies including the actual operator_id, dependencie's operator
+    doesn't exist and ciclycal dependencies.
 
     Args:
         dependencies (list): the dependencies list.
@@ -281,6 +284,7 @@ def has_cycles_util(operator_id, visited, recursion_stack, new_dependencies, new
 
 def raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies):
     """Raises an exception if the dependencies of operators from experiment are cyclical.
+
     Args:
         project_id (str): the project uuid.
         experiment_id (str): the experiment uuid.
