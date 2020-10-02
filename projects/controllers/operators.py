@@ -227,7 +227,7 @@ def raise_if_parameters_are_invalid(parameters):
         raise BadRequest(PARAMETERS_EXCEPTION_MSG)
 
     for key, value in parameters.items():
-        if not isinstance(value, (str, int, float, bool, list, dict)):
+        if not (value is None) and not isinstance(value, (str, int, float, bool, list, dict)):
             raise BadRequest(PARAMETERS_EXCEPTION_MSG)
 
 
