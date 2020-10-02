@@ -356,5 +356,19 @@
 			"papermill $notebookPath output.ipynb -b $parameters;\n                        status=$?;\n                        bash save-dataset.sh;\n                        bash save-figure.sh;\n                        bash make-cells-read-only.sh\n                        bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;\n                        exit $status"
 		],
         "image": "platiagro/platiagro-notebook-image:0.1.0"
+    },
+    {
+        "name": "Text Pre Processor",
+        "description": "Utiliza as bibliotecas nltk, ftfy e regex para pré processar textos para outras tarefas",
+        "experimentNotebook": "/samples/nlp-text-pre-processor/Experiment.ipynb",
+        "deploymentNotebook": "/samples/nlp-text-pre-processor/Deployment.ipynb",
+        "tags": [
+            "NLP"
+        ],
+        "commands": ["sh", "-c"],
+        "arguments": [
+            "papermill $notebookPath output.ipynb -b $parameters;\n                        status=$?;\n                        bash save-dataset.sh;\n                        bash save-figure.sh;\n                        bash make-cells-read-only.sh\n                        bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;\n                        exit $status"
+        ],
+        "image": "platiagro/platiagro-notebook-image:0.1.0"
     }
 ]
