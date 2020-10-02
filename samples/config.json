@@ -356,5 +356,19 @@
 			"papermill $notebookPath output.ipynb -b $parameters;\n                        status=$?;\n                        bash save-dataset.sh;\n                        bash save-figure.sh;\n                        bash make-cells-read-only.sh\n                        bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;\n                        exit $status"
 		],
         "image": "platiagro/platiagro-notebook-image:0.1.0"
+    },
+    {
+        "name": "GloVe Embeddings Bag (Inglês)",
+        "description": "Classifica frases com base em Embeddings GloVe disponibilizados pela Universidade de Stanford",
+        "experimentNotebook": "/samples/nlp-english-glove-embeddings-sentence-classification/Experiment.ipynb",
+        "deploymentNotebook": "/samples/nlp-english-glove-embeddings-sentence-classification/Deployment.ipynb",
+        "tags": [
+            "NLP"
+        ],
+        "commands": ["sh", "-c"],
+        "arguments": [
+            "papermill $notebookPath output.ipynb -b $parameters;\n                        status=$?;\n                        bash save-dataset.sh;\n                        bash save-figure.sh;\n                        bash make-cells-read-only.sh\n                        bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;\n                        exit $status"
+        ],
+        "image": "platiagro/platiagro-notebook-image:0.1.0"
     }
 ]
