@@ -106,15 +106,9 @@ jobs:
         run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
       - name: Installing dependencies
         run: |
-          sudo apt-get install build-essential swig
-          sudo apt-get install -y swig
-          python -m pip install --upgrade pip
-          curl https://raw.githubusercontent.com/automl/auto-sklearn/master/requirements.txt | xargs -n 1 -L 1 python -m pip install
-          python -m pip install .[testing]
-          python -c "from smac.tae.execute_ta_run import StatusType"
+          pip install .[testing]
       - name: Component integration pytest
         run: |
-          python -c "from smac.tae.execute_ta_run import StatusType"
           pytest tests/components
         env:
           MINIO_ENDPOINT: localhost:9000
