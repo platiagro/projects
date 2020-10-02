@@ -14,6 +14,11 @@ import numpy as np
 import pandas as pd
 import warnings
 
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import KFold, cross_val_score
+
 import featuretools as ft
 import featuretools.variable_types as vtypes
 
@@ -31,6 +36,9 @@ class FeatureTools():
 
         self.data = data.dropna()
         self.feature_types = feature_types
+        self.aux_ft = feature_types
+        self.ftypes_list = feature_types[0].tolist()
+        self.target_var = target_var
         self.group_var = group_var
         self.date_var = date_var
         self.names = names
@@ -38,6 +46,9 @@ class FeatureTools():
         if date_var is not None:
             self.data[date_var] = self.data[date_var].astype(str)
             self.data[date_var] = pd.to_datetime(self.data[date_var], infer_datetime_format=True)
+
+        self.target_indx = list(self.data.columns).index(target_var)
+        self.target_type = self.ftypes_list[self.target_indx]
 
         warnings.filterwarnings("ignore")
 
@@ -156,6 +167,55 @@ class FeatureTools():
         return trans_applied
 
 
+    def evaluate(self, solution, feature_types):
+        """
+        Evaluate the variable data agains different models.
+        May be used to compare before and after the feature engineering.
+        Parameters
+        ----------
+        Nothing
+        Returns
+        ----------
+        result_mean: float
+            Mean result
+        """
+
+        solution = solution.fillna(method='ffill').fillna(method='bfill')
+
+        if type(feature_types) == pd.DataFrame:
+            feature_types = feature_types[0].tolist()
+
+        # Convert all categorical columns to numerical
+        cat_feat_indexes = [indx for indx, x in enumerate(feature_types) if x == 'Categorical']
+        cat_feats = solution.columns[cat_feat_indexes].tolist()
+
+        oe = OrdinalEncoder()
+        if len(cat_feats) > 0:
+            solution[cat_feats] = oe.fit_transform(solution[cat_feats])
+
+        if self.date_var is not None and self.date_var in list(solution.columns):
+            solution.pop(self.date_var)
+
+        # Separate the last column (target)
+        target = solution.pop(self.target_var).values
+
+        # Machine Learning Parameters
+        model, scoring = None, None
+
+        if self.target_type == 'Categorical':
+            model = RandomForestClassifier(random_state=0)
+            scoring = 'f1_macro'
+        else:
+            model = RandomForestRegressor(random_state=0)
+            scoring = 'neg_mean_absolute_error'
+
+        # Call
+        kf = KFold(n_splits=20, shuffle=True, random_state=0)
+        results = cross_val_score(model, solution, target, cv=kf, scoring=scoring)
+
+        return results.mean()
+
+
     def auto_feat(self):
         """
         Executes auto featuring.
@@ -174,6 +234,8 @@ class FeatureTools():
 
         if self.group_var == None or len(self.group_var) == 0:
             return self.data, self.feature_types, {}
+
+        default_energy = self.evaluate(self.data.copy(), self.feature_types.copy())
 
         # Parse data dataframe to EntitySet
         es = self.parse_data()
@@ -212,6 +274,10 @@ class FeatureTools():
             result.drop("id", axis=1, inplace=True)
 
         self.add_feature_types(result)
+
+        if self.evaluate(result, self.feature_types.copy()) < default_energy:
+            result = self.data
+            self.feature_types = self.aux_ft
 
         trans_applied = self.create_feat_template(self.data, result)
 
