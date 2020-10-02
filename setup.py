@@ -23,6 +23,7 @@ extras = {
         "papermill[s3]==2.1.1",
         "scikit-learn==0.22.2.post1",
         "category-encoders==2.2.2",
+        "smac>=0.12,<0.13",
         "auto-sklearn==0.7.0",
         "networkx==2.4",
         "matplotlib==3.3.0"
