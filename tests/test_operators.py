@@ -210,15 +210,6 @@ class TestOperators(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
-                "parameters": {"coef": None},
-            })
-            result = rv.get_json()
-            expected = {"message": "The specified parameters are not valid"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-                "taskId": TASK_ID,
                 "dependencies": "unk"  # only lists are accepted
             })
             result = rv.get_json()
@@ -384,14 +375,6 @@ class TestOperators(TestCase):
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "parameters": [{"name": "coef", "value": 0.1}],
-            })
-            result = rv.get_json()
-            expected = {"message": "The specified parameters are not valid"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-                "parameters": {"coef": None},
             })
             result = rv.get_json()
             expected = {"message": "The specified parameters are not valid"}
