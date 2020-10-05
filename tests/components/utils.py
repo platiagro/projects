@@ -114,6 +114,29 @@ def creates_titanic_metadata(dataset_object_name):
     )
 
 
+def creates_imdb_metadata(dataset_object_name):
+    """Create IMDB metadata into which the model will import.
+    Args:
+        dataset_object_name (str): name of the dataset that the Model will search in Minio.
+    """
+    try:
+        MINIO_CLIENT.make_bucket(BUCKET_NAME)
+    except BucketAlreadyOwnedByYou:
+        pass
+
+    metadata = {"columns": ["label", "text", "is_valid"],
+                "featuretypes": ["Categorical", "Categorical", "Categorical"],
+                "filename": "imdb_mock.metadata"}
+
+    buffer = BytesIO(dumps(metadata).encode())
+    MINIO_CLIENT.put_object(
+        bucket_name=BUCKET_NAME,
+        object_name=f"datasets/{dataset_object_name}/{dataset_object_name}.metadata",
+        data=buffer,
+        length=buffer.getbuffer().nbytes,
+    )
+
+
 def creates_mock_dataset(object_name, object_content):
     """Create a mock dataset to be used in unit test.
 
