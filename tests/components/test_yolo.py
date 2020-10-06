@@ -50,6 +50,3 @@ class TestYolo(TestCase):
 
         # Run test with COCO dataset
         execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=COCO_DATASET_FULL_PATH))
-
-        # Deploy component
-        execute_notebook(deployment_path, "/dev/null")
