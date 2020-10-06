@@ -27,7 +27,9 @@ extras = {
         "auto-sklearn==0.7.0",
         "networkx==2.4",
         "matplotlib==3.3.0",
-        "tensorflow==2.3.0"
+        "tensorflow==2.3.0",
+        "opencv-contrib-python==4.1.2.30",
+        "opencv-python==4.1.2.30"
     ]
 }
 
