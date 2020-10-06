@@ -45,7 +45,11 @@ class TestYolo(TestCase):
         delete_mock_dataset(COCO_DATASET)
 
     def test_yolo(self):
-        experiment_path = "samples/default_yolo/Experiment.ipynb"
+        experiment_path = "samples/default-yolo/Experiment.ipynb"
+        deployment_path = "samples/default-yolo/Deployment.ipynb"
 
         # Run test with COCO dataset
         execute_notebook(experiment_path, "/dev/null", parameters=dict(dataset=COCO_DATASET_FULL_PATH))
+
+        # Deploy component
+        execute_notebook(deployment_path, "/dev/null")
