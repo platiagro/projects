@@ -26,7 +26,8 @@ extras = {
         "smac>=0.12,<0.13",
         "auto-sklearn==0.7.0",
         "networkx==2.4",
-        "matplotlib==3.3.0"
+        "matplotlib==3.3.0",
+        "tensorflow==2.3.0"
     ]
 }
 
