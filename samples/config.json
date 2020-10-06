@@ -360,8 +360,8 @@
 	{
         "name": "You Only Look Once (YOLO)",
         "description": "Utiliza o modelo YOLO para classificação de imagens usando Yolov4",
-        "experimentNotebook": "/samples/default_yolo/Experiment.ipynb",
-        "deploymentNotebook": "/samples/default_yolo/Deployment.ipynb",
+        "experimentNotebook": "/samples/default-yolo/Experiment.ipynb",
+        "deploymentNotebook": "/samples/default-yolo/Deployment.ipynb",
         "tags": [
             "COMPUTER_VISION"
         ],
