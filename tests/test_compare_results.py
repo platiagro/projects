@@ -18,7 +18,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 
-class TestExperiments(TestCase):
+class TestCompareResults(TestCase):
     def setUp(self):
         self.maxDiff = None
         conn = engine.connect()
