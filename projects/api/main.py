@@ -9,6 +9,7 @@ from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
     Forbidden, InternalServerError
 
 from ..database import db_session, init_db
+from .compare_results import bp as compare_results_blueprint
 from .experiments import bp as experiments_blueprint
 from .datasets import bp as datasets_blueprint
 from .figures import bp as figures_blueprint
@@ -24,6 +25,7 @@ from ..samples import init_tasks
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 app.register_blueprint(projects_blueprint, url_prefix="/projects")
+app.register_blueprint(compare_results_blueprint, url_prefix="/projects/<project_id>/compareResults")
 app.register_blueprint(experiments_blueprint, url_prefix="/projects/<project_id>/experiments")
 app.register_blueprint(tasks_blueprint, url_prefix="/tasks")
 app.register_blueprint(parameters_blueprint, url_prefix="/tasks/<task_id>/parameters")
