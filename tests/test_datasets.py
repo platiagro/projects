@@ -191,3 +191,16 @@ class TestDatasets(TestCase):
                 "total": 3
             }
             self.assertDictEqual(result, expected)
+
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/datasets/{RUN_ID}")
+            result = rv.get_json()
+            expected = {
+                "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
+                "data": [
+                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
+                ],
+                "total": 3
+            }
+            self.assertDictEqual(result, expected)

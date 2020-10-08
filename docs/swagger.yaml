@@ -561,6 +561,49 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/datasets/{runId}:
+    get:
+      summary: "List datasets paginated by runId."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+          description: Page size
+      responses:
+        "200":
+          $ref: "#/components/responses/Datasets"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/figures:
     get:
       summary: "List all figures."
@@ -589,6 +632,39 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/figures/{runId}:
+    get:
+      summary: "List all figures by runId."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Figures"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/metrics:
     get:
       summary: "List all metrics."
@@ -606,6 +682,41 @@ paths:
           schema:
             type: string
         - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Metrics"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/metrics/{runId}:
+    get:
+      summary: "List all metrics by runId."
+      tags:
+        - "Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
           in: path
           required: true
           schema:

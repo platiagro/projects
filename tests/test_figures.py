@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from io import BytesIO
 from unittest import TestCase
 
-from minio.error import BucketAlreadyOwnedByYou
+import matplotlib.pyplot as plt
+import numpy as np
 
+import platiagro
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
@@ -11,24 +12,22 @@ from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
-FIGURE_NAME = f"experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/figure-123456.png"
+RUN_ID = str(uuid_alpha())
 
 
 class TestFigures(TestCase):
     def setUp(self):
         self.maxDiff = None
-        try:
-            MINIO_CLIENT.make_bucket(BUCKET_NAME)
-        except BucketAlreadyOwnedByYou:
-            pass
 
-        file = BytesIO(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\xc0\x00\x00\x00\xba\x08\x02\x00\x00\x00w\x07\xd5\xf7\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\x04gAMA\x00\x00\xb1\x8f\x0b\xfca\x05\x00\x00\x00\tpHYs\x00\x00\x0e\xc3\x00\x00\x0e\xc3\x01\xc7o\xa8d\x00\x00\x01\xbaIDATx^\xed\xd21\x01\x00\x00\x0c\xc3\xa0\xf97\xdd\x89\xc8\x0b\x1a\xb8A \x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\x89@$\x02\x91\x08D"\x10\xc1\xf6\x1a:\xf5\xe1\x06\x89A\xdf\x00\x00\x00\x00IEND\xaeB`\x82')
-        MINIO_CLIENT.put_object(
-            bucket_name=BUCKET_NAME,
-            object_name=FIGURE_NAME,
-            data=file,
-            length=file.getbuffer().nbytes,
-        )
+        t = np.arange(0.0, 2.0, 0.01)
+        s = 1 + np.sin(2 * np.pi * t)
+        fig, ax = plt.subplots()
+        ax.plot(t, s)
+
+        platiagro.save_figure(experiment_id=EXPERIMENT_ID,
+                              operator_id=OPERATOR_ID,
+                              run_id=RUN_ID,
+                              figure=fig)
 
     def tearDown(self):
         prefix = f"experiments/{EXPERIMENT_ID}"
@@ -38,5 +37,11 @@ class TestFigures(TestCase):
     def test_list_figures(self):
         with app.test_client() as c:
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/figures")
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+
+    def test_list_figures_by_run_id(self):
+        with app.test_client() as c:
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/figures/{RUN_ID}")
             result = rv.get_json()
             self.assertIsInstance(result, list)
