@@ -11,7 +11,7 @@ from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
 from .experiments import create_experiment
 from ..database import db_session
-from ..models import Dependency, Experiment, Operator, Project
+from ..models import Dependency, Experiment, Operator, Project, TrainingHistory
 from ..object_storage import remove_objects
 from .utils import uuid_alpha, list_objects, objects_uuid, text_to_list
 
@@ -110,6 +110,8 @@ def delete_project(uuid):
 
     experiments = Experiment.query.filter(Experiment.project_id == uuid).all()
     for experiment in experiments:
+        # remove training history
+        TrainingHistory.query.filter(TrainingHistory.experiment_id == experiment.uuid).delete()
         # remove dependencies
         operators = db_session.query(Operator).filter(Operator.experiment_id == experiment.uuid).all()
         for operator in operators:
@@ -185,23 +187,26 @@ def total_rows_projects(name):
 
 def delete_multiple_projects(project_ids):
     """Delete multiple projects.
-
     Args:
         project_ids(str): list of projects
-
     Returns:
         message
-
     """
     total_elements = len(project_ids)
     all_projects_ids = list_objects(project_ids)
     if total_elements < 1:
         return {"message": "please inform the uuid of the project"}
     projects = db_session.query(Project).filter(Project.uuid.in_(all_projects_ids)).all()
-    experiments = db_session.query(Experiment).filter(Experiment.project_id.in_(objects_uuid(projects))).all()
-    operators = db_session.query(Operator).filter(Operator.experiment_id.in_(objects_uuid(experiments))) \
+    experiments = db_session.query(Experiment) \
+        .filter(Experiment.project_id.in_(objects_uuid(projects))) \
         .all()
-    session = pre_delete(db_session, projects, total_elements, operators, experiments, all_projects_ids)
+    operators = db_session.query(Operator) \
+        .filter(Operator.experiment_id.in_(objects_uuid(experiments))) \
+        .all()
+    training_histories = db_session.query(TrainingHistory) \
+        .filter(TrainingHistory.experiment_id.in_(objects_uuid(experiments))) \
+        .all()
+    session = pre_delete(db_session, projects, total_elements, training_histories, operators, experiments, all_projects_ids)
     for experiment in experiments:
         prefix = join("experiments", experiment.uuid)
         try:
@@ -212,23 +217,30 @@ def delete_multiple_projects(project_ids):
     return {"message": "Successfully removed projects"}
 
 
-def pre_delete(db_session, projects, total_elements, operators, experiments, all_projects_ids):
+def pre_delete(db_session,
+               projects,
+               total_elements,
+               training_histories,
+               operators,
+               experiments,
+               all_projects_ids):
     """SQL form for deleting multiple projects.
-
     Args:
         db_session(db_session): db_session
         projects(projects): list projects
         total_elements(int): total elements found in projects
+        training_histories:(operators): list training history
         operators:(operators): list operators
         experiments(experiments): list experiments
         all_projects_ids(str): uuids of projects to be excluded
-
     Returns:
         db_session
-
     """
     if len(projects) != total_elements:
         raise NOT_FOUND
+    if len(training_histories):
+        training_histories = TrainingHistory.__table__.delete().where(TrainingHistory.experiment_id.in_(objects_uuid(experiments)))
+        db_session.execute(training_histories)
     if len(operators):
         # remove dependencies
         for operator in operators:

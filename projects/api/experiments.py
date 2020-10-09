@@ -4,7 +4,7 @@
 from flask import Blueprint, jsonify, request
 
 from ..controllers.experiments import list_experiments, create_experiment, \
-    get_experiment, update_experiment, delete_experiment
+    get_experiment, update_experiment, delete_experiment, list_experiments_training_history
 from ..utils import to_snake_case
 
 bp = Blueprint("experiments", __name__)
@@ -49,3 +49,10 @@ def handle_delete_experiment(project_id, experiment_id):
     experiment = delete_experiment(uuid=experiment_id,
                                    project_id=project_id)
     return jsonify(experiment)
+
+
+@bp.route("/trainingHistory", methods=["GET"])
+def handle_get_experiments_training_history(project_id):
+    """Handles GET requests to /trainingHistory."""
+    response = list_experiments_training_history(project_id=project_id)
+    return jsonify(response)

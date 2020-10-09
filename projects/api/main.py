@@ -19,12 +19,15 @@ from .projects import bp as projects_blueprint
 from .metrics import bp as metrics_blueprint
 from .tasks import bp as tasks_blueprint
 from .templates import bp as templates_blueprint
+from .training_history import bp as training_history_blueprint
 from ..samples import init_tasks
 
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 app.register_blueprint(projects_blueprint, url_prefix="/projects")
 app.register_blueprint(experiments_blueprint, url_prefix="/projects/<project_id>/experiments")
+app.register_blueprint(training_history_blueprint,
+                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/trainingHistory")
 app.register_blueprint(tasks_blueprint, url_prefix="/tasks")
 app.register_blueprint(parameters_blueprint, url_prefix="/tasks/<task_id>/parameters")
 app.register_blueprint(operators_blueprint,

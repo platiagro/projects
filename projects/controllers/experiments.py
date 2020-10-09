@@ -8,10 +8,11 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
-from ..models import Dependency, Experiment, Template, Operator
+from ..models import Dependency, Experiment, Template, Operator, TrainingHistory
 from ..object_storage import remove_objects
 from .dependencies import create_dependency
 from .operators import create_operator, update_operator
+from .training_history import list_training_history
 from .utils import raise_if_project_does_not_exist, uuid_alpha
 
 
@@ -215,6 +216,8 @@ def delete_experiment(uuid, project_id):
     if experiment is None:
         raise NOTFOUND
 
+    # remove training history
+    TrainingHistory.query.filter(TrainingHistory.experiment_id == uuid).delete()
     # remove dependencies
     operators = db_session.query(Operator).filter(Operator.experiment_id == uuid).all()
     for operator in operators:
@@ -281,3 +284,24 @@ def find_by_experiment_id(experiment_id):
         raise NOTFOUND
 
     return experiment.as_dict()
+
+
+def list_experiments_training_history(project_id):
+    """Lists all experiments training history under an project.
+    Args:
+        project_id (str): the project uuid.
+    Returns:
+        A list of all experiments training history.
+    """
+    raise_if_project_does_not_exist(project_id)
+
+    experiments = db_session.query(Experiment) \
+        .filter_by(project_id=project_id) \
+        .all()
+
+    response = {}
+    for experiment in experiments:
+        training_histories = list_training_history(project_id=project_id,
+                                                   experiment_id=experiment.uuid)
+        response[experiment.uuid] = training_histories
+    return response

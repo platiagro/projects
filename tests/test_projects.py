@@ -18,6 +18,8 @@ DESCRIPTION = "Description"
 PROJECT_ID_2 = str(uuid_alpha())
 NAME_2 = "foo 2"
 
+TRAINING_HISTORY_ID = str(uuid_alpha())
+
 
 class TestProjects(TestCase):
     def setUp(self):
@@ -39,12 +41,21 @@ class TestProjects(TestCase):
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
             f"VALUES ('{EXPERIMENT_ID}', '{EXPERIMENT_NAME}', '{PROJECT_ID}', 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
-
         conn.execute(text)
+
+        text = (
+            f"INSERT INTO training_history (uuid, project_id, experiment_id, run_id, details, created_at) "
+            f"VALUES ('{TRAINING_HISTORY_ID}', '{PROJECT_ID}', '{EXPERIMENT_ID}', '123', '[]', '{CREATED_AT}')"
+        )
+        conn.execute(text)
+
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
+        text = f"DELETE FROM training_history WHERE project_id in ('{PROJECT_ID}')"
+        conn.execute(text)
+
         text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
@@ -256,7 +267,11 @@ class TestProjects(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.post("/projects/deleteprojects", json=[{"uuid": f"{PROJECT_ID_2}"}])
+            rv = c.post("/projects/deleteprojects", json=[
+                    {"uuid": f"{PROJECT_ID}"},
+                    {"uuid": f"{PROJECT_ID_2}"}
+                ]
+            )
             result = rv.get_json()
             expected = {"message": "Successfully removed projects"}
             self.assertDictEqual(expected, result)

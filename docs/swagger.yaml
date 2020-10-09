@@ -407,6 +407,103 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/trainingHistory:
+    get:
+      summary: "Lists all experiments training history under an project."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/ExperimentTrainingHistories"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/trainingHistory:
+    get:
+      summary: "Lists all training history under an experiment."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TrainingHistories"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Creates a new training history."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/TrainingHistoryPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/TrainingHistory"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete a training history."
+      tags:
+        - "Experiments"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments/{experimentId}/operators:
     get:
       summary: "List all operators."
@@ -1002,6 +1099,70 @@ components:
       items:
         oneOf:
           - $ref: "#/components/schemas/Template"
+    TrainingHistory:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        experiment_id:
+          type: string
+          format: uuid
+        run_id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              operatorId:
+                type: string
+                format: uuid
+              taskId:
+                type: string
+                format: uuid
+              parameters:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+    TrainingHistories:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/TrainingHistory"
+    ExperimentTrainingHistories:
+      type: object
+      properties:
+        uuid:
+          type: array
+          items: 
+            oneOf:
+              - $ref: "#/components/schemas/TrainingHistory"
+      example:
+        cdba33fb-7261-4db8-b36c-a3307af41553:
+          uuid: "ec2f9165-d8c5-4d3c-97f1-34cd4e227f5e"
+          projectId: "c0051e40-ee17-4c8b-9f8a-79125071616c"
+          experimentId: "cdba33fb-7261-4db8-b36c-a3307af41553"
+          runId: "e26f2a69-1896-4234-9976-dc6bb3c4b66e"
+          createdAt: "2020-10-09T13:35:06"
+          details: 
+            - operatorId: "a03bf11e-7c71-498e-b485-d3d3eb6b7d80"
+              taskId: "e4821771-e199-4583-8226-eb739097a1bb"
+              parameters:
+                - name: "target"
+                  value: "Species"
   requestBodies:
     TaskPost:
       content:
@@ -1295,6 +1456,33 @@ components:
             properties:
               name:
                 type: string
+    TrainingHistoryPost:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              runId:
+                type: string
+                format: uuid
+              operators:
+                type: array
+                items:
+                  properties:
+                    operatorId:
+                      type: string
+                      format: uuid
+                    taskId:
+                      type: string
+                      format: uuid
+                    parameters:
+                      type: array
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
   responses:
     Task:
       description: ""
@@ -1391,6 +1579,24 @@ components:
                 type: string
             required:
               - message
+    TrainingHistory:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TrainingHistory"
+    ExperimentTrainingHistories:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExperimentTrainingHistories"
+    TrainingHistories:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TrainingHistories"
     BadRequest:
       description: ""
       content:
