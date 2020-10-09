@@ -41,6 +41,8 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 NAME_COPYFROM = "TEST_COPY"
 
+TRAINING_HISTORY_ID = str(uuid_alpha())
+
 
 class TestExperiments(TestCase):
     def setUp(self):
@@ -92,6 +94,13 @@ class TestExperiments(TestCase):
             f"VALUES ('{DEPENDENCY_ID}', '{OPERATOR_ID_2}', '{OPERATOR_ID}')"
         )
         conn.execute(text)
+
+        text = (
+            f"INSERT INTO training_history (uuid, project_id, experiment_id, run_id, details, created_at) "
+            f"VALUES ('{TRAINING_HISTORY_ID}', '{PROJECT_ID}', '{EXPERIMENT_ID}', '123', '[]', '{CREATED_AT}')"
+        )
+        conn.execute(text)
+
         conn.close()
 
     def tearDown(self):
@@ -102,6 +111,9 @@ class TestExperiments(TestCase):
 
         text = f"DELETE FROM dependencies WHERE operator_id in" \
                f" (SELECT uuid FROM operators WHERE task_id = '{TASK_ID}')"
+        conn.execute(text)
+
+        text = f"DELETE FROM training_history WHERE project_id in ('{PROJECT_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
@@ -328,4 +340,29 @@ class TestExperiments(TestCase):
             rv = c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}")
             result = rv.get_json()
             expected = {"message": "Experiment deleted"}
+            self.assertDictEqual(expected, result)
+
+    def test_list_experiments_training_history(self):
+        with app.test_client() as c:
+            rv = c.get("/projects/unk/experiments/trainingHistory")
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/trainingHistory")
+            result = rv.get_json()
+            expected = {
+                EXPERIMENT_ID: [
+                    {
+                        "uuid": TRAINING_HISTORY_ID,
+                        "projectId": PROJECT_ID,
+                        "experimentId": EXPERIMENT_ID,
+                        "runId": "123",
+                        "createdAt": CREATED_AT_ISO,
+                        "details": []
+                    }
+                ],
+                EXPERIMENT_ID_2: []
+            }
             self.assertDictEqual(expected, result)
