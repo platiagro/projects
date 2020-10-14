@@ -16,8 +16,9 @@ RUN pip install /app/
 
 RUN wget https://github.com/platiagro/tasks/archive/main.zip && \
     unzip main.zip && \
-    mv tasks-main /samples && \
-    rm -rf main.zip
+    mv tasks-main/tasks /samples && \
+    mv tasks-main/config.json /samples && \
+    rm -rf main.zip tasks-main/
 
 WORKDIR /app/
 
