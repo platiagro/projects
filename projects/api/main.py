@@ -25,7 +25,7 @@ from ..samples import init_tasks
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 app.register_blueprint(projects_blueprint, url_prefix="/projects")
-app.register_blueprint(compare_results_blueprint, url_prefix="/projects/<project_id>/compareResults")
+app.register_blueprint(compare_results_blueprint, url_prefix="/projects/<project_id>/comparisons")
 app.register_blueprint(experiments_blueprint, url_prefix="/projects/<project_id>/experiments")
 app.register_blueprint(tasks_blueprint, url_prefix="/tasks")
 app.register_blueprint(parameters_blueprint, url_prefix="/tasks/<task_id>/parameters")

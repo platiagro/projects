@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-from json import dumps
 from unittest import TestCase
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.object_storage import BUCKET_NAME
 
 EXPERIMENT_ID = str(uuid_alpha())
 PROJECT_ID = str(uuid_alpha())
@@ -58,25 +56,25 @@ class TestCompareResults(TestCase):
 
     def test_list_compare_results(self):
         with app.test_client() as c:
-            rv = c.get("/projects/unk/compareResults")
+            rv = c.get("/projects/unk/comparisons")
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/projects/{PROJECT_ID}/compareResults")
+            rv = c.get(f"/projects/{PROJECT_ID}/comparisons")
             result = rv.get_json()
             self.assertIsInstance(result, list)
 
     def test_create_compare_result(self):
         with app.test_client() as c:
-            rv = c.post("/projects/unk/compareResults")
+            rv = c.post("/projects/unk/comparisons")
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.post(f"/projects/{PROJECT_ID}/compareResults")
+            rv = c.post(f"/projects/{PROJECT_ID}/comparisons")
             result = rv.get_json()
             expected = {
                 "projectId": PROJECT_ID,
@@ -94,19 +92,19 @@ class TestCompareResults(TestCase):
 
     def test_update_compare_result(self):
         with app.test_client() as c:
-            rv = c.patch(f"/projects/foo/compareResults/{COMPARE_RESULT_ID}", json={})
+            rv = c.patch(f"/projects/foo/comparisons/{COMPARE_RESULT_ID}", json={})
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}/compareResults/foo", json={})
+            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/foo", json={})
             result = rv.get_json()
             expected = {"message": "The specified compare result does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}/compareResults/{COMPARE_RESULT_ID}", json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/{COMPARE_RESULT_ID}", json={
                 "experimentId": "unk",
             })
             result = rv.get_json()
@@ -114,12 +112,12 @@ class TestCompareResults(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}/compareResults/{COMPARE_RESULT_ID}", json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/{COMPARE_RESULT_ID}", json={
                 "unk": "bar",
             })
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}/compareResults/{COMPARE_RESULT_ID}", json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/{COMPARE_RESULT_ID}", json={
                 "experimentId": EXPERIMENT_ID,
             })
             result = rv.get_json()
@@ -140,19 +138,19 @@ class TestCompareResults(TestCase):
 
     def test_delete_compare_result(self):
         with app.test_client() as c:
-            rv = c.delete(f"/projects/foo/compareResults/{COMPARE_RESULT_ID}")
+            rv = c.delete(f"/projects/foo/comparisons/{COMPARE_RESULT_ID}")
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete(f"/projects/{PROJECT_ID}/compareResults/unk")
+            rv = c.delete(f"/projects/{PROJECT_ID}/comparisons/unk")
             result = rv.get_json()
             expected = {"message": "The specified compare result does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete(f"/projects/{PROJECT_ID}/compareResults/{COMPARE_RESULT_ID}")
+            rv = c.delete(f"/projects/{PROJECT_ID}/comparisons/{COMPARE_RESULT_ID}")
             result = rv.get_json()
             expected = {"message": "Compare result deleted"}
             self.assertDictEqual(expected, result)
