@@ -11,13 +11,10 @@ from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
 from ..database import db_session, init_db
 from .compare_results import bp as compare_results_blueprint
 from .experiments import bp as experiments_blueprint
-from .datasets import bp as datasets_blueprint
-from .figures import bp as figures_blueprint
 from .json_encoder import CustomJSONEncoder
 from .operators import bp as operators_blueprint
 from .parameters import bp as parameters_blueprint
 from .projects import bp as projects_blueprint
-from .metrics import bp as metrics_blueprint
 from .tasks import bp as tasks_blueprint
 from .templates import bp as templates_blueprint
 from ..samples import init_tasks
@@ -31,12 +28,6 @@ app.register_blueprint(tasks_blueprint, url_prefix="/tasks")
 app.register_blueprint(parameters_blueprint, url_prefix="/tasks/<task_id>/parameters")
 app.register_blueprint(operators_blueprint,
                        url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators")
-app.register_blueprint(datasets_blueprint,
-                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/datasets")
-app.register_blueprint(figures_blueprint,
-                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/figures")
-app.register_blueprint(metrics_blueprint,
-                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/metrics")
 app.register_blueprint(templates_blueprint, url_prefix="/templates")
 
 
