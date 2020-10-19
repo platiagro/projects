@@ -328,7 +328,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/comparisons/{compareResultId}:
+  /projects/{projectId}/comparisons/{comparisonId}:
     patch:
       summary: "Update a compare result by ID."
       tags:
@@ -339,7 +339,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: compareResultId
+        - name: comparisonId
           in: path
           required: true
           schema:
@@ -367,7 +367,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: compareResultId
+        - name: comparisonId
           in: path
           required: true
           schema:
