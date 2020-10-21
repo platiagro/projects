@@ -8,7 +8,7 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ..database import db_session
-from ..models import Dependency, Experiment, Template, Operator
+from ..models import CompareResult, Dependency, Experiment, Operator, Template
 from ..object_storage import remove_objects
 from .dependencies import create_dependency
 from .operators import create_operator, update_operator
@@ -215,6 +215,8 @@ def delete_experiment(uuid, project_id):
     if experiment is None:
         raise NOTFOUND
 
+    # remove compare results
+    CompareResult.query.filter(CompareResult.experiment_id == uuid).delete()
     # remove dependencies
     operators = db_session.query(Operator).filter(Operator.experiment_id == uuid).all()
     for operator in operators:

@@ -287,6 +287,100 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/comparisons:
+    get:
+      summary: "List all compare results sorted by created_at in ascending order."
+      tags:
+        - "Projects"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/CompareResults"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new compare results."
+      tags:
+        - "Projects"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/CompareResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/comparisons/{comparisonId}:
+    patch:
+      summary: "Update a compare result by ID."
+      tags:
+        - "Projects"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: comparisonId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/CompareResultPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/CompareResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete a compare result by ID."
+      tags:
+        - "Projects"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: comparisonId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments:
     get:
       summary: "List all experiments sorted by position in ascending order."
@@ -614,6 +708,35 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
+    CompareResult:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        experimentId:
+          type: string
+          format: uuid
+        operatorId:
+          type: string
+          format: uuid
+        runId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CompareResults:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/CompareResult"
     Task:
       type: object
       properties:
@@ -866,6 +989,21 @@ components:
         oneOf:
           - $ref: "#/components/schemas/Template"
   requestBodies:
+    CompareResultPatch:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              experimentId:
+                type: string
+                format: uuid
+              operatorId:
+                type: string
+                format: uuid
+              runId:
+                type: string
+                format: uuid
     TaskPost:
       content:
         application/json:
@@ -1159,6 +1297,18 @@ components:
               name:
                 type: string
   responses:
+    CompareResult:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CompareResult"
+    CompareResults:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CompareResults"
     Task:
       description: ""
       content:
