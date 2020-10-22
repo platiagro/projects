@@ -33,8 +33,8 @@ class TestCompareResults(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO compare_result (uuid, project_id, created_at, updated_at) "
-            f"VALUES ('{COMPARE_RESULT_ID}', '{PROJECT_ID}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO compare_result (uuid, project_id, position, created_at, updated_at) "
+            f"VALUES ('{COMPARE_RESULT_ID}', '{PROJECT_ID}', '{POSITION}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -81,6 +81,7 @@ class TestCompareResults(TestCase):
                 "experimentId": None,
                 "operatorId": None,
                 "runId": None,
+                "position": 1,
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -127,6 +128,7 @@ class TestCompareResults(TestCase):
                 "experimentId": EXPERIMENT_ID,
                 "operatorId": None,
                 "runId": None,
+                "position": 0,
                 "createdAt": CREATED_AT_ISO,
             }
             machine_generated = ["updatedAt"]
