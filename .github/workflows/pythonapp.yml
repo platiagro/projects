@@ -68,8 +68,8 @@ jobs:
           - async/await NÃO EXISTEM no Python3.6
           - Métodos que são chamados de outros arquivos `.py` **DEVEM TER Docstring**.
           - Usar Google Style Python Docstring: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
-    - name: Set Docker TAG
-      id: var
+    - name: Set output variables
+      id: vars
       run: |
         echo ${{ github.ref }}
         if [ ${{ github.ref }} = "refs/heads/master" ]; then
@@ -77,6 +77,8 @@ jobs:
         else
           echo ::set-output name=TAG::0.1.0-SNAPSHOT
         fi
+        echo ::set-output name=BRANCH::${{ github.ref }}
+        echo ::set-output name=COMMIT::${{ github.sha }}
     - uses: actions/checkout@v2
     - name: Set up Python 3.6
       uses: actions/setup-python@v1
@@ -125,4 +127,5 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         registry: registry.hub.docker.com
         repository: platiagro/projects
-        tags: ${{ steps.var.outputs.TAG }}
+        tags: ${{ steps.vars.outputs.TAG }}
+        build_args: COMMIT=${{ steps.vars.outputs.COMMIT }},BRANCH=${{ steps.vars.outputs.BRANCH }}
