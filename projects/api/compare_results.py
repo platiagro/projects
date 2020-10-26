@@ -3,9 +3,9 @@
 
 from flask import Blueprint, jsonify, request
 
-from ..controllers.compare_results import list_compare_results, create_compare_result, \
+from projects.controllers.compare_results import list_compare_results, create_compare_result, \
     update_compare_result, delete_compare_result
-from ..utils import to_snake_case
+from projects.utils import to_snake_case
 
 bp = Blueprint("compare_results", __name__)
 

@@ -6,9 +6,9 @@ from datetime import datetime
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from ..database import db_session
-from ..models import Template, Operator
-from .utils import raise_if_experiment_does_not_exist, uuid_alpha
+from projects.controllers.utils import raise_if_experiment_does_not_exist, uuid_alpha
+from projects.database import db_session
+from projects.models import Template, Operator
 
 
 def list_templates():

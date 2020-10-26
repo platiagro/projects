@@ -5,14 +5,14 @@ from datetime import datetime
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from ..database import db_session
-from ..models import Operator, Task
-from .parameters import list_parameters
-from .dependencies import list_dependencies, list_next_operators, \
+from projects.controllers.dependencies import list_dependencies, list_next_operators, \
     create_dependency, delete_dependency
-from .utils import raise_if_task_does_not_exist, \
+from projects.controllers.parameters import list_parameters
+from projects.controllers.utils import raise_if_task_does_not_exist, \
     raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
     raise_if_operator_does_not_exist, uuid_alpha
+from projects.database import db_session
+from projects.models import Operator, Task
 
 
 PARAMETERS_EXCEPTION_MSG = "The specified parameters are not valid"

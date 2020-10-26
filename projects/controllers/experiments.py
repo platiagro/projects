@@ -7,12 +7,12 @@ from os.path import join
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from ..database import db_session
-from ..models import CompareResult, Dependency, Experiment, Operator, Template
-from ..object_storage import remove_objects
-from .dependencies import create_dependency
-from .operators import create_operator, update_operator
-from .utils import raise_if_project_does_not_exist, uuid_alpha
+from projects.controllers.dependencies import create_dependency
+from projects.controllers.operators import create_operator, update_operator
+from projects.controllers.utils import raise_if_project_does_not_exist, uuid_alpha
+from projects.database import db_session
+from projects.models import CompareResult, Dependency, Experiment, Operator, Template
+from projects.object_storage import remove_objects
 
 
 NOTFOUND = NotFound("The specified experiment does not exist")

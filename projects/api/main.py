@@ -8,16 +8,16 @@ from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
     Forbidden, InternalServerError
 
-from ..database import db_session, init_db
-from .compare_results import bp as compare_results_blueprint
-from .experiments import bp as experiments_blueprint
-from .json_encoder import CustomJSONEncoder
-from .operators import bp as operators_blueprint
-from .parameters import bp as parameters_blueprint
-from .projects import bp as projects_blueprint
-from .tasks import bp as tasks_blueprint
-from .templates import bp as templates_blueprint
-from ..samples import init_tasks
+from projects.api.compare_results import bp as compare_results_blueprint
+from projects.api.experiments import bp as experiments_blueprint
+from projects.api.json_encoder import CustomJSONEncoder
+from projects.api.operators import bp as operators_blueprint
+from projects.api.parameters import bp as parameters_blueprint
+from projects.api.projects import bp as projects_blueprint
+from projects.api.tasks import bp as tasks_blueprint
+from projects.api.templates import bp as templates_blueprint
+from projects.database import db_session, init_db
+from projects.samples import init_tasks
 
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder

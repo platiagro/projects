@@ -3,9 +3,9 @@
 
 from flask import Blueprint, jsonify, request
 
-from ..controllers.templates import list_templates, create_template, \
+from projects.controllers.templates import list_templates, create_template, \
     get_template, update_template, delete_template
-from ..utils import to_snake_case
+from projects.utils import to_snake_case
 
 bp = Blueprint("templates", __name__)
 

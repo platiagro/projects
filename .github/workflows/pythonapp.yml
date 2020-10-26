@@ -68,6 +68,8 @@ jobs:
           - async/await NÃO EXISTEM no Python3.6
           - Métodos que são chamados de outros arquivos `.py` **DEVEM TER Docstring**.
           - Usar Google Style Python Docstring: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+          - Usar sempre import absoluto.
+            ex: from projects.database import Base (BOM), from .database import Base (RUIM)
     - name: Set output variables
       id: vars
       run: |

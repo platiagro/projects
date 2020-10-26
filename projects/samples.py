@@ -3,7 +3,7 @@ from json import load
 
 from werkzeug.exceptions import BadRequest
 
-from .controllers.tasks import create_task
+from projects.controllers.tasks import create_task
 
 
 def init_tasks(config_path):

@@ -4,9 +4,9 @@
 from flask import jsonify, request
 from flask_smorest import Blueprint
 
-from ..controllers.tasks import create_task, get_task, update_task, \
+from projects.controllers.tasks import create_task, get_task, update_task, \
      delete_task, pagination_tasks
-from ..utils import to_snake_case
+from projects.utils import to_snake_case
 
 bp = Blueprint("tasks", __name__)
 

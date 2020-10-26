@@ -3,9 +3,9 @@
 
 from flask import Blueprint, jsonify, request
 
-from ..controllers.operators import list_operators, create_operator, \
+from projects.controllers.operators import list_operators, create_operator, \
     update_operator, delete_operator
-from ..utils import to_snake_case
+from projects.utils import to_snake_case
 
 bp = Blueprint("operators", __name__)
 

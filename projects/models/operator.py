@@ -5,9 +5,9 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, JSON, String, ForeignKey, Float
 from sqlalchemy.orm import relationship
 
-from .dependencies import Dependency
-from ..database import Base
-from ..utils import to_camel_case
+from projects.models.dependency import Dependency
+from projects.database import Base
+from projects.utils import to_camel_case
 
 
 class Operator(Base):
