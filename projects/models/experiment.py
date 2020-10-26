@@ -6,9 +6,9 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, Foreign
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
 
-from .operators import Operator
-from ..database import Base
-from ..utils import to_camel_case
+from projects.models.operator import Operator
+from projects.database import Base
+from projects.utils import to_camel_case
 
 
 class Experiment(Base):

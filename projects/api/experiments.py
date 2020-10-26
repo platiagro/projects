@@ -3,9 +3,9 @@
 
 from flask import Blueprint, jsonify, request
 
-from ..controllers.experiments import list_experiments, create_experiment, \
+from projects.controllers.experiments import list_experiments, create_experiment, \
     get_experiment, update_experiment, delete_experiment
-from ..utils import to_snake_case
+from projects.utils import to_snake_case
 
 bp = Blueprint("experiments", __name__)
 

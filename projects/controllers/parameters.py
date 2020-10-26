@@ -3,8 +3,8 @@
 
 from werkzeug.exceptions import NotFound
 
-from ..models import Task
-from ..jupyter import read_parameters
+from projects.jupyter import read_parameters
+from projects.models import Task
 
 
 def list_parameters(task_id, is_checked=False):

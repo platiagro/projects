@@ -13,13 +13,13 @@ from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError
 from werkzeug.exceptions import BadRequest, Forbidden, NotFound, InternalServerError
 
 
-from ..database import db_session
-from ..jupyter import create_new_file, list_files, delete_file, update_folder_name
-from ..models import Task
-from ..models.task import DEFAULT_COMMANDS, DEFAULT_ARGUMENTS
-from ..object_storage import BUCKET_NAME, get_object, put_object, \
+from projects.controllers.utils import uuid_alpha, text_to_list
+from projects.database import db_session
+from projects.jupyter import create_new_file, list_files, delete_file, update_folder_name
+from projects.models import Task
+from projects.models.task import DEFAULT_COMMANDS, DEFAULT_ARGUMENTS
+from projects.object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
-from .utils import uuid_alpha, text_to_list
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
@@ -475,5 +475,5 @@ def uninformed_page(query, order):
         query = query.order_by(asc(text(f'{order[0]}')))
     elif 'desc' == order[1].lower():
         query = query.order_by(desc(text(f'{order[0]}')))
-    
+
     return query

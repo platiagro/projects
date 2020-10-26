@@ -9,11 +9,11 @@ from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError, OperationalError, InternalError
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
-from .experiments import create_experiment
-from ..database import db_session
-from ..models import Dependency, Experiment, Operator, Project
-from ..object_storage import remove_objects
-from .utils import uuid_alpha, list_objects, objects_uuid, text_to_list
+from projects.controllers.experiments import create_experiment
+from projects.controllers.utils import uuid_alpha, list_objects, objects_uuid, text_to_list
+from projects.database import db_session
+from projects.models import Dependency, Experiment, Operator, Project
+from projects.object_storage import remove_objects
 
 
 NOT_FOUND = NotFound('The specified project does not exist')

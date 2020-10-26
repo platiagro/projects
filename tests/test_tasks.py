@@ -107,6 +107,28 @@ class TestTasks(TestCase):
         for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
             MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
+        session = requests.Session()
+        session.cookies.update(COOKIES)
+        session.headers.update(HEADERS)
+        session.hooks = {
+            "response": lambda r, *args, **kwargs: r.raise_for_status(),
+        }
+
+        r = session.get(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks",
+        )
+        contents = r.json()["content"]
+        for content in contents:
+            session.delete(
+                url=f"{JUPYTER_ENDPOINT}/api/contents/{content['path']}/Experiment.ipynb",
+            )
+            session.delete(
+                url=f"{JUPYTER_ENDPOINT}/api/contents/{content['path']}/Deployment.ipynb",
+            )
+            session.delete(
+                url=f"{JUPYTER_ENDPOINT}/api/contents/{content['path']}",
+            )
+
         conn = engine.connect()
         text = f"DELETE FROM tasks WHERE 1 = 1"
         conn.execute(text)

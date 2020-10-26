@@ -6,8 +6,8 @@ import re
 
 from werkzeug.exceptions import NotFound
 
-from ..database import db_session
-from ..models import Experiment, Operator, Project, Task
+from projects.database import db_session
+from projects.models import Experiment, Operator, Project, Task
 
 
 def raise_if_task_does_not_exist(task_id):

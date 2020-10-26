@@ -3,7 +3,7 @@ from datetime import date
 
 from flask.json import JSONEncoder
 
-from ..database import Base
+from projects.database import Base
 
 
 class CustomJSONEncoder(JSONEncoder):

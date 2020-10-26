@@ -6,10 +6,10 @@ from datetime import datetime
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from ..database import db_session
-from ..models import CompareResult
-from .utils import raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
-    uuid_alpha
+from projects.controllers.utils import raise_if_project_does_not_exist, \
+    raise_if_experiment_does_not_exist, uuid_alpha
+from projects.database import db_session
+from projects.models import CompareResult
 
 
 NOT_FOUND = NotFound("The specified compare result does not exist")

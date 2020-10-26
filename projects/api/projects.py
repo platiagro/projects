@@ -3,10 +3,10 @@
 
 from flask import jsonify, request
 from flask_smorest import Blueprint
-from ..controllers.projects import create_project, \
+from projects.controllers.projects import create_project, \
     get_project, update_project, delete_project, pagination_projects, \
     delete_multiple_projects
-from ..utils import to_snake_case
+from projects.utils import to_snake_case
 
 bp = Blueprint("projects", __name__)
 

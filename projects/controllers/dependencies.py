@@ -2,9 +2,10 @@
 """Dependency controller."""
 from werkzeug.exceptions import NotFound
 
-from ..database import db_session
-from ..models import Dependency
-from .utils import raise_if_operator_does_not_exist, uuid_alpha
+from projects.controllers.utils import raise_if_operator_does_not_exist, \
+    uuid_alpha
+from projects.database import db_session
+from projects.models import Dependency
 
 
 def list_dependencies(operator_id):

@@ -4,8 +4,8 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 
-from ..database import Base
-from ..utils import to_camel_case
+from projects.database import Base
+from projects.utils import to_camel_case
 
 
 class CompareResult(Base):
