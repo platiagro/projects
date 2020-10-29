@@ -5,9 +5,9 @@ name: Python application
 
 on:
   push:
-    branches: [ master ]
+    branches: [ v0.1.0-branch ]
   pull_request:
-    branches: [ master ]
+    branches: [ v0.1.0-branch ]
 
 jobs:
   build:
@@ -74,7 +74,7 @@ jobs:
       id: vars
       run: |
         echo ${{ github.ref }}
-        if [ ${{ github.ref }} = "refs/heads/master" ]; then
+        if [ ${{ github.ref }} = "refs/heads/v0.1.0-branch" ]; then
           echo ::set-output name=TAG::0.1.0
         else
           echo ::set-output name=TAG::0.1.0-SNAPSHOT
