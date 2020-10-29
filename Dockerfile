@@ -24,11 +24,11 @@ COPY ./setup.py /app/setup.py
 
 RUN pip install /app/
 
-RUN wget https://github.com/platiagro/tasks/archive/main.zip && \
-    unzip main.zip && \
-    mv tasks-main/tasks /samples && \
-    mv tasks-main/config.json /samples && \
-    rm -rf main.zip tasks-main/
+RUN wget https://github.com/platiagro/tasks/archive/v0.1.0.zip && \
+    unzip v0.1.0.zip && \
+    mv tasks-0.1.0/tasks /samples && \
+    mv tasks-0.1.0/config.json /samples && \
+    rm -rf v0.1.0.zip tasks-0.1.0/
 
 WORKDIR /app/
 
