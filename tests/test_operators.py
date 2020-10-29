@@ -210,15 +210,6 @@ class TestOperators(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
-                "parameters": {"coef": None},
-            })
-            result = rv.get_json()
-            expected = {"message": "The specified parameters are not valid"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-                "taskId": TASK_ID,
                 "dependencies": "unk"  # only lists are accepted
             })
             result = rv.get_json()
@@ -266,6 +257,13 @@ class TestOperators(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
+                "taskId": TASK_ID,
+                "parameters": {"coef": None},  # None is allowed!
+            })
+            result = rv.get_json()
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
                 "taskId": TASK_ID,
@@ -391,14 +389,6 @@ class TestOperators(TestCase):
             self.assertEqual(rv.status_code, 400)
 
             rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-                "parameters": {"coef": None},
-            })
-            result = rv.get_json()
-            expected = {"message": "The specified parameters are not valid"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
                 "dependencies": [OPERATOR_ID],
             })
             result = rv.get_json()
@@ -484,6 +474,12 @@ class TestOperators(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
+                "parameters": {"coef": None},
+            })
+            result = rv.get_json()
+            self.assertEqual(rv.status_code, 200)  # None is allowed
 
     def test_delete_operator(self):
         with app.test_client() as c:
