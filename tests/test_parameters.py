@@ -13,7 +13,7 @@ from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 TASK_ID = str(uuid_alpha())
 NAME = "foo"
 DESCRIPTION = "long foo"
-IMAGE = "platiagro/platiagro-notebook-image-test:0.1.0"
+IMAGE = "platiagro/platiagro-notebook-image-test:0.2.0"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
 ARGUMENTS = ["ARG"]

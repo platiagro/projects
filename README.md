@@ -69,7 +69,7 @@ docker run -d -p 8888:8888 \
 Then, build a docker image that launches the API server:
 
 ```bash
-docker build -t platiagro/projects:0.1.0 .
+docker build -t platiagro/projects:0.2.0 .
 ```
 
 Finally, start the API server:
@@ -85,7 +85,7 @@ docker run -it -p 8080:8080 \
   --env "MYSQL_DB_USER=$MYSQL_DB_USER" \
   --env "MYSQL_DB_PASSWORD=$MYSQL_DB_PASSWORD" \
   --env "JUPYTER_ENDPOINT=$JUPYTER_ENDPOINT" \
-  platiagro/projects:0.1.0
+  platiagro/projects:0.2.0
 ```
 
 ### Run Local:

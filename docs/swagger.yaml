@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: PlatIAgro Projects API
-  version: "0.1.0"
+  version: "0.2.0"
   description: >
     These are the docs for PlatIAgro Projects API.
     The endpoints below are usually accessed by the PlatIAgro Web-UI.
@@ -1020,7 +1020,7 @@ components:
                 description: string
                 tags: ["DEFAULT"]
                 commands: ["cmd"]
-                image: platiagro/platiagro-notebook-image:0.1.0
+                image: platiagro/platiagro-notebook-image:0.2.0
             copyFrom:
               summary: Notebooks from another task
               value:
@@ -1028,7 +1028,7 @@ components:
                 description: string
                 tags: ["DEFAULT"]
                 commands: ["cmd"]
-                image: platiagro/platiagro-notebook-image:0.1.0
+                image: platiagro/platiagro-notebook-image:0.2.0
                 copyFrom: 3fa85f64-5717-4562-b3fc-2c963f66afa6
             notebook:
               summary: Notebooks from request body
@@ -1037,7 +1037,7 @@ components:
                 description: string
                 tags: ["DEFAULT"]
                 commands: ["cmd"]
-                image: platiagro/platiagro-notebook-image:0.1.0
+                image: platiagro/platiagro-notebook-image:0.2.0
                 deploymentNotebook:
                   {
                     "cells":
