@@ -9,7 +9,7 @@ from projects.database import Base
 from projects.jupyter import read_parameters
 from projects.utils import to_camel_case
 
-DEFAULT_IMAGE = 'platiagro/platiagro-notebook-image:0.1.0'
+DEFAULT_IMAGE = 'platiagro/platiagro-notebook-image:0.2.0'
 DEFAULT_COMMANDS = ['sh', '-c']
 DEFAULT_ARGUMENTS = ['''papermill $notebookPath output.ipynb -b $parameters;
                         status=$?;

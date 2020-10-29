@@ -75,9 +75,9 @@ jobs:
       run: |
         echo ${{ github.ref }}
         if [ ${{ github.ref }} = "refs/heads/master" ]; then
-          echo ::set-output name=TAG::0.1.0
+          echo ::set-output name=TAG::0.2.0
         else
-          echo ::set-output name=TAG::0.1.0-SNAPSHOT
+          echo ::set-output name=TAG::0.2.0-SNAPSHOT
         fi
         echo ::set-output name=BRANCH::${{ github.ref }}
         echo ::set-output name=COMMIT::${{ github.sha }}
