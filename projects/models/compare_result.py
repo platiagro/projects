@@ -2,7 +2,7 @@
 """Compare result model."""
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, JSON, String
 
 from projects.database import Base
 from projects.utils import to_camel_case
@@ -15,7 +15,7 @@ class CompareResult(Base):
     experiment_id = Column(String(255), ForeignKey("experiments.uuid"))
     operator_id = Column(String(255))
     run_id = Column(String(255))
-    position = Column(Integer, nullable=False, default=-1)
+    layout = Column(JSON)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 

@@ -726,6 +726,17 @@ components:
         runId:
           type: string
           format: uuid
+        layout:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            w:
+              type: number
+            h:
+              type: number
         createdAt:
           type: string
           format: date-time
@@ -1004,6 +1015,17 @@ components:
               runId:
                 type: string
                 format: uuid
+              layout:
+                type: object
+                properties:
+                  x:
+                    type: number
+                  y:
+                    type: number
+                  w:
+                    type: number
+                  h:
+                    type: number
     TaskPost:
       content:
         application/json:
