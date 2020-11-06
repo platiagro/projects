@@ -41,6 +41,11 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 NAME_COPYFROM = "TEST_COPY"
 
+DEPENDENCIES_EMPTY = []
+DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
+DEPENDENCIES_OP_ID = [OPERATOR_ID]
+DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
+
 
 class TestExperiments(TestCase):
     def setUp(self):
@@ -70,14 +75,14 @@ class TestExperiments(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
         )
         conn.execute(text)
 
@@ -86,22 +91,12 @@ class TestExperiments(TestCase):
             f"VALUES ('{TEMPLATE_ID}', '{NAME}', '{TASKS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
-
-        text = (
-            f"INSERT INTO dependencies (uuid, operator_id, dependency) "
-            f"VALUES ('{DEPENDENCY_ID}', '{OPERATOR_ID_2}', '{OPERATOR_ID}')"
-        )
-        conn.execute(text)
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
 
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM dependencies WHERE operator_id in" \
-               f" (SELECT uuid FROM operators WHERE task_id = '{TASK_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
