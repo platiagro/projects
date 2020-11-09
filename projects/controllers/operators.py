@@ -115,7 +115,7 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
 
     raise_if_parameters_are_invalid(kwargs.get("parameters", {}))
 
-    dependencies = kwargs.get("dependencies", None)
+    dependencies = kwargs.get("dependencies")
     if dependencies is not None:
         raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=uuid)
 
@@ -240,7 +240,7 @@ def has_cycles_util(operator_id, visited, recursion_stack, new_dependencies, new
     operator = Operator.query.get(operator_id)
     dependencies = operator.dependencies
 
-    if (operator_id == new_dependencies_op):
+    if operator_id == new_dependencies_op:
         dependencies = dependencies + list(set(new_dependencies) - set(dependencies))
 
     # Recur for all neighbours
@@ -248,7 +248,7 @@ def has_cycles_util(operator_id, visited, recursion_stack, new_dependencies, new
     # recursion_stack then graph is cyclic
     for neighbour in dependencies:
         if ((visited[neighbour] is False and
-             has_cycles_util(neighbour, visited, recursion_stack, new_dependencies, new_dependencies_op,) is True) or
+             has_cycles_util(neighbour, visited, recursion_stack, new_dependencies, new_dependencies_op) is True) or
                 recursion_stack[neighbour] is True):
             return True
 

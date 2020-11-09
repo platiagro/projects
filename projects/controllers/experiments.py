@@ -70,7 +70,7 @@ def create_experiment(name=None, project_id=None, copy_from=None):
             source_operators = {}
             for source_operator in experiment_find['operators']:
 
-                source_dependencies = [d for d in source_operator.dependencies]
+                source_dependencies = source_operator.dependencies
 
                 kwargs = {
                     "task_id": source_operator.task_id,
