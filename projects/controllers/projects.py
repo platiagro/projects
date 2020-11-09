@@ -12,7 +12,7 @@ from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 from projects.controllers.experiments import create_experiment
 from projects.controllers.utils import uuid_alpha, list_objects, objects_uuid, text_to_list
 from projects.database import db_session
-from projects.models import Dependency, Experiment, Operator, Project
+from projects.models import Experiment, Operator, Project
 from projects.object_storage import remove_objects
 
 
@@ -110,11 +110,6 @@ def delete_project(uuid):
 
     experiments = Experiment.query.filter(Experiment.project_id == uuid).all()
     for experiment in experiments:
-        # remove dependencies
-        operators = db_session.query(Operator).filter(Operator.experiment_id == experiment.uuid).all()
-        for operator in operators:
-            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
-
         # remove operators
         Operator.query.filter(Operator.experiment_id == experiment.uuid).delete()
 
@@ -230,9 +225,6 @@ def pre_delete(db_session, projects, total_elements, operators, experiments, all
     if len(projects) != total_elements:
         raise NOT_FOUND
     if len(operators):
-        # remove dependencies
-        for operator in operators:
-            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
         # remove operators
         operators = Operator.__table__.delete().where(Operator.experiment_id.in_(objects_uuid(experiments)))
         db_session.execute(operators)

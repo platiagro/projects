@@ -42,6 +42,13 @@ CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
+DEPENDENCIES_EMPTY = []
+DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
+DEPENDENCIES_OP_ID = [OPERATOR_ID]
+DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
+DEPENDENCIES_OP_ID_2 = [OPERATOR_ID_2]
+DEPENDENCIES_OP_ID_2_JSON = dumps(DEPENDENCIES_OP_ID_2)
+
 TASK_DATASET_ID = str(uuid_alpha())
 TASK_DATASET_TAGS = ["DATASETS"]
 TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
@@ -82,58 +89,43 @@ class TestOperators(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
-            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_2_JSON}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}',"
-            f" '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f" '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID_3}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}',"
-            f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID_4}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}',"
-            f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at) "
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID_5}', '{EXPERIMENT_ID_2}', '{TASK_ID}', '{PARAMETERS_JSON}',"
-            f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}')"
-        )
-        conn.execute(text)
-
-        text = (
-            f"INSERT INTO dependencies (uuid, operator_id, dependency) "
-            f"VALUES ('{DEPENDENCY_ID}', '{OPERATOR_ID}', '{OPERATOR_ID_2}')"
-        )
-        conn.execute(text)
-
-        text = (
-            f"INSERT INTO dependencies (uuid, operator_id, dependency) "
-            f"VALUES ('{DEPENDENCY_ID_2}', '{OPERATOR_ID_4}', '{OPERATOR_ID}')"
+            f"'{POSITION_X}', '{POSITION_X}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
-        text = f"DELETE FROM dependencies WHERE operator_id in" \
-               f"(SELECT uuid  FROM operators where task_id = '{TASK_ID}')"
-        conn.execute(text)
 
         text = f"DELETE FROM operators WHERE experiment_id in" \
                f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"

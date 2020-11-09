@@ -7,11 +7,10 @@ from os.path import join
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from projects.controllers.dependencies import create_dependency
 from projects.controllers.operators import create_operator, update_operator
 from projects.controllers.utils import raise_if_project_does_not_exist, uuid_alpha
 from projects.database import db_session
-from projects.models import CompareResult, Dependency, Experiment, Operator, Template
+from projects.models import CompareResult, Experiment, Operator, Template
 from projects.object_storage import remove_objects
 
 
@@ -60,11 +59,10 @@ def create_experiment(name=None, project_id=None, copy_from=None):
     if check_experiment_name:
         raise BadRequest("an experiment with that name already exists")
 
-    experiment = Experiment(uuid=uuid_alpha(),
-                            name=name,
-                            project_id=project_id)
+    experiment = Experiment(uuid=uuid_alpha(), name=name, project_id=project_id)
     db_session.add(experiment)
     db_session.commit()
+
     if copy_from:
         try:
             experiment_find = find_by_experiment_id(experiment_id=copy_from)
@@ -72,7 +70,7 @@ def create_experiment(name=None, project_id=None, copy_from=None):
             source_operators = {}
             for source_operator in experiment_find['operators']:
 
-                source_dependencies = [d.dependency for d in source_operator.dependencies]
+                source_dependencies = source_operator.dependencies
 
                 kwargs = {
                     "task_id": source_operator.task_id,
@@ -91,7 +89,6 @@ def create_experiment(name=None, project_id=None, copy_from=None):
             # update dependencies on new operators
             for _, value in source_operators.items():
                 dependencies = [source_operators[d]['copy_uuid'] for d in value['dependencies']]
-
                 update_operator(value['copy_uuid'], project_id, experiment.uuid, dependencies=dependencies)
 
         except NotFound:
@@ -161,10 +158,6 @@ def update_experiment(uuid, project_id, **kwargs):
         if template is None:
             raise BadRequest("The specified template does not exist")
 
-        # remove dependencies
-        operators = db_session.query(Operator).filter(Operator.experiment_id == uuid).all()
-        for operator in operators:
-            Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
         # remove operators
         Operator.query.filter(Operator.experiment_id == uuid).delete()
 
@@ -172,14 +165,16 @@ def update_experiment(uuid, project_id, **kwargs):
         last_operator_id = None
         for task_id in template.tasks:
             operator_id = uuid_alpha()
+            dependencies = []
+            if last_operator_id is not None:
+                dependencies = [last_operator_id]
             objects = [
                 Operator(uuid=operator_id,
                          experiment_id=uuid,
-                         task_id=task_id)
+                         task_id=task_id,
+                         dependencies=dependencies)
             ]
             db_session.bulk_save_objects(objects)
-            if last_operator_id is not None:
-                create_dependency(operator_id, last_operator_id)
             last_operator_id = operator_id
 
     data = {"updated_at": datetime.utcnow()}
@@ -217,10 +212,6 @@ def delete_experiment(uuid, project_id):
 
     # remove compare results
     CompareResult.query.filter(CompareResult.experiment_id == uuid).delete()
-    # remove dependencies
-    operators = db_session.query(Operator).filter(Operator.experiment_id == uuid).all()
-    for operator in operators:
-        Dependency.query.filter(Dependency.operator_id == operator.uuid).delete()
     # remove operators
     Operator.query.filter(Operator.experiment_id == uuid).delete()
 
