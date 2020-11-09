@@ -161,8 +161,7 @@ def delete_operator(uuid, project_id, experiment_id):
             dependencies = op.dependencies.remove(uuid)
             if dependencies is None:
                 dependencies = []
-            kwargs = {'dependencies': dependencies}
-            update_operator(op.uuid, project_id, experiment_id, **kwargs)
+            update_operator(op.uuid, project_id, experiment_id, dependencies=dependencies)
 
     db_session.delete(operator)
     db_session.commit()
