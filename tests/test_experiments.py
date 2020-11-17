@@ -297,7 +297,8 @@ class TestExperiments(TestCase):
                 "parameters": {},
                 "dependencies": [],
                 "positionX": None,
-                "positionY": None
+                "positionY": None,
+                "deploymentId": None
             }]
             machine_generated = ["uuid", "createdAt", "updatedAt"]
             for attr in machine_generated:
