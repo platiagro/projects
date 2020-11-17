@@ -11,7 +11,8 @@ from projects.utils import to_camel_case
 class Operator(Base):
     __tablename__ = "operators"
     uuid = Column(String(255), primary_key=True)
-    experiment_id = Column(String(255), ForeignKey("experiments.uuid"), nullable=False)
+    deployment_id = Column(String(255), ForeignKey("deployments.uuid"), nullable=True)
+    experiment_id = Column(String(255), ForeignKey("experiments.uuid"), nullable=True)
     task_id = Column(String(255), ForeignKey("tasks.uuid"), nullable=False)
     dependencies = Column(JSON, nullable=True, default=[])
     parameters = Column(JSON, nullable=False, default={})
