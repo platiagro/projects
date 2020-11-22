@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Parameters controller."""
-
 from werkzeug.exceptions import NotFound
 
 from projects.jupyter import read_parameters
@@ -8,13 +7,22 @@ from projects.models import Task
 
 
 def list_parameters(task_id, is_checked=False):
-    """Lists all parameters from the experiment notebook of a task.
+    """
+    Lists all parameters from the experiment notebook of a task.
 
-    Args:
-        task_id (str): the task uuid to look for in our database.
+    Parameters
+    ----------
+    task_id : str
 
-    Returns:
+    Returns
+    -------
+    list
         A list of all parameters.
+
+    Raises
+    ------
+    NotFound
+        When task_id does not exist.
     """
     task = Task.query.get(task_id)
     if task is None:

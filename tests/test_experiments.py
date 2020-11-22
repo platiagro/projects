@@ -39,7 +39,7 @@ CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
-NAME_COPYFROM = "TEST_COPY"
+NAME_COPYFROM = "test copyFrom"
 
 DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
@@ -174,13 +174,13 @@ class TestExperiments(TestCase):
         with app.test_client() as c:
             rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
                 "name": f"{NAME_COPYFROM}",
-                "copy_from": f"{EXPERIMENT_ID}"
+                "copyFrom": f"{EXPERIMENT_ID}"
             })
             self.assertEqual(rv.status_code, 200)
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
-                "name": f"TESCOPY",
-                "copy_from": f"4555"
+                "name": f"test copyFrom 2",
+                "copyFrom": f"4555"
             })
             self.assertEqual(rv.status_code, 400)
 

@@ -86,9 +86,15 @@ class TestProjects(TestCase):
             self.assertIsInstance(result["projects"], list)
             self.assertIsInstance(result["total"], int)
 
+            rv = c.get("/projects?order=name unk")
+            result = rv.get_json()
+            expected = {"message": "Invalid order argument"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
             rv = c.get("/projects?order=name")
             result = rv.get_json()
-            expected = {"message": "It was not possible to sort with the specified parameter"}
+            expected = {"message": "Invalid order argument"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 

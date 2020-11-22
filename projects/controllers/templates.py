@@ -12,9 +12,12 @@ from projects.models import Template, Operator
 
 
 def list_templates():
-    """Lists all templates from our database.
+    """
+    Lists all templates from our database.
 
-    Returns:
+    Returns
+    -------
+    list
         A list of all templates sorted by name in natural sort order.
     """
     templates = db_session.query(Template) \
@@ -25,13 +28,26 @@ def list_templates():
 
 
 def create_template(name=None, experiment_id=None, **kwargs):
-    """Creates a new template in our database.
+    """
+    Creates a new template in our database.
 
-    Args:
-        name (str): the template name.
+    Parameters
+    ----------
+    name : str
+    experiment_id : str
+    **kwargs
+        Arbitrary keyword arguments.
 
-    Returns:
-        The template info.
+    Returns
+    -------
+    dict
+        The template attributes.
+
+    Raises
+    ------
+    BadRequest
+        When name is not a str instance.
+        When the `**kwargs` (template attributes) are invalid.
     """
     if not isinstance(name, str):
         raise BadRequest("name is required")
@@ -59,16 +75,25 @@ def create_template(name=None, experiment_id=None, **kwargs):
     return template.as_dict()
 
 
-def get_template(uuid):
-    """Details a template from our database.
-
-    Args:
-        uuid (str): the template uuid to look for in our database.
-
-    Returns:
-        The template info.
+def get_template(template_id):
     """
-    template = Template.query.get(uuid)
+    Details a template from our database.
+
+    Parameters
+    ----------
+    template_id : str
+
+    Returns
+    -------
+    dict
+        The template attributes.
+
+    Raises
+    ------
+    NotFound
+        When project_id does not exist.
+    """
+    template = Template.query.get(template_id)
 
     if template is None:
         raise NotFound("The specified template does not exist")
@@ -76,17 +101,29 @@ def get_template(uuid):
     return template.as_dict()
 
 
-def update_template(uuid, **kwargs):
-    """Updates a template in our database.
-
-    Args:
-        uuid (str): the template uuid to look for in our database.
-        **kwargs: arbitrary keyword arguments.
-
-    Returns:
-        The template info.
+def update_template(template_id, **kwargs):
     """
-    template = Template.query.get(uuid)
+    Updates a template in our database.
+
+    Parameters
+    ----------
+    template_id : str
+    **kwargs:
+        Arbitrary keyword arguments.
+
+    Returns
+    -------
+    dict
+        The template attributes.
+
+    Raises
+    ------
+    NotFound
+        When project_id does not exist.
+    BadRequest
+        When the `**kwargs` (template attributes) are invalid.
+    """
+    template = Template.query.get(template_id)
 
     if template is None:
         raise NotFound("The specified template does not exist")
@@ -95,7 +132,7 @@ def update_template(uuid, **kwargs):
     data.update(kwargs)
 
     try:
-        db_session.query(Template).filter_by(uuid=uuid).update(data)
+        db_session.query(Template).filter_by(uuid=template_id).update(data)
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
@@ -103,16 +140,25 @@ def update_template(uuid, **kwargs):
     return template.as_dict()
 
 
-def delete_template(uuid):
-    """Delete a template in our database.
-
-    Args:
-        uuid (str): the template uuid to look for in our database.
-
-    Returns:
-        The deletion result.
+def delete_template(template_id):
     """
-    template = Template.query.get(uuid)
+    Delete a template in our database.
+
+    Parameters
+    ----------
+    template_id : str
+
+    Returns
+    -------
+    dict
+        The deletion result.
+
+    Raises
+    ------
+    NotFound
+        When project_id does not exist.
+    """
+    template = Template.query.get(template_id)
 
     if template is None:
         raise NotFound("The specified template does not exist")

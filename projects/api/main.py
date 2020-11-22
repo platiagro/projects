@@ -8,27 +8,87 @@ from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, MethodNotAllowed, \
     Forbidden, InternalServerError
 
-from projects.api.compare_results import bp as compare_results_blueprint
+from projects.api.comparisons import bp as comparisons_blueprint
+from projects.api.deployments import bp as deployments_blueprint
+from projects.api.deployments.runs import bp as deployments_runs_blueprint
+from projects.api.deployments.runs.logs import bp as deployments_logs_blueprint
 from projects.api.experiments import bp as experiments_blueprint
+from projects.api.experiments.operators import bp as experiments_operators_blueprint
+from projects.api.experiments.runs import bp as experiments_runs_blueprint
+from projects.api.experiments.runs.datasets import bp as datasets_blueprint
+from projects.api.experiments.runs.figures import bp as figures_blueprint
+from projects.api.experiments.runs.logs import bp as experiments_logs_blueprint
+from projects.api.experiments.runs.metrics import bp as metrics_blueprint
 from projects.api.json_encoder import CustomJSONEncoder
-from projects.api.operators import bp as operators_blueprint
-from projects.api.parameters import bp as parameters_blueprint
 from projects.api.projects import bp as projects_blueprint
 from projects.api.tasks import bp as tasks_blueprint
+from projects.api.tasks.parameters import bp as tasks_parameters_blueprint
 from projects.api.templates import bp as templates_blueprint
 from projects.database import db_session, init_db
 from projects.samples import init_tasks
 
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
-app.register_blueprint(projects_blueprint, url_prefix="/projects")
-app.register_blueprint(compare_results_blueprint, url_prefix="/projects/<project_id>/comparisons")
-app.register_blueprint(experiments_blueprint, url_prefix="/projects/<project_id>/experiments")
-app.register_blueprint(tasks_blueprint, url_prefix="/tasks")
-app.register_blueprint(parameters_blueprint, url_prefix="/tasks/<task_id>/parameters")
-app.register_blueprint(operators_blueprint,
-                       url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators")
-app.register_blueprint(templates_blueprint, url_prefix="/templates")
+app.register_blueprint(
+    projects_blueprint,
+    url_prefix="/projects",
+)
+app.register_blueprint(
+    comparisons_blueprint,
+    url_prefix="/projects/<project_id>/comparisons",
+)
+app.register_blueprint(
+    experiments_blueprint,
+    url_prefix="/projects/<project_id>/experiments",
+)
+app.register_blueprint(
+    experiments_operators_blueprint,
+    url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators",
+)
+app.register_blueprint(
+    experiments_runs_blueprint,
+    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs",
+)
+app.register_blueprint(
+    datasets_blueprint,
+    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/datasets",
+)
+app.register_blueprint(
+    figures_blueprint,
+    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/figures",
+)
+app.register_blueprint(
+    experiments_logs_blueprint,
+    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/logs",
+)
+app.register_blueprint(
+    metrics_blueprint,
+    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/metrics",
+)
+app.register_blueprint(
+    deployments_blueprint,
+    url_prefix=f"/projects/<project_id>/deployments",
+)
+app.register_blueprint(
+    deployments_runs_blueprint,
+    url_prefix=f"/projects/<project_id>/deployments/<deployment_id>/runs",
+)
+app.register_blueprint(
+    deployments_logs_blueprint,
+    url_prefix=f"/projects/<project_id>/deployments/<deployment_id>/runs/<run_id>/operators/<operator_id>/logs",
+)
+app.register_blueprint(
+    tasks_blueprint,
+    url_prefix="/tasks",
+)
+app.register_blueprint(
+    tasks_parameters_blueprint,
+    url_prefix="/tasks/<task_id>/parameters",
+)
+app.register_blueprint(
+    templates_blueprint,
+    url_prefix="/templates",
+)
 
 
 @app.teardown_appcontext
@@ -38,7 +98,9 @@ def shutdown_session(exception=None):
 
 @app.route("/", methods=["GET"])
 def ping():
-    """Handles GET requests to /."""
+    """
+    Handles GET requests to /.
+    """
     return "pong"
 
 
