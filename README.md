@@ -33,6 +33,8 @@ export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
 export JUPYTER_ENDPOINT=http://localhost:8888
+export KF_PIPELINES_ENDPOINT=127.0.0.1:31380/pipeline
+export KF_PIPELINES_NAMESPACE=deployments
 ```
 
 (Optional) Start a MinIO instance:
@@ -101,6 +103,8 @@ export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
 export JUPYTER_ENDPOINT=http://localhost:8888
+export KF_PIPELINES_ENDPOINT=127.0.0.1:31380/pipeline
+export KF_PIPELINES_NAMESPACE=deployments
 ```
 
 (Optional) Create a virtualenv:
@@ -147,6 +151,8 @@ export MYSQL_DB_NAME=platiagro
 export MYSQL_DB_USER=root
 export MYSQL_DB_PASSWORD=
 export JUPYTER_ENDPOINT=http://localhost:8888
+export KF_PIPELINES_ENDPOINT=127.0.0.1:31380/pipeline
+export KF_PIPELINES_NAMESPACE=deployments
 ```
 
 Use the following command to run all tests:

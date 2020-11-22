@@ -13,7 +13,7 @@ servers:
 tags:
   - name: "Tasks"
     description: >
-      Tasks are tools and algorithms that a data-scientist writes in Jupyter Notebooks.
+      Tasks are tools and algorithms that a data-scientist writes in Jupyter Notebooks or in a Docker image.
       You may use these tasks as a step of an experiment to perform model training or inference.
   - name: "Projects"
     description: >
@@ -21,11 +21,30 @@ tags:
       In a project, you may test different experiments (hypothesis/solutions/models) that address the business question you are trying to answer.
   - name: "Experiments"
     description: >
-      Experiments allow data-scientists to draw sequential workflows using the tasks.
-      These workflows may describe the steps of data-preparation, data-modeling, or even a real-time inference service.
+      Experiments allow data-scientists to draw acyclic workflows using tasks.
+      These workflows may describe the steps of data-preparation, data-modeling.
+  - name: "Experiment Runs"
+    description: >
+      Runs are the executions of an experiment.
+      Each run start from the first step and generates its own results.
+  - name: "Deployments"
+    description: >
+      Deployments allow drawing sequential workflows for real-time inference.
+      These workflows are accessible by HTTP via REST endpoints.
+  - name: "Deployment Runs"
+    description: >
+      Runs are the executions of a deployment.
+      Each run start from the first step and generates its own results.
+  - name: "Results"
+    description: >
+      Results are the outputs of experiment runs.
+      They are: figures, metrics, datasets and log messages.
+  - name: "Comparisons"
+    description: >
+      Comparisons organize results from different experiments for evaluation/comparision.
   - name: "Operators"
     description: >
-      An Operator is a single unit in an experiment flow.
+      An Operator is a single unit in an experiment or deployment flow.
       When a data-scientist runs an experiment, the operator runs a Jupyter Notebook of its task.
   - name: "Templates"
     description: >
@@ -33,7 +52,7 @@ tags:
 paths:
   /tasks:
     get:
-      summary: "List all tasks sorted by name in natural sort order."
+      summary: "List tasks. Supports pagination, and sorting."
       tags:
         - "Tasks"
       parameters:
@@ -90,6 +109,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Task"
@@ -109,6 +129,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         $ref: "#/components/requestBodies/TaskPatch"
       responses:
@@ -152,6 +173,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Parameters"
@@ -163,7 +185,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects:
     get:
-      summary: "List all projects sorted by name in natural sort order."
+      summary: "List projects. Supports pagination, and sorting."
       tags:
         - "Projects"
       parameters:
@@ -211,7 +233,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects/deleteprojects:
     post:
-      summary: "delete projects by ids."
+      summary: "Delete multiple projects."
       tags:
         - "Projects"
       requestBody:
@@ -236,6 +258,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Project"
@@ -255,6 +278,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         $ref: "#/components/requestBodies/Project"
       responses:
@@ -278,6 +302,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -289,18 +314,19 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/comparisons:
     get:
-      summary: "List all compare results sorted by created_at in ascending order."
+      summary: "List all comparisons sorted by created_at in ascending order."
       tags:
-        - "Projects"
+        - "Comparisons"
       parameters:
         - name: projectId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
-          $ref: "#/components/responses/CompareResults"
+          $ref: "#/components/responses/Comparisons"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -308,18 +334,19 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
     post:
-      summary: "Create a new compare results."
+      summary: "Create a new comparison."
       tags:
-        - "Projects"
+        - "Comparisons"
       parameters:
         - name: projectId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
-          $ref: "#/components/responses/CompareResult"
+          $ref: "#/components/responses/Comparison"
         "400":
           $ref: "#/components/responses/BadRequest"
         "404":
@@ -330,25 +357,27 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/comparisons/{comparisonId}:
     patch:
-      summary: "Update a compare result by ID."
+      summary: "Update a comparison by ID."
       tags:
-        - "Projects"
+        - "Comparisons"
       parameters:
         - name: projectId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
         - name: comparisonId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/CompareResultPatch"
+        $ref: "#/components/requestBodies/ComparisonPatch"
       responses:
         "200":
-          $ref: "#/components/responses/CompareResult"
+          $ref: "#/components/responses/Comparison"
         "400":
           $ref: "#/components/responses/BadRequest"
         "404":
@@ -358,20 +387,22 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
     delete:
-      summary: "Delete a compare result by ID."
+      summary: "Delete a comparison by ID."
       tags:
-        - "Projects"
+        - "Comparisons"
       parameters:
         - name: projectId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
         - name: comparisonId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -392,6 +423,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Experiments"
@@ -411,6 +443,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         $ref: "#/components/requestBodies/ExperimentPost"
       responses:
@@ -435,11 +468,13 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: experimentId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Experiment"
@@ -459,11 +494,13 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: experimentId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         $ref: "#/components/requestBodies/ExperimentPatch"
       responses:
@@ -487,11 +524,13 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: experimentId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -503,7 +542,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments/{experimentId}/operators:
     get:
-      summary: "List all operators."
+      summary: "List all operators, unsorted."
       tags:
         - "Operators"
       parameters:
@@ -512,11 +551,13 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: experimentId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Operators"
@@ -536,11 +577,13 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: experimentId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         $ref: "#/components/requestBodies/OperatorPost"
       responses:
@@ -565,16 +608,19 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: experimentId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
         - name: operatorId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         $ref: "#/components/requestBodies/OperatorPatch"
       responses:
@@ -598,21 +644,581 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: experimentId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
         - name: operatorId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/runs:
+    get:
+      summary: "List all experiment runs sorted by created_at in ascending order."
+      tags:
+        - "Experiment Runs"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Run"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new experiment run."
+      tags:
+        - "Experiment Runs"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/RunPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/Run"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}:
+    get:
+      summary: "Detail a specific experiment run by ID."
+      tags:
+        - "Experiment Runs"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Run"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Terminate an experiment run."
+      tags:
+        - "Experiment Runs"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: experimentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/retry:
+    put:
+      summary: "Re-initiate a failed or terminated experiment run."
+      tags:
+        - "Experiment Runs"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: experimentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/datasets:
+    get:
+      summary: "List datasets. Supports pagination."
+      tags:
+        - "Results"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+          description: Page size
+      responses:
+        "200":
+          $ref: "#/components/responses/Datasets"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/figures:
+    get:
+      summary: "List all figures"
+      tags:
+        - "Results"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Figures"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/metrics:
+    get:
+      summary: "List all metrics"
+      tags:
+        - "Results"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Metrics"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/logs:
+    get:
+      summary: "Get logs from Jupyter Notebook"
+      tags:
+        - "Results"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Logs"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments:
+    get:
+      summary: "List all deployments."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Deployments"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new deployment."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/DeploymentPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/Deployment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}:
+    get:
+      summary: "Detail a specific deployment by ID."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Deployment"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    patch:
+      summary: "Update a deployment by ID."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/DeploymentPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/Deployment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Delete a deployment by ID."
+      tags:
+        - "Deployments"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/runs:
+    get:
+      summary: "List all experiment runs sorted by created_at in ascending order."
+      tags:
+        - "Deployment Runs"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Run"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new deployment run."
+      tags:
+        - "Deployment Runs"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/RunPost"
+      responses:
+        "200":
+          $ref: "#/components/responses/Run"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/runs/{runId}:
+    get:
+      summary: "Detail a specific deployment run by ID."
+      tags:
+        - "Deployment Runs"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Run"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      summary: "Terminate a deployment run."
+      tags:
+        - "Deployment Runs"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -655,6 +1261,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Template"
@@ -674,6 +1281,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         $ref: "#/components/requestBodies/TemplatePatch"
       responses:
@@ -697,6 +1305,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -708,7 +1317,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
-    CompareResult:
+    Comparison:
       type: object
       properties:
         uuid:
@@ -743,11 +1352,11 @@ components:
         updatedAt:
           type: string
           format: date-time
-    CompareResults:
+    Comparisons:
       type: array
       items:
         oneOf:
-          - $ref: "#/components/schemas/CompareResult"
+          - $ref: "#/components/schemas/Comparison"
     Task:
       type: object
       properties:
@@ -923,6 +1532,35 @@ components:
       items:
         oneOf:
           - $ref: "#/components/schemas/Experiment"
+    Deployment:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        experimentId:
+          type: string
+          format: uuid
+        isActive:
+          type: boolean
+        name:
+          type: string
+        operators:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/Operator"
+        position:
+          type: integer
+        status:
+          type: string
+        uuid:
+          type: string
+          format: uuid
+    Deployments:
+      type: array
+      items:
+        $ref: "#/components/schemas/Deployment"
     Operator:
       type: object
       properties:
@@ -967,6 +1605,102 @@ components:
                 type: string
                 enum: [Unset, Setted up]
                 example: Setted up
+    Logs:
+      type: object
+      properties:
+        exception:
+          type: string
+          example: "KeyError"
+        traceback:
+          type: array
+          items:
+            type: string
+            example:
+              - "---------------------------------------------------------------------------"
+              - "KeyError                                  Traceback (most recent call last)"
+              - "<ipython-input-6-3c08f8d95ae4> in <module>"
+              - "----> 1 df.dropna(subset = [target],inplace=True)"
+              - "      2 y = df[target].to_numpy()"
+              - ""
+              - "/opt/conda/lib/python3.7/site-packages/pandas/core/frame.py in dropna(self, axis, how, thresh, subset, inplace)"
+              - "   4857                 check = indices == -1"
+              - "   4858                 if check.any():"
+              - "-> 4859                     raise KeyError(list(np.compress(check, subset)))"
+              - "   4860                 agg_obj = self.take(indices, axis=agg_axis)"
+              - "   4861 "
+              - ""
+              - "KeyError: ['species']"
+    Datasets:
+      type: array
+      items:
+        oneOf:
+          - type: object
+            properties:
+              columns:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                      example: "SepalLengthCm"
+                    - type: string
+                      example: "Species"
+              data:
+                type: array
+                items:
+                  oneOf:
+                    - type: array
+                      items:
+                        oneOf:
+                          - type: number
+                            example: 5.1
+                          - type: string
+                            example: "Iris-setosa"
+              total:
+                type: number
+                example: 2
+    Figures:
+      type: array
+      items:
+        oneOf:
+          - type: string
+            example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAC6CAIAAAB3B9X3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAG6SURBVHhe7dIxAQAADMOg+TfdicgLGrhBIBCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhDB9ho69eEGiUHfAAAAAElFTkSuQmCC"
+    Metrics:
+      type: array
+      items:
+        oneOf:
+          - type: object
+            example:
+              metric_name: metric_value
+    Run:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        runId:
+          type: string
+          format: uuid
+        operators:
+          type: array
+          items:
+            type: object
+            properties:
+              operatorId:
+                type: string
+                format: uuid
+              taskId:
+                type: string
+                format: uuid
+              parameters:
+                type: object
+                example:
+                  dataset: "/tmp/data/iris.csv"
+                  target: "SepalLengthCm"
+    Runs:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Run"
     Template:
       type: object
       properties:
@@ -1000,7 +1734,7 @@ components:
         oneOf:
           - $ref: "#/components/schemas/Template"
   requestBodies:
-    CompareResultPatch:
+    ComparisonPatch:
       content:
         application/json:
           schema:
@@ -1217,7 +1951,6 @@ components:
                 type: string
               description:
                 type: string
-
     Deleteprojects:
       content:
         application/json:
@@ -1227,7 +1960,6 @@ components:
               properties:
                 uuid:
                   type: string
-
     ExperimentPost:
       content:
         application/json:
@@ -1253,6 +1985,29 @@ components:
               templateId:
                 type: string
                 format: uuid
+    DeploymentPost:
+      description: Necessary body if experimentDeploy equals true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              copyFrom:
+                type: string
+    DeploymentPatch:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              isActive:
+                type: boolean
+              name:
+                type: string
+              position:
+                type: integer
     OperatorPost:
       content:
         application/json:
@@ -1299,6 +2054,20 @@ components:
               positionY:
                 type: number
                 format: float
+    RunPost:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              experimentId:
+                type: string
+                format: uuid
+              operators:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: "#/components/schemas/Operator"
     TemplatePost:
       content:
         application/json:
@@ -1319,18 +2088,18 @@ components:
               name:
                 type: string
   responses:
-    CompareResult:
+    Comparison:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CompareResult"
-    CompareResults:
+            $ref: "#/components/schemas/Comparison"
+    Comparisons:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CompareResults"
+            $ref: "#/components/schemas/Comparisons"
     Task:
       description: ""
       content:
@@ -1373,6 +2142,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Experiments"
+    Deployment:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Deployments"
+    Deployments:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Deployments"
     Operator:
       description: ""
       content:
@@ -1385,6 +2166,42 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Operators"
+    Logs:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Logs"
+    Datasets:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Datasets"
+    Figures:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Figures"
+    Metrics:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Metrics"
+    Run:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Run"
+    Runs:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Runs"
     Template:
       description: ""
       content:

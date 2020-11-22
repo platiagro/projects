@@ -5,7 +5,7 @@ name: Python application
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, feature/merge-projects-and-pipelines ]
   pull_request:
     branches: [ master ]
 
@@ -14,17 +14,14 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: platiagro
-        ports:
-        - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
     steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.6
+
     - name: Code review tips
       uses: unsplash/comment-on-pr@master
       if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
@@ -67,9 +64,32 @@ jobs:
           - f-string `f'text-{variable}'` é melhor que `'text-{}'.format(variable)` e `'text-' + variable`
           - async/await NÃO EXISTEM no Python3.6
           - Métodos que são chamados de outros arquivos `.py` **DEVEM TER Docstring**.
-          - Usar Google Style Python Docstring: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+          - Usar NumPy Style Python Docstring: https://www.sphinx-doc.org/en/master/usage/extensions/example_numpy.html
           - Usar sempre import absoluto.
             ex: from projects.database import Base (BOM), from .database import Base (RUIM)
+
+          ### Padrão de URLs para API REST
+          - Usar REST resource naming guide: https://restfulapi.net/resource-naming/
+          - USE SUBSTANTIVOS! **NÃO USE VERBOS NA URL!**
+            ex: `/projects/:projectId/executions` (BOM), `/project/execute` (RUIM)
+          - **SUBSTANTIVOS SEMPRE NO PLURAL!**
+            ex: `/deployments/:deploymentId` (BOM), `/deployment/:deploymentId` (RUIM)
+          - **SUBSTANTIVOS SÃO SEMPRE SEPARADOS POR UM ID. NÃO USE DOIS SUBSTANTIVOS SEGUIDOS**
+            ex: `/experiments/:experimentId/results` (BOM), `/experiments/results/:experimentId` (RUIM)
+          - Para consultar uma lista de resources (paginada ou não):
+            ex: `GET /resources?page=1&size=10&filter=...`
+          - Para criar um resource (e gerar um resourceId aleatório):
+            ex: `POST /resources`
+          - Para acessar um resource por resourceId:
+            ex: `GET /resources/{resourceId}`
+          - Para substituir/criar (ou atualizar TODOS OS CAMPOS) de um resource com resourceId específico:
+            ex: `PUT /resources/{resourceId}`
+          - Para excluir um resource:
+            ex: `DELETE /resources/{resourceId}`
+          - Para atualizar alguns campos de um resource:
+            ex: `PATCH /resources/{resourceId}`
+          - Em dúvidas? Mantenha uma consistência com as URLs já existem.
+
     - name: Set output variables
       id: vars
       run: |
@@ -81,27 +101,243 @@ jobs:
         fi
         echo ::set-output name=BRANCH::${{ github.ref }}
         echo ::set-output name=COMMIT::${{ github.sha }}
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.6
-    - name: Run MinIO image
-      run: |
-        docker run -d -p 9000:9000 \
-        -e "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
-        -e "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
-        minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
-      env:
-        MINIO_ACCESS_KEY: minio
-        MINIO_SECRET_KEY: minio123
+
     - name: Run jupyter image
       run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
+
+    - name: Install Kubernetes 1.15.7
+      run: |
+        curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+        sudo swapoff -a
+        sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+        sudo apt-get install -y --allow-downgrades kubeadm=1.15.7-00 kubelet=1.15.7-00 kubectl=1.15.7-00
+        echo 'KUBELET_EXTRA_ARGS=--eviction-hard=nodefs.available<1%,nodefs.inodesFree<1%,imagefs.available<1% --image-gc-high-threshold=99' | sudo tee /etc/default/kubelet
+        sudo systemctl daemon-reload
+        sudo systemctl restart kubelet
+        sudo kubeadm init
+        sudo mkdir -p $HOME/.kube
+        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+        kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+        kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=admin --user=kubelet --group=system:serviceaccounts
+        kubectl taint nodes --all node-role.kubernetes.io/master-
+        while [ $(kubectl get node |tail -n 1|awk '{print $2}') != "Ready" ]; do echo waiting nodes to be ready...; sleep 1; done
+
+    - name: Add Persistent Volumes to Kubernetes
+      run: |
+        for i in `seq 1 10`; do
+          sudo mkdir -p "/mnt/disks/vol-$i"
+          sudo mount -t tmpfs -o size=20G "vol-$i" "/mnt/disks/vol-$i"
+        done
+        cat <<EOF | kubectl apply -f -
+          kind: StorageClass
+          apiVersion: storage.k8s.io/v1
+          metadata:
+            name: local-storage
+          provisioner: kubernetes.io/no-provisioner
+          reclaimPolicy: Delete
+        EOF
+        kubectl patch storageclass local-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+        cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: local-provisioner-config
+            namespace: default
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          data:
+            storageClassMap: |
+              local-storage:
+                hostDir: /mnt/disks
+                mountDir: /mnt/disks
+                blockCleanerCommand:
+                  - "/scripts/shred.sh"
+                  - "2"
+                volumeMode: Filesystem
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: apps/v1
+          kind: DaemonSet
+          metadata:
+            name: local-volume-provisioner
+            namespace: default
+            labels:
+              app: local-volume-provisioner
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          spec:
+            selector:
+              matchLabels:
+                app: local-volume-provisioner
+            template:
+              metadata:
+                labels:
+                  app: local-volume-provisioner
+              spec:
+                serviceAccountName: local-storage-admin
+                containers:
+                  - image: "quay.io/external_storage/local-volume-provisioner:v2.3.2"
+                    name: provisioner
+                    securityContext:
+                      privileged: true
+                    env:
+                    - name: MY_NODE_NAME
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: spec.nodeName
+                    - name: MY_NAMESPACE
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: metadata.namespace
+                    - name: JOB_CONTAINER_IMAGE
+                      value: "quay.io/external_storage/local-volume-provisioner:v2.3.2"
+                    volumeMounts:
+                      - mountPath: /etc/provisioner/config
+                        name: provisioner-config
+                        readOnly: true
+                      - mountPath: /dev
+                        name: provisioner-dev
+                      - mountPath: /mnt/disks
+                        name: disks
+                        mountPropagation: "HostToContainer"
+                volumes:
+                  - name: provisioner-config
+                    configMap:
+                      name: local-provisioner-config
+                  - name: provisioner-dev
+                    hostPath:
+                      path: /dev
+                  - name: disks
+                    hostPath:
+                      path: /mnt/disks
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: local-storage-admin
+            namespace: default
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: local-storage-provisioner-pv-binding
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          subjects:
+          - kind: ServiceAccount
+            name: local-storage-admin
+            namespace: default
+          roleRef:
+            kind: ClusterRole
+            name: system:persistent-volume-provisioner
+            apiGroup: rbac.authorization.k8s.io
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: local-storage-provisioner-node-clusterrole
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          rules:
+          - apiGroups: [""]
+            resources: ["nodes"]
+            verbs: ["get"]
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: local-storage-provisioner-node-binding
+            labels:
+              heritage: "Tiller"
+              release: "release-name"
+              chart: provisioner-2.3.2
+          subjects:
+          - kind: ServiceAccount
+            name: local-storage-admin
+            namespace: default
+          roleRef:
+            kind: ClusterRole
+            name: local-storage-provisioner-node-clusterrole
+            apiGroup: rbac.authorization.k8s.io
+        EOF
+        sleep 10
+        kubectl wait --for=condition=Ready pods --all --timeout=60s
+
+    - name: Create load balancer
+      run: |
+        kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.3/manifests/metallb.yaml
+        cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            namespace: metallb-system
+            name: config
+          data:
+            config: |
+              address-pools:
+              - name: default
+                protocol: layer2
+                addresses:
+                - $KUBEFLOW_MASTER_IP_ADDRESS-$KUBEFLOW_MASTER_IP_ADDRESS
+        EOF
+      env:
+        KUBEFLOW_MASTER_IP_ADDRESS: 0.0.0.0
+
+    - name: Install Kubeflow Pipelines
+      run: |
+        kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources?ref=$PIPELINE_VERSION"
+        kubectl wait --for condition=established --timeout=60s crd/applications.app.k8s.io
+        kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=$PIPELINE_VERSION"
+        sleep 10
+        kubectl -n kubeflow wait applications/pipeline --for condition=Ready --timeout=600s
+        kubectl -n kubeflow patch deployment mysql --patch \
+          '{ "spec": { "template": { "spec": { "containers": [ { "image": "mysql:5.7", "name": "mysql" } ] } } } }'
+        kubectl -n kubeflow patch svc ml-pipeline --patch \
+          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
+        kubectl -n kubeflow patch svc mysql --patch \
+          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 31000, "port": 3306, "protocol": "TCP", "targetPort": 3306 } ] } }'
+        kubectl -n kubeflow patch svc minio-service --patch \
+          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 32000, "port": 9000, "protocol": "TCP", "targetPort": 9000 } ] } }'
+        kubectl -n kubeflow wait deployments/mysql --for condition=Available --timeout=60s
+        sleep 10
+        kubectl -n kubeflow exec $(kubectl -n kubeflow get pod |awk '{print $1}'|grep mysql) -- mysql_upgrade -u root -p --force
+        kubectl -n kubeflow delete pod -l app=mysql
+      env:
+        PIPELINE_VERSION: 0.5.1
+
+    - name: Install Istio
+      run: |
+        kubectl apply -k "github.com/platiagro/manifests/istio/istio-crds/base?ref=v0.2.0-kubeflow-v1.1-branch"
+        kubectl apply -k "github.com/platiagro/manifests/istio/istio-install/base?ref=v0.2.0-kubeflow-v1.1-branch"
+        kubectl apply -k "github.com/platiagro/manifests/istio/add-anonymous-user-filter/base?ref=v0.2.0-kubeflow-v1.1-branch"
+
+    - name: Install Seldon
+      run: |
+        kubectl apply -k "github.com/platiagro/manifests/cert-manager/cert-manager-crds/base?ref=v0.2.0-kubeflow-v1.1-branch"
+        kubectl apply -k "github.com/platiagro/manifests/seldon/seldon-core-operator/base?ref=v0.2.0-kubeflow-v1.1-branch"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install .
+
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
@@ -110,18 +346,22 @@ jobs:
         coverage run --branch --source=projects -m pytest
         coverage xml -i
       env:
-        MINIO_ENDPOINT: localhost:9000
+        MINIO_ENDPOINT: localhost:32000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
-        MYSQL_DB_HOST: localhost
+        MYSQL_DB_HOST: localhost:31000
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://localhost:8888
+        KF_PIPELINES_ENDPOINT: 127.0.0.1:30000
+        KF_PIPELINES_NAMESPACE: kubeflow
+
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
     - name: Build and push image
       uses: docker/build-push-action@v1
       with:

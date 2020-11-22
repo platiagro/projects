@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from projects.controllers.parameters import list_parameters
+from projects.controllers.tasks.parameters import list_parameters
 from projects.controllers.utils import raise_if_task_does_not_exist, \
     raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
     raise_if_operator_does_not_exist, uuid_alpha
@@ -18,14 +18,23 @@ DEPENDENCIES_EXCEPTION_MSG = "The specified dependencies are not valid."
 
 
 def list_operators(project_id, experiment_id):
-    """Lists all operators under an experiment.
+    """
+    Lists all operators under an experiment.
 
-    Args:
-        project_id (str): the project uuid.
-        experiment_id (str): the experiment uuid.
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
 
-    Returns:
-        A list of all operator.
+    Returns
+    -------
+    list
+        A list of all operators.
+
+    Raises
+    ------
+    NotFound
+        When either project_id or experiment_id does not exist.
     """
     raise_if_project_does_not_exist(project_id)
     raise_if_experiment_does_not_exist(experiment_id)
@@ -48,16 +57,35 @@ def create_operator(project_id, experiment_id, task_id=None,
     """
     Creates a new operator in our database.
     The new operator is added to the end of the operator list.
-    Args:
-        project_id (str): the project uuid.
-        experiment_id (str): the experiment uuid.
-        task_id (str): the task uuid.
-        parameters (dict): the parameters dict.
-        dependencies (list): the dependencies array.
-        position_x (float): position x.
-        position_y (float): position y.
-    Returns:
-        The operator info.
+
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
+    task_id :str
+    parameters : dict
+        The parameters dict.
+    dependencies : list
+        The dependencies array.
+    position_x : float
+        Position x.
+    position_y : float
+        Position y.
+    **kwargs
+        Arbitrary keyword arguments.
+
+    Returns
+    -------
+    dict
+        The operator attributes.
+
+    Raises
+    ------
+    BadRequest
+        When task_id is not a str instance.
+        When the `**kwargs` (task attributes) are invalid.
+    NotFound
+        When either project_id or experiment_id does not exist.
     """
     raise_if_project_does_not_exist(project_id)
     raise_if_experiment_does_not_exist(experiment_id)
@@ -95,20 +123,34 @@ def create_operator(project_id, experiment_id, task_id=None,
     return operator.as_dict()
 
 
-def update_operator(uuid, project_id, experiment_id, **kwargs):
-    """Updates an operator in our database and adjusts the position of others.
-    Args:
-        uuid (str): the operator uuid to look for in our database.
-        project_id (str): the project uuid.
-        experiment_id (str): the experiment uuid.
-        **kwargs: arbitrary keyword arguments.
-    Returns:
-        The operator info.
+def update_operator(project_id, experiment_id, operator_id, **kwargs):
+    """
+    Updates an operator in our database and adjusts the position of others.
+
+    Parameters
+    ----------
+    project_id  :str
+    experiment_id : str
+    operator_id : str
+    **kwargs
+        Arbitrary keyword arguments.
+
+    Returns
+    -------
+    dict
+        The operator attributes.
+
+    Raises
+    ------
+    NotFound
+        When any of project_id, experiment_id, or operator_id does not exist.
+    BadRequest
+        When the `**kwargs` (task attributes) are invalid.
     """
     raise_if_project_does_not_exist(project_id)
     raise_if_experiment_does_not_exist(experiment_id)
 
-    operator = Operator.query.get(uuid)
+    operator = Operator.query.get(operator_id)
 
     if operator is None:
         raise NotFound("The specified operator does not exist")
@@ -117,13 +159,13 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
 
     dependencies = kwargs.get("dependencies")
     if dependencies is not None:
-        raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=uuid)
+        raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=operator_id)
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
 
     try:
-        db_session.query(Operator).filter_by(uuid=uuid).update(data)
+        db_session.query(Operator).filter_by(uuid=operator_id).update(data)
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
@@ -133,19 +175,30 @@ def update_operator(uuid, project_id, experiment_id, **kwargs):
     return operator.as_dict()
 
 
-def delete_operator(uuid, project_id, experiment_id):
-    """Delete an operator in our database.
-    Args:
-        uuid (str): the operator uuid to look for in our database.
-        project_id (str): the project uuid.
-        experiment_id (str): the experiment uuid.
-    Returns:
+def delete_operator(project_id, experiment_id, operator_id):
+    """
+    Delete an operator in our database.
+
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
+    operator_id : str
+
+    Returns
+    -------
+    dict
         The deletion result.
+
+    Raises
+    ------
+    NotFound
+        When any of project_id, experiment_id, or operator_id does not exist.
     """
     raise_if_project_does_not_exist(project_id)
     raise_if_experiment_does_not_exist(experiment_id)
 
-    operator = Operator.query.get(uuid)
+    operator = Operator.query.get(operator_id)
 
     if operator is None:
         raise NotFound("The specified operator does not exist")
@@ -154,14 +207,17 @@ def delete_operator(uuid, project_id, experiment_id):
     # in dependencies and remove this operator from dependencies
     operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
-        .filter(Operator.uuid != uuid)\
+        .filter(Operator.uuid != operator_id) \
         .all()
     for op in operators:
-        if uuid in op.dependencies:
-            dependencies = op.dependencies.remove(uuid)
+        if operator_id in op.dependencies:
+            dependencies = op.dependencies.remove(operator_id)
             if dependencies is None:
                 dependencies = []
-            update_operator(op.uuid, project_id, experiment_id, dependencies=dependencies)
+            update_operator(project_id=project_id,
+                            experiment_id=experiment_id,
+                            operator_id=op.uuid,
+                            dependencies=dependencies)
 
     db_session.delete(operator)
     db_session.commit()
@@ -170,10 +226,17 @@ def delete_operator(uuid, project_id, experiment_id):
 
 
 def raise_if_parameters_are_invalid(parameters):
-    """Raises an exception if the specified parameters are not valid.
+    """
+    Raises an exception if the specified parameters are not valid.
 
-    Args:
-        parameters (dict): the parameters dict.
+    Parameters
+    ----------
+    parameters : dict
+
+    Raises
+    ------
+    BadRequest
+        When any parameter value is not str, int, float, bool, list, or dict.
     """
     if not isinstance(parameters, dict):
         raise BadRequest(PARAMETERS_EXCEPTION_MSG)
@@ -184,13 +247,24 @@ def raise_if_parameters_are_invalid(parameters):
 
 
 def raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=None):
-    """Raises an exception if the specified dependencies are not valid.
+    """
+    Raises an exception if the specified dependencies are not valid.
     The invalid dependencies are duplicate elements on the dependencies,
     dependencies including the actual operator_id, dependencie's operator
     doesn't exist and ciclycal dependencies.
-    Args:
-        dependencies (list): the dependencies list.
-        operator_id (str): the operator uuid.
+
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
+    dependencies : list
+    operator_id : str
+
+    Raises
+    ------
+    BadRequest
+        When any dependency does not exist.
+        When dependencies are cyclic.
     """
     if not isinstance(dependencies, list):
         raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
@@ -211,13 +285,20 @@ def raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, o
 
 
 def raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies):
-    """Raises an exception if the dependencies of operators from experiment are cyclical.
+    """
+    Raises an exception if the dependencies of operators from experiment are cyclical.
 
-    Args:
-        project_id (str): the project uuid.
-        experiment_id (str): the experiment uuid.
-        operator_id (str): the operator uuid.
-        dependencies (list): the dependencies list.
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
+    operator_id : str
+    dependencies : list
+
+    Raises
+    ------
+    BadRequest
+        When dependencies are cyclic.
     """
     operators = list_operators(project_id, experiment_id)
 

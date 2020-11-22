@@ -7,10 +7,13 @@ from projects.controllers.tasks import create_task
 
 
 def init_tasks(config_path):
-    """Installs the tasks from a config file. Avoids duplicates.
+    """
+    Installs the tasks from a config file. Avoids duplicates.
 
-    Args:
-        config_path (str): the path to the config file.
+    Parameters
+    ----------
+    config_path : str
+        The path to the config file.
     """
     with open(config_path) as f:
         tasks = load(f)
@@ -48,12 +51,17 @@ def init_tasks(config_path):
 
 
 def read_notebook(notebook_path):
-    """Reads the contents of a notebook.
+    """
+    Reads the contents of a notebook.
 
-    Args:
-        notebook_path (str): the path to the notebook file.
+    Parameters
+    ----------
+    notebook_path :str
+        The path to the notebook file.
 
-    Returns:
+    Returns
+    -------
+    bytes
         The notebook content as bytes.
     """
     with open(notebook_path, "rb") as f:
