@@ -22,7 +22,8 @@ from projects.object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
 
 PREFIX = "tasks"
-VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING", "PREDICTOR"]
+VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
+              "PREDICTOR", "COMPUTER_VISION", "NLP"]
 DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
 
