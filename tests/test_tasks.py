@@ -43,13 +43,13 @@ class TestTasks(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, is_monitoring, created_at, updated_at) "
+            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID_2}', 'foo 2', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH_2}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, is_monitoring, created_at, updated_at) "
+            f"VALUES ('{TASK_ID_2}', 'foo 2', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH_2}', 0, 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -248,6 +248,7 @@ class TestTasks(TestCase):
                 "description": "long test",
                 "tags": ["DEFAULT"],
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": [
                     {"default": "", "name": "dataset", "type": "string"},
                 ],
@@ -283,6 +284,7 @@ class TestTasks(TestCase):
                 "description": "long test",
                 "tags": TAGS,
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": PARAMETERS,
             }
             machine_generated = [
@@ -315,6 +317,7 @@ class TestTasks(TestCase):
                 "description": "long test",
                 "tags": TAGS,
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": PARAMETERS,
             }
             machine_generated = [
@@ -351,6 +354,7 @@ class TestTasks(TestCase):
                 "arguments": ARGUMENTS,
                 "tags": TAGS,
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": [
                     {"default": "", "name": "dataset", "type": "string"},
                 ],
@@ -389,6 +393,7 @@ class TestTasks(TestCase):
                 "description": None,
                 "tags": ["DATASETS"],
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": [],
                 "experimentNotebookPath": None,
                 "deploymentNotebookPath": None,
@@ -427,6 +432,7 @@ class TestTasks(TestCase):
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
@@ -488,6 +494,7 @@ class TestTasks(TestCase):
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
             }
@@ -513,6 +520,7 @@ class TestTasks(TestCase):
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
             }
@@ -538,6 +546,7 @@ class TestTasks(TestCase):
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
             }
@@ -563,6 +572,7 @@ class TestTasks(TestCase):
                 "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
                 "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
                 "isDefault": IS_DEFAULT,
+                'isMonitoring': False,
                 "parameters": PARAMETERS,
                 "createdAt": CREATED_AT_ISO,
             }

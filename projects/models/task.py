@@ -32,6 +32,7 @@ class Task(Base):
     experiment_notebook_path = Column(String(255))
     deployment_notebook_path = Column(String(255), nullable=True)
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
+    is_monitoring = Column(Boolean, nullable=False, server_default=expression.false())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 

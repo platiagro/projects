@@ -34,6 +34,11 @@ def init_tasks(config_path):
                 deployment_notebook = None
 
             try:
+                is_monitoring = task["isMonitoring"]
+            except KeyError:
+                is_monitoring = False
+
+            try:
                 create_task(name=name,
                             description=description,
                             tags=tags,
@@ -42,7 +47,8 @@ def init_tasks(config_path):
                             arguments=arguments,
                             experiment_notebook=experiment_notebook,
                             deployment_notebook=deployment_notebook,
-                            is_default=True)
+                            is_default=True,
+                            is_monitoring=is_monitoring)
             except BadRequest:
                 pass
 

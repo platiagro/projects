@@ -49,6 +49,7 @@ def create_task(**kwargs):
     experiment_notebook = kwargs.get('experiment_notebook', None)
     deployment_notebook = kwargs.get('deployment_notebook', None)
     is_default = kwargs.get('is_default', None)
+    is_monitoring = kwargs.get('is_monitoring', None)
     copy_from = kwargs.get('copy_from', None)
 
     if not isinstance(name, str):
@@ -127,7 +128,8 @@ def create_task(**kwargs):
                 arguments=arguments,
                 experiment_notebook_path=experiment_notebook_path,
                 deployment_notebook_path=deployment_notebook_path,
-                is_default=is_default)
+                is_default=is_default,
+                is_monitoring=is_monitoring)
     db_session.add(task)
     db_session.commit()
 
