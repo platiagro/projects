@@ -1,17 +1,25 @@
 # -*- coding: utf-8 -*-
 from json import load
 
-from werkzeug.exceptions import BadRequest
+from os import environ
 
 from projects.controllers.tasks import create_task
 
+from projects import __version__
 
-def init_tasks(config_path):
+from werkzeug.exceptions import BadRequest
+
+
+def init_tasks(config_path, default_image=None):
     """Installs the tasks from a config file. Avoids duplicates.
 
     Args:
         config_path (str): the path to the config file.
+        default_image (str): the default image to be used on a task.
     """
+    if not default_image:
+        default_image = f"platiagro/platiagro-notebook-image:{__version__}"
+
     with open(config_path) as f:
         tasks = load(f)
 
@@ -19,7 +27,12 @@ def init_tasks(config_path):
             name = task["name"]
             description = task["description"]
             tags = task["tags"]
-            image = task["image"]
+
+            if "image" in task:
+                image = task["image"]
+            else:
+                image = environ.get("PLATIAGRO_NOTEBOOK_IMAGE", default_image)
+
             commands = task["commands"]
             arguments = task["arguments"]
 
