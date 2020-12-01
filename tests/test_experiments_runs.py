@@ -100,19 +100,21 @@ class TestExperimentsRuns(TestCase):
         conn.execute(text)
         conn.close()
 
-    # def test_list_runs(self):
-    #     with app.test_client() as c:
-    #         rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs")
-    #         result = rv.get_json()
-    #         self.assertIsInstance(result, list)
-    #         self.assertEqual(rv.status_code, 200)
+    def test_list_runs(self):
+        with app.test_client() as c:
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs")
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+            self.assertEqual(rv.status_code, 200)
 
-    # def test_create_run(self):
-    #     with app.test_client() as c:
-    #         rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs", json={})
-    #         result = rv.get_json()
-    #         self.assertIsInstance(result, dict)
-    #         self.assertEqual(rv.status_code, 200)
+    def test_create_run(self):
+        with app.test_client() as c:
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs", json={})
+            result = rv.get_json()
+            self.assertIsInstance(result, dict)
+            self.assertIn("operators", result)
+            self.assertIn("runId", result)
+            self.assertEqual(rv.status_code, 200)
 
     def test_get_run(self):
         with app.test_client() as c:
@@ -121,17 +123,26 @@ class TestExperimentsRuns(TestCase):
             self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 200)
 
-    # def test_terminate_run(self):
-    #     with app.test_client() as c:
-    #         rv = c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
-    #         result = rv.get_json()
-    #         expected = {"message": "Run terminated."}
-    #         self.assertDictEqual(expected, result)
-    #         self.assertEqual(rv.status_code, 200)
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun")
+            result = rv.get_json()
+            expected = {"message": "The specified run does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
-    # def test_retry_run(self):
-    #     with app.test_client() as c:
-    #         rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/retry")
-    #         result = rv.get_json()
-    #         self.assertIsInstance(result, dict)
-    #         self.assertEqual(rv.status_code, 200)
+    def test_terminate_run(self):
+        with app.test_client() as c:
+            rv = c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
+            result = rv.get_json()
+            expected = {"message": "Run terminated."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
+
+    def test_retry_run(self):
+        with app.test_client() as c:
+            c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{run_id}")
+
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{run_id}/retry")
+            result = rv.get_json()
+            expected = {"message": "Run re-initiated successfully"}
+            self.assertDictEqual(expected, result)  
+            self.assertEqual(rv.status_code, 200)

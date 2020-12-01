@@ -6,7 +6,9 @@ from datetime import datetime
 
 from projects.kfp import KFP_CLIENT
 from projects.kfp.pipeline import compile_pipeline
+from projects.kfp.utils import get_operator_parameters
 
+from werkzeug.exceptions import BadRequest
 
 def list_runs(experiment_id):
     """
@@ -77,7 +79,11 @@ def start_run(experiment_id, operators):
         pipeline_package_path=pipeline_package_path,
     )
     os.remove(pipeline_package_path)
-    return run
+    response = {"runId": run.id}
+    creation_details = get_run(run.id, experiment_id)
+    response.update(creation_details)
+
+    return response
 
 
 def get_run(run_id, experiment_id):
@@ -130,10 +136,10 @@ def get_run(run_id, experiment_id):
                     operator["status"] = "Terminated"
                 else:
                     operator["status"] = str(node["phase"])
-                # operator["parameters"] = get_operator_parameters(workflow_manifest, display_name)
+                operator["parameters"] = get_operator_parameters(workflow_manifest, display_name)
                 operators_status[display_name] = operator
     return {
-        "operators": operators_status,
+        "operators": operators_status, "runId": kfp_run.run.id, "createdAt": kfp_run.run.created_at
     }
 
 
@@ -184,12 +190,19 @@ def terminate_run(run_id, experiment_id):
     Returns
     -------
     dict
-        The run attributes.
+        Deleted response confirmation.
 
     Raises
     ------
     ApiException
     """
+    if run_id == "latest":
+        run_id = get_latest_run_id(experiment_id)
+
+    print(run_id)
+
+    KFP_CLIENT.runs.terminate_run(run_id=run_id)
+
     return {"message": "Run terminated."}
 
 
@@ -205,10 +218,23 @@ def retry_run(run_id, experiment_id):
     Returns
     -------
     dict
-        The run attributes.
+        Retry response confirmation.
 
     Raises
     ------
     ApiException
+    BadRequest
     """
-    return {}
+    if run_id == "latest":
+        run_id = get_latest_run_id(experiment_id)
+
+    kfp_run = KFP_CLIENT.get_run(
+        run_id=run_id,
+    )
+
+    if kfp_run.run.status == "Failed":
+        KFP_CLIENT.runs.retry_run(run_id=kfp_run.run.id)
+    else:
+        raise BadRequest("Not a failed run")
+
+    return {"message": "Run re-initiated successfully"}
