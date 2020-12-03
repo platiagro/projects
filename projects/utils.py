@@ -11,7 +11,7 @@ def to_camel_case(snake_str):
 
     Parameters
     ----------
-    snake_str :str
+    snake_str : str
 
     Returns
     -------
@@ -29,7 +29,7 @@ def to_snake_case(camel_str):
 
     Parameters
     ----------
-    camel_case_str :str
+    camel_case_str : str
 
     Returns
     -------
@@ -40,13 +40,25 @@ def to_snake_case(camel_str):
 
 
 def remove_ansi_escapes(traceback):
+    """
+    Remove ansi escapes from jupyter logs
+
+    Parameters
+    ----------
+    traceback : str
+        Jupyter traceback logs section
+
+    Returns
+    -------
+    list
+    """
     compiler = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
     readable_text = [compiler.sub("", line).split("\n") for line in traceback]
 
     return list(chain.from_iterable(readable_text))
 
 
-def search_for_pod_name(details, operator_id):
+def search_for_pod_details(details, operator_id):
     """
     Get operator pod name.
 
@@ -59,6 +71,7 @@ def search_for_pod_name(details, operator_id):
     Returns
     -------
     dict
+        A dict containing information from a pod.
     """
     try:
         if "nodes" in details["status"]:

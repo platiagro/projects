@@ -5,8 +5,10 @@ import re
 import uuid
 
 from werkzeug.exceptions import NotFound
+from kfp_server_api.exceptions import ApiException
 
 from projects.database import db_session
+from projects.kfp import KFP_CLIENT
 from projects.models import Deployment, Experiment, Operator, Project, Task
 
 
@@ -112,6 +114,24 @@ def raise_if_operator_does_not_exist(operator_id, experiment_id=None):
         # verify if operator is from the provided experiment
         if experiment_id and operator.one().as_dict()["experimentId"] != experiment_id:
             raise NotFound("The specified operator is from another experiment")
+
+
+def raise_if_run_does_not_exist(run_id):
+    """
+    Raises an exception if the specified run does not exist.
+
+    Parameters
+    ----------
+    run_id : str
+
+    Raises
+    ------
+    NotFound
+    """
+    try:
+        KFP_CLIENT.get_run(run_id=run_id)
+    except ApiException:
+        raise NotFound("The specified run does not exist")
 
 
 def uuid_alpha():
