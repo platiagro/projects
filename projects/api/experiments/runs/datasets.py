@@ -2,13 +2,12 @@
 """Experiment Datasets blueprint."""
 from flask import request, Blueprint
 
-from projects.controllers.experiments.runs.datasets import get_dataset
+from projects.controllers.experiments.runs.datasets import get_dataset, get_dataset_name
 
 bp = Blueprint("datasets", __name__)
 
 
 @bp.route("", methods=["GET"])
-# @bp.paginate()
 def handle_get_dataset(project_id, experiment_id, run_id, operator_id):
     """
     Handles GET requests to /.
@@ -25,12 +24,16 @@ def handle_get_dataset(project_id, experiment_id, run_id, operator_id):
     -------
     List
     """
-    page = request.args.get('page', 1)
-    page_size = request.args.get('page_size', 10)
+    page = request.args.get("page", 1)
+    page_size = request.args.get("page_size", 10)
+    application_type = request.headers.get("Accept", False)
+
     datasets = get_dataset(project_id=project_id,
                            experiment_id=experiment_id,
                            run_id=run_id,
                            operator_id=operator_id,
-                           page=page,
-                           page_size=page_size)
+                           page=int(page),
+                           page_size=int(page_size),
+                           application_csv=application_type)
+
     return datasets

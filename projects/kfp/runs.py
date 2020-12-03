@@ -172,7 +172,7 @@ def get_latest_run_id(experiment_id):
     latest_run_id = None
     for kfp_run in kfp_runs.runs:
         workflow_manifest = json.loads(kfp_run.pipeline_spec.workflow_manifest)
-        if workflow_manifest["metadata"]["generateName"] == "experiment-":
+        if workflow_manifest["metadata"]["generateName"] == "common-pipeline-":
             latest_run_id = kfp_run.id
             break
 
