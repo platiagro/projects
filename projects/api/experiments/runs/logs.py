@@ -23,5 +23,5 @@ def handle_list_logs(project_id, experiment_id, run_id, operator_id):
     -------
     str
     """
-    logs = get_operator_logs(experiment_id, operator_id)
+    logs = get_operator_logs(experiment_id, operator_id, run_id)
     return jsonify(logs)

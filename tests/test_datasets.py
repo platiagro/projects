@@ -159,15 +159,34 @@ class TestDatasets(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets")
+            # rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets")
+            # result = rv.get_json()
+            # expected = {
+            #     "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
+            #     "data": [
+            #         ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+            #         ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+            #         ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
+            #     ],
+            #     "total": 3
+            # }
+            # self.assertDictEqual(expected, result)
+
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notReal/operators/{OPERATOR_ID}/datasets")
             result = rv.get_json()
-            expected = {
-                "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
-                "data": [
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                    ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
-                ],
-                "total": 3
-            }
+            expected = {"message": "The specified run does not exist"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            # rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/lastest/operators/{OPERATOR_ID}/datasets")
+            # result = rv.get_json()
+            # expected = {
+            #     "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
+            #     "data": [
+            #         ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+            #         ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+            #         ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
+            #     ],
+            #     "total": 3
+            # }
+            # self.assertDictEqual(expected, result)

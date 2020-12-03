@@ -11,8 +11,11 @@ from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 from werkzeug.exceptions import NotFound
 
+from projects.kfp import KFP_CLIENT
+from projects.kfp.runs import get_latest_run_id
+from projects.kfp.utils import search_for_pod_name
 from projects.object_storage import BUCKET_NAME, get_object
-from projects.utils import remove_ansi_escapes, search_for_pod_name
+from projects.utils import remove_ansi_escapes
 
 JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
@@ -103,7 +106,8 @@ def update_folder_name(path, new_path):
 
 
 def delete_file(path):
-    """Deletes a file or directory in the given path.
+    """
+    Deletes a file or directory in the given path.
 
     Parameters
     ----------
@@ -116,7 +120,8 @@ def delete_file(path):
 
 
 def read_parameters(path):
-    """Lists the parameters declared in a notebook.
+    """
+    Lists the parameters declared in a notebook.
 
     Parameters
     ----------
@@ -153,7 +158,8 @@ def read_parameters(path):
 
 
 def read_parameters_from_source(source):
-    """Lists the parameters declared in source code.
+    """
+    Lists the parameters declared in source code.
 
     Parameters
     ----------
@@ -202,7 +208,7 @@ def read_parameters_from_source(source):
     return parameters
 
 
-def get_operator_logs(experiment_id, operator_id):
+def get_operator_logs(experiment_id, operator_id, run_id):
     """
     Retrive logs from a failed operator.
 
@@ -214,6 +220,7 @@ def get_operator_logs(experiment_id, operator_id):
     Returns
     -------
     dict
+        Operator's logs.
 
     Raises
     ------
@@ -244,13 +251,15 @@ def get_operator_logs(experiment_id, operator_id):
         except KeyError:
             pass
 
-    # TODO
-    # run_details = get_run(experiment_id)
-    # details = loads(run_details.pipeline_runtime.workflow_manifest)
-    # operator_container = search_for_pod_name(details, operator_id)
+    if run_id == "latest":
+        run_id = get_latest_run_id(experiment_id)
 
-    # if operator_container["status"] == "Failed":
-    #     return {"exception": operator_container["message"],
-    #             "traceback": [f"Kernel has died: {operator_container['message']}"]}
+    run_details = KFP_CLIENT.get_run(run_id)
+    details = loads(run_details.pipeline_runtime.workflow_manifest)
+    operator_container = search_for_pod_name(details, operator_id)
+
+    if operator_container["status"] == "Failed":
+        return {"exception": operator_container["message"],
+                "traceback": [f"Kernel has died: {operator_container['message']}"]}
 
     return {"message": "Notebook finished with status completed"}
