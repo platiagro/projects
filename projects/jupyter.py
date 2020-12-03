@@ -11,6 +11,7 @@ from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 from werkzeug.exceptions import NotFound
 
+from projects.controllers import utils as projectUtils
 from projects.kfp import KFP_CLIENT
 from projects.kfp.runs import get_latest_run_id
 from projects.kfp.utils import search_for_pod_name
@@ -253,6 +254,8 @@ def get_operator_logs(experiment_id, operator_id, run_id):
 
     if run_id == "latest":
         run_id = get_latest_run_id(experiment_id)
+
+    projectUtils.raise_if_run_does_not_exist(run_id)
 
     run_details = KFP_CLIENT.get_run(run_id)
     details = loads(run_details.pipeline_runtime.workflow_manifest)
