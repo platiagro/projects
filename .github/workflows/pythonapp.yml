@@ -5,9 +5,9 @@ name: Python application
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, v*-branch ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, v*-branch ]
 
 jobs:
   build:
@@ -70,22 +70,36 @@ jobs:
           - Usar Google Style Python Docstring: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
           - Usar sempre import absoluto.
             ex: from projects.database import Base (BOM), from .database import Base (RUIM)
-    - name: Set output variables
-      id: vars
-      run: |
-        echo ${{ github.ref }}
-        if [ ${{ github.ref }} = "refs/heads/master" ]; then
-          echo ::set-output name=TAG::0.2.0
-        else
-          echo ::set-output name=TAG::0.2.0-SNAPSHOT
-        fi
-        echo ::set-output name=BRANCH::${{ github.ref }}
-        echo ::set-output name=COMMIT::${{ github.sha }}
+
+           ### Padrão de URLs para API REST
+          - Usar REST resource naming guide: https://restfulapi.net/resource-naming/
+          - USE SUBSTANTIVOS! **NÃO USE VERBOS NA URL!**
+            ex: `/projects/:projectId/executions` (BOM), `/project/execute` (RUIM)
+          - **SUBSTANTIVOS SEMPRE NO PLURAL!**
+            ex: `/deployments/:deploymentId` (BOM), `/deployment/:deploymentId` (RUIM)
+          - **SUBSTANTIVOS SÃO SEMPRE SEPARADOS POR UM ID. NÃO USE DOIS SUBSTANTIVOS SEGUIDOS**
+            ex: `/experiments/:experimentId/results` (BOM), `/experiments/results/:experimentId` (RUIM)
+          - Para consultar uma lista de resources (paginada ou não):
+            ex: `GET /resources?page=1&size=10&filter=...`
+          - Para criar um resource (e gerar um resourceId aleatório):
+            ex: `POST /resources`
+          - Para acessar um resource por resourceId:
+            ex: `GET /resources/{resourceId}`
+          - Para substituir/criar (ou atualizar TODOS OS CAMPOS) de um resource com resourceId específico:
+            ex: `PUT /resources/{resourceId}`
+          - Para excluir um resource:
+            ex: `DELETE /resources/{resourceId}`
+          - Para atualizar alguns campos de um resource:
+            ex: `PATCH /resources/{resourceId}`
+          - Em dúvidas? Mantenha uma consistência com as URLs já existem.
+
     - uses: actions/checkout@v2
+
     - name: Set up Python 3.6
       uses: actions/setup-python@v1
       with:
         python-version: 3.6
+
     - name: Run MinIO image
       run: |
         docker run -d -p 9000:9000 \
@@ -95,13 +109,16 @@ jobs:
       env:
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
+
     - name: Run jupyter image
       run: docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook start-notebook.sh --NotebookApp.token=''
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install .
+
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
@@ -117,11 +134,27 @@ jobs:
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://localhost:8888
+
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Set output variables
+      id: vars
+      run: |
+        VERSION=$(python -c "import projects; print(projects.__version__)")
+        if [ ${{ github.ref }} = "refs/heads/master" ]; then
+          echo ::set-output name=TAG::${VERSION}-SNAPSHOT
+        elif [[ ${{ github.ref }} =~ ^refs/heads/v.*-branch$ ]]; then
+          echo ::set-output name=TAG::${VERSION}
+        else
+          echo ::set-output name=TAG::${VERSION}-${{ github.sha }}
+        fi
+        echo ::set-output name=BRANCH::${{ github.ref }}
+        echo ::set-output name=COMMIT::${{ github.sha }}
+
     - name: Build and push image
       uses: docker/build-push-action@v1
       with:
