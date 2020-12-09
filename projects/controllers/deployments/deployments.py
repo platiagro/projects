@@ -136,6 +136,7 @@ def get_deployment(project_id, deployment_id):
         When either project_id or deployment_id does not exist.
     """
     raise_if_project_does_not_exist(project_id)
+
     deployment = Deployment.query.get(deployment_id)
     if deployment is None:
         raise NOT_FOUND
@@ -150,6 +151,7 @@ def get_deployment(project_id, deployment_id):
         # resp["url"] = deployment_status["url"]
     except NotFound:
         pass
+
     return resp
 
 

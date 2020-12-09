@@ -9,12 +9,7 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
-from werkzeug.exceptions import NotFound
 
-from projects.controllers import utils as projectUtils
-from projects.kfp import KFP_CLIENT
-from projects.kfp.runs import get_latest_run_id
-from projects.kfp.utils import search_for_pod_name
 from projects.object_storage import BUCKET_NAME, get_object
 from projects.utils import remove_ansi_escapes
 
@@ -209,9 +204,9 @@ def read_parameters_from_source(source):
     return parameters
 
 
-def get_operator_logs(experiment_id, operator_id, run_id):
+def get_notebook_logs(experiment_id, operator_id):
     """
-    Retrive logs from a failed operator.
+    Get logs from a Jupyter notebook.
 
     Parameters
     ----------
@@ -221,14 +216,15 @@ def get_operator_logs(experiment_id, operator_id, run_id):
     Returns
     -------
     dict
-        Operator's logs.
+        Operator's notebook logs.
 
     Raises
     ------
-    NotFound
-        When the notebook does not exist.
+    HTTPError
+
     """
     operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
+    logs = {}
 
     try:
         r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
@@ -236,7 +232,9 @@ def get_operator_logs(experiment_id, operator_id, run_id):
     except HTTPError as e:
         status_code = e.response.status_code
         if status_code == 404:
-            raise NotFound("The specified notebook does not exist")
+            return logs
+        else:
+            raise HTTPError("Error occured while trying to access Jupyter API.")
 
     for cell in notebook_content["cells"]:
         try:
@@ -248,21 +246,8 @@ def get_operator_logs(experiment_id, operator_id, run_id):
                         error_log = output["traceback"]
                         traceback = remove_ansi_escapes(error_log)
 
-                        return {"exception": output["ename"], "traceback": traceback}
+                        logs = {"exception": output["ename"], "traceback": traceback}
         except KeyError:
             pass
 
-    if run_id == "latest":
-        run_id = get_latest_run_id(experiment_id)
-
-    projectUtils.raise_if_run_does_not_exist(run_id)
-
-    run_details = KFP_CLIENT.get_run(run_id)
-    details = loads(run_details.pipeline_runtime.workflow_manifest)
-    operator_container = search_for_pod_name(details, operator_id)
-
-    if operator_container["status"] == "Failed":
-        return {"exception": operator_container["message"],
-                "traceback": [f"Kernel has died: {operator_container['message']}"]}
-
-    return {"message": "Notebook finished with status completed"}
+    return logs

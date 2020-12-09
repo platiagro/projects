@@ -111,9 +111,9 @@ def get_operator_parameters(workflow_manifest, operator):
                     return format_operator_parameters(parameters)
 
 
-def search_for_pod_name(details: dict, operator_id: str):
+def search_for_pod_info(details: dict, operator_id: str):
     """
-    Get operator pod name.
+    Get operator pod info, such as: name, status and message error (if failed).
 
     Parameters
     ----------
@@ -121,13 +121,19 @@ def search_for_pod_name(details: dict, operator_id: str):
         Workflow manifest from pipeline runtime.
     operator_id : str
 
-    Returns:
-        dict: id and status of pod
+    Returns
+    -------
+    dict
+        Pod informations.
     """
+    info = {}
+
     try:
         if 'nodes' in details['status']:
             for node in [*details['status']['nodes'].values()]:
                 if node['displayName'] == operator_id:
-                    return {'name': node['id'], 'status': node['phase'], 'message': node['message']}
+                    info = {'name': node['id'], 'status': node['phase'], 'message': node['message']}
     except KeyError:
         pass
+
+    return info

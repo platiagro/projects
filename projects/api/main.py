@@ -47,35 +47,35 @@ app.register_blueprint(
 )
 app.register_blueprint(
     experiments_runs_blueprint,
-    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs",
+    url_prefix="/projects/<project_id>/experiments/<experiment_id>/runs",
 )
 app.register_blueprint(
     datasets_blueprint,
-    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/datasets",
+    url_prefix="/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/datasets",
 )
 app.register_blueprint(
     figures_blueprint,
-    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/figures",
+    url_prefix="/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/figures",
 )
 app.register_blueprint(
     experiments_logs_blueprint,
-    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/logs",
+    url_prefix="/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/logs",
 )
 app.register_blueprint(
     metrics_blueprint,
-    url_prefix=f"/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/metrics",
+    url_prefix="/projects/<project_id>/experiments/<experiment_id>/runs/<run_id>/operators/<operator_id>/metrics",
 )
 app.register_blueprint(
     deployments_blueprint,
-    url_prefix=f"/projects/<project_id>/deployments",
+    url_prefix="/projects/<project_id>/deployments",
 )
 app.register_blueprint(
     deployments_runs_blueprint,
-    url_prefix=f"/projects/<project_id>/deployments/<deployment_id>/runs",
+    url_prefix="/projects/<project_id>/deployments/<deployment_id>/runs",
 )
 app.register_blueprint(
     deployments_logs_blueprint,
-    url_prefix=f"/projects/<project_id>/deployments/<deployment_id>/runs/<run_id>/operators/<operator_id>/logs",
+    url_prefix="/projects/<project_id>/deployments/<deployment_id>/runs/<run_id>/operators/<operator_id>/logs",
 )
 app.register_blueprint(
     tasks_blueprint,
