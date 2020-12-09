@@ -14,6 +14,7 @@ DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
+RUN_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1}
 POSITION = 0
 POSITION_X = 0.3
@@ -43,6 +44,14 @@ TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
 
 class TestExperimentsRuns(TestCase):
     def setUp(self):
+        # Run a default pipeline for tests
+        kfp_experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID)
+        a = KFP_CLIENT.run_pipeline(
+            experiment_id=kfp_experiment.id,
+            job_name=EXPERIMENT_ID,
+            pipeline_package_path="tests/resources/mocked_experiment.yaml",
+        )
+
         conn = engine.connect()
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
@@ -74,14 +83,7 @@ class TestExperimentsRuns(TestCase):
             f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
-
-        # Run a default pipeline for tests
-        kfp_experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID)
-        KFP_CLIENT.run_pipeline(
-            experiment_id=kfp_experiment.id,
-            job_name=EXPERIMENT_ID,
-            pipeline_package_path="tests/resources/mocked_experiment.yaml",
-        )
+        conn.close()
 
     def tearDown(self):
         conn = engine.connect()
@@ -118,16 +120,16 @@ class TestExperimentsRuns(TestCase):
 
     def test_get_run(self):
         with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
-            result = rv.get_json()
-            self.assertIsInstance(result, dict)
-            self.assertEqual(rv.status_code, 200)
-
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun")
             result = rv.get_json()
             expected = {"message": "The specified run does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
+
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
+            result = rv.get_json()
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)
 
     def test_terminate_run(self):
         with app.test_client() as c:
@@ -139,9 +141,9 @@ class TestExperimentsRuns(TestCase):
 
     def test_retry_run(self):
         with app.test_client() as c:
-            c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{run_id}")
+            c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
 
-            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{run_id}/retry")
+            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/retry")
             result = rv.get_json()
             expected = {"message": "Run re-initiated successfully"}
             self.assertDictEqual(expected, result)  

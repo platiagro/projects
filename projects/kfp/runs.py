@@ -172,7 +172,7 @@ def get_latest_run_id(experiment_id):
     latest_run_id = None
     for kfp_run in kfp_runs.runs:
         workflow_manifest = json.loads(kfp_run.pipeline_spec.workflow_manifest)
-        if workflow_manifest["metadata"]["generateName"] == "common-pipeline-":
+        if workflow_manifest["metadata"]["generateName"] == "experiment-":
             latest_run_id = kfp_run.id
             break
 
@@ -199,8 +199,6 @@ def terminate_run(run_id, experiment_id):
     """
     if run_id == "latest":
         run_id = get_latest_run_id(experiment_id)
-
-    print(run_id)
 
     KFP_CLIENT.runs.terminate_run(run_id=run_id)
 
