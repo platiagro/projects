@@ -43,13 +43,14 @@ def get_logs(project_id, experiment_id, run_id, operator_id):
                              operator_id=operator_id)
 
     if not logs:
+        # No notebooks or logs were found in the Jupyter API.
+        # Search for logs in the operator pod details.
+
         if run_id == "latest":
             run_id = get_latest_run_id(experiment_id)
 
         raise_if_run_does_not_exist(run_id)
 
-        # No log was found in Jupyter (error was not from the execution notebook or
-        # the notebook does not exist). Search for logs in the operator pod details
         run_details = KFP_CLIENT.get_run(run_id)
         details = loads(run_details.pipeline_runtime.workflow_manifest)
         operator = search_for_pod_info(details, operator_id)
