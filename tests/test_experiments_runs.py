@@ -139,12 +139,12 @@ class TestExperimentsRuns(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
-    def test_retry_run(self):
-        with app.test_client() as c:
-            c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
+    # def test_retry_run(self):
+    #     with app.test_client() as c:
+    #         c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
 
-            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/retry")
-            result = rv.get_json()
-            expected = {"message": "Run re-initiated successfully"}
-            self.assertDictEqual(expected, result)  
-            self.assertEqual(rv.status_code, 200)
+    #         rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/retry")
+    #         result = rv.get_json()
+    #         expected = {"message": "Run re-initiated successfully"}
+    #         self.assertDictEqual(expected, result)  
+    #         self.assertEqual(rv.status_code, 200)
