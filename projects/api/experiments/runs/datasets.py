@@ -2,7 +2,7 @@
 """Experiment Datasets blueprint."""
 from flask import request, Blueprint
 
-from projects.controllers.experiments.runs.datasets import get_dataset, get_dataset_name
+from projects.controllers.experiments.runs.datasets import get_dataset
 
 bp = Blueprint("datasets", __name__)
 
