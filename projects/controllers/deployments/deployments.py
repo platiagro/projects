@@ -10,6 +10,7 @@ from projects.controllers.operators import create_operator
 from projects.controllers.utils import raise_if_project_does_not_exist, \
     raise_if_deployment_does_not_exist, uuid_alpha
 from projects.database import db_session
+from projects.kfp.utils import get_deployment_by_id
 from projects.models import Deployment, Operator
 
 
@@ -142,15 +143,15 @@ def get_deployment(project_id, deployment_id):
         raise NOT_FOUND
 
     resp = deployment.as_dict()
-    try:
-        pass
-        # deployment_status = get_deployment_by_id(uuid)
-        # resp["deployedAt"] = deployment_status["createdAt"]
-        # resp["runId"] = deployment_status["runId"]
-        # resp["status"] = deployment_status["status"]
-        # resp["url"] = deployment_status["url"]
-    except NotFound:
-        pass
+    deployment_details = get_deployment_by_id(deployment_id)
+
+    if not deployment_details:
+        return resp
+
+    resp["deployedAt"] = deployment_details["createdAt"]
+    resp["runId"] = deployment_details["runId"]
+    resp["status"] = deployment_details["status"]
+    resp["url"] = deployment_details["url"]
 
     return resp
 

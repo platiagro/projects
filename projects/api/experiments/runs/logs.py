@@ -8,7 +8,7 @@ bp = Blueprint("experiment_logs", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_get_logs(project_id, experiment_id, run_id, operator_id):
+def handle_list_logs(project_id, experiment_id, run_id, operator_id):
     """
     Handles GET requests to /.
 
