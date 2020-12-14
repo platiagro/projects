@@ -18,7 +18,7 @@ CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 DESCRIPTION = "Description"
 OPERATOR_ID = str(uuid_alpha())
-OPERATOR_ID_2 = str(uuid_alpha())
+OPERATOR_ID_2 = 'efe1dd49-9b2b-4dc4-8876-9567d092c056'
 POSITION_X = 0.3
 POSITION_Y = 0.5
 PARAMETERS = {"coef": 0.1}
@@ -53,8 +53,8 @@ class TestOperators(TestCase):
     def setUp(self):
         self.maxDiff = None
 
-        experiment = KFP_CLIENT.create_experiment(name=MOCKED_DEPLOYMENT_ID)
-        KFP_CLIENT.run_pipeline(experiment.id, MOCKED_DEPLOYMENT_ID, "tests/resources/mocked_deployment.yaml")
+        deployment = KFP_CLIENT.create_experiment(name=MOCKED_DEPLOYMENT_ID, namespace="deployments")
+        KFP_CLIENT.run_pipeline(deployment.id, MOCKED_DEPLOYMENT_ID, "tests/resources/mocked_deployment.yaml")
 
         session = requests.Session()
         session.cookies.update(COOKIES)
@@ -85,6 +85,13 @@ class TestOperators(TestCase):
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
+            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
             f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
         )
         conn.execute(text)
@@ -131,19 +138,19 @@ class TestOperators(TestCase):
             data=dumps({"type": "notebook", "content": loads(SAMPLE_COMPLETED_NOTEBOOK)}),
         )
 
-    def tearDown(self):
-        conn = engine.connect()
+        def tearDown(self):
+            conn = engine.connect()
 
-        text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
-        conn.execute(text)
+            text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
+            conn.execute(text)
 
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
-        conn.execute(text)
+            text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
+            conn.execute(text)
 
-        text = f"DELETE FROM deployments WHERE uuid = '{MOCKED_DEPLOYMENT_ID}'"
-        conn.execute(text)
+            text = f"DELETE FROM deployments WHERE uuid = '{MOCKED_DEPLOYMENT_ID}'"
+            conn.execute(text)
 
-        conn.close()
+            conn.close()
 
     def test_get_operator_logs(self):
         with app.test_client() as c:
@@ -163,21 +170,26 @@ class TestOperators(TestCase):
             self.assertEqual(rv.status_code, 200)
             self.assertDictEqual(result, expected)
 
-    #         rv = c.get(f"projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun/operators/{OPERATOR_ID_2}/logs")
-    #         result = rv.get_json()
-    #         expected = {"message": "Notebook finished with status completed"}
-    #         self.assertEqual(rv.status_code, 200)
-    #         self.assertDictEqual(result, expected)
+            experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID, namespace="deployments")
+            
+            # Run experiment to be succeed
+            run = KFP_CLIENT.run_pipeline(experiment.id, OPERATOR_ID_2, "tests/resources/mocked_operator_succeed.yaml")
 
-    # def test_get_deployment_log(self):
-    #     with app.test_client() as c:
-    #         rv = c.get(f"/projects/{PROJECT_ID}/deployments/foo/runs/latest/logs")
-    #         result = rv.get_json()
-    #         expected = {"message": "The specified deployment does not exist"}
-    #         self.assertDictEqual(expected, result)
-    #         self.assertEqual(rv.status_code, 404)
+            rv = c.get(f"projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{run.id}/operators/{OPERATOR_ID_2}/logs")
+            result = rv.get_json()
+            expected = {"message": "Notebook finished with status completed."}
+            self.assertEqual(rv.status_code, 200)
+            self.assertDictEqual(result, expected)
 
-    #         rv = c.get(f"/projects/{PROJECT_ID}/deployments/{MOCKED_DEPLOYMENT_ID}/runs/latest?experimentDeploy=True")
-    #         result = rv.get_json()
-    #         self.assertIsInstance(result, list)
-    #         self.assertEqual(rv.status_code, 200)
+    def test_get_deployment_log(self):
+        with app.test_client() as c:
+            rv = c.get(f"/projects/{PROJECT_ID}/deployments/foo/runs/latest/logs")
+            result = rv.get_json()
+            expected = {"message": "The specified deployment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{MOCKED_DEPLOYMENT_ID}/runs/{MOCKED_DEPLOYMENT_ID}/logs")
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+            self.assertEqual(rv.status_code, 200)
