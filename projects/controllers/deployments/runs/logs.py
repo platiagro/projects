@@ -33,7 +33,7 @@ def list_logs(project_id, deployment_id, run_id):
     Raises
     ------
     NotFound
-        When any of project_id, deployment_id, or run_id does not exist.
+        When any of project_id or deployment_id does not exist.
     """
     raise_if_project_does_not_exist(project_id)
     raise_if_deployment_does_not_exist(deployment_id)
