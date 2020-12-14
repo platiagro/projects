@@ -6,8 +6,8 @@ from kfp import compiler, dsl
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
-from projects.kfp import KF_PIPELINES_NAMESPACE, MEMORY_REQUEST, MEMORY_LIMIT, \
-    CPU_REQUEST, CPU_LIMIT
+from projects.kfp import KFP_CLIENT, KF_PIPELINES_NAMESPACE, MEMORY_REQUEST, \
+    MEMORY_LIMIT, CPU_REQUEST, CPU_LIMIT
 
 
 def compile_pipeline(name, operators):
@@ -120,3 +120,28 @@ def create_container_op(operator):
         .set_cpu_limit(CPU_LIMIT)
 
     return container_op
+
+
+def undeploy_pipeline(resource):
+    """
+    Undeploy a deployment pipeline.
+
+    Parameters
+    ----------
+    resource : dict
+        A k8s resource which will be submitted to the cluster.
+    """
+    @dsl.pipeline(name='Undeploy')
+    def undeploy():
+        dsl.ResourceOp(
+            name='undeploy',
+            k8s_resource=resource,
+            action='delete'
+        )
+
+    KFP_CLIENT.create_run_from_pipeline_func(
+        undeploy,
+        {},
+        run_name='undeploy',
+        namespace=KF_PIPELINES_NAMESPACE
+    )

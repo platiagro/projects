@@ -8,9 +8,9 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from projects.controllers.operators import create_operator
 from projects.controllers.utils import raise_if_project_does_not_exist, \
-    raise_if_deployment_does_not_exist, uuid_alpha
+    uuid_alpha
 from projects.database import db_session
-from projects.kfp.utils import get_deployment_by_id
+from projects.kfp.deployments import get_deployment_runs
 from projects.models import Deployment, Operator
 
 
@@ -138,12 +138,13 @@ def get_deployment(project_id, deployment_id):
     """
     raise_if_project_does_not_exist(project_id)
 
-    deployment = Deployment.query.get(deployment_id)
-    if deployment is None:
-        raise NOT_FOUND
+    # deployment = Deployment.query.get(deployment_id)
+    # if deployment is None:
+    #     raise NOT_FOUND
 
-    resp = deployment.as_dict()
-    deployment_details = get_deployment_by_id(deployment_id)
+    # resp = deployment.as_dict()
+    resp = {}
+    deployment_details = get_deployment_runs(deployment_id)
 
     if not deployment_details:
         return resp

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Deployment Runs blueprint."""
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
-from projects.controllers.deployments.runs import create_run, list_runs, \
-    terminate_run
+from projects.controllers.deployments.runs import create_run, get_run, \
+    list_runs, terminate_run
 
 bp = Blueprint("deployment_runs", __name__)
 
@@ -41,8 +41,31 @@ def handle_post_runs(project_id, deployment_id):
     -------
     str
     """
+    experiment_deployment = request.args.get('experimentDeploy', False)
     run = create_run(project_id=project_id,
-                     deployment_id=deployment_id)
+                     deployment_id=deployment_id,
+                     experiment_deployment=experiment_deployment)
+    return jsonify(run)
+
+
+@bp.route("<run_id>", methods=["GET"])
+def handle_get_run(project_id, deployment_id, run_id):
+    """
+    Handles GET requests to /<run_id>.
+
+    Parameters
+    ----------
+    project_id : str
+    deployment_id : str
+    run_id : str
+
+    Returns
+    -------
+    str
+    """
+    run = get_run(project_id=project_id,
+                  deployment_id=deployment_id,
+                  run_id=run_id)
     return jsonify(run)
 
 

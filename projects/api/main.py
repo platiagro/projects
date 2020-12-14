@@ -75,7 +75,7 @@ app.register_blueprint(
 )
 app.register_blueprint(
     deployments_logs_blueprint,
-    url_prefix="/projects/<project_id>/deployments/<deployment_id>/runs/<run_id>/operators/<operator_id>/logs",
+    url_prefix="/projects/<project_id>/deployments/<deployment_id>/runs/<run_id>/logs",
 )
 app.register_blueprint(
     tasks_blueprint,
