@@ -138,12 +138,11 @@ def get_deployment(project_id, deployment_id):
     """
     raise_if_project_does_not_exist(project_id)
 
-    # deployment = Deployment.query.get(deployment_id)
-    # if deployment is None:
-    #     raise NOT_FOUND
+    deployment = Deployment.query.get(deployment_id)
+    if deployment is None:
+        raise NOT_FOUND
 
-    # resp = deployment.as_dict()
-    resp = {}
+    resp = deployment.as_dict()
     deployment_details = get_deployment_runs(deployment_id)
 
     if not deployment_details:
