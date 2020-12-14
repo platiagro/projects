@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utility functions."""
-
+import ast
 import re
 from itertools import chain
 
@@ -58,29 +58,29 @@ def remove_ansi_escapes(traceback):
     return list(chain.from_iterable(readable_text))
 
 
-def search_for_pod_details(details, operator_id):
+def convert_json_values(value):
     """
-    Get operator pod name.
+    Convert boolean and null JSON values to Python format.
 
     Parameters
     ----------
-    details : dict
-        Workflow manifest from pipeline runtime.
-    operator_id : str
+    value : str
 
     Returns
     -------
-    dict
-        A dict containing information from a pod.
+    str or None
     """
-    try:
-        if "nodes" in details["status"]:
-            for node in [*details["status"]["nodes"].values()]:
-                if node["displayName"] == operator_id:
-                    return {
-                        "name": node["id"],
-                        "status": node["phase"],
-                        "message": node["message"],
-                    }
-    except KeyError:
-        pass
+    if value == "null":
+        value = None
+    elif value == "true":
+        value = True
+    elif value == "false":
+        value = False
+    else:
+        try:
+            # try to convert string to correct type
+            value = ast.literal_eval(value)
+        except Exception:
+            pass
+
+    return value

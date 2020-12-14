@@ -9,6 +9,7 @@ from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.jupyter import JUPYTER_ENDPOINT, COOKIES, HEADERS
 from projects.object_storage import BUCKET_NAME
+from projects.kfp import KFP_CLIENT
 
 PROJECT_ID = str(uuid_alpha())
 NAME = "foo"
@@ -27,6 +28,8 @@ WRONG_OPERATOR_ID = str(uuid_alpha())
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
+DEPLOYMENT_ID = str(uuid_alpha())
+POSITION = 0
 DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 IMAGE = "platiagro/platiagro-notebook-image-test:0.2.0"
@@ -36,6 +39,7 @@ ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
+MOCKED_DEPLOYMENT_ID = "aa23c286-1524-4ae9-ae44-6c3e63eb9862"
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 EXPERIMENT_NAME = "Experimento 1"
@@ -48,6 +52,9 @@ class TestOperators(TestCase):
 
     def setUp(self):
         self.maxDiff = None
+
+        experiment = KFP_CLIENT.create_experiment(name=MOCKED_DEPLOYMENT_ID)
+        KFP_CLIENT.run_pipeline(experiment.id, MOCKED_DEPLOYMENT_ID, "tests/resources/mocked_deployment.yaml")
 
         session = requests.Session()
         session.cookies.update(COOKIES)
@@ -79,6 +86,12 @@ class TestOperators(TestCase):
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
             f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{MOCKED_DEPLOYMENT_ID}', '{NAME}', '{PROJECT_ID}', '{EXPERIMENT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -118,6 +131,23 @@ class TestOperators(TestCase):
             data=dumps({"type": "notebook", "content": loads(SAMPLE_COMPLETED_NOTEBOOK)}),
         )
 
+    def tearDown(self):
+        conn = engine.connect()
+
+        text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM deployments WHERE uuid = '{MOCKED_DEPLOYMENT_ID}'"
+        conn.execute(text)
+
+        conn.close()
+
     def test_get_operator_logs(self):
         with app.test_client() as c:
             rv = c.get(f"projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/operators/{OPERATOR_ID}/logs")
@@ -136,8 +166,21 @@ class TestOperators(TestCase):
             self.assertEqual(rv.status_code, 200)
             self.assertDictEqual(result, expected)
 
-            # rv = c.get(f"projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun/operators/{OPERATOR_ID_2}/logs")
-            # result = rv.get_json()
-            # expected = {"message": "Notebook finished with status completed"}
-            # self.assertEqual(rv.status_code, 200)
-            # self.assertDictEqual(result, expected)
+            rv = c.get(f"projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun/operators/{OPERATOR_ID_2}/logs")
+            result = rv.get_json()
+            expected = {"message": "Notebook finished with status completed"}
+            self.assertEqual(rv.status_code, 200)
+            self.assertDictEqual(result, expected)
+
+    def test_get_deployment_log(self):
+        with app.test_client() as c:
+            rv = c.get(f"/projects/{PROJECT_ID}/deployments/foo/runs/latest/logs")
+            result = rv.get_json()
+            expected = {"message": "The specified deployment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{MOCKED_DEPLOYMENT_ID}/runs/latest?experimentDeploy=True")
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+            self.assertEqual(rv.status_code, 200)
