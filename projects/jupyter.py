@@ -221,7 +221,7 @@ def get_notebook_logs(experiment_id, operator_id):
     Raises
     ------
     HTTPError
-
+        When a error occured while trying to access Jupyter API.
     """
     operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
     logs = {}
