@@ -62,8 +62,8 @@ def get_dataset(project_id, experiment_id, run_id, operator_id, page=1, page_siz
         if page_size == -1:
             content = dataset.to_csv(index=False)
         else:
-            dataFrame = DataFrame(columns=dataset.columns, data=paged_data)
-            content = dataFrame.to_csv(index=False)
+            df = DataFrame(columns=dataset.columns, data=paged_data)
+            content = df.to_csv(index=False)
 
         response = make_response(content)
         response.headers["Content-Disposition"] = f"attachment; filename={name}"
@@ -71,7 +71,9 @@ def get_dataset(project_id, experiment_id, run_id, operator_id, page=1, page_siz
         return response
     else:
         if page_size == -1:
-            return dataset.to_dict(orient="split")
+            dataset = dataset.to_dict(orient="split")
+            del dataset["index"]
+            return dataset
         else:
             return {"columns": dataset.columns, "data": paged_data, "total": len(dataset)}
 

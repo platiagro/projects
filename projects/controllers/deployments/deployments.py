@@ -85,6 +85,9 @@ def create_deployment(project_id=None,
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
+    if not experiment_id:
+        raise BadRequest("experiment id was not specified")
+
     check_deployment_name = db_session.query(Deployment) \
         .filter(Deployment.project_id == project_id) \
         .filter(Deployment.name == name) \
