@@ -10,9 +10,11 @@ from projects.object_storage import BUCKET_NAME
 
 OPERATOR_ID = str(uuid_alpha())
 NAME = "foo"
+DEPLOYMENT_MOCK_NAME = "Foo Deployment"
 DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
+DEPLOYMENT_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1}
@@ -45,11 +47,11 @@ TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
 class TestExperimentsRuns(TestCase):
     def setUp(self):
         # Run a default pipeline for tests
-        kfp_experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID)
+        kfp_experiment = KFP_CLIENT.create_experiment(name=DEPLOYMENT_ID)
         KFP_CLIENT.run_pipeline(
             experiment_id=kfp_experiment.id,
-            job_name=EXPERIMENT_ID,
-            pipeline_package_path="tests/resources/mocked_experiment.yaml",
+            job_name=DEPLOYMENT_ID,
+            pipeline_package_path="tests/resources/mocked_deployment.yaml",
         )
 
         conn = engine.connect()
@@ -66,6 +68,12 @@ class TestExperimentsRuns(TestCase):
         conn.execute(text)
 
         text = (
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{DEPLOYMENT_ID}', '{NAME}', '{PROJECT_ID}', '{EXPERIMENT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
@@ -78,8 +86,8 @@ class TestExperimentsRuns(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
+            f"INSERT INTO operators (uuid, deployment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID}', '{DEPLOYMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
             f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
@@ -88,11 +96,17 @@ class TestExperimentsRuns(TestCase):
     def tearDown(self):
         conn = engine.connect()
 
-        text = f"DELETE FROM operators WHERE experiment_id in" \
-               f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
+        text = f"DELETE FROM operators WHERE deployment_id in" \
+               f"(SELECT uuid FROM deployments where project_id = '{PROJECT_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}')"
+        conn.execute(text)
+
+        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM deployments WHERE name = '{DEPLOYMENT_MOCK_NAME}'"
         conn.execute(text)
 
         text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
@@ -102,47 +116,82 @@ class TestExperimentsRuns(TestCase):
         conn.execute(text)
         conn.close()
 
-    def test_list_runs(self):
+    def test_list_deployments(self):
         with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs")
+            rv = c.get(f"/projects/foo/deployments")
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.get(f"/projects/{PROJECT_ID}/deployments")
             result = rv.get_json()
             self.assertIsInstance(result, list)
             self.assertEqual(rv.status_code, 200)
 
-    def test_create_run(self):
+    def test_create_deployment(self):
         with app.test_client() as c:
-            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs", json={})
+            rv = c.post(f"/projects/foo/deployments")
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": None})
+            result = rv.get_json()
+            expected = {"message": "name is required"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": DEPLOYMENT_MOCK_NAME})
+            result = rv.get_json()
+            expected = {"message": "experiment id was not specified"}
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": NAME,
+                                                                     "experimentId": EXPERIMENT_ID})
+            result = rv.get_json()
+            expected = {"message": "a deployment with that name already exists"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": DEPLOYMENT_MOCK_NAME,
+                                                                     "experimentId": EXPERIMENT_ID})
             result = rv.get_json()
             self.assertIsInstance(result, dict)
-            self.assertIn("operators", result)
-            self.assertIn("runId", result)
             self.assertEqual(rv.status_code, 200)
 
-    def test_get_run(self):
+    def test_get_deployment(self):
         with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun")
+            rv = c.get(f"/projects/foo/deployments/{DEPLOYMENT_ID}")
             result = rv.get_json()
-            expected = {"message": "The specified run does not exist"}
+            expected = {"message": "The specified project does not exist"}
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.get(f"/projects/foo/deployments/foo-bar")
+            result = rv.get_json()
+            expected = {"message": "The specified deployment does not exist"}
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}")
+            result = rv.get_json()
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)
+
+    def test_delete_deployment(self):
+        with app.test_client() as c:
+            rv = c.get(f"/projects/foo/deployments/{DEPLOYMENT_ID}")
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.delete(f"/projects/{PROJECT_ID}/deployments/buz-qux")
+            result = rv.get_json()
+            expected = {"message": "The specified deployment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
+            rv = c.delete(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}")
             result = rv.get_json()
-            self.assertIsInstance(result, dict)
-            self.assertEqual(rv.status_code, 200)
-
-    def test_terminate_run(self):
-        with app.test_client() as c:
-            rv = c.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
-            result = rv.get_json()
-            expected = {"message": "Run terminated."}
+            expected = {"message": "Deployment deleted"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
-
-    def test_retry_run(self):
-        with app.test_client() as c:
-            rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/retry")
-            result = rv.get_json()
-            expected = {"message": "Not a failed run"}
-            self.assertDictEqual(expected, result)  
-            self.assertEqual(rv.status_code, 400)

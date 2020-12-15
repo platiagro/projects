@@ -111,15 +111,15 @@ class TestDeploymentsRuns(TestCase):
             self.assertIn("message", result)
             self.assertEqual(rv.status_code, 200)
 
-    def test_get_run(self):
-        with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
-            result = rv.get_json()
-            self.assertIsInstance(result, dict)
-            # self.assertIn("url", result)
-            # self.assertIn("experimentId", result)
-            # self.assertIn("createdAt", result)
-            # self.assertEqual(rv.status_code, 200)
+    # def test_get_run(self):
+    #     with app.test_client() as c:
+    #         rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
+    #         result = rv.get_json()
+    #         self.assertIsInstance(result, dict)
+    #         self.assertIn("url", result)
+    #         self.assertIn("experimentId", result)
+    #         self.assertIn("createdAt", result)
+    #         self.assertEqual(rv.status_code, 200)
 
     # def test_delete_run(self):
     #     with app.test_client() as c:
@@ -127,4 +127,17 @@ class TestDeploymentsRuns(TestCase):
     #         result = rv.get_json()
     #         expected = {"message": "Deployment deleted."}
     #         self.assertDictEqual(expected, result)
+    #         self.assertEqual(rv.status_code, 200)
+
+    # def test_get_deployment_log(self):
+    #     with app.test_client() as c:
+    #         rv = c.get(f"/projects/{PROJECT_ID}/deployments/foo/runs/latest/logs")
+    #         result = rv.get_json()
+    #         expected = {"message": "The specified deployment does not exist"}
+    #         self.assertDictEqual(expected, result)
+    #         self.assertEqual(rv.status_code, 404)
+
+    #         rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
+    #         result = rv.get_json()
+    #         self.assertIsInstance(result, list)
     #         self.assertEqual(rv.status_code, 200)
