@@ -10,15 +10,19 @@ from projects.object_storage import BUCKET_NAME
 
 OPERATOR_ID = str(uuid_alpha())
 NAME = "foo"
+NAME_2 = "bar"
 DEPLOYMENT_MOCK_NAME = "Foo Deployment"
 DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
+EXPERIMENT_ID_2 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
+DEPLOYMENT_ID_2 = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1}
 POSITION = 0
+POSITION_2 = 1
 POSITION_X = 0.3
 POSITION_Y = 0.5
 IMAGE = "platiagro/platiagro-notebook-image-test:0.2.0"
@@ -68,8 +72,20 @@ class TestExperimentsRuns(TestCase):
         conn.execute(text)
 
         text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID_2}', '{NAME_2}', '{PROJECT_ID}', '{POSITION_2}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
             f"VALUES ('{DEPLOYMENT_ID}', '{NAME}', '{PROJECT_ID}', '{EXPERIMENT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{DEPLOYMENT_ID_2}', '{NAME_2}', '{PROJECT_ID}', '{EXPERIMENT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -154,7 +170,9 @@ class TestExperimentsRuns(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            operators = {"operators": [{"parameters": PARAMETERS, "positionX": 0, "positionY": 0}]}
             rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": DEPLOYMENT_MOCK_NAME,
+                                                                     "operators": operators,
                                                                      "experimentId": EXPERIMENT_ID})
             result = rv.get_json()
             self.assertIsInstance(result, dict)
@@ -194,4 +212,28 @@ class TestExperimentsRuns(TestCase):
             result = rv.get_json()
             expected = {"message": "Deployment deleted"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
+
+    def test_update_deployment(self):
+        with app.test_client() as c:
+            rv = c.patch(f"/projects/foo/deployments/{DEPLOYMENT_ID}", json={})
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/deployments/buz-qux", json={})
+            result = rv.get_json()
+            expected = {"message": "The specified deployment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID_2}", json={"name": NAME})
+            result = rv.get_json()
+            expected = {"message": "a deployment with that name already exists"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={"name": "Foo Bar"})
+            result = rv.get_json()
+            self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 200)
