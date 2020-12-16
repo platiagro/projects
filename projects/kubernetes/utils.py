@@ -2,7 +2,7 @@
 """Utility functions."""
 
 
-def search_for_pod_info(details: dict, operator_id: str):
+def search_for_pod_info(details, operator_id):
     """
     Get operator pod info, such as: name, status and message error (if failed).
 

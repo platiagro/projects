@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from json import dumps
+from os import remove
 from unittest import TestCase
 
 from projects.api.main import app
@@ -32,12 +33,18 @@ class TestDeploymentsRuns(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.maxDiff = None
+        with open("tests/resources/mocked_deployment.yaml", "r") as file:
+            content = file.read()
+
+        content = content.replace("$deploymentId", DEPLOYMENT_ID)
+        with open("tests/resources/mocked.yaml", "w") as file:
+            file.write(content)
 
         kfp_experiment = KFP_CLIENT.create_experiment(name=DEPLOYMENT_ID)
         KFP_CLIENT.run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=DEPLOYMENT_ID,
-            pipeline_package_path="tests/resources/mocked_deployment.yaml",
+            pipeline_package_path="tests/resources/mocked.yaml",
         )
 
         conn = engine.connect()
@@ -90,12 +97,7 @@ class TestDeploymentsRuns(TestCase):
 
         conn.close()
 
-    def test_list_runs(self):
-        with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
-            result = rv.get_json()
-            self.assertIsInstance(result, list)
-            self.assertEqual(rv.status_code, 200)
+        remove('tests/resources/mocked.yaml')
 
     def test_create_run(self):
         with app.test_client() as c:
@@ -111,6 +113,13 @@ class TestDeploymentsRuns(TestCase):
             self.assertIn("message", result)
             self.assertEqual(rv.status_code, 200)
 
+    def test_list_runs(self):
+        with app.test_client() as c:
+            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+            self.assertEqual(rv.status_code, 200)
+
     def test_get_deployment_log(self):
         with app.test_client() as c:
             rv = c.get(f"/projects/{PROJECT_ID}/deployments/foo/runs/latest/logs")
@@ -124,20 +133,17 @@ class TestDeploymentsRuns(TestCase):
             # self.assertIsInstance(result, list)
             # self.assertEqual(rv.status_code, 200)
 
-    # def test_get_run(self):
-    #     with app.test_client() as c:
-    #         rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
-    #         result = rv.get_json()
-    #         self.assertIsInstance(result, dict)
-    #         self.assertIn("url", result)
-    #         self.assertIn("experimentId", result)
-    #         self.assertIn("createdAt", result)
-    #         self.assertEqual(rv.status_code, 200)
+    def test_get_run(self):
+        with app.test_client() as c:
+            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
+            result = rv.get_json()
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)
 
-    # def test_delete_run(self):
-    #     with app.test_client() as c:
-    #         rv = c.delete(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
-    #         result = rv.get_json()
-    #         expected = {"message": "Deployment deleted."}
-    #         self.assertDictEqual(expected, result)
-    #         self.assertEqual(rv.status_code, 200)
+    def test_delete_run(self):
+        with app.test_client() as c:
+            rv = c.delete(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
+            result = rv.get_json()
+            expected = {"message": "Deployment deleted."}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)

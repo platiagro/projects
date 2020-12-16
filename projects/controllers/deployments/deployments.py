@@ -101,16 +101,19 @@ def create_deployment(project_id=None,
                             name=name,
                             project_id=project_id)
     db_session.add(deployment)
+    db_session.flush()
 
     if operators and len(operators) > 0:
         for operator in operators:
             create_operator(deployment_id=deployment.uuid,
+                            experiment_id=experiment_id,
                             project_id=project_id,
                             task_id=operator.get("taskId"),
                             parameters=operator.get("parameters"),
                             dependencies=operator.get("dependencies"),
                             position_x=operator.get("positionX"),
                             position_y=operator.get("positionY"))
+    # dar uma olhada no SQL Alchemy
     db_session.commit()
 
     if position is None:

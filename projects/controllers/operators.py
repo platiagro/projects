@@ -51,9 +51,9 @@ def list_operators(project_id, experiment_id):
     return response
 
 
-def create_operator(project_id, experiment_id, task_id=None,
-                    parameters=None, dependencies=None, position_x=None,
-                    position_y=None, **kwargs):
+def create_operator(project_id, experiment_id, deployment_id=None,
+                    task_id=None, parameters=None, dependencies=None,
+                    position_x=None, position_y=None, **kwargs):
     """
     Creates a new operator in our database.
     The new operator is added to the end of the operator list.
@@ -87,8 +87,8 @@ def create_operator(project_id, experiment_id, task_id=None,
     NotFound
         When either project_id or experiment_id does not exist.
     """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_experiment_does_not_exist(experiment_id)
+    if experiment_id:
+        raise_if_experiment_does_not_exist(experiment_id)
 
     if not isinstance(task_id, str):
         raise BadRequest("taskId is required")
@@ -110,6 +110,7 @@ def create_operator(project_id, experiment_id, task_id=None,
 
     operator = Operator(uuid=uuid_alpha(),
                         experiment_id=experiment_id,
+                        deployment_id=deployment_id,
                         task_id=task_id,
                         dependencies=dependencies,
                         parameters=parameters,
@@ -314,6 +315,22 @@ def raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies):
 
 
 def has_cycles_util(operator_id, visited, recursion_stack, new_dependencies, new_dependencies_op):
+    """
+    Check if a run has cycle.
+
+    Parameters
+    ----------
+    operator_id : str
+    visited : bool
+    recursion_stack : list
+    new_dependencies :
+    new_dependencies_op :
+
+    Returns
+    -------
+    bool
+        If a run has cycles or not.
+    """
     visited[operator_id] = True
     recursion_stack[operator_id] = True
 
@@ -337,6 +354,18 @@ def has_cycles_util(operator_id, visited, recursion_stack, new_dependencies, new
 
 
 def check_status(operator):
+    """
+    Check operator status
+
+    Parameters
+    ----------
+    operator : str
+
+    Returns
+    ------
+    str
+        The operator status.
+    """
     # get total operator parameters with value
     op_params_keys = [key for key in operator.parameters.keys() if operator.parameters[key] != '']
     total_op_params = len(op_params_keys)

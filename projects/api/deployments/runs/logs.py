@@ -22,5 +22,7 @@ def handle_list_logs(project_id, deployment_id, run_id):
     -------
     str
     """
-    logs = list_logs(project_id, deployment_id, run_id)
+    logs = list_logs(project_id=project_id,
+                     deployment_id=deployment_id,
+                     run_id=run_id)
     return jsonify(logs)

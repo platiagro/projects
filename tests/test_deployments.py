@@ -50,6 +50,8 @@ TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
 
 class TestExperimentsRuns(TestCase):
     def setUp(self):
+        self.maxDiff = None
+
         # Run a default pipeline for tests
         kfp_experiment = KFP_CLIENT.create_experiment(name=DEPLOYMENT_ID)
         KFP_CLIENT.run_pipeline(
@@ -170,10 +172,10 @@ class TestExperimentsRuns(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            operators = {"operators": [{"parameters": PARAMETERS, "positionX": 0, "positionY": 0}]}
+            operators = [{"parameters": PARAMETERS, "positionX": 0, "positionY": 0, "taskId": TASK_ID}]
             rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": DEPLOYMENT_MOCK_NAME,
                                                                      "operators": operators,
-                                                                     "experimentId": EXPERIMENT_ID})
+                                                                     "experimentId": EXPERIMENT_ID_2})
             result = rv.get_json()
             self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 200)
