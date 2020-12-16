@@ -24,6 +24,26 @@ def list_templates():
     return [template.as_dict() for template in templates]
 
 
+def check_operator_dependencies_order(operators_ordered, operator):
+    """Check operator dependencies order.
+    Args:
+        operators_ordered (list): the operators ordered.
+        operator (dict): operator data.
+    """
+    uuid = operator.uuid
+    dependencies = operator.dependencies
+    if uuid not in operators_ordered:
+        if len(dependencies) == 0:
+            operators_ordered.append(uuid)
+        else:
+            check = True
+            for d in dependencies:
+                if d not in operators_ordered:
+                    check = False
+            if check:
+                operators_ordered.append(uuid)
+
+
 def order_operators_by_dependencies(operators):
     """Order operators by dependencies.
     Args:
@@ -34,18 +54,7 @@ def order_operators_by_dependencies(operators):
     operators_ordered = []
     while len(operators) != len(operators_ordered):
         for operator in operators:
-            uuid = operator.uuid
-            dependencies = operator.dependencies
-            if uuid not in operators_ordered:
-                if len(dependencies) == 0:
-                    operators_ordered.append(uuid)
-                else:
-                    check = True
-                    for d in dependencies:
-                        if d not in operators_ordered:
-                            check = False
-                    if check:
-                        operators_ordered.append(uuid)
+            check_operator_dependencies_order(operators_ordered, operator)
     return operators_ordered
 
 
