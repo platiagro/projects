@@ -46,12 +46,37 @@ def create_template(name=None, experiment_id=None, **kwargs):
 
     operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
-        .order_by(Operator.created_at.asc()) \
         .all()
 
-    # JSON array order of elements are preserved,
-    # so there is no need to save positions
-    tasks = [operator.task_id for operator in operators]
+    # order operators by dependencies
+    operators_ordered = []
+    while len(operators) != len(operators_ordered):
+        for operator in operators:
+            uuid = operator.uuid
+            dependencies = operator.dependencies
+            if uuid not in operators_ordered:
+                if len(dependencies) == 0:
+                    operators_ordered.append(uuid)
+                else:
+                    check = True
+                    for d in dependencies:
+                        if d not in operators_ordered:
+                            check = False
+                    if check:
+                        operators_ordered.append(uuid)
+
+    # JSON array order of elements are preserved, so there is no need to save positions
+    tasks = []
+    for uuid in operators_ordered:
+        operator = next((op for op in operators if op.uuid == uuid), None)
+        task = {
+            'uuid': operator.uuid,
+            'task_id': operator.task_id,
+            'dependencies': operator.dependencies,
+            'position_x': operator.position_x,
+            'position_y': operator.position_y,
+        }
+        tasks.append(task)
 
     template = Template(uuid=uuid_alpha(), name=name, tasks=tasks)
     db_session.add(template)

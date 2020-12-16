@@ -161,21 +161,29 @@ def update_experiment(uuid, project_id, **kwargs):
         # remove operators
         Operator.query.filter(Operator.experiment_id == uuid).delete()
 
-        # save the last operator id created to create dependency on next operator
-        last_operator_id = None
-        for task_id in template.tasks:
-            operator_id = uuid_alpha()
+        # save the operators created to get the created_uuid to use on dependencies
+        operators_created = []
+        for task in template.tasks:
             dependencies = []
-            if last_operator_id is not None:
-                dependencies = [last_operator_id]
+            task_dependencies = task['dependencies']
+            if len(task_dependencies) > 0:
+                for d in task_dependencies:
+                    op_created = next((o for o in operators_created if o['uuid'] == d), None)
+                    dependencies.append(op_created['created_uuid'])
+
+            operator_id = uuid_alpha()
             objects = [
                 Operator(uuid=operator_id,
                          experiment_id=uuid,
-                         task_id=task_id,
-                         dependencies=dependencies)
+                         dependencies=dependencies,
+                         task_id=task['task_id'],
+                         position_x=task['position_x'],
+                         position_y=task['position_y'],
+                         )
             ]
             db_session.bulk_save_objects(objects)
-            last_operator_id = operator_id
+            task['created_uuid'] = operator_id
+            operators_created.append(task)
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
