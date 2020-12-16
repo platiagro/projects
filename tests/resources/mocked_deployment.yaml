@@ -9,7 +9,7 @@ metadata:
 spec:
   entrypoint: deployment
   templates:
-    - name: deployment
+    - name: mocked-deployment-$deploymentId
       dag:
         tasks:
           - {
@@ -18,29 +18,7 @@ spec:
             }
           - name: deployment
             template: deployment
-            dependencies: [export-notebook]
-          - { name: export-notebook, template: export-notebook }
-    - name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
-      resource:
-        action: create
-        manifest: |
-          apiVersion: v1
-          kind: PersistentVolumeClaim
-          metadata:
-            name: '{{workflow.name}}-d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7'
-            namespace: deployments
-          spec:
-            accessModes:
-            - ReadWriteOnce
-            resources:
-              requests:
-                storage: 50Mi
-      outputs:
-        parameters:
-          - name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7-manifest
-            valueFrom: { jsonPath: "{}" }
-          - name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7-name
-            valueFrom: { jsonPath: "{.metadata.name}" }
+            dependencies: []
     - name: deployment
       resource:
         action: create
@@ -49,10 +27,10 @@ spec:
           apiVersion: machinelearning.seldon.io/v1alpha2
           kind: SeldonDeployment
           metadata:
-            deploymentName: foo
+            deploymentName: $deploymentId
             labels:
               app: seldon
-            name: aa23c286-1524-4ae9-ae44-6c3e63eb9861
+            name: $deploymentId
             namespace: deployments
           spec:
             annotations:
@@ -73,18 +51,11 @@ spec:
                       value: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
                     - name: PARAMETERS
                       value: '[]'
-                    image: platiagro/platiagro-deployment-image:0.2.0
+                    image: seldonio/mock_classifier:1.5.0-dev
                     name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
                     securityContext:
                       allowPrivilegeEscalation: false
                       runAsUser: 0
-                    volumeMounts:
-                    - mountPath: /app
-                      name: workspace
-                  volumes:
-                  - name: workspace
-                    persistentVolumeClaim:
-                      claimName: '{{workflow.name}}-d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7'
               graph:
                 children: []
                 endpoint:
@@ -112,52 +83,6 @@ spec:
           - name: deployment-name
             valueFrom: { jsonPath: "{.metadata.name}" }
       activeDeadlineSeconds: 300
-    - name: export-notebook
-      resource:
-        action: create
-        manifest: |
-          apiVersion: v1
-          kind: Pod
-          metadata:
-            annotations:
-              sidecar.istio.io/inject: 'false'
-            name: '{{workflow.name}}-d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7'
-            namespace: deployments
-          spec:
-            containers:
-            - args:
-              - papermill s3://anonymous/tasks/fbd77f4b-3563-42bb-96f8-4309590862e4/Experiment.ipynb
-                output.ipynb --log-level DEBUG;                      status=$?;                      bash
-                upload-to-jupyter.sh aa23c286-1524-4ae9-ae44-6c3e63eb9861 d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
-                Deployment.ipynb;                      touch -t 197001010000 Model.py;                      exit
-                $status
-              command:
-              - sh
-              - -c
-              env:
-              - name: EXPERIMENT_ID
-                value: aa23c286-1524-4ae9-ae44-6c3e63eb9861
-              - name: OPERATOR_ID
-                value: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
-              image: platiagro/platiagro-notebook-image:0.2.0
-              name: export-notebook
-              resources:
-                requests:
-                  memory: 2G
-              volumeMounts:
-              - mountPath: /home/jovyan
-                name: workspace
-            restartPolicy: Never
-            volumes:
-            - name: workspace
-              persistentVolumeClaim:
-                claimName: '{{workflow.name}}-d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7'
-      outputs:
-        parameters:
-          - name: export-notebook-manifest
-            valueFrom: { jsonPath: "{}" }
-          - name: export-notebook-name
-            valueFrom: { jsonPath: "{.metadata.name}" }
   arguments:
     parameters: []
   serviceAccountName: pipeline-runner
