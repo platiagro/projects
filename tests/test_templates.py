@@ -62,7 +62,7 @@ class TestTemplates(TestCase):
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
-            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
+            f"'{POSITION_Y}', '2000-01-02 00:00:00', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
 
