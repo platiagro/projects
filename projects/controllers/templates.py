@@ -24,8 +24,8 @@ def list_templates():
     return [template.as_dict() for template in templates]
 
 
-def check_operator_dependencies_order(operators_ordered, operator):
-    """Check operator dependencies order.
+def order_operators_by_dependencies(operators_ordered, operator):
+    """Order operators by dependencies.
     Args:
         operators_ordered (list): the operators ordered.
         operator (dict): operator data.
@@ -42,20 +42,6 @@ def check_operator_dependencies_order(operators_ordered, operator):
                     check = False
             if check:
                 operators_ordered.append(uuid)
-
-
-def order_operators_by_dependencies(operators):
-    """Order operators by dependencies.
-    Args:
-        operators (list): the operators to be ordered.
-    Returns:
-        Ordered operators.
-    """
-    operators_ordered = []
-    while len(operators) != len(operators_ordered):
-        for operator in operators:
-            check_operator_dependencies_order(operators_ordered, operator)
-    return operators_ordered
 
 
 def create_template(name=None, experiment_id=None, **kwargs):
@@ -81,7 +67,10 @@ def create_template(name=None, experiment_id=None, **kwargs):
         .all()
 
     # order operators by dependencies
-    operators_ordered = order_operators_by_dependencies(operators)
+    operators_ordered = []
+    while len(operators) != len(operators_ordered):
+        for operator in operators:
+            order_operators_by_dependencies(operators_ordered, operator)
 
     # JSON array order of elements are preserved, so there is no need to save positions
     tasks = []
