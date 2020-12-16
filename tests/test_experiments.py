@@ -32,7 +32,14 @@ ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
-TASKS_JSON = dumps([TASK_ID])
+TASK = {
+    'dependencies': [],
+    'position_x': None,
+    'position_y': None,
+    'task_id': TASK_ID,
+    'uuid': OPERATOR_ID
+}
+TASKS_JSON = dumps([TASK])
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
