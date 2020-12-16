@@ -87,6 +87,8 @@ def create_operator(project_id, experiment_id, deployment_id=None,
     NotFound
         When either project_id or experiment_id does not exist.
     """
+    raise_if_project_does_not_exist(project_id)
+
     if experiment_id:
         raise_if_experiment_does_not_exist(experiment_id)
 
