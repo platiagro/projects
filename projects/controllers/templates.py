@@ -24,12 +24,35 @@ def list_templates():
     return [template.as_dict() for template in templates]
 
 
+def order_operators_by_dependencies(operators):
+    """Order operators by dependencies.
+    Args:
+        operators (list): the operators to be ordered.
+    Returns:
+        Ordered operators.
+    """
+    operators_ordered = []
+    while len(operators) != len(operators_ordered):
+        for operator in operators:
+            uuid = operator.uuid
+            dependencies = operator.dependencies
+            if uuid not in operators_ordered:
+                if len(dependencies) == 0:
+                    operators_ordered.append(uuid)
+                else:
+                    check = True
+                    for d in dependencies:
+                        if d not in operators_ordered:
+                            check = False
+                    if check:
+                        operators_ordered.append(uuid)
+    return operators_ordered
+
+
 def create_template(name=None, experiment_id=None, **kwargs):
     """Creates a new template in our database.
-
     Args:
         name (str): the template name.
-
     Returns:
         The template info.
     """
@@ -49,21 +72,7 @@ def create_template(name=None, experiment_id=None, **kwargs):
         .all()
 
     # order operators by dependencies
-    operators_ordered = []
-    while len(operators) != len(operators_ordered):
-        for operator in operators:
-            uuid = operator.uuid
-            dependencies = operator.dependencies
-            if uuid not in operators_ordered:
-                if len(dependencies) == 0:
-                    operators_ordered.append(uuid)
-                else:
-                    check = True
-                    for d in dependencies:
-                        if d not in operators_ordered:
-                            check = False
-                    if check:
-                        operators_ordered.append(uuid)
+    operators_ordered = order_operators_by_dependencies(operators)
 
     # JSON array order of elements are preserved, so there is no need to save positions
     tasks = []
