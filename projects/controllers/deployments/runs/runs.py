@@ -44,7 +44,7 @@ def list_runs(project_id, deployment_id):
     return [runs]
 
 
-def create_run(project_id, deployment_id, experiment_deployment=False):
+def create_run(project_id, deployment_id):
     """
     Starts a new run in Kubeflow Pipelines.
 
@@ -64,12 +64,8 @@ def create_run(project_id, deployment_id, experiment_deployment=False):
         When any of project_id, or deployment_id does not exist.
     """
     raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
 
-    if experiment_deployment:
-        deployment = Experiment.query.get(deployment_id)
-    else:
-        deployment = Deployment.query.get(deployment_id)
+    deployment = Deployment.query.get(deployment_id)
 
     if deployment is None:
         raise NOT_FOUND
@@ -93,9 +89,11 @@ def create_run(project_id, deployment_id, experiment_deployment=False):
 
     compile_pipeline(deployment.uuid, deployment.operators)
     experiment = KFP_CLIENT.create_experiment(name=deployment.uuid)
-    run = KFP_CLIENT.run_pipeline(experiment.id, deployment_id, f"{deployment.uuid}.yaml")
+    run = KFP_CLIENT.run_pipeline(experiment_id=experiment.id,
+                                  job_name=deployment_id, 
+                                  pipeline_package_path=f"{deployment.uuid}.yaml")
 
-    return {"message": "Pipeline is running.", "runId": run.id}
+    return {"uuid": run.id, "deploymentId": deployment.uuid, "operators": deployment.operators}
 
 
 def get_run(project_id, deployment_id, run_id):

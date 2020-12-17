@@ -121,6 +121,7 @@ def log_parser(raw_log):
         line = re.sub(r'( [-:*]{1})', '', line)
         message = re.findall(LOG_MESSAGE_PATTERN, line)
         message = ' '.join([str(x) for x in message])
+        message = re.sub(TIME_STAMP_PATTERN, '', message)
 
         log = {}
         log['timestamp'] = timestamp
