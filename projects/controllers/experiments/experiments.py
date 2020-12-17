@@ -8,7 +8,8 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from projects.controllers.operators import create_operator, update_operator
-from projects.controllers.utils import raise_if_project_does_not_exist, uuid_alpha
+from projects.controllers.utils import raise_if_project_does_not_exist, \
+    raise_if_experiment_does_not_exist, uuid_alpha
 from projects.database import db_session
 from projects.models import Comparison, Experiment, Operator, Template
 from projects.object_storage import remove_objects
@@ -184,11 +185,9 @@ def update_experiment(project_id, experiment_id, **kwargs):
         When `kwargs["template_id"]` is informed but it does not exist.
     """
     raise_if_project_does_not_exist(project_id)
+    raise_if_experiment_does_not_exist(experiment_id)
 
     experiment = Experiment.query.get(experiment_id)
-
-    if experiment is None:
-        raise NOT_FOUND
 
     if "name" in kwargs:
         name = kwargs["name"]

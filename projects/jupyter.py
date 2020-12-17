@@ -264,7 +264,6 @@ def get_jupyter_notebook(experiment_id, operator_id, notebook_type='Experiment')
         When the `notebook_type` isn't a supported type.
     """
     operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/{notebook_type}.ipynb"
-    content = {}
 
     if notebook_type not in SUPPORTED_TYPES:
         raise ValueError(f"The type {notebook_type} is not a valid one.")
@@ -277,5 +276,5 @@ def get_jupyter_notebook(experiment_id, operator_id, notebook_type='Experiment')
     except HTTPError as e:
         status_code = e.response.status_code
         if status_code == 404:
-            return content
+            return {}
         raise HTTPError("Error occured while trying to access Jupyter API.")
