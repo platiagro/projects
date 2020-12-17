@@ -41,10 +41,8 @@ def handle_post_runs(project_id, deployment_id):
     -------
     str
     """
-    experiment_deployment = request.args.get('experimentDeploy', False)
     run = create_run(project_id=project_id,
-                     deployment_id=deployment_id,
-                     experiment_deployment=experiment_deployment)
+                     deployment_id=deployment_id)
     return jsonify(run)
 
 
