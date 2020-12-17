@@ -19,6 +19,7 @@ from projects.models import Operator, Task
 EXCLUDE_CONTAINERS = ['istio-proxy', 'seldon-container-engine']
 TIME_STAMP_PATTERN = r'\d{4}-\d{2}-\d{2}(:?\s|T)\d{2}:\d{2}:\d{2}(:?.|,)\d+Z?\s?'
 LOG_MESSAGE_PATTERN = r'[a-zA-Z0-9\"\'.\-@_!#$%^&*()<>?\/|}{~:]{1,}'
+LOG_LEVEL_PATTERN = r'(?<![\\w\\d])INFO(?![\\w\\d])|(?<![\\w\\d])WARN(?![\\w\\d])|(?<![\\w\\d])ERROR(?![\\w\\d])'
 
 
 def list_logs(project_id, deployment_id, run_id):
@@ -69,6 +70,7 @@ def list_logs(project_id, deployment_id, run_id):
 
                     # get task name
                     # TODO: deixar o nome da task visivel no arquivo yaml deste container
+
                     operator = Operator.query.get(container.name)
                     if operator:
                         task = Task.query.get(operator.task_id)
@@ -76,7 +78,7 @@ def list_logs(project_id, deployment_id, run_id):
                             name = task.name
 
                     resp = {}
-                    resp['containerName'] = name
+                    resp['containerName'] = container.name if not operator else name
                     resp['logs'] = logs
                     response.append(resp)
         return response
@@ -102,8 +104,6 @@ def log_parser(raw_log):
     dict
         Detailed logs with level, Time Stamp and message from pod container.
     """
-    full_log_level_regex = set_log_level_regex()
-
     logs = []
     buf = StringIO(raw_log)
     line = buf.readline()
@@ -114,7 +114,7 @@ def log_parser(raw_log):
         timestamp = re.search(TIME_STAMP_PATTERN, line).group()
         line = re.sub(timestamp, '', line)
 
-        level = re.findall(full_log_level_regex, line)
+        level = re.findall(LOG_LEVEL_PATTERN, line)
         level = ' '.join([str(x) for x in level])
         line = line.replace(level, '')
 
@@ -130,25 +130,3 @@ def log_parser(raw_log):
         line = buf.readline()
 
     return logs
-
-
-def set_log_level_regex():
-    """
-    Set regex to catch log level from pod container logs.
-
-    Returns
-    -------
-    str
-        The regex pattern.
-    """
-    log_level = ['INFO', 'WARN', 'ERROR']
-    log_level_regex = r'(?<![\w\d]){}(?![\w\d])'
-    full_log_level_regex = ''
-
-    for level in log_level:
-        if full_log_level_regex:
-            full_log_level_regex += '|' + log_level_regex.format(level)
-        else:
-            full_log_level_regex = log_level_regex.format(level)
-
-    return full_log_level_regex

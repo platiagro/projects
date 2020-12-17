@@ -233,8 +233,7 @@ def get_notebook_logs(experiment_id, operator_id):
         status_code = e.response.status_code
         if status_code == 404:
             return logs
-        else:
-            raise HTTPError("Error occured while trying to access Jupyter API.")
+        raise HTTPError("Error occured while trying to access Jupyter API.")
 
     for cell in notebook_content["cells"]:
         try:
@@ -245,7 +244,6 @@ def get_notebook_logs(experiment_id, operator_id):
                     if output["output_type"] == "error":
                         error_log = output["traceback"]
                         traceback = remove_ansi_escapes(error_log)
-
                         logs = {"exception": output["ename"], "traceback": traceback}
         except KeyError:
             pass
