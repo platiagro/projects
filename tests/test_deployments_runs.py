@@ -128,10 +128,10 @@ class TestDeploymentsRuns(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            # rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
-            # result = rv.get_json()
-            # self.assertIsInstance(result, list)
-            # self.assertEqual(rv.status_code, 200)
+            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+            self.assertEqual(rv.status_code, 200)
 
     def test_get_run(self):
         with app.test_client() as c:

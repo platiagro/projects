@@ -41,7 +41,7 @@ def format_operator_parameters(parameters):
 
     Parameters
     ----------
-    parameters : list
+    parameters : dict
 
     Returns
     -------
@@ -67,7 +67,7 @@ def get_parameter_list_values(value):
 
     Parameters
     ----------
-    value : str
+    value : list
 
     Returns
     -------
@@ -89,8 +89,6 @@ def get_parameter_list_values(value):
 def remove_non_deployable_operators(operators):
     """
     Removes operators that are not part of the deployment pipeline.
-    If the non-deployable operator is dependent on another operator, it will be
-    removed from that operator's dependency list.
 
     Parameters
     ----------
@@ -101,9 +99,14 @@ def remove_non_deployable_operators(operators):
     -------
     list
         A list of all deployable operators.
+
+    Notes
+    -----
+    If the non-deployable operator is dependent on another operator, it will be
+    removed from that operator's dependency list.
     """
     deployable_operators = [operator for operator in operators if operator["notebookPath"]]
-    non_deployable_operators = list()
+    non_deployable_operators = []
 
     for operator in operators:
         if operator["notebookPath"] is None:
