@@ -87,7 +87,7 @@ class TestDeploymentsRuns(TestCase):
         conn.close()
 
     @classmethod
-    def tearDown(cls):
+    def tearDownClass(cls):
         conn = engine.connect()
 
         text = f"DELETE FROM operators WHERE 1 = 1"
