@@ -5,7 +5,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from projects.controllers.utils import raise_if_project_does_not_exist, \
     raise_if_deployment_does_not_exist
-from projects.models import Deployment, Experiment, Task
+from projects.models import Deployment, Task
 
 from projects.kfp import KFP_CLIENT
 from projects.kfp.pipeline import compile_pipeline, undeploy_pipeline
@@ -90,7 +90,7 @@ def create_run(project_id, deployment_id):
     compile_pipeline(deployment.uuid, deployment.operators)
     experiment = KFP_CLIENT.create_experiment(name=deployment.uuid)
     run = KFP_CLIENT.run_pipeline(experiment_id=experiment.id,
-                                  job_name=deployment_id, 
+                                  job_name=deployment_id,
                                   pipeline_package_path=f"{deployment.uuid}.yaml")
 
     return {"uuid": run.id, "deploymentId": deployment.uuid, "operators": deployment.operators}

@@ -15,6 +15,7 @@ from projects.utils import remove_ansi_escapes
 
 JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
+SUPPORTED_TYPES = ['Deployment', 'Experiment']
 
 COOKIES = {"_xsrf": "token"}
 HEADERS = {"content-type": "application/json", "X-XSRFToken": "token"}
@@ -206,7 +207,7 @@ def read_parameters_from_source(source):
 
 def get_notebook_logs(experiment_id, operator_id):
     """
-    Get logs from a Jupyter notebook.
+    Get logs from a Experiment notebook.
 
     Parameters
     ----------
@@ -217,25 +218,12 @@ def get_notebook_logs(experiment_id, operator_id):
     -------
     dict
         Operator's notebook logs.
-
-    Raises
-    ------
-    HTTPError
-        When a error occured while trying to access Jupyter API.
     """
-    operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/Experiment.ipynb"
+    notebook = get_jupyter_notebook(experiment_id, operator_id)
+    notebook = notebook["content"]
     logs = {}
 
-    try:
-        r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
-        notebook_content = loads(r.decode("utf-8"))["content"]
-    except HTTPError as e:
-        status_code = e.response.status_code
-        if status_code == 404:
-            return logs
-        raise HTTPError("Error occured while trying to access Jupyter API.")
-
-    for cell in notebook_content["cells"]:
+    for cell in notebook["cells"]:
         try:
             metadata = cell["metadata"]["papermill"]
 
@@ -249,3 +237,45 @@ def get_notebook_logs(experiment_id, operator_id):
             pass
 
     return logs
+
+
+def get_jupyter_notebook(experiment_id, operator_id, notebook_type='Experiment'):
+    """
+    Get JSON content from a notebook using the JupyterLab API.
+
+    Parameters
+    ----------
+    experiment_id : str
+    operator_id : str
+    notebook_type : str
+        Notebook type: `Deployment` or `Experiment`. Default to Experiment.
+
+    Returns
+    -------
+    dict
+        The notebook content.
+
+    Raises
+    ------
+    HTTPError
+        When a error occured while trying to access Jupyter API.
+
+    ValueError
+        When the `notebook_type` isn't a supported type.
+    """
+    operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/{notebook_type}.ipynb"
+    content = {}
+
+    if notebook_type not in SUPPORTED_TYPES:
+        raise ValueError(f"The type {notebook_type} is not a valid one.")
+
+    try:
+        r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
+        content = loads(r.decode("utf-8"))
+
+        return content
+    except HTTPError as e:
+        status_code = e.response.status_code
+        if status_code == 404:
+            return content
+        raise HTTPError("Error occured while trying to access Jupyter API.")

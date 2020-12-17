@@ -67,18 +67,9 @@ def list_logs(project_id, deployment_id, run_id):
                     )
 
                     logs = log_parser(pod_log)
-
-                    # get task name
-                    # TODO: deixar o nome da task visivel no arquivo yaml deste container
-
-                    operator = Operator.query.get(container.name)
-                    if operator:
-                        task = Task.query.get(operator.task_id)
-                        if task:
-                            name = task.name
-
+                    name = get_operator_name(container.name)
                     resp = {}
-                    resp['containerName'] = container.name if not operator else name
+                    resp['containerName'] = name
                     resp['logs'] = logs
                     response.append(resp)
         return response
@@ -131,3 +122,32 @@ def log_parser(raw_log):
         line = buf.readline()
 
     return logs
+
+
+def get_operator_name(container_name):
+    """
+    Get task name from a container.
+
+    Parameters
+    ----------
+    container_name : str
+
+    Returns
+    -------
+    str
+        The task name.
+
+    Notes
+    -----
+    If the container is not linked to any operator, it returns the name of the container.
+    """
+    # get task name
+    # TODO: deixar o nome da task visivel no arquivo yaml deste container
+    operator = Operator.query.get(container_name)
+
+    if operator:
+        task = Task.query.get(operator.task_id)
+        if task:
+            return task.name
+
+    return container_name

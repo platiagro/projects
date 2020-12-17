@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Deployment Runs blueprint."""
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
 from projects.controllers.deployments.runs import create_run, get_run, \
     list_runs, terminate_run
