@@ -122,7 +122,7 @@ def create_task(**kwargs):
 
     if not isinstance(name, str):
         raise BadRequest("name is required")
-    
+
     has_notebook = experiment_notebook or deployment_notebook
 
     if copy_from and has_notebook:
@@ -476,7 +476,10 @@ def init_notebook_metadata(task_id, deployment_notebook, experiment_notebook):
 
 def raise_if_invalid_docker_image(image):
     """
-    
+    Raise an error if a str does not meet the standards for a docker image name.
+
+    Example: (username/organization)/name-of-the-image:tag
+
     Parameters
     ----------
     image : str or None
@@ -489,6 +492,5 @@ def raise_if_invalid_docker_image(image):
     """
     pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+){0,1}$")
 
-    if image:
-        if pattern.match(image) is None:
-            raise BadRequest("invalid docker image name")
+    if image and pattern.match(image) is None:
+        raise BadRequest("invalid docker image name")
