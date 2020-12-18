@@ -9,6 +9,7 @@ from projects.kfp import KFP_CLIENT
 from projects.object_storage import BUCKET_NAME
 
 OPERATOR_ID = str(uuid_alpha())
+OPERATOR_ID_2 = str(uuid_alpha())
 NAME = "foo"
 NAME_2 = "bar"
 DEPLOYMENT_MOCK_NAME = "Foo Deployment"
@@ -109,10 +110,21 @@ class TestExperimentsRuns(TestCase):
             f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID_2}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
+            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
+        )
+        conn.execute(text)
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
+
+        text = f"DELETE FROM operators WHERE experiment_id in" \
+               f"(SELECT uuid FROM experiments where project_id = '{PROJECT_ID}')"
+        conn.execute(text)
 
         text = f"DELETE FROM operators WHERE deployment_id in" \
                f"(SELECT uuid FROM deployments where project_id = '{PROJECT_ID}')"
@@ -172,13 +184,14 @@ class TestExperimentsRuns(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            operators = [{"parameters": PARAMETERS, "positionX": 0, "positionY": 0, "taskId": TASK_ID}]
             rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": DEPLOYMENT_MOCK_NAME,
-                                                                     "operators": operators,
                                                                      "experimentId": EXPERIMENT_ID_2})
             result = rv.get_json()
+            operator = result["operators"][0]
             self.assertIsInstance(result, dict)
-            self.assertEqual(rv.status_code, 200)
+            self.assertIn("operators", result)
+            self.assertEqual(TASK_ID, operator["taskId"])
+            self.assertEqual(EXPERIMENT_ID_2, operator["experimentId"])
 
     def test_get_deployment(self):
         with app.test_client() as c:

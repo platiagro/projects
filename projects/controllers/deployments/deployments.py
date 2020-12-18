@@ -49,7 +49,6 @@ def create_deployment(project_id=None,
                       experiment_id=None,
                       is_active=None,
                       name=None,
-                      operators=None,
                       position=None,
                       status=None):
     """
@@ -103,17 +102,21 @@ def create_deployment(project_id=None,
     db_session.add(deployment)
     db_session.flush()
 
+    operators = db_session.query(Operator) \
+        .filter_by(experiment_id=experiment_id) \
+        .all()
+
     if operators and len(operators) > 0:
         for operator in operators:
             create_operator(deployment_id=deployment.uuid,
                             experiment_id=experiment_id,
                             project_id=project_id,
-                            task_id=operator.get("taskId"),
-                            parameters=operator.get("parameters"),
-                            dependencies=operator.get("dependencies"),
-                            position_x=operator.get("positionX"),
-                            position_y=operator.get("positionY"))
-    # dar uma olhada no SQL Alchemy
+                            task_id=operator.task_id,
+                            parameters=operator.parameters,
+                            dependencies=operator.dependencies,
+                            position_x=operator.position_x,
+                            position_y=operator.position_y)
+
     db_session.commit()
 
     if position is None:

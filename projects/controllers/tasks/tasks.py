@@ -111,10 +111,10 @@ def create_task(**kwargs):
     """
     name = kwargs.get("name", None)
     description = kwargs.get("description", None)
-    tags = kwargs.get("tags", None)
+    tags = kwargs.get("tags", ["DEFAULT"])
     image = kwargs.get("image", None)
-    commands = kwargs.get("commands", None)
-    arguments = kwargs.get("arguments", None)
+    commands = kwargs.get("commands", [DEFAULT_COMMANDS])
+    arguments = kwargs.get("arguments", [DEFAULT_ARGUMENTS])
     experiment_notebook = kwargs.get("experiment_notebook", None)
     deployment_notebook = kwargs.get("deployment_notebook", None)
     is_default = kwargs.get("is_default", None)
@@ -122,11 +122,13 @@ def create_task(**kwargs):
 
     if not isinstance(name, str):
         raise BadRequest("name is required")
+    
+    has_notebook = experiment_notebook or deployment_notebook
 
-    if copy_from and (experiment_notebook or deployment_notebook):
+    if copy_from and has_notebook:
         raise BadRequest("Either provide notebooks or a task to copy from")
 
-    if tags is None or len(tags) == 0:
+    if len(tags) == 0:
         tags = ["DEFAULT"]
 
     if any(tag not in VALID_TAGS for tag in tags):
@@ -134,10 +136,7 @@ def create_task(**kwargs):
         raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
     # check if image is a valid docker image
-    if image:
-        pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+){0,1}$")
-        if pattern.match(image) is None:
-            raise BadRequest("invalid docker image name")
+    raise_if_invalid_docker_image(image)
 
     check_comp_name = db_session.query(Task).filter_by(name=name).first()
     if check_comp_name:
@@ -179,12 +178,6 @@ def create_task(**kwargs):
     else:
         experiment_notebook_path = None
         deployment_notebook_path = None
-
-    if commands is None or len(commands) == 0:
-        commands = DEFAULT_COMMANDS
-
-    if arguments is None or len(arguments) == 0:
-        arguments = DEFAULT_ARGUMENTS
 
     # saves task info to the database
     task = Task(uuid=task_id,
@@ -479,3 +472,23 @@ def init_notebook_metadata(task_id, deployment_notebook, experiment_notebook):
         experiment_notebook["metadata"]["experiment_id"] = experiment_id
         experiment_notebook["metadata"]["operator_id"] = operator_id
         experiment_notebook["metadata"]["task_id"] = task_id
+
+
+def raise_if_invalid_docker_image(image):
+    """
+    
+    Parameters
+    ----------
+    image : str or None
+        The image name.
+
+    Raises
+    ------
+    BadRequest
+        When a given image is a invalid one.
+    """
+    pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+){0,1}$")
+
+    if image:
+        if pattern.match(image) is None:
+            raise BadRequest("invalid docker image name")
