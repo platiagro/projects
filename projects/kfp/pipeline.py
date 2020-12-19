@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Kubeflow Pipelines interface."""
+from base64 import b64encode
 from string import Template
+from yaml import dump
 
 from kfp import compiler, dsl
 from kubernetes import client as k8s_client
@@ -78,7 +80,7 @@ def create_container_op(operator):
         ARG = Template(argument)
         argument = ARG.safe_substitute({
             "notebookPath": operator.task.experiment_notebook_path,
-            "parameters": "",  # TODO
+            "parameters": format_parameters_base64(operator.parameters),
             "experimentId": operator.experiment_id,
             "operatorId": operator.uuid,
             "dataset": "",  # TODO
@@ -145,3 +147,29 @@ def undeploy_pipeline(resource):
         run_name='undeploy',
         namespace=KF_PIPELINES_NAMESPACE
     )
+
+
+def format_parameters_base64(parameters):
+    """
+    Format parameters to a format that papermill accepts: base64 encoded yaml.
+
+    Parameters
+    ----------
+    parameters : dict
+
+    Returns
+    -------
+    str:
+        Base64-encoded YAML string, containing parameter values.
+    """
+    parameters_dict = {}
+    for name, value in parameters.items():
+        # "dataset" is a special parameter that contains a dataset filename
+        # The prefix /tmp/data/ is added to the parameter so the notebook
+        # receives the full path to the dataset file during a run.
+        if name == "dataset":
+            parameters_dict[name] = f"/tmp/data/{value}"
+        else:
+            parameters_dict[name] = value
+
+    return b64encode(dump(parameters_dict).encode()).decode()
