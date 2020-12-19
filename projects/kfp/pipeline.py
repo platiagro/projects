@@ -46,10 +46,18 @@ def compile_pipeline(name, operators):
             action="apply",
         )
 
+        # Find the special parameter "dataset" (which is copied to all operators)
+        dataset = None
+        for operator in operators:
+            for parameter_name, parameter_value in operator.parameters.items():
+                if parameter_name == "dataset":
+                    dataset = parameter_value
+                    break
+
         # Create container_op for all operators
         containers = {}
         for operator in operators:
-            container_op = create_container_op(operator)
+            container_op = create_container_op(operator, dataset=dataset)
             containers[operator.uuid] = container_op
 
         # Define operators volumes and dependecies
@@ -63,13 +71,14 @@ def compile_pipeline(name, operators):
         .compile(experiment_pipeline, f"{name}.yaml")
 
 
-def create_container_op(operator):
+def create_container_op(operator, dataset=None):
     """
     Create operator operator from YAML file.
 
     Parameters
     ----------
     operator : dict
+    dataset : str
 
     Returns
     -------
@@ -83,8 +92,7 @@ def create_container_op(operator):
             "parameters": format_parameters_base64(operator.parameters),
             "experimentId": operator.experiment_id,
             "operatorId": operator.uuid,
-            "dataset": "",  # TODO
-            "trainingDatasetDir": "",  # TRAINING_DATASETS_DIR,
+            "dataset": dataset,
         })
         arguments.append(argument)
 
