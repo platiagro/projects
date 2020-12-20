@@ -141,6 +141,10 @@ def create_container_op(operator, dataset=None):
         )
 
     for name, value in operator.parameters.items():
+        if value is not None:
+            # fix for: cannot unmarshal number into
+            # Go struct field EnvVar.value of type string
+            value = dumps(value)
         container_op \
             .add_env_variable(
                 k8s_client.V1EnvVar(
