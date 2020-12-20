@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Kubeflow Pipelines interface."""
 from base64 import b64encode
+from json import dumps
 from string import Template
 from yaml import dump
 
@@ -47,11 +48,13 @@ def compile_pipeline(name, operators):
         )
 
         # Find the special parameter "dataset" (which is copied to all operators)
+        # The prefix /tmp/data/ is added to the parameter so the operator
+        # receives the full path to the dataset file during a run.
         dataset = None
         for operator in operators:
             for parameter_name, parameter_value in operator.parameters.items():
                 if parameter_name == "dataset":
-                    dataset = parameter_value
+                    dataset = f"/tmp/data/{parameter_value}"
                     break
 
         # Create container_op for all operators
@@ -87,9 +90,11 @@ def create_container_op(operator, dataset=None):
     arguments = []
     for argument in operator.task.arguments:
         ARG = Template(argument)
+        # FIXME: Remover ARG.safe_substitute e usar variáveis de ambiente
+        # para passar os parâmetros
         argument = ARG.safe_substitute({
             "notebookPath": operator.task.experiment_notebook_path,
-            "parameters": format_parameters_base64(operator.parameters),
+            "parameters": format_parameters_base64(operator.parameters, dataset=dataset),
             "experimentId": operator.experiment_id,
             "operatorId": operator.uuid,
             "dataset": dataset,
@@ -121,7 +126,28 @@ def create_container_op(operator, dataset=None):
                 name="RUN_ID",
                 value=dsl.RUN_ID_PLACEHOLDER,
             ),
+        ) \
+        .add_env_variable(
+            k8s_client.V1EnvVar(
+                name="NOTEBOOK_PATH",
+                value=operator.task.experiment_notebook_path,
+            ),
+        ) \
+        .add_env_variable(
+            k8s_client.V1EnvVar(
+                name="PARAMETER_dataset",
+                value=dataset,
+            ),
         )
+
+    for name, value in operator.parameters.items():
+        container_op \
+            .add_env_variable(
+                k8s_client.V1EnvVar(
+                    name=f"PARAMETER_{name}",
+                    value=value,
+                ),
+            )
 
     container_op \
         .set_memory_request(MEMORY_REQUEST) \
@@ -157,13 +183,14 @@ def undeploy_pipeline(resource):
     )
 
 
-def format_parameters_base64(parameters):
+def format_parameters_base64(parameters, dataset=None):
     """
     Format parameters to a format that papermill accepts: base64 encoded yaml.
 
     Parameters
     ----------
     parameters : dict
+    dataset : str
 
     Returns
     -------
@@ -172,11 +199,9 @@ def format_parameters_base64(parameters):
     """
     parameters_dict = {}
     for name, value in parameters.items():
-        # "dataset" is a special parameter that contains a dataset filename
-        # The prefix /tmp/data/ is added to the parameter so the notebook
-        # receives the full path to the dataset file during a run.
+        # "dataset" is a special parameter that contains the full path to dataset file
         if name == "dataset":
-            parameters_dict[name] = f"/tmp/data/{value}"
+            parameters_dict[name] = dataset
         else:
             parameters_dict[name] = value
 
