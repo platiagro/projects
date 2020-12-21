@@ -1,19 +1,13 @@
 # -*- coding: utf-8 -*-
 """Deployments Logs controller."""
-import json
 import re
-
 from io import StringIO
-
-from kubernetes import client
-from kubernetes.client.rest import ApiException
-from werkzeug.exceptions import NotFound, InternalServerError
 
 from projects.controllers.utils import raise_if_project_does_not_exist, \
     raise_if_deployment_does_not_exist
-from projects.kfp import KF_PIPELINES_NAMESPACE
-from projects.kubernetes.kube_config import load_kube_config
+
 from projects.kubernetes.seldon import list_deployment_pods
+from projects.kubernetes.utils import get_pod_log
 from projects.models import Operator, Task
 
 EXCLUDE_CONTAINERS = ['istio-proxy', 'seldon-container-engine']
@@ -45,40 +39,29 @@ def list_logs(project_id, deployment_id, run_id):
     raise_if_project_does_not_exist(project_id)
     raise_if_deployment_does_not_exist(deployment_id)
 
-    load_kube_config()
-    core_api = client.CoreV1Api()
+    deployment_pods = list_deployment_pods(deployment_id)
+    response = {'status': 'Starting', 'logs': []}
 
-    try:
-        response = []
-        deployment_pods = list_deployment_pods(deployment_id)
-
-        for pod in deployment_pods:
-            for container in pod.spec.containers:
-                if container.name not in EXCLUDE_CONTAINERS:
-                    # Equivalent to
-                    # `kubectl -n KF_PIPELINES_NAMESPACE logs pod.metada.name -c container.name`
-                    pod_log = core_api.read_namespaced_pod_log(
-                        name=pod.metadata.name,
-                        namespace=KF_PIPELINES_NAMESPACE,
-                        container=container.name,
-                        pretty='true',
-                        tail_lines=512,
-                        timestamps=True
-                    )
-
-                    logs = log_parser(pod_log)
-                    name = get_operator_name(container.name)
-                    resp = {}
-                    resp['containerName'] = name
-                    resp['logs'] = logs
-                    response.append(resp)
+    if not deployment_pods:
+        response['status'] = 'Creating'
         return response
-    except ApiException as e:
-        body = json.loads(e.body)
-        error_message = body['message']
-        if 'not found' in error_message:
-            raise NotFound('The specified deployment does not exist')
-        raise InternalServerError('{}'.format(error_message))
+
+    for pod in deployment_pods:
+        for container in pod.spec.containers:
+            if container.name not in EXCLUDE_CONTAINERS:
+                pod_log = get_pod_log(pod, container)
+
+                if not pod_log:
+                    response['status'] = 'Creating'
+                    return response
+
+                container_ = {}
+                container_['containerName'] = get_operator_name(container.name)
+                container_['logs'] = log_parser(pod_log)
+                response['status'] = 'Completed'
+                response.update(container_)
+
+    return response
 
 
 def log_parser(raw_log):
