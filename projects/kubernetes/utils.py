@@ -59,7 +59,6 @@ def get_pod_log(pod, container):
     """
     load_kube_config()
     core_api = client.CoreV1Api()
-    pod_log = []
 
     try:
         pod_log = core_api.read_namespaced_pod_log(
@@ -77,5 +76,5 @@ def get_pod_log(pod, container):
         message = body['message']
 
         if 'ContainerCreating' in message:
-            return pod_log
+            return []
         raise InternalServerError(f"Error while trying to retrive container's log: {message}")

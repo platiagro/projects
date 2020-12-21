@@ -68,7 +68,6 @@ def list_seldon_deployment_objects(deployment_id, namespace=None):
     """
     load_kube_config()
     custom_api = client.CustomObjectsApi()
-    objects = []
 
     if not namespace:
         namespace = KF_PIPELINES_NAMESPACE
@@ -91,9 +90,9 @@ def list_seldon_deployment_objects(deployment_id, namespace=None):
         message = body['message']
 
         if body['code'] == 404:
-            return objects
+            return []
         raise InternalServerError(f'Error while trying to retrive custom objects: {message}')
     except KeyError:
         # At this point, it's still being created,
         # and does not contain any `deploymentStatus` key yet.
-        return objects
+        return []
