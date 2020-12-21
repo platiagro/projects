@@ -1408,7 +1408,22 @@ components:
           type: array
           items:
             type: string
+    TaskDocker:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
         commands:
+          type: array
+          items:
+            type: string
+        arguments:
           type: array
           items:
             type: string
@@ -1425,12 +1440,6 @@ components:
           type: array
           items:
             type: string
-        commands:
-          type: array
-          items:
-            type: string
-        image:
-          type: string
         copyFrom:
           type: string
           format: uuid
@@ -1445,12 +1454,6 @@ components:
           type: array
           items:
             type: string
-        commands:
-          type: array
-          items:
-            type: string
-        image:
-          type: string
         deploymentNotebook:
           type: object
         experimentNotebook:
@@ -1766,6 +1769,7 @@ components:
           schema:
             oneOf:
               - $ref: "#/components/schemas/TaskEmpty"
+              - $ref: "#/components/schemas/TaskDocker"
               - $ref: "#/components/schemas/TaskCopyFrom"
               - $ref: "#/components/schemas/TaskNotebooks"
           examples:
@@ -1775,25 +1779,28 @@ components:
                 name: string
                 description: string
                 tags: ["DEFAULT"]
-                commands: ["cmd"]
-                image: platiagro/platiagro-experiment-image:0.2.0
-            copyFrom:
-              summary: Notebooks from another task
+            docker:
+              summary: Custom docker image
               value:
                 name: string
                 description: string
                 tags: ["DEFAULT"]
                 commands: ["cmd"]
-                image: platiagro/platiagro-experiment-image:0.2.0
+                arguments: ["arg"]
+                image: your-custom-docker-image:tag
+            copyFrom:
+              summary: Copy another task
+              value:
+                name: string
+                description: string
+                tags: ["DEFAULT"]
                 copyFrom: 3fa85f64-5717-4562-b3fc-2c963f66afa6
             notebook:
-              summary: Notebooks from request body
+              summary: Upload notebooks in request body
               value:
                 name: string
                 description: string
                 tags: ["DEFAULT"]
-                commands: ["cmd"]
-                image: platiagro/platiagro-experiment-image:0.2.0
                 deploymentNotebook:
                   {
                     "cells":
@@ -1873,6 +1880,9 @@ components:
             name: string
             description: string
             tags: ["DEFAULT"]
+            commands: ["cmd"]
+            arguments: ["arg"]
+            image: your-custom-docker-image:tag
             deploymentNotebook:
               {
                 "cells":
