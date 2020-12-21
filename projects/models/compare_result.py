@@ -14,6 +14,7 @@ class CompareResult(Base):
     project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False)
     experiment_id = Column(String(255), ForeignKey("experiments.uuid"))
     operator_id = Column(String(255))
+    active_tab = Column(String(10), nullable=False, default='1')
     run_id = Column(String(255))
     layout = Column(JSON)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
