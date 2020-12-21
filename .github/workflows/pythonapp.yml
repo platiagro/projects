@@ -17,10 +17,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up Python 3.6
+    - name: Set up Python 3.7
       uses: actions/setup-python@v1
       with:
-        python-version: 3.6
+        python-version: 3.7
 
     - name: Code review tips
       uses: unsplash/comment-on-pr@master
@@ -58,11 +58,10 @@ jobs:
           ### Build Github actions COM SUCESSO
 
           ### Python
-          - Usar Python 3.6
+          - Usar Python>=3.7
           - Remover `print`.
           - Não deixar código-fonte comentado.
           - f-string `f'text-{variable}'` é melhor que `'text-{}'.format(variable)` e `'text-' + variable`
-          - async/await NÃO EXISTEM no Python3.6
           - Métodos que são chamados de outros arquivos `.py` **DEVEM TER Docstring**.
           - Usar NumPy Style Python Docstring: https://www.sphinx-doc.org/en/master/usage/extensions/example_numpy.html
           - Usar sempre import absoluto.
