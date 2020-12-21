@@ -87,25 +87,11 @@ def create_container_op(operator, dataset=None):
     -------
     kfp.dsl.ContainerOp
     """
-    arguments = []
-    for argument in operator.task.arguments:
-        ARG = Template(argument)
-        # FIXME: Remover ARG.safe_substitute e usar variáveis de ambiente
-        # para passar os parâmetros
-        argument = ARG.safe_substitute({
-            "notebookPath": operator.task.experiment_notebook_path,
-            "parameters": format_parameters_base64(operator.parameters, dataset=dataset),
-            "experimentId": operator.experiment_id,
-            "operatorId": operator.uuid,
-            "dataset": dataset,
-        })
-        arguments.append(argument)
-
     container_op = dsl.ContainerOp(
         name=operator.uuid,
         image=operator.task.image,
         command=operator.task.commands,
-        arguments=arguments,
+        arguments=operator.task.arguments,
     )
 
     container_op.container.set_image_pull_policy("Always") \

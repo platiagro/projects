@@ -18,7 +18,7 @@ spec:
           - { name: EXPERIMENT_ID, value: b281185b-6104-4c8c-8185-31eb53bef8de }
           - { name: OPERATOR_ID, value: d4560e7e-0a22-425f-9125-19816d060e76 }
           - { name: RUN_ID, value: "{{workflow.uid}}" }
-        image: platiagro/platiagro-notebook-image:0.2.0
+        image: platiagro/platiagro-experiment-image:0.2.0
         imagePullPolicy: Always
         resources:
           limits: { memory: 4G, cpu: 2000m }

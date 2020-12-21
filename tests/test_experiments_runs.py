@@ -19,7 +19,7 @@ PARAMETERS = {"coef": 0.1}
 POSITION = 0
 POSITION_X = 0.3
 POSITION_Y = 0.5
-IMAGE = "platiagro/platiagro-notebook-image-test:0.2.0"
+IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
 ARGUMENTS = ["ARG"]
@@ -146,5 +146,5 @@ class TestExperimentsRuns(TestCase):
     #         rv = c.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/retry")
     #         result = rv.get_json()
     #         expected = {"message": "Run re-initiated successfully"}
-    #         self.assertDictEqual(expected, result)  
+    #         self.assertDictEqual(expected, result)
     #         self.assertEqual(rv.status_code, 200)

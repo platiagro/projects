@@ -5,19 +5,12 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, DateTime, JSON, String, Text
 from sqlalchemy.sql import expression
 
+from projects import __version__
 from projects.database import Base
 from projects.jupyter import read_parameters
 from projects.utils import to_camel_case
 
-DEFAULT_IMAGE = 'platiagro/platiagro-notebook-image:0.2.0'
-DEFAULT_COMMANDS = ['sh', '-c']
-DEFAULT_ARGUMENTS = ['''papermill $notebookPath output.ipynb -b $parameters;
-                        status=$?;
-                        bash save-dataset.sh;
-                        bash save-figure.sh;
-                        bash make-cells-read-only.sh
-                        bash upload-to-jupyter.sh $experimentId $operatorId Experiment.ipynb;
-                        exit $status''']
+DEFAULT_IMAGE = f'platiagro/platiagro-experiment-image:{__version__}'
 
 
 class Task(Base):
@@ -26,8 +19,8 @@ class Task(Base):
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     image = Column(String(255), nullable=False, default=DEFAULT_IMAGE)
-    commands = Column(JSON, nullable=False, default=DEFAULT_COMMANDS)
-    arguments = Column(JSON, nullable=False, default=DEFAULT_ARGUMENTS)
+    commands = Column(JSON, nullable=True)
+    arguments = Column(JSON, nullable=True)
     tags = Column(JSON, nullable=False, default=["DEFAULT"])
     experiment_notebook_path = Column(String(255))
     deployment_notebook_path = Column(String(255), nullable=True)

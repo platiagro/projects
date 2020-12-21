@@ -1776,7 +1776,7 @@ components:
                 description: string
                 tags: ["DEFAULT"]
                 commands: ["cmd"]
-                image: platiagro/platiagro-notebook-image:0.2.0
+                image: platiagro/platiagro-experiment-image:0.2.0
             copyFrom:
               summary: Notebooks from another task
               value:
@@ -1784,7 +1784,7 @@ components:
                 description: string
                 tags: ["DEFAULT"]
                 commands: ["cmd"]
-                image: platiagro/platiagro-notebook-image:0.2.0
+                image: platiagro/platiagro-experiment-image:0.2.0
                 copyFrom: 3fa85f64-5717-4562-b3fc-2c963f66afa6
             notebook:
               summary: Notebooks from request body
@@ -1793,7 +1793,7 @@ components:
                 description: string
                 tags: ["DEFAULT"]
                 commands: ["cmd"]
-                image: platiagro/platiagro-notebook-image:0.2.0
+                image: platiagro/platiagro-experiment-image:0.2.0
                 deploymentNotebook:
                   {
                     "cells":

@@ -16,7 +16,6 @@ from projects.controllers.utils import uuid_alpha
 from projects.database import db_session
 from projects.jupyter import create_new_file, list_files, delete_file, update_folder_name
 from projects.models import Task
-from projects.models.task import DEFAULT_COMMANDS, DEFAULT_ARGUMENTS
 from projects.object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
 
@@ -113,8 +112,8 @@ def create_task(**kwargs):
     description = kwargs.get("description", None)
     tags = kwargs.get("tags", ["DEFAULT"])
     image = kwargs.get("image", None)
-    commands = kwargs.get("commands", [DEFAULT_COMMANDS])
-    arguments = kwargs.get("arguments", [DEFAULT_ARGUMENTS])
+    commands = kwargs.get("commands", None)
+    arguments = kwargs.get("arguments", None)
     experiment_notebook = kwargs.get("experiment_notebook", None)
     deployment_notebook = kwargs.get("deployment_notebook", None)
     is_default = kwargs.get("is_default", None)
