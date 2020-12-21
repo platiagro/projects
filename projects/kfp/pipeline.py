@@ -171,28 +171,3 @@ def undeploy_pipeline(resource):
         run_name='undeploy',
         namespace=KF_PIPELINES_NAMESPACE
     )
-
-
-def format_parameters_base64(parameters, dataset=None):
-    """
-    Format parameters to a format that papermill accepts: base64 encoded yaml.
-
-    Parameters
-    ----------
-    parameters : dict
-    dataset : str
-
-    Returns
-    -------
-    str:
-        Base64-encoded YAML string, containing parameter values.
-    """
-    parameters_dict = {}
-    for name, value in parameters.items():
-        # "dataset" is a special parameter that contains the full path to dataset file
-        if name == "dataset":
-            parameters_dict[name] = dataset
-        else:
-            parameters_dict[name] = value
-
-    return b64encode(dump(parameters_dict).encode()).decode()
