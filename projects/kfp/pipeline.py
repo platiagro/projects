@@ -61,10 +61,10 @@ def compile_pipeline(name, operators):
         containers = {}
         for operator in operators:
             container_op = create_container_op(operator, dataset=dataset)
-            containers[operator.uuid] = container_op
+            containers[operator.uuid] = (operator, container_op)
 
         # Define operators volumes and dependecies
-        for container_op in containers.values():
+        for operator, container_op in containers.values():
             dependencies = [containers[dependency_id] for dependency_id in operator.dependencies]
             container_op.after(*dependencies)
 
