@@ -90,7 +90,8 @@ class TestDeploymentsRuns(TestCase):
     def tearDownClass(cls):
         conn = engine.connect()
 
-        text = f"DELETE FROM operators WHERE 1 = 1"
+        text = f"DELETE FROM operators WHERE experiment_id in" \
+               f"(SELECT uuid FROM experiments where project_id = '{PROJECT_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
