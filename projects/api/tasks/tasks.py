@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tasks blueprint."""
-from flask import jsonify, request
-from flask_smorest import Blueprint
+from flask import Blueprint, jsonify, request
 
 from projects.controllers.tasks import create_task, delete_task, get_task, \
     list_tasks, update_task
@@ -11,8 +10,7 @@ bp = Blueprint("tasks", __name__)
 
 
 @bp.route("", methods=["GET"])
-@bp.paginate()
-def handle_list_tasks(pagination_parameters):
+def handle_list_tasks():
     """
     Handles GET requests to /.
 
@@ -26,10 +24,10 @@ def handle_list_tasks(pagination_parameters):
     """
     filters = request.args.copy()
     order_by = filters.pop("order", None)
-    filters.pop("page", None)
-    filters.pop("page_size", None)
-    tasks = list_tasks(page=pagination_parameters.page,
-                       page_size=pagination_parameters.page_size,
+    page = filters.pop("page", None)
+    page_size = filters.pop("page_size", None)
+    tasks = list_tasks(page=page,
+                       page_size=page_size,
                        order_by=order_by,
                        **filters)
     return jsonify(tasks)

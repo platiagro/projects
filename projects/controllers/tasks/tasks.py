@@ -28,7 +28,7 @@ EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
 NOT_FOUND = NotFound("The specified task does not exist")
 
 
-def list_tasks(page=1, page_size=10, order_by=None, **filters):
+def list_tasks(page, page_size, order_by=None, **filters):
     """
     Lists tasks. Supports pagination, and sorting.
 
@@ -37,7 +37,7 @@ def list_tasks(page=1, page_size=10, order_by=None, **filters):
     page : int
         The page number. First page is 1.
     page_size : int
-        The page size. Default value is 10.
+        The page size.
     order_by : str
         Order by instruction. Format is "column [asc|desc]".
     **filters : dict
@@ -79,8 +79,10 @@ def list_tasks(page=1, page_size=10, order_by=None, **filters):
     elif sort.lower() == "desc":
         query = query.order_by(desc(getattr(Task, column)))
 
-    # Applies pagination
-    query = query.limit(page_size).offset((page - 1) * page_size)
+    if page and page_size:
+        # Applies pagination
+        query = query.limit(page_size).offset((page - 1) * page_size)
+    
     tasks = query.all()
 
     return {
