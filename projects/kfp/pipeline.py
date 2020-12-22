@@ -65,7 +65,7 @@ def compile_pipeline(name, operators):
 
         # Define operators volumes and dependecies
         for operator, container_op in containers.values():
-            dependencies = [containers[dependency_id] for dependency_id in operator.dependencies]
+            dependencies = [containers[dependency_id][1] for dependency_id in operator.dependencies]
             container_op.after(*dependencies)
 
             container_op.add_pvolumes({"vol-tmp-data": wrkdirop.volume})
