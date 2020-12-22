@@ -118,7 +118,12 @@ def create_container_op(operator, dataset=None):
                 name="NOTEBOOK_PATH",
                 value=operator.task.experiment_notebook_path,
             ),
-        ) \
+        )
+
+    if dataset is not None:
+        dataset = dumps(dataset)
+
+    container_op.container \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="PARAMETER_dataset",
