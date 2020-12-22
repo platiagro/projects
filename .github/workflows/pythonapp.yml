@@ -267,6 +267,18 @@ jobs:
         sleep 10
         kubectl wait --for=condition=Ready pods --all --timeout=60s
 
+    - name: Install Cert Manager
+      run: |
+        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
+        # https://github.com/kubernetes-sigs/kustomize/issues/2205
+        ./kustomize build "github.com/platiagro/manifests/cert-manager/cert-manager-crds/base?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/cert-manager/cert-manager-kube-system-resources/base?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/cert-manager/cert-manager/base?ref=$BRANCH" | kubectl apply -f -
+        sleep 10
+        kubectl wait --for=condition=Ready pods --all --timeout=60s
+      env:
+        BRANCH: v0.2.0-kubeflow-v1.1-branch
+
     - name: Create load balancer
       id: lb
       run: |
