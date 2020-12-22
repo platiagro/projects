@@ -81,7 +81,7 @@ def list_tasks(page, page_size, order_by=None, **filters):
 
     if page and page_size:
         # Applies pagination
-        query = query.limit(page_size).offset((page - 1) * page_size)
+        query = query.limit(page_size).offset((int(page) - 1) * int(page_size))
     
     tasks = query.all()
 
