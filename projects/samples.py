@@ -4,7 +4,6 @@ from os import environ
 
 from werkzeug.exceptions import BadRequest
 
-from projects import __version__
 from projects.controllers.tasks import create_task
 from projects.models.task import DEFAULT_IMAGE
 

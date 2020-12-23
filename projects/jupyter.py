@@ -4,11 +4,13 @@ from json import dumps, loads, JSONDecodeError
 from os import getenv
 from re import compile, sub
 
-from minio.error import NoSuchKey
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
+
+from minio.error import NoSuchKey
+from werkzeug.exceptions import InternalServerError
 
 from projects.object_storage import BUCKET_NAME, get_object
 from projects.utils import remove_ansi_escapes
@@ -218,8 +220,17 @@ def get_notebook_logs(experiment_id, operator_id):
     -------
     dict
         Operator's notebook logs.
+
+    Raises
+    ------
+    InternalServerError
+        When an error is encountered when trying to recover from the contents of a notebook.
     """
     notebook = get_jupyter_notebook(experiment_id, operator_id)
+
+    if not notebook:
+        raise InternalServerError("An error occured while trying to recover Notebook content.")
+
     notebook = notebook["content"]
     logs = {}
 

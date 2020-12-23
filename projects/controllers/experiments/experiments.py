@@ -11,7 +11,7 @@ from projects.controllers.operators import create_operator, update_operator
 from projects.controllers.utils import raise_if_project_does_not_exist, \
     raise_if_experiment_does_not_exist, uuid_alpha
 from projects.database import db_session
-from projects.models import Comparison, Experiment, Operator, Template
+from projects.models import Comparison, Deployment, Experiment, Operator, Template
 from projects.object_storage import remove_objects
 
 
@@ -275,6 +275,8 @@ def delete_experiment(project_id, experiment_id):
     Comparison.query.filter(Comparison.experiment_id == experiment_id).delete()
     # remove operators
     Operator.query.filter(Operator.experiment_id == experiment_id).delete()
+    # remove deployments
+    Deployment.query.filter(Deployment.experiment_id == experiment_id).delete()
 
     db_session.delete(experiment)
     db_session.commit()
