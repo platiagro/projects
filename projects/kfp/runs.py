@@ -12,7 +12,7 @@ from projects.kfp.pipeline import compile_pipeline
 
 def list_runs(experiment_id):
     """
-    Lists all comparisons under a project.
+    Lists all runs of an experiment.
 
     Parameters
     ----------
@@ -60,12 +60,16 @@ def start_run(experiment_id, operators, is_deployment=False):
     experiment_id : str
     operators : list
     is_deployment : bool
+        Whether to create a SeldonDeployment resource.
 
     Returns
     -------
     dict
         The run attributes.
     """
+    if len(operators) == 0:
+        raise ValueError("Necessary at least one operator.")
+
     compile_pipeline(name=experiment_id,
                      operators=operators,
                      is_deployment=is_deployment)
@@ -81,11 +85,7 @@ def start_run(experiment_id, operators, is_deployment=False):
         pipeline_package_path=pipeline_package_path,
     )
     os.remove(pipeline_package_path)
-    response = {"runId": run.id}
-    creation_details = get_run(run.id, experiment_id)
-    response.update(creation_details)
-
-    return response
+    return get_run(run.id, experiment_id)
 
 
 def get_run(run_id, experiment_id):
@@ -136,7 +136,7 @@ def get_run(run_id, experiment_id):
             operators[operator_id]["parameters"] = get_parameters(template)
 
     return {
-        "runId": kfp_run.run.id,
+        "uuid": kfp_run.run.id,
         "operators": operators,
         "createdAt": kfp_run.run.created_at,
     }

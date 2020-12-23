@@ -5,11 +5,11 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from projects.controllers.utils import raise_if_project_does_not_exist, \
     raise_if_deployment_does_not_exist
-from projects.models import Deployment, Task
+from projects.models import Deployment
 
 from projects.kfp import KFP_CLIENT
 from projects.kfp import runs as kfp_runs
-from projects.kfp.pipeline import compile_pipeline, undeploy_pipeline
+from projects.kfp.pipeline import undeploy_pipeline
 from projects.kfp.deployments import get_deployment_runs
 
 from projects.kubernetes.kube_config import load_kube_config
@@ -71,9 +71,13 @@ def create_run(project_id, deployment_id):
     if deployment is None:
         raise NOT_FOUND
 
-    run = kfp_runs.start_run(experiment_id=deployment.experiment_id,
-                             operators=experiment.operators)
-
+    try:
+        run = kfp_runs.start_run(experiment_id=deployment_id,
+                                operators=deployment.operators,
+                                is_deployment=True)
+    except ValueError as e:
+        raise BadRequest(str(e))
+    run["deploymentId"] = deployment_id
     return run
 
 

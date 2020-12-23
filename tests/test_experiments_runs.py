@@ -115,7 +115,7 @@ class TestExperimentsRuns(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result, dict)
             self.assertIn("operators", result)
-            self.assertIn("runId", result)
+            self.assertIn("uuid", result)
             self.assertEqual(rv.status_code, 200)
 
     def test_get_run(self):
@@ -129,6 +129,8 @@ class TestExperimentsRuns(TestCase):
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
             result = rv.get_json()
             self.assertIsInstance(result, dict)
+            self.assertIn("operators", result)
+            self.assertIn("uuid", result)
             self.assertEqual(rv.status_code, 200)
 
     def test_terminate_run(self):

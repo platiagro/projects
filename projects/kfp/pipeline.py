@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Kubeflow Pipelines interface."""
+from collections import defaultdict
 from json import dumps, loads
 
 from kfp import compiler, dsl
@@ -72,39 +73,7 @@ def compile_pipeline(name, operators, is_deployment):
             container_op.add_pvolumes({"vol-tmp-data": wrkdirop.volume})
 
         if is_deployment:
-            component_specs = []
-            for operator in operators:
-                component_specs.append(
-                    COMPONENT_SPEC.substitute({
-                        "operatorId": operator.uuid,
-                        "experimentId": operator.experiment_id,
-                    })
-                )
-
-            # FIXME
-            graph = []
-            for operator, container_op in containers.values():
-                children = []
-                graph.append(
-                    GRAPH.substitute({
-                        "name": operator.uuid,
-                        "children": children,
-                    })
-                )
-
-            seldon_deployment = SELDON_DEPLOYMENT.substitute({
-                "namespace": KF_PIPELINES_NAMESPACE,
-                "deploymentName": name,
-                "componentSpecs": ",".join(component_specs),
-                "graph": ",".join(graph),
-            })
-
-            seldon_deployment = loads(seldon_deployment)
-            resource_op = dsl.ResourceOp(
-                name="deployment",
-                k8s_resource=seldon_deployment,
-                success_condition="status.state == Available",
-            ).set_timeout(300)
+            resource_op = create_resource_op(operators)
 
             for _, container_op in containers.values():
                 resource_op.after(container_op)
@@ -115,7 +84,7 @@ def compile_pipeline(name, operators, is_deployment):
 
 def create_container_op(operator, is_deployment, dataset=None):
     """
-    Create operator operator from YAML file.
+    Create kfp.dsl.ContainerOp container from an operator list.
 
     Parameters
     ----------
@@ -196,6 +165,72 @@ def create_container_op(operator, is_deployment, dataset=None):
         .set_cpu_limit(CPU_LIMIT)
 
     return container_op
+
+
+def create_resource_op(operators):
+    """
+    Create kfp.dsl.ResourceOp container from an operator list.
+
+    Parameters
+    ----------
+    operators : list
+
+    Returns
+    -------
+    kfp.dsl.ResourceOp
+    """
+    component_specs = []
+    for operator in operators:
+        component_specs.append(
+            COMPONENT_SPEC.substitute({
+                "operatorId": operator.uuid,
+                "experimentId": operator.deployment_id,
+            })
+        )
+
+    first = None
+    graph = defaultdict(list)
+    for operator in operators:
+        if len(operator.dependencies) == 0:
+            first = operator.uuid
+
+        for dependency_id in operator.dependencies:
+            graph[dependency_id].append({operator.uuid: graph[operator.uuid]})
+
+    if first is None:
+        raise ValueError("deployment can't have cycles")
+
+    def build_graph(operator_id, children):
+        if len(children) > 1:
+            raise ValueError("deployment can't have multiple dependencies")
+        elif len(children) == 1:
+            child_operator_id, children = children[0].items()
+            children = build_graph(child_operator_id, children)
+        else:
+            children = "[]"
+
+        return GRAPH.substitute({
+            "name": operator_id,
+            "children": children,
+        })
+
+    graph = build_graph(operator_id=first, children=graph[first])
+
+    seldon_deployment = SELDON_DEPLOYMENT.substitute({
+        "namespace": KF_PIPELINES_NAMESPACE,
+        "deploymentName": name,
+        "componentSpecs": ",".join(component_specs),
+        "graph": graph,
+    })
+
+    seldon_deployment = loads(seldon_deployment)
+    resource_op = dsl.ResourceOp(
+        name="deployment",
+        k8s_resource=seldon_deployment,
+        success_condition="status.state == Available",
+    ).set_timeout(300)
+
+    return resource_op
 
 
 def undeploy_pipeline(resource):

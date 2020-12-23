@@ -18,6 +18,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 EXPERIMENT_ID = str(uuid_alpha())
 POSITION = 0
 OPERATOR_ID = str(uuid_alpha())
+OPERATOR_ID_2 = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 PARAMETERS_JSON = dumps({"coef": 0.1})
 DEP_EMPTY_JSON = dumps([])
@@ -84,6 +85,12 @@ class TestDeploymentsRuns(TestCase):
             f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{DEPLOYMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEP_EMPTY_JSON}')"
         )
         conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, deployment_id, task_id, parameters, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{DEPLOYMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '[\"{OPERATOR_ID}\"]')"
+        )
+        conn.execute(text)
         conn.close()
 
     @classmethod
@@ -113,16 +120,19 @@ class TestDeploymentsRuns(TestCase):
             result = rv.get_json()
             expected = {'message': 'The specified project does not exist'}
             self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 404)
 
             rv = c.post(f"/projects/{PROJECT_ID}/deployments/foo/runs", json={})
             result = rv.get_json()
             expected = {'message': 'The specified deployment does not exist'}
             self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 404)
 
             rv = c.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID_2}/runs", json={})
             result = rv.get_json()
             expected = {'message': 'Necessary at least one operator.'}
             self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 400)
 
             rv = c.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
             result = rv.get_json()

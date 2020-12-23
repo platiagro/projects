@@ -1677,12 +1677,12 @@ components:
     Run:
       type: object
       properties:
+        uuid:
+          type: string
+          format: uuid
         createdAt:
           type: string
           format: date-time
-        runId:
-          type: string
-          format: uuid
         operators:
           type: array
           items:

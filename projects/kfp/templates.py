@@ -98,14 +98,8 @@ GRAPH = Template("""{
     },
     "children": [
         $children
-    ]$logger
+    ]
 }""")
-
-LOGGER = Template(""",
-    "logger": {
-        "url": "http://pipelines.kubeflow/seldon/logger/$experimentId",
-        "mode": "all"
-    }""")
 
 POD_DEPLOYMENT_VOLUME = Template("""
 {

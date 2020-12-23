@@ -68,9 +68,6 @@ spec:
               children: []
               endpoint:
                 type: REST
-              logger:
-                mode: all
-                url: http://pipelines.kubeflow/seldon/logger/e75ba6d1-3a70-4158-bdca-85eb13311576
               name: efe1dd49-9b2b-4dc4-8876-9567d092c056
               type: MODEL
             labels:
