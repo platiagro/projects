@@ -10,6 +10,7 @@ from kubernetes.client.models import V1PersistentVolumeClaim
 from projects.kfp import CPU_LIMIT, CPU_REQUEST, KFP_CLIENT, \
     KF_PIPELINES_NAMESPACE, MEMORY_LIMIT, MEMORY_REQUEST
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
+from projects.kubernetes.utils import volume_exists
 
 
 def compile_pipeline(name, operators, experiment_id, deployment_id):
@@ -246,10 +247,15 @@ def create_resource_op(operators, experiment_id, deployment_id):
         "graph": graph,
     })
 
-    seldon_deployment = loads(seldon_deployment)
+    sdep_resource = loads(seldon_deployment)
+
+    # mounts the volume from experiment (if exists)
+    if volume_exists(f"vol-experiment-{experiment_id}", KF_PIPELINES_NAMESPACE):
+        sdep_resource = mount_volume_from_experiment(sdep_resource)
+
     resource_op = dsl.ResourceOp(
         name="deployment",
-        k8s_resource=seldon_deployment,
+        k8s_resource=sdep_resource,
         success_condition="status.state == Available",
     ).set_timeout(300)
 
@@ -303,3 +309,31 @@ def get_dataset(operators):
                 break
 
     return dataset
+
+
+def mount_volume_from_experiment(sdep_resource, experiment_id):
+    """
+    Adds volume mounts to seldon deployment k8s resource.
+
+    Parameters
+    ----------
+    sdep_resource : dict
+    experiment_id : str
+
+    Returns
+    -------
+    dict
+    """
+    for predictor in sdep_resource["spec"]["predictors"]:
+        for spec in predictor["componentSpecs"]:
+            spec["containers"][0]["volumeMounts"].append({
+                "name": "data",
+                "mountPath": "/tmp/data",
+            })
+            spec["volumes"].append({
+                "name": "data",
+                "persistentVolumeClaim": {
+                    "claimName": f"vol-experiment-{experiment_id}",
+                },
+            })
+    return seldon_deployment

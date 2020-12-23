@@ -75,10 +75,6 @@ COMPONENT_SPEC = Template("""
                     {
                         "name": "workspace",
                         "mountPath": "/app"
-                    },
-                    {
-                        "name": "data",
-                        "mountPath": "/tmp/data"
                     }
                 ]
             }
@@ -88,12 +84,6 @@ COMPONENT_SPEC = Template("""
                 "name": "workspace",
                 "persistentVolumeClaim": {
                     "claimName": "vol-deployment-$deploymentId"
-                }
-            },
-            {
-                "name": "data",
-                "persistentVolumeClaim": {
-                    "claimName": "vol-experiment-$experimentId"
                 }
             }
         ]

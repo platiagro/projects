@@ -78,3 +78,28 @@ def get_pod_log(pod, container):
         if 'ContainerCreating' in message:
             return []
         raise InternalServerError(f"Error while trying to retrive container's log: {message}")
+
+
+def volume_exists(name, namespace):
+    """
+    Returns whether a persistent volume exists.
+
+    Parameters
+    ----------
+    name : str
+    namespace : str
+
+    Returns
+    -------
+    bool
+    """
+    load_kube_config()
+    v1 = client.CoreV1Api()
+    try:
+        volume = v1.read_namespaced_persistent_volume_claim(name=name, namespace=namespace)
+        if volume.status.phase == "Bound":
+            return True
+        else:
+            return False
+    except ApiException:
+        return False
