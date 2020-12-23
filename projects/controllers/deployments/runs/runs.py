@@ -72,7 +72,9 @@ def create_run(project_id, deployment_id):
         raise NOT_FOUND
 
     try:
-        run = kfp_runs.start_run(operators=deployment.operators,
+        # keeps operators that have deployment_notebooks
+        operators = [o for o in deployment.operators if o.task.deployment_notebook_path]
+        run = kfp_runs.start_run(operators=operators,
                                  experiment_id=deployment.experiment_id,
                                  deployment_id=deployment_id)
     except ValueError as e:
