@@ -51,16 +51,15 @@ def list_runs(experiment_id):
     return runs
 
 
-def start_run(experiment_id, operators, is_deployment=False):
+def start_run(operators, experiment_id, deployment_id=None):
     """
     Start a new run in Kubeflow Pipelines.
 
     Parameters
     ----------
-    experiment_id : str
     operators : list
-    is_deployment : bool
-        Whether to create a SeldonDeployment resource.
+    experiment_id : str
+    deployment_id : str or None
 
     Returns
     -------
@@ -70,15 +69,21 @@ def start_run(experiment_id, operators, is_deployment=False):
     if len(operators) == 0:
         raise ValueError("Necessary at least one operator.")
 
-    compile_pipeline(name=experiment_id,
+    if deployment_id is None:
+        name = f"experiment-{experiment_id}"
+    else:
+        name = f"deployment-{deployment_id}"
+
+    compile_pipeline(name=name,
                      operators=operators,
-                     is_deployment=is_deployment)
+                     experiment_id=experiment_id,
+                     deployment_id=deployment_id)
 
     kfp_experiment = KFP_CLIENT.create_experiment(name=experiment_id)
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
 
-    job_name = f"{experiment_id}-{tag}"
-    pipeline_package_path = f"{experiment_id}.yaml"
+    job_name = f"{name}-{tag}"
+    pipeline_package_path = f"{name}.yaml"
     run = KFP_CLIENT.run_pipeline(
         experiment_id=kfp_experiment.id,
         job_name=job_name,

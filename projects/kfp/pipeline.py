@@ -12,7 +12,7 @@ from projects.kfp import CPU_LIMIT, CPU_REQUEST, KFP_CLIENT, \
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 
 
-def compile_pipeline(name, operators, is_deployment):
+def compile_pipeline(name, operators, experiment_id, deployment_id):
     """
     Compile the pipeline in a .yaml file.
 
@@ -20,77 +20,101 @@ def compile_pipeline(name, operators, is_deployment):
     ----------
     name : str
     operators : list
-    is_deployment : bool
+    experiment_id : str
+    deployment_id : str or None
     """
+    if deployment_id is None:
+        mount_path = "/tmp/data"
+    else:
+        mount_path = "/home/jovyan"
+        # Creates resource_op that creates a seldondeployment
+        resource_op = create_resource_op(operators,
+                                         experiment_id,
+                                         deployment_id)
+
     @dsl.pipeline(name=name)
     def pipeline_func():
-        pvc = V1PersistentVolumeClaim(
-            api_version="v1",
-            kind="PersistentVolumeClaim",
-            metadata={
-                "name": f"vol-{name}",
-                "namespace": KF_PIPELINES_NAMESPACE,
-            },
-            spec={
-                "accessModes": ["ReadWriteOnce"],
-                "resources": {
-                    "requests": {
-                        "storage": "1Gi",
-                    },
-                },
-            },
-        )
+        # Create a volume to share data between container_ops
+        volume_op = create_volume_op(name)
 
-        wrkdirop = dsl.VolumeOp(
-            name="vol-tmp-data",
-            k8s_resource=pvc,
-            action="apply",
-        )
+        # Gets dataset from any operator that has a dataset
+        dataset = get_dataset(operators)
 
-        # Find the special parameter "dataset" (which is copied to all operators)
-        # The prefix /tmp/data/ is added to the parameter so the operator
-        # receives the full path to the dataset file during a run.
-        dataset = None
-        for operator in operators:
-            for parameter_name, parameter_value in operator.parameters.items():
-                if parameter_name == "dataset":
-                    dataset = f"/tmp/data/{parameter_value}"
-                    break
-
-        # Create container_op for all operators
+        # Create a container_op for each operator
         containers = {}
         for operator in operators:
+            if deployment_id is not None:
+                notebook_path = operator.task.deployment_notebook_path
+            else:
+                notebook_path = operator.task.experiment_notebook_path
+
             container_op = create_container_op(operator=operator,
-                                               is_deployment=is_deployment,
+                                               experiment_id=experiment_id,
+                                               notebook_path=notebook_path,
                                                dataset=dataset)
             containers[operator.uuid] = (operator, container_op)
 
-        # Define operators volumes and dependencies
+        # Sets dependencies for each container_op
         for operator, container_op in containers.values():
             dependencies = [containers[dependency_id][1] for dependency_id in operator.dependencies]
             container_op.after(*dependencies)
+            container_op.add_pvolumes({mount_path: volume_op.volume})
 
-            container_op.add_pvolumes({"vol-tmp-data": wrkdirop.volume})
-
-        if is_deployment:
-            resource_op = create_resource_op(operators)
-
-            for _, container_op in containers.values():
+            if deployment_id is not None:
                 resource_op.after(container_op)
 
     compiler.Compiler() \
         .compile(pipeline_func, f"{name}.yaml")
 
 
-def create_container_op(operator, is_deployment, dataset=None):
+def create_volume_op(name):
+    """
+    Creates a kfp.dsl.VolumeOp container.
+
+    Parameters
+    ----------
+    name : str
+
+    Returns
+    -------
+    kfp.dsl.ContainerOp
+    """
+    pvc = V1PersistentVolumeClaim(
+        api_version="v1",
+        kind="PersistentVolumeClaim",
+        metadata={
+            "name": f"vol-{name}",
+            "namespace": KF_PIPELINES_NAMESPACE,
+        },
+        spec={
+            "accessModes": ["ReadWriteOnce"],
+            "resources": {
+                "requests": {
+                    "storage": "1Gi",
+                },
+            },
+        },
+    )
+
+    volume_op = dsl.VolumeOp(
+        name="vol-tmp-data",
+        k8s_resource=pvc,
+        action="apply",
+    )
+
+    return volume_op
+
+
+def create_container_op(operator, experiment_id, notebook_path=None, dataset=None):
     """
     Create kfp.dsl.ContainerOp container from an operator list.
 
     Parameters
     ----------
     operator : dict
-    is_deployment: bool
-    dataset : str
+    experiment_id : str
+    notebook_path : str or None
+    dataset : str or None
 
     Returns
     -------
@@ -103,16 +127,11 @@ def create_container_op(operator, is_deployment, dataset=None):
         arguments=operator.task.arguments,
     )
 
-    if is_deployment:
-        notebook_path = operator.task.deployment_notebook_path
-    else:
-        notebook_path = operator.task.experiment_notebook_path
-
     container_op.container.set_image_pull_policy("Always") \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="EXPERIMENT_ID",
-                value=operator.experiment_id,
+                value=experiment_id,
             ),
         ) \
         .add_env_variable(
@@ -167,13 +186,15 @@ def create_container_op(operator, is_deployment, dataset=None):
     return container_op
 
 
-def create_resource_op(operators):
+def create_resource_op(operators, experiment_id, deployment_id):
     """
     Create kfp.dsl.ResourceOp container from an operator list.
 
     Parameters
     ----------
     operators : list
+    experiment_id : str
+    deployment_id : str
 
     Returns
     -------
@@ -184,7 +205,8 @@ def create_resource_op(operators):
         component_specs.append(
             COMPONENT_SPEC.substitute({
                 "operatorId": operator.uuid,
-                "experimentId": operator.deployment_id,
+                "experimentId": experiment_id,
+                "deploymentId": deployment_id,
             })
         )
 
@@ -204,7 +226,7 @@ def create_resource_op(operators):
         if len(children) > 1:
             raise ValueError("deployment can't have multiple dependencies")
         elif len(children) == 1:
-            child_operator_id, children = children[0].items()
+            child_operator_id, children = next(iter(children[0].items()))
             children = build_graph(child_operator_id, children)
         else:
             children = "[]"
@@ -218,7 +240,7 @@ def create_resource_op(operators):
 
     seldon_deployment = SELDON_DEPLOYMENT.substitute({
         "namespace": KF_PIPELINES_NAMESPACE,
-        "deploymentName": name,
+        "deploymentName": deployment_id,
         "componentSpecs": ",".join(component_specs),
         "graph": graph,
     })
@@ -256,3 +278,27 @@ def undeploy_pipeline(resource):
         run_name='undeploy',
         namespace=KF_PIPELINES_NAMESPACE
     )
+
+
+def get_dataset(operators):
+    """
+    Find the special parameter "dataset" (which is copied to all operators)
+    The prefix /tmp/data/ is added to the parameter so the operator
+    receives the full path to the dataset file during a run.
+
+    Parameters
+    ----------
+    operators : list
+
+    Returns
+    -------
+    str
+    """
+    dataset = None
+    for operator in operators:
+        for name, value in operator.parameters.items():
+            if name == "dataset":
+                dataset = f"/tmp/data/{value}"
+                break
+
+    return dataset
