@@ -87,7 +87,8 @@ def create_run(project_id, deployment_id):
     else:
         raise BadRequest("Necessary at least one operator.")
 
-    compile_pipeline(deployment.uuid, deployment.operators)
+    compile_pipeline(name=deployment.uuid,
+                     operators=deployment.operators)
     experiment = KFP_CLIENT.create_experiment(name=deployment.uuid)
     run = KFP_CLIENT.run_pipeline(experiment_id=experiment.id,
                                   job_name=deployment_id,

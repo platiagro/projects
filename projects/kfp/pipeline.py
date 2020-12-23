@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """Kubeflow Pipelines interface."""
-from base64 import b64encode
 from json import dumps
-from string import Template
-from yaml import dump
 
 from kfp import compiler, dsl
 from kubernetes import client as k8s_client
@@ -22,8 +19,8 @@ def compile_pipeline(name, operators):
     name : str
     operators : list
     """
-    @dsl.pipeline(name="Experiment")
-    def experiment_pipeline():
+    @dsl.pipeline(name=name)
+    def pipeline_func():
         pvc = V1PersistentVolumeClaim(
             api_version="v1",
             kind="PersistentVolumeClaim",
@@ -71,7 +68,7 @@ def compile_pipeline(name, operators):
             container_op.add_pvolumes({"vol-tmp-data": wrkdirop.volume})
 
     compiler.Compiler() \
-        .compile(experiment_pipeline, f"{name}.yaml")
+        .compile(pipeline_func, f"{name}.yaml")
 
 
 def create_container_op(operator, dataset=None):
@@ -136,7 +133,7 @@ def create_container_op(operator, dataset=None):
             # fix for: cannot unmarshal number into
             # Go struct field EnvVar.value of type string
             value = dumps(value)
-        container_op \
+        container_op.container \
             .add_env_variable(
                 k8s_client.V1EnvVar(
                     name=f"PARAMETER_{name}",
@@ -144,7 +141,7 @@ def create_container_op(operator, dataset=None):
                 ),
             )
 
-    container_op \
+    container_op.container \
         .set_memory_request(MEMORY_REQUEST) \
         .set_memory_limit(MEMORY_LIMIT) \
         .set_cpu_request(CPU_REQUEST) \

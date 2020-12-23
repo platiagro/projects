@@ -8,7 +8,6 @@ from werkzeug.exceptions import BadRequest
 
 from projects.kfp import KFP_CLIENT
 from projects.kfp.pipeline import compile_pipeline
-from projects.kfp.utils import get_operator_parameters
 
 
 def list_runs(experiment_id):
@@ -115,32 +114,29 @@ def get_run(run_id, experiment_id):
 
     workflow_manifest = json.loads(kfp_run.pipeline_runtime.workflow_manifest)
 
-    # nodes are creating, returns the tasks with no dependencies as Pending
-    if "nodes" not in workflow_manifest["status"]:
-        template = next(t for t in workflow_manifest["spec"]["templates"] if t["name"] == "experiment")
-        tasks = (t for t in template["dag"]["tasks"] if "dependencies" not in t)
-        status = dict((t["name"], {"status": "Pending"}) for t in tasks)
-        return {"operators": status}
+    operators = {}
 
-    # nodes are running
-    nodes = workflow_manifest["status"]["nodes"]
+    # initializes all operators with status=Pending and parameters={}
+    template = next(t for t in workflow_manifest["spec"]["templates"] if "dag" in t)
+    tasks = (tsk for tsk in template["dag"]["tasks"] if tsk["name"] != "vol-tmp-data")
+    operators = dict((t["name"], {"status": "Pending", "parameters": {}}) for t in tasks)
 
-    operators_status = {}
+    # sets statuses for each operator
+    for node in workflow_manifest["status"].get("nodes", {}).values():
+        if node["displayName"] in operators:
+            operator_id = node["displayName"]
+            operators[operator_id]["status"] = get_status(node)
 
-    for index, node in enumerate(nodes.values()):
-        if index != 0:
-            display_name = str(node["displayName"])
-            if "vol-tmp-data" != display_name:
-                operator = {}
-                # check if pipeline was interrupted
-                if "message" in node and str(node["message"]) == "terminated":
-                    operator["status"] = "Terminated"
-                else:
-                    operator["status"] = str(node["phase"])
-                operator["parameters"] = get_operator_parameters(workflow_manifest, display_name)
-                operators_status[display_name] = operator
+    # sets parameters for each operator
+    for template in workflow_manifest["spec"]["templates"]:
+        if "container" in template and "env" in template["container"]:
+            operator_id = template["name"]
+            operators[operator_id]["parameters"] = get_parameters(template)
+
     return {
-        "operators": operators_status, "runId": kfp_run.run.id, "createdAt": kfp_run.run.created_at
+        "runId": kfp_run.run.id,
+        "operators": operators,
+        "createdAt": kfp_run.run.created_at,
     }
 
 
@@ -237,3 +233,54 @@ def retry_run(run_id, experiment_id):
         raise BadRequest("Not a failed run")
 
     return {"message": "Run re-initiated successfully"}
+
+
+def get_parameters(template):
+    """
+    Builds a dict of parameters from a workflow manifest.
+
+    Parameters
+    ----------
+    template : dict
+
+    Returns
+    -------
+    dict
+        Parameters.
+    """
+    parameters = {}
+    prefix = "PARAMETER_"
+    for var in template["container"]["env"]:
+        name = var["name"]
+        value = var.get("value")
+
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+
+            if value is not None:
+                value = json.loads(value)
+
+            parameters[name] = value
+
+    return parameters
+
+
+def get_status(node):
+    """
+    Builds a dict of status from a workflow manifest.
+
+    Parameters
+    ----------
+    node : dict
+
+    Returns
+    -------
+    str
+    """
+    # check if pipeline was interrupted
+    if "message" in node and str(node["message"]) == "terminated":
+        status = "Terminated"
+    else:
+        status = str(node["phase"])
+
+    return status
