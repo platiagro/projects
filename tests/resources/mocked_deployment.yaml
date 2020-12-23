@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: deployment-
+  generateName: deployment-$deploymentId-
   annotations:
     {
       pipelines.kubeflow.org/pipeline_spec: '{"name": "Deployment."}',

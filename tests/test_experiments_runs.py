@@ -6,7 +6,7 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.kfp import KFP_CLIENT
-from projects.object_storage import BUCKET_NAME
+from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 OPERATOR_ID = str(uuid_alpha())
 NAME = "foo"
@@ -42,12 +42,27 @@ TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
 
 class TestExperimentsRuns(TestCase):
     def setUp(self):
+        self.maxDiff = None
+
+        MINIO_CLIENT.fput_object(
+            bucket_name=BUCKET_NAME,
+            object_name=f"tasks/{TASK_ID}/Experiment.ipynb",
+            file_path="tests/resources/mocked_experiment_task.ipynb",
+        )
+
+        with open("tests/resources/mocked_experiment.yaml", "r") as file:
+            content = file.read()
+
+        content = content.replace("$experimentId", EXPERIMENT_ID)
+        with open("tests/resources/mocked.yaml", "w") as file:
+            file.write(content)
+
         # Run a default pipeline for tests
         kfp_experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID)
         a = KFP_CLIENT.run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=EXPERIMENT_ID,
-            pipeline_package_path="tests/resources/mocked_experiment.yaml",
+            pipeline_package_path="tests/resources/mocked.yaml",
         )
 
         conn = engine.connect()
@@ -105,7 +120,7 @@ class TestExperimentsRuns(TestCase):
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs")
             result = rv.get_json()
             self.assertIsInstance(result, list)
-            self.assertEqual(len(result), 1)
+            self.assertGreater(len(result), 0)
             self.assertEqual(rv.status_code, 200)
 
     def test_create_run(self):

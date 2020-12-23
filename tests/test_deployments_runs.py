@@ -159,7 +159,7 @@ class TestDeploymentsRuns(TestCase):
             rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
             result = rv.get_json()
             self.assertIsInstance(result, list)
-            self.assertEqual(len(result), 1)
+            self.assertGreater(len(result), 0)
             self.assertEqual(rv.status_code, 200)
 
     def test_get_deployment_log(self):
