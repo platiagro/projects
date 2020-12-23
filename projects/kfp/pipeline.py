@@ -335,4 +335,4 @@ def mount_volume_from_experiment(sdep_resource, experiment_id):
                     "claimName": f"vol-experiment-{experiment_id}",
                 },
             })
-    return seldon_deployment
+    return sdep_resource
