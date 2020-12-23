@@ -249,7 +249,7 @@ def create_resource_op(operators, experiment_id, deployment_id):
 
     sdep_resource = loads(seldon_deployment)
 
-    # mounts the volume from experiment (if exists)
+    # mounts the "/tmp/data" volume from experiment (if exists)
     if volume_exists(f"vol-experiment-{experiment_id}", KF_PIPELINES_NAMESPACE):
         sdep_resource = mount_volume_from_experiment(sdep_resource)
 
