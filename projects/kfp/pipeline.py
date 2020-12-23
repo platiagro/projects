@@ -250,7 +250,7 @@ def create_resource_op(operators, experiment_id, deployment_id):
 
     # mounts the "/tmp/data" volume from experiment (if exists)
     if volume_exists(f"vol-experiment-{experiment_id}", KF_PIPELINES_NAMESPACE):
-        sdep_resource = mount_volume_from_experiment(sdep_resource)
+        sdep_resource = mount_volume_from_experiment(sdep_resource, experiment_id)
 
     resource_op = dsl.ResourceOp(
         name="deployment",
