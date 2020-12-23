@@ -49,16 +49,23 @@ TASK_DATASET_TAGS = ["DATASETS"]
 TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
 
 
-class TestExperimentsRuns(TestCase):
+class TestDeployments(TestCase):
     def setUp(self):
         self.maxDiff = None
+
+        with open("tests/resources/mocked_deployment.yaml", "r") as file:
+            content = file.read()
+
+        content = content.replace("$deploymentId", DEPLOYMENT_ID)
+        with open("tests/resources/mocked.yaml", "w") as file:
+            file.write(content)
 
         # Run a default pipeline for tests
         kfp_experiment = KFP_CLIENT.create_experiment(name=DEPLOYMENT_ID)
         KFP_CLIENT.run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=DEPLOYMENT_ID,
-            pipeline_package_path="tests/resources/mocked_deployment.yaml",
+            pipeline_package_path="tests/resources/mocked.yaml",
         )
 
         conn = engine.connect()
