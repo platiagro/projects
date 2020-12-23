@@ -23,8 +23,6 @@ TASK_ID = str(uuid_alpha())
 PARAMETERS_JSON = dumps({"coef": 0.1})
 DEP_EMPTY_JSON = dumps([])
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
-ARGUMENTS_JSON = dumps(["ARG"])
-COMMANDS_JSON = dumps(["CMD"])
 TAGS_JSON = dumps(["PREDICTOR"])
 DEPLOY_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 EX_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
@@ -52,7 +50,7 @@ class TestDeploymentsRuns(TestCase):
         conn = engine.connect()
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID}', 'name', 'desc', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EX_NOTEBOOK_PATH}', '{DEPLOY_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES ('{TASK_ID}', 'name', 'desc', '{IMAGE}', NULL, NULL, '{TAGS_JSON}', '{EX_NOTEBOOK_PATH}', '{DEPLOY_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
