@@ -23,15 +23,6 @@ def compile_pipeline(name, operators, experiment_id, deployment_id):
     experiment_id : str
     deployment_id : str or None
     """
-    if deployment_id is None:
-        mount_path = "/tmp/data"
-    else:
-        mount_path = "/home/jovyan"
-        # Creates resource_op that creates a seldondeployment
-        resource_op = create_resource_op(operators,
-                                         experiment_id,
-                                         deployment_id)
-
     @dsl.pipeline(name=name)
     def pipeline_func():
         # Create a volume to share data between container_ops
@@ -53,6 +44,15 @@ def compile_pipeline(name, operators, experiment_id, deployment_id):
                                                notebook_path=notebook_path,
                                                dataset=dataset)
             containers[operator.uuid] = (operator, container_op)
+
+        if deployment_id is None:
+            mount_path = "/tmp/data"
+        else:
+            mount_path = "/home/jovyan"
+            # Creates resource_op that creates a seldondeployment
+            resource_op = create_resource_op(operators=operators,
+                                             experiment_id=experiment_id,
+                                             deployment_id=deployment_id)
 
         # Sets dependencies for each container_op
         for operator, container_op in containers.values():
@@ -213,6 +213,7 @@ def create_resource_op(operators, experiment_id, deployment_id):
     first = None
     graph = defaultdict(list)
     for operator in operators:
+        print(operator.as_dict())
         if len(operator.dependencies) == 0:
             first = operator.uuid
 
@@ -229,7 +230,7 @@ def create_resource_op(operators, experiment_id, deployment_id):
             child_operator_id, children = next(iter(children[0].items()))
             children = build_graph(child_operator_id, children)
         else:
-            children = "[]"
+            children = ""
 
         return GRAPH.substitute({
             "name": operator_id,

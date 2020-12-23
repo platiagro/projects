@@ -105,6 +105,7 @@ class TestExperimentsRuns(TestCase):
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs")
             result = rv.get_json()
             self.assertIsInstance(result, list)
+            self.assertEqual(len(result), 1)
             self.assertEqual(rv.status_code, 200)
 
     def test_create_run(self):

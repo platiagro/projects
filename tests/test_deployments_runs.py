@@ -7,7 +7,7 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.kfp import KFP_CLIENT
-from projects.object_storage import BUCKET_NAME
+from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
@@ -20,6 +20,7 @@ POSITION = 0
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
+TASK_ID_2 = str(uuid_alpha())
 PARAMETERS_JSON = dumps({"coef": 0.1})
 DEP_EMPTY_JSON = dumps([])
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
@@ -33,6 +34,13 @@ class TestDeploymentsRuns(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.maxDiff = None
+
+        MINIO_CLIENT.fput_object(
+            bucket_name=BUCKET_NAME,
+            object_name=f"tasks/{TASK_ID}/Deployment.ipynb",
+            file_path="tests/resources/mocked_deployment_task.ipynb",
+        )
+
         with open("tests/resources/mocked_deployment.yaml", "r") as file:
             content = file.read()
 
@@ -51,6 +59,12 @@ class TestDeploymentsRuns(TestCase):
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES ('{TASK_ID}', 'name', 'desc', '{IMAGE}', NULL, NULL, '{TAGS_JSON}', '{EX_NOTEBOOK_PATH}', '{DEPLOY_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID_2}', 'name', 'desc', '{IMAGE}', NULL, NULL, '{TAGS_JSON}', '{EX_NOTEBOOK_PATH}', NULL, 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -80,7 +94,7 @@ class TestDeploymentsRuns(TestCase):
 
         text = (
             f"INSERT INTO operators (uuid, experiment_id, deployment_id, task_id, parameters, created_at, updated_at, dependencies) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{DEPLOYMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEP_EMPTY_JSON}')"
+            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{DEPLOYMENT_ID}', '{TASK_ID_2}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEP_EMPTY_JSON}')"
         )
         conn.execute(text)
 
@@ -110,7 +124,7 @@ class TestDeploymentsRuns(TestCase):
 
         conn.close()
 
-        remove('tests/resources/mocked.yaml')
+        remove("tests/resources/mocked.yaml")
 
     def test_create_run(self):
         with app.test_client() as c:
@@ -145,6 +159,7 @@ class TestDeploymentsRuns(TestCase):
             rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
             result = rv.get_json()
             self.assertIsInstance(result, list)
+            self.assertEqual(len(result), 1)
             self.assertEqual(rv.status_code, 200)
 
     def test_get_deployment_log(self):

@@ -71,12 +71,18 @@ def create_run(project_id, deployment_id):
     if deployment is None:
         raise NOT_FOUND
 
+    # Removes operators that don't have a deployment_notebook (eg. Upload de Dados).
+    # Then, fix dependencies in their children.
+    operators = []
+    all_operators = deployment.operators
+    for operator in deployment.operators:
+        if operator.task.deployment_notebook_path is None:
+            all_operators = fix_children_dependencies(removed_operator=operator,
+                                                      all_operators=all_operators)
+        else:
+            operators.append(operator)
+
     try:
-        # keeps operators that have deployment_notebooks
-        operators = [o for o in deployment.operators if o.task.deployment_notebook_path]
-
-
-
         run = kfp_runs.start_run(operators=operators,
                                  experiment_id=deployment.experiment_id,
                                  deployment_id=deployment_id)
@@ -85,6 +91,26 @@ def create_run(project_id, deployment_id):
 
     run["deploymentId"] = deployment_id
     return run
+
+
+def fix_children_dependencies(removed_operator, all_operators):
+    """
+    After an operator was removed, passes the dependencies to its children.
+
+    Parameters
+    ----------
+    removed_operator : Operator
+    all_operators : list
+
+    Returns
+    -------
+    list
+        The run attributes.
+    """
+    for o in all_operators:
+        if removed_operator.uuid in o.dependencies:
+            o.dependencies.remove(removed_operator.uuid)
+            o.dependencies.extend(removed_operator.dependencies)
 
 
 def get_run(project_id, deployment_id, run_id):
