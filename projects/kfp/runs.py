@@ -41,7 +41,7 @@ def list_runs(experiment_id):
     runs = []
     for kfp_run in kfp_runs.runs:
         workflow_manifest = json.loads(kfp_run.pipeline_spec.workflow_manifest)
-        if workflow_manifest["metadata"]["generateName"] == "experiment-":
+        if workflow_manifest["metadata"]["generateName"] == f"experiment-{experiment_id}-":
             run_id = kfp_run.id
             run = get_run(experiment_id=experiment_id,
                           run_id=run_id)

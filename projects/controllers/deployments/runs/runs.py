@@ -74,6 +74,9 @@ def create_run(project_id, deployment_id):
     try:
         # keeps operators that have deployment_notebooks
         operators = [o for o in deployment.operators if o.task.deployment_notebook_path]
+
+
+
         run = kfp_runs.start_run(operators=operators,
                                  experiment_id=deployment.experiment_id,
                                  deployment_id=deployment_id)
