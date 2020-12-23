@@ -214,7 +214,6 @@ def create_resource_op(operators, experiment_id, deployment_id):
     first = None
     graph = defaultdict(list)
     for operator in operators:
-        print(operator.as_dict())
         if len(operator.dependencies) == 0:
             first = operator.uuid
 
