@@ -51,7 +51,7 @@ def list_runs(experiment_id):
     return runs
 
 
-def start_run(experiment_id, operators):
+def start_run(experiment_id, operators, is_deployment=False):
     """
     Start a new run in Kubeflow Pipelines.
 
@@ -59,6 +59,7 @@ def start_run(experiment_id, operators):
     ----------
     experiment_id : str
     operators : list
+    is_deployment : bool
 
     Returns
     -------
@@ -66,7 +67,8 @@ def start_run(experiment_id, operators):
         The run attributes.
     """
     compile_pipeline(name=experiment_id,
-                     operators=operators)
+                     operators=operators,
+                     is_deployment=is_deployment)
 
     kfp_experiment = KFP_CLIENT.create_experiment(name=experiment_id)
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")

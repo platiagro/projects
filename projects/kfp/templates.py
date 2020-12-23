@@ -8,7 +8,7 @@ SELDON_DEPLOYMENT = Template("""{
         "labels": {
             "app": "seldon"
         },
-        "name": "$experimentId",
+        "name": "$deploymentName",
         "deploymentName": "$deploymentName",
         "namespace": "$namespace"
     },
@@ -20,7 +20,7 @@ SELDON_DEPLOYMENT = Template("""{
             "seldon.io/grpc-read-timeout": "60000",
             "seldon.io/engine-separate-pod": "true"
         },
-        "name": "$experimentId",
+        "name": "$deploymentName",
         "resources": {
             "requests": {
                 "memory": "2G"
@@ -69,10 +69,6 @@ COMPONENT_SPEC = Template("""
                     {
                         "name": "OPERATOR_ID",
                         "value": "$operatorId"
-                    },
-                    {
-                        "name": "PARAMETERS",
-                        "value": "$parameters"
                     }
                 ],
                 "volumeMounts": [

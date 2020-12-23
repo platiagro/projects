@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """Kubeflow Pipelines interface."""
-from json import dumps
+from json import dumps, loads
 
 from kfp import compiler, dsl
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
-from projects.kfp import KFP_CLIENT, KF_PIPELINES_NAMESPACE, MEMORY_REQUEST, \
-    MEMORY_LIMIT, CPU_REQUEST, CPU_LIMIT
+from projects.kfp import CPU_LIMIT, CPU_REQUEST, KFP_CLIENT, \
+    KF_PIPELINES_NAMESPACE, MEMORY_LIMIT, MEMORY_REQUEST
+from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 
 
-def compile_pipeline(name, operators):
+def compile_pipeline(name, operators, is_deployment):
     """
     Compile the pipeline in a .yaml file.
 
@@ -18,6 +19,7 @@ def compile_pipeline(name, operators):
     ----------
     name : str
     operators : list
+    is_deployment : bool
     """
     @dsl.pipeline(name=name)
     def pipeline_func():
@@ -57,27 +59,68 @@ def compile_pipeline(name, operators):
         # Create container_op for all operators
         containers = {}
         for operator in operators:
-            container_op = create_container_op(operator, dataset=dataset)
+            container_op = create_container_op(operator=operator,
+                                               is_deployment=is_deployment,
+                                               dataset=dataset)
             containers[operator.uuid] = (operator, container_op)
 
-        # Define operators volumes and dependecies
+        # Define operators volumes and dependencies
         for operator, container_op in containers.values():
             dependencies = [containers[dependency_id][1] for dependency_id in operator.dependencies]
             container_op.after(*dependencies)
 
             container_op.add_pvolumes({"vol-tmp-data": wrkdirop.volume})
 
+        if is_deployment:
+            component_specs = []
+            for operator in operators:
+                component_specs.append(
+                    COMPONENT_SPEC.substitute({
+                        "operatorId": operator.uuid,
+                        "experimentId": operator.experiment_id,
+                    })
+                )
+
+            # FIXME
+            graph = []
+            for operator, container_op in containers.values():
+                children = []
+                graph.append(
+                    GRAPH.substitute({
+                        "name": operator.uuid,
+                        "children": children,
+                    })
+                )
+
+            seldon_deployment = SELDON_DEPLOYMENT.substitute({
+                "namespace": KF_PIPELINES_NAMESPACE,
+                "deploymentName": name,
+                "componentSpecs": ",".join(component_specs),
+                "graph": ",".join(graph),
+            })
+
+            seldon_deployment = loads(seldon_deployment)
+            resource_op = dsl.ResourceOp(
+                name="deployment",
+                k8s_resource=seldon_deployment,
+                success_condition="status.state == Available",
+            ).set_timeout(300)
+
+            for _, container_op in containers.values():
+                resource_op.after(container_op)
+
     compiler.Compiler() \
         .compile(pipeline_func, f"{name}.yaml")
 
 
-def create_container_op(operator, dataset=None):
+def create_container_op(operator, is_deployment, dataset=None):
     """
     Create operator operator from YAML file.
 
     Parameters
     ----------
     operator : dict
+    is_deployment: bool
     dataset : str
 
     Returns
@@ -90,6 +133,11 @@ def create_container_op(operator, dataset=None):
         command=operator.task.commands,
         arguments=operator.task.arguments,
     )
+
+    if is_deployment:
+        notebook_path = operator.task.deployment_notebook_path
+    else:
+        notebook_path = operator.task.experiment_notebook_path
 
     container_op.container.set_image_pull_policy("Always") \
         .add_env_variable(
@@ -113,7 +161,7 @@ def create_container_op(operator, dataset=None):
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="NOTEBOOK_PATH",
-                value=operator.task.experiment_notebook_path,
+                value=notebook_path,
             ),
         )
 

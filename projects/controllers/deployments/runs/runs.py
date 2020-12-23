@@ -8,6 +8,7 @@ from projects.controllers.utils import raise_if_project_does_not_exist, \
 from projects.models import Deployment, Task
 
 from projects.kfp import KFP_CLIENT
+from projects.kfp import runs as kfp_runs
 from projects.kfp.pipeline import compile_pipeline, undeploy_pipeline
 from projects.kfp.deployments import get_deployment_runs
 
@@ -70,31 +71,10 @@ def create_run(project_id, deployment_id):
     if deployment is None:
         raise NOT_FOUND
 
-    deploy_operators = []
-    operators = deployment.operators
-    if operators and len(operators) > 0:
-        for operator in operators:
-            task = Task.query.get(operator.task_id)
-            deploy_operator = {
-                "arguments": task.arguments,
-                "commands": task.commands,
-                "dependencies": operator.dependencies,
-                "image": task.image,
-                "notebookPath": task.deployment_notebook_path,
-                "operatorId": operator.uuid,
-            }
-            deploy_operators.append(deploy_operator)
-    else:
-        raise BadRequest("Necessary at least one operator.")
+    run = kfp_runs.start_run(experiment_id=deployment.experiment_id,
+                             operators=experiment.operators)
 
-    compile_pipeline(name=deployment.uuid,
-                     operators=deployment.operators)
-    experiment = KFP_CLIENT.create_experiment(name=deployment.uuid)
-    run = KFP_CLIENT.run_pipeline(experiment_id=experiment.id,
-                                  job_name=deployment_id,
-                                  pipeline_package_path=f"{deployment.uuid}.yaml")
-
-    return {"uuid": run.id, "deploymentId": deployment.uuid, "operators": deployment.operators}
+    return run
 
 
 def get_run(project_id, deployment_id, run_id):
