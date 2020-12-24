@@ -41,12 +41,11 @@ def list_logs(project_id, deployment_id, run_id):
 
     deployment_pods = list_deployment_pods(deployment_id)
     response = []
-    container_ = {'containerName': None, 'logs': [], 'status': 'Starting'}
+    container_ = {'status': 'Starting'}
 
     if not deployment_pods:
         container_.update({'status': 'Creating'})
-        response.append(container_)
-        return response
+        return container_
 
     for pod in deployment_pods:
         for container in pod.spec.containers:
@@ -55,8 +54,7 @@ def list_logs(project_id, deployment_id, run_id):
 
                 if not pod_log:
                     container_.update({'status': 'Creating'})
-                    response.append(container_)
-                    return response
+                    return container_
 
                 container_ = {}
                 container_['containerName'] = get_operator_name(container.name)

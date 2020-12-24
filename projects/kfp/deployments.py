@@ -23,7 +23,7 @@ def get_deployment_runs(deployment_id):
     deployment = {}
 
     for deployment_run in list_deployments_runs():
-        if deployment_run["name"] == deployment_id:
+        if deployment_run["deploymentId"] == deployment_id:
             deployment = deployment_run
             break
 
@@ -130,11 +130,14 @@ def format_deployment_pipeline(run):
         deployment_manifest = yaml.load(template['resource']['manifest'], Loader=yaml.FullLoader)
 
         name = deployment_manifest["metadata"]["name"]
+        deployment_id = deployment_manifest["metadata"]["deploymentId"]
+
         if "deploymentName" in deployment_manifest["metadata"]:
             name = deployment_manifest["metadata"]["deploymentName"]
         return {
             "experimentId": experiment_id,
             "name": name,
+            "deploymentId": deployment_id,
             "status": run.status or "Running",
             "createdAt": run.created_at,
             "runId": run.id

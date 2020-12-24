@@ -78,7 +78,8 @@ def create_run(project_id, deployment_id):
     try:
         run = kfp_runs.start_run(operators=operators,
                                  experiment_id=deployment.experiment_id,
-                                 deployment_id=deployment_id)
+                                 deployment_id=deployment_id,
+                                 deployment_name=deployment.name)
     except ValueError as e:
         raise BadRequest(str(e))
 
