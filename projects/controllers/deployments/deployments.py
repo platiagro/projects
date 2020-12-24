@@ -108,6 +108,8 @@ def create_deployment(project_id=None,
 
     if operators and len(operators) > 0:
         for operator in operators:
+            # FIXME Do not copy dependencies from experiment!
+            # Use the generated operator.uuid
             create_operator(deployment_id=deployment.uuid,
                             project_id=project_id,
                             task_id=operator.task_id,
