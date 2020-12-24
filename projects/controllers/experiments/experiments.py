@@ -273,8 +273,15 @@ def delete_experiment(project_id, experiment_id):
 
     # remove comparisons
     Comparison.query.filter(Comparison.experiment_id == experiment_id).delete()
-    # remove operators
+
+    # remove experiment operators
     Operator.query.filter(Operator.experiment_id == experiment_id).delete()
+
+    # remove deployment (if exists) operators
+    deployment = Deployment.query.filter(Deployment.experiment_id == experiment_id).first()
+    if deployment:
+        Operator.query.filter(Operator.deployment_id == deployment.uuid).delete()
+
     # remove deployments
     Deployment.query.filter(Deployment.experiment_id == experiment_id).delete()
 

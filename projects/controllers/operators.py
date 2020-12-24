@@ -51,7 +51,7 @@ def list_operators(project_id, experiment_id):
     return response
 
 
-def create_operator(project_id, experiment_id, deployment_id=None,
+def create_operator(project_id, experiment_id=None, deployment_id=None,
                     task_id=None, parameters=None, dependencies=None,
                     position_x=None, position_y=None, **kwargs):
     """
@@ -89,8 +89,15 @@ def create_operator(project_id, experiment_id, deployment_id=None,
     """
     raise_if_project_does_not_exist(project_id)
 
+    if dependencies is None:
+        dependencies = []
+
     if experiment_id:
         raise_if_experiment_does_not_exist(experiment_id)
+        raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies)
+
+    if experiment_id and deployment_id:
+        raise BadRequest("Operator cannot contain an experiment and a deployment simultaneously")
 
     if not isinstance(task_id, str):
         raise BadRequest("taskId is required")
@@ -104,11 +111,6 @@ def create_operator(project_id, experiment_id, deployment_id=None,
         parameters = {}
 
     raise_if_parameters_are_invalid(parameters)
-
-    if dependencies is None:
-        dependencies = []
-
-    raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies)
 
     operator = Operator(uuid=uuid_alpha(),
                         experiment_id=experiment_id,
