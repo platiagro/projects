@@ -198,7 +198,6 @@ class TestDeployments(TestCase):
             self.assertIsInstance(result, dict)
             self.assertIn("operators", result)
             self.assertEqual(TASK_ID, operator["taskId"])
-            self.assertEqual(EXPERIMENT_ID_2, operator["experimentId"])
 
     def test_get_deployment(self):
         with app.test_client() as c:
