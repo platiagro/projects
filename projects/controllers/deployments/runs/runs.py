@@ -5,7 +5,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from projects.controllers.utils import raise_if_project_does_not_exist, \
     raise_if_deployment_does_not_exist
-from projects.models import Deployment
+from projects.models import Deployment, Experiment
 
 from projects.kfp import KFP_CLIENT
 from projects.kfp import runs as kfp_runs
@@ -71,9 +71,13 @@ def create_run(project_id, deployment_id):
     if deployment is None:
         raise NOT_FOUND
 
+    experiment = Experiment.query.get(deployment.experiment_id)
+
     # Removes operators that don't have a deployment_notebook (eg. Upload de Dados).
     # Then, fix dependencies in their children.
-    operators = remove_non_deployable_operators(deployment.operators)
+    # Remove from Deployment operators where operators have
+    # Experiment non-deployables operators as dependencies
+    operators = remove_non_deployable_operators(experiment.operators)
 
     try:
         run = kfp_runs.start_run(operators=operators,
