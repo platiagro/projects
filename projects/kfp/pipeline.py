@@ -325,11 +325,11 @@ def mount_volume_from_experiment(sdep_resource, experiment_id):
     """
     for predictor in sdep_resource["spec"]["predictors"]:
         for spec in predictor["componentSpecs"]:
-            spec["containers"][0]["volumeMounts"].append({
+            spec["spec"]["containers"][0]["volumeMounts"].append({
                 "name": "data",
                 "mountPath": "/tmp/data",
             })
-            spec["volumes"].append({
+            spec["spec"]["volumes"].append({
                 "name": "data",
                 "persistentVolumeClaim": {
                     "claimName": f"vol-experiment-{experiment_id}",
