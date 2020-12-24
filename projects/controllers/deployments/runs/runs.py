@@ -181,7 +181,7 @@ def remove_non_deployable_operators(operators):
     If the non-deployable operator is dependent on another operator, it will be
     removed from that operator's dependency list.
     """
-    deployable_operators = [o for o in operators if o.task.deployment_notebook_path is None]
+    deployable_operators = [o for o in operators if o.task.deployment_notebook_path is not None]
     non_deployable_operators = get_non_deployable_operators(operators, deployable_operators)
 
     for operator in deployable_operators:
