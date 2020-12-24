@@ -104,19 +104,29 @@ def create_deployment(project_id=None,
 
     operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
+        .order_by(Operator.dependencies.asc()) \
         .all()
 
     if operators and len(operators) > 0:
+        operators_mapper = {}
+
         for operator in operators:
-            # FIXME Do not copy dependencies from experiment!
-            # Use the generated operator.uuid
-            create_operator(deployment_id=deployment.uuid,
-                            project_id=project_id,
-                            task_id=operator.task_id,
-                            parameters=operator.parameters,
-                            dependencies=operator.dependencies,
-                            position_x=operator.position_x,
-                            position_y=operator.position_y)
+            dependencies = []
+
+            if operator.dependencies:
+                # Get the new id's of the dependencies
+                dependencies = [operators_mapper[dependencie_uuid] for dependencie_uuid in operator.dependencies]
+
+            operator_ = create_operator(deployment_id=deployment.uuid,
+                                        project_id=project_id,
+                                        task_id=operator.task_id,
+                                        parameters=operator.parameters,
+                                        dependencies=dependencies,
+                                        position_x=operator.position_x,
+                                        position_y=operator.position_y)
+
+            # Keys is the old uuid and values the new one
+            operators_mapper.update({operator.uuid: operator_["uuid"]})
 
     db_session.commit()
 

@@ -23,7 +23,7 @@ def get_deployment_runs(deployment_id):
     deployment = {}
 
     for deployment_run in list_deployments_runs():
-        if deployment_run["experimentId"] == deployment_id:
+        if deployment_run["name"] == deployment_id:
             deployment = deployment_run
             break
 
