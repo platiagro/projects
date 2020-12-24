@@ -73,14 +73,7 @@ def create_run(project_id, deployment_id):
 
     # Removes operators that don't have a deployment_notebook (eg. Upload de Dados).
     # Then, fix dependencies in their children.
-    operators = []
-    all_operators = deployment.operators
-    for operator in deployment.operators:
-        if operator.task.deployment_notebook_path is None:
-            all_operators = fix_children_dependencies(removed_operator=operator,
-                                                      all_operators=all_operators)
-        else:
-            operators.append(operator)
+    operators = remove_non_deployable_operators(deployment.operators)
 
     try:
         run = kfp_runs.start_run(operators=operators,
@@ -91,26 +84,6 @@ def create_run(project_id, deployment_id):
 
     run["deploymentId"] = deployment_id
     return run
-
-
-def fix_children_dependencies(removed_operator, all_operators):
-    """
-    After an operator was removed, passes the dependencies to its children.
-
-    Parameters
-    ----------
-    removed_operator : Operator
-    all_operators : list
-
-    Returns
-    -------
-    list
-        The run attributes.
-    """
-    for o in all_operators:
-        if removed_operator.uuid in o.dependencies:
-            o.dependencies.remove(removed_operator.uuid)
-            o.dependencies.extend(removed_operator.dependencies)
 
 
 def get_run(project_id, deployment_id, run_id):
@@ -187,3 +160,64 @@ def terminate_run(project_id, deployment_id, run_id):
     KFP_CLIENT.runs.delete_run(deployment_run["runId"])
 
     return {"message": "Deployment deleted."}
+
+
+def remove_non_deployable_operators(operators):
+    """
+    Removes operators that are not part of the deployment pipeline.
+
+    Parameters
+    ----------
+    operators : list
+        Original pipeline operators.
+
+    Returns
+    -------
+    list
+        A list of all deployable operators.
+
+    Notes
+    -----
+    If the non-deployable operator is dependent on another operator, it will be
+    removed from that operator's dependency list.
+    """
+    deployable_operators = [o for o in operators if o.task.deployment_notebook_path is None]
+    non_deployable_operators = get_non_deployable_operators(operators, deployable_operators)
+
+    for operator in deployable_operators:
+        dependencies = set(operator.dependencies)
+        operator.dependencies = list(dependencies - set(non_deployable_operators))
+
+    return deployable_operators
+
+
+def get_non_deployable_operators(operators, deployable_operators):
+    """
+    Get all non deployable operators from a deployment run.
+
+    Parameters
+    ----------
+    operators : list
+    deployable_operators : list
+
+    Returns
+    -------
+    list
+        A list of non deployable operators.
+    """
+    non_deployable_operators = []
+    for operator in operators:
+        if operator.task.deployment_notebook_path is None:
+            # checks if the non-deployable operator has dependency
+            if operator.dependencies:
+                dependency = operator.dependencies
+
+                # looks for who has the non-deployable operator as dependency
+                # and assign the dependency of the non-deployable operator to this operator
+                for op in deployable_operators:
+                    if operator.uuid in op.dependencies:
+                        op.dependencies = dependency
+
+            non_deployable_operators.append(operator.uuid)
+
+    return non_deployable_operators
