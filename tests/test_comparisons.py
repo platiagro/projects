@@ -33,8 +33,8 @@ class TestComparisons(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO comparisons (uuid, project_id, created_at, updated_at) "
-            f"VALUES ('{COMPARISON_ID}', '{PROJECT_ID}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO comparisons (uuid, project_id, active_tab, created_at, updated_at) "
+            f"VALUES ('{COMPARISON_ID}', '{PROJECT_ID}', '1', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -80,6 +80,7 @@ class TestComparisons(TestCase):
                 "projectId": PROJECT_ID,
                 "experimentId": None,
                 "operatorId": None,
+                "activeTab": "1",
                 "runId": None,
                 "layout": None,
             }
@@ -127,6 +128,7 @@ class TestComparisons(TestCase):
                 "projectId": PROJECT_ID,
                 "experimentId": EXPERIMENT_ID,
                 "operatorId": None,
+                "activeTab": "1",
                 "runId": None,
                 "layout": None,
                 "createdAt": CREATED_AT_ISO,
