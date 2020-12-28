@@ -7,7 +7,7 @@ from projects.database import engine
 
 EXPERIMENT_ID = str(uuid_alpha())
 PROJECT_ID = str(uuid_alpha())
-COMPARE_RESULT_ID = str(uuid_alpha())
+COMPARISON_ID = str(uuid_alpha())
 NAME = "foo"
 POSITION = 0
 CREATED_AT = "2000-01-01 00:00:00"
@@ -16,7 +16,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 
-class TestCompareResults(TestCase):
+class TestComparisons(TestCase):
     def setUp(self):
         self.maxDiff = None
         conn = engine.connect()
@@ -33,8 +33,8 @@ class TestCompareResults(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO compare_result (uuid, project_id, active_tab, created_at, updated_at) "
-            f"VALUES ('{COMPARE_RESULT_ID}', '{PROJECT_ID}', '1', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO comparisons (uuid, project_id, active_tab, created_at, updated_at) "
+            f"VALUES ('{COMPARISON_ID}', '{PROJECT_ID}', '1', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -43,7 +43,7 @@ class TestCompareResults(TestCase):
     def tearDown(self):
         conn = engine.connect()
 
-        text = f"DELETE FROM compare_result WHERE project_id in ('{PROJECT_ID}')"
+        text = f"DELETE FROM comparisons WHERE project_id in ('{PROJECT_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM experiments WHERE project_id in ('{PROJECT_ID}')"
@@ -54,7 +54,7 @@ class TestCompareResults(TestCase):
 
         conn.close()
 
-    def test_list_compare_results(self):
+    def test_list_comparisons(self):
         with app.test_client() as c:
             rv = c.get("/projects/unk/comparisons")
             result = rv.get_json()
@@ -66,7 +66,7 @@ class TestCompareResults(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result, list)
 
-    def test_create_compare_result(self):
+    def test_create_comparison(self):
         with app.test_client() as c:
             rv = c.post("/projects/unk/comparisons")
             result = rv.get_json()
@@ -92,9 +92,9 @@ class TestCompareResults(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
 
-    def test_update_compare_result(self):
+    def test_update_comparison(self):
         with app.test_client() as c:
-            rv = c.patch(f"/projects/foo/comparisons/{COMPARE_RESULT_ID}", json={})
+            rv = c.patch(f"/projects/foo/comparisons/{COMPARISON_ID}", json={})
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
@@ -102,11 +102,11 @@ class TestCompareResults(TestCase):
 
             rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/foo", json={})
             result = rv.get_json()
-            expected = {"message": "The specified compare result does not exist"}
+            expected = {"message": "The specified comparison does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/{COMPARE_RESULT_ID}", json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/{COMPARISON_ID}", json={
                 "experimentId": "unk",
             })
             result = rv.get_json()
@@ -114,17 +114,17 @@ class TestCompareResults(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/{COMPARE_RESULT_ID}", json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/{COMPARISON_ID}", json={
                 "unk": "bar",
             })
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/{COMPARE_RESULT_ID}", json={
+            rv = c.patch(f"/projects/{PROJECT_ID}/comparisons/{COMPARISON_ID}", json={
                 "experimentId": EXPERIMENT_ID,
             })
             result = rv.get_json()
             expected = {
-                "uuid": COMPARE_RESULT_ID,
+                "uuid": COMPARISON_ID,
                 "projectId": PROJECT_ID,
                 "experimentId": EXPERIMENT_ID,
                 "operatorId": None,
@@ -140,9 +140,9 @@ class TestCompareResults(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
-    def test_delete_compare_result(self):
+    def test_delete_comparison(self):
         with app.test_client() as c:
-            rv = c.delete(f"/projects/foo/comparisons/{COMPARE_RESULT_ID}")
+            rv = c.delete(f"/projects/foo/comparisons/{COMPARISON_ID}")
             result = rv.get_json()
             expected = {"message": "The specified project does not exist"}
             self.assertDictEqual(expected, result)
@@ -150,11 +150,11 @@ class TestCompareResults(TestCase):
 
             rv = c.delete(f"/projects/{PROJECT_ID}/comparisons/unk")
             result = rv.get_json()
-            expected = {"message": "The specified compare result does not exist"}
+            expected = {"message": "The specified comparison does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete(f"/projects/{PROJECT_ID}/comparisons/{COMPARE_RESULT_ID}")
+            rv = c.delete(f"/projects/{PROJECT_ID}/comparisons/{COMPARISON_ID}")
             result = rv.get_json()
-            expected = {"message": "Compare result deleted"}
+            expected = {"message": "Comparison deleted"}
             self.assertDictEqual(expected, result)

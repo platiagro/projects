@@ -7,6 +7,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
 
 from projects.models.operator import Operator
+from projects.models.deployment import Deployment
 from projects.database import Base
 from projects.utils import to_camel_case
 
@@ -22,6 +23,8 @@ class Experiment(Base):
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     operators = relationship("Operator", backref="experiment",
                              primaryjoin=uuid == Operator.experiment_id)
+    deployments = relationship("Deployment", backref="experiment",
+                                primaryjoin=uuid == Deployment.experiment_id)
 
     def __repr__(self):
         return f"<Experiment {self.name}>"
@@ -29,4 +32,5 @@ class Experiment(Base):
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
         d["operators"] = self.operators
+        d["deployments"] = self.deployments
         return d

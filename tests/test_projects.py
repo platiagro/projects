@@ -86,9 +86,15 @@ class TestProjects(TestCase):
             self.assertIsInstance(result["projects"], list)
             self.assertIsInstance(result["total"], int)
 
+            rv = c.get("/projects?order=name unk")
+            result = rv.get_json()
+            expected = {"message": "Invalid order argument"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
             rv = c.get("/projects?order=name")
             result = rv.get_json()
-            expected = {"message": "It was not possible to sort with the specified parameter"}
+            expected = {"message": "Invalid order argument"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
@@ -135,7 +141,7 @@ class TestProjects(TestCase):
                 "operators": [],
             }
             self.assertEqual(len(result_experiments), 1)
-            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt"]
+            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt", "deployments"]
             for attr in machine_generated:
                 self.assertIn(attr, result_experiments[0])
                 del result_experiments[0][attr]
@@ -168,6 +174,7 @@ class TestProjects(TestCase):
                 "position": 0,
                 "isActive": True,
                 "operators": [],
+                "deployments": [],
             }
             self.assertEqual(len(result_experiments), 1)
             machine_generated = ["createdAt", "updatedAt"]
@@ -227,6 +234,7 @@ class TestProjects(TestCase):
                 "position": 0,
                 "isActive": True,
                 "operators": [],
+                "deployments": [],
             }
             self.assertEqual(len(result_experiments), 1)
             machine_generated = ["createdAt", "updatedAt"]

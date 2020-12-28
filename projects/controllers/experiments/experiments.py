@@ -8,23 +8,33 @@ from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from projects.controllers.operators import create_operator, update_operator
-from projects.controllers.utils import raise_if_project_does_not_exist, uuid_alpha
+from projects.controllers.utils import raise_if_project_does_not_exist, \
+    raise_if_experiment_does_not_exist, uuid_alpha
 from projects.database import db_session
-from projects.models import CompareResult, Experiment, Operator, Template
+from projects.models import Comparison, Deployment, Experiment, Operator, Template
 from projects.object_storage import remove_objects
 
 
-NOTFOUND = NotFound("The specified experiment does not exist")
+NOT_FOUND = NotFound("The specified experiment does not exist")
 
 
 def list_experiments(project_id):
-    """Lists all experiments under a project.
+    """
+    Lists all experiments under a project.
 
-    Args:
-        project_id (str): the project uuid.
+    Parameters
+    ----------
+    project_id: str
 
-    Returns:
+    Returns
+    -------
+    list
         A list of all experiments.
+
+    Raises
+    ------
+    NotFound
+        When project_id does not exist.
     """
     raise_if_project_does_not_exist(project_id)
 
@@ -35,26 +45,39 @@ def list_experiments(project_id):
     return [experiment.as_dict() for experiment in experiments]
 
 
-def create_experiment(name=None, project_id=None, copy_from=None):
-    """Creates a new experiment in our database and adjusts the position of others.
-
+def create_experiment(project_id=None, name=None, copy_from=None):
+    """
+    Creates a new experiment in our database and adjusts the position of others.
     The new experiment is added to the end of the experiment list.
 
-    Args:
-        name (str): the experiment name.
-        project_id (str): the project uuid.
-        copy_from (str): the copy_from uuid.
-    Returns:
-        The experiment info.
+    Parameters
+    ----------
+    project_id : str
+    name : str
+    copy_from : str
+        The experiment id from which uuid.
+
+    Returns
+    -------
+    dict
+        The experiment attributes.
+
+    Raises
+    ------
+    NotFound
+        When project_id does not exist.
+    BadRequest
+        When name is not a str instance.
+        When name is already the name of another experiment.
     """
     raise_if_project_does_not_exist(project_id)
 
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
-    check_experiment_name = db_session.query(Experiment)\
-        .filter(Experiment.project_id == project_id)\
-        .filter(Experiment.name == name)\
+    check_experiment_name = db_session.query(Experiment) \
+        .filter(Experiment.project_id == project_id) \
+        .filter(Experiment.name == name) \
         .first()
     if check_experiment_name:
         raise BadRequest("an experiment with that name already exists")
@@ -68,7 +91,7 @@ def create_experiment(name=None, project_id=None, copy_from=None):
             experiment_find = find_by_experiment_id(experiment_id=copy_from)
 
             source_operators = {}
-            for source_operator in experiment_find['operators']:
+            for source_operator in experiment_find["operators"]:
 
                 source_dependencies = source_operator.dependencies
 
@@ -79,7 +102,9 @@ def create_experiment(name=None, project_id=None, copy_from=None):
                     "position_x": source_operator.position_x,
                     "position_y": source_operator.position_y
                 }
-                operator = create_operator(project_id, experiment.uuid, **kwargs)
+                operator = create_operator(project_id=project_id,
+                                           experiment_id=experiment.uuid,
+                                           **kwargs)
 
                 source_operators[source_operator.uuid] = {
                     "copy_uuid": operator["uuid"],
@@ -88,12 +113,16 @@ def create_experiment(name=None, project_id=None, copy_from=None):
 
             # update dependencies on new operators
             for _, value in source_operators.items():
-                dependencies = [source_operators[d]['copy_uuid'] for d in value['dependencies']]
-                update_operator(value['copy_uuid'], project_id, experiment.uuid, dependencies=dependencies)
+                dependencies = [source_operators[d]["copy_uuid"] for d in value["dependencies"]]
+                update_operator(project_id=project_id,
+                                experiment_id=experiment.uuid,
+                                operator_id=value["copy_uuid"],
+                                dependencies=dependencies)
 
         except NotFound:
-            delete_experiment(experiment.uuid, project_id)
-            raise BadRequest('Source experiment does not exist')
+            delete_experiment(project_id=project_id,
+                              experiment_id=experiment.uuid)
+            raise BadRequest("Source experiment does not exist")
 
     fix_positions(project_id=project_id,
                   experiment_id=experiment.uuid,
@@ -102,49 +131,70 @@ def create_experiment(name=None, project_id=None, copy_from=None):
     return experiment.as_dict()
 
 
-def get_experiment(uuid, project_id):
-    """Details an experiment from our database.
+def get_experiment(project_id, experiment_id):
+    """
+    Details an experiment from our database.
 
-    Args:
-        uuid (str): the experiment uuid to look for in our database.
-        project_id (str): the project uuid.
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
 
-    Returns:
-        The experiment info.
+    Returns
+    -------
+    dict
+        The experiment attributes.
+
+    Raises
+    ------
+    NotFound
+        When either project_id or experiment_id does not exist.
     """
     raise_if_project_does_not_exist(project_id)
 
-    experiment = Experiment.query.get(uuid)
+    experiment = Experiment.query.get(experiment_id)
 
     if experiment is None:
-        raise NOTFOUND
+        raise NOT_FOUND
 
     return experiment.as_dict()
 
 
-def update_experiment(uuid, project_id, **kwargs):
-    """Updates an experiment in our database and adjusts the position of others.
+def update_experiment(project_id, experiment_id, **kwargs):
+    """
+    Updates an experiment in our database and adjusts the position of others.
 
-    Args:
-        uuid (str): the experiment uuid to look for in our database.
-        project_id (str): the project uuid.
-        **kwargs: arbitrary keyword arguments.
-    Returns:
-        The experiment info.
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
+    **kwargs:
+        Arbitrary keyword arguments.
+
+    Returns
+    -------
+    dict
+        The experiment attributes.
+
+    Raises
+    ------
+    NotFound
+        When either project_id or experiment_id does not exist.
+    BadRequest
+        When name is already the name of another experiment.
+        When `kwargs["template_id"]` is informed but it does not exist.
     """
     raise_if_project_does_not_exist(project_id)
+    raise_if_experiment_does_not_exist(experiment_id)
 
-    experiment = Experiment.query.get(uuid)
-
-    if experiment is None:
-        raise NOTFOUND
+    experiment = Experiment.query.get(experiment_id)
 
     if "name" in kwargs:
         name = kwargs["name"]
         if name != experiment.name:
-            check_experiment_name = db_session.query(Experiment)\
-                .filter(Experiment.project_id == project_id)\
-                .filter(Experiment.name == name)\
+            check_experiment_name = db_session.query(Experiment) \
+                .filter(Experiment.project_id == project_id) \
+                .filter(Experiment.name == name) \
                 .first()
             if check_experiment_name:
                 raise BadRequest("an experiment with that name already exists")
@@ -159,7 +209,7 @@ def update_experiment(uuid, project_id, **kwargs):
             raise BadRequest("The specified template does not exist")
 
         # remove operators
-        Operator.query.filter(Operator.experiment_id == uuid).delete()
+        Operator.query.filter(Operator.experiment_id == experiment_id).delete()
 
         # save the last operator id created to create dependency on next operator
         last_operator_id = None
@@ -170,7 +220,7 @@ def update_experiment(uuid, project_id, **kwargs):
                 dependencies = [last_operator_id]
             objects = [
                 Operator(uuid=operator_id,
-                         experiment_id=uuid,
+                         experiment_id=experiment_id,
                          task_id=task_id,
                          dependencies=dependencies)
             ]
@@ -181,7 +231,9 @@ def update_experiment(uuid, project_id, **kwargs):
     data.update(kwargs)
 
     try:
-        db_session.query(Experiment).filter_by(uuid=uuid).update(data)
+        db_session.query(Experiment) \
+            .filter_by(uuid=experiment_id) \
+            .update(data)
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
@@ -193,51 +245,72 @@ def update_experiment(uuid, project_id, **kwargs):
     return experiment.as_dict()
 
 
-def delete_experiment(uuid, project_id):
-    """Delete an experiment in our database and in the object storage.
+def delete_experiment(project_id, experiment_id):
+    """
+    Delete an experiment in our database and in the object storage.
 
-    Args:
-        uuid (str): the experiment uuid to look for in our database.
-        project_id (str): the project uuid.
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
 
-    Returns:
+    Returns
+    -------
+    dict
         The deletion result.
+
+    Raises
+    ------
+    NotFound
+        When either project_id or experiment_id does not exist.
     """
     raise_if_project_does_not_exist(project_id)
 
-    experiment = Experiment.query.get(uuid)
+    experiment = Experiment.query.get(experiment_id)
 
     if experiment is None:
-        raise NOTFOUND
+        raise NOT_FOUND
 
-    # remove compare results
-    CompareResult.query.filter(CompareResult.experiment_id == uuid).delete()
-    # remove operators
-    Operator.query.filter(Operator.experiment_id == uuid).delete()
+    # remove comparisons
+    Comparison.query.filter(Comparison.experiment_id == experiment_id).delete()
+
+    # remove experiment operators
+    Operator.query.filter(Operator.experiment_id == experiment_id).delete()
+
+    # remove deployment (if exists) operators
+    deployment = Deployment.query.filter(Deployment.experiment_id == experiment_id).first()
+    if deployment:
+        Operator.query.filter(Operator.deployment_id == deployment.uuid).delete()
+
+    # remove deployments
+    Deployment.query.filter(Deployment.experiment_id == experiment_id).delete()
 
     db_session.delete(experiment)
     db_session.commit()
 
     fix_positions(project_id=experiment.project_id)
 
-    prefix = join("experiments", uuid)
+    prefix = join("experiments", experiment_id)
     remove_objects(prefix=prefix)
 
     return {"message": "Experiment deleted"}
 
 
 def fix_positions(project_id, experiment_id=None, new_position=None):
-    """Reorders the experiments in a project when an experiment is updated/deleted.
+    """
+    Reorders the experiments in a project when an experiment is updated/deleted.
 
-    Args:
-        project_id (str): the project uuid.
-        experiment_id (str): the experiment uuid.
-        new_position (int): the position where the experiment is shown.
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
+    new_position : int
+        The position where the experiment is shown.
     """
     other_experiments = db_session.query(Experiment) \
         .filter_by(project_id=project_id) \
-        .filter(Experiment.uuid != experiment_id)\
-        .order_by(Experiment.position.asc())\
+        .filter(Experiment.uuid != experiment_id) \
+        .order_by(Experiment.position.asc()) \
         .all()
 
     if experiment_id is not None:
@@ -256,21 +329,34 @@ def fix_positions(project_id, experiment_id=None, new_position=None):
         else:
             data["is_active"] = False
 
-        db_session.query(Experiment).filter_by(uuid=experiment.uuid).update(data)
+        db_session.query(Experiment) \
+            .filter_by(uuid=experiment.uuid) \
+            .update(data)
+
     db_session.commit()
 
 
 def find_by_experiment_id(experiment_id):
-    """Search the experiment by id
-    Args:
-        experiment_id (str): the experiment uuid
+    """
+    Search the experiment by id.
 
-    Returns:
-        List of experiment
+    Parameters
+    ----------
+    experiment_id : str
+
+    Returns
+    -------
+    dict
+        The experiment attributes.
+
+    Raises
+    ------
+    NotFound
+        When experiment_id does not exist.
     """
     experiment = Experiment.query.get(experiment_id)
 
     if experiment is None:
-        raise NOTFOUND
+        raise NOT_FOUND
 
     return experiment.as_dict()

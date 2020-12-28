@@ -4,16 +4,20 @@ from json import dumps, loads, JSONDecodeError
 from os import getenv
 from re import compile, sub
 
-from minio.error import NoSuchKey
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 
+from minio.error import NoSuchKey
+from werkzeug.exceptions import InternalServerError
+
 from projects.object_storage import BUCKET_NAME, get_object
+from projects.utils import remove_ansi_escapes
 
 JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
 URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
+SUPPORTED_TYPES = ['Deployment', 'Experiment']
 
 COOKIES = {"_xsrf": "token"}
 HEADERS = {"content-type": "application/json", "X-XSRFToken": "token"}
@@ -35,13 +39,18 @@ SESSION.mount("http://", ADAPTER)
 
 
 def list_files(path):
-    """Lists the files in the specified path.
+    """
+    Lists the files in the specified path.
 
-    Args:
-        path (str): path to a folder.
+    Parameters
+    ----------
+    path : str
+        Path to a folder.
 
-    Returns:
-        list: A list of filenames.
+    Returns
+    -------
+    list
+        A list of filenames.
     """
     try:
         r = SESSION.get(url=f"{URL_CONTENTS}/{path}")
@@ -53,12 +62,17 @@ def list_files(path):
 
 
 def create_new_file(path, is_folder, content=None):
-    """Creates a new file or directory in the specified path.
+    """
+    Creates a new file or directory in the specified path.
 
-    Args:
-        path (str): path to the file or folder.
-        is_folder (bool): whether to create a file or a folder.
-        content (bytes, optional): the file content.
+    Parameters
+    ----------
+    path : str
+        Path to the file or folder.
+    is_folder : bool
+        Whether to create a file or a folder.
+    content : bytes, optional
+        The file content.
     """
     if content is not None:
         content = loads(content.decode("utf-8"))
@@ -73,10 +87,15 @@ def create_new_file(path, is_folder, content=None):
 
 
 def update_folder_name(path, new_path):
-    """Update folder name.
-    Args:
-        path (str): path folder.
-        new_path (str): new path to the folder.
+    """
+    Update folder name.
+
+    Parameters
+    ----------
+    path : str
+        Path folder.
+    new_path : str
+        New path to the folder.
     """
     payload = {"path": new_path}
     SESSION.patch(
@@ -86,10 +105,13 @@ def update_folder_name(path, new_path):
 
 
 def delete_file(path):
-    """Deletes a file or directory in the given path.
+    """
+    Deletes a file or directory in the given path.
 
-    Args:
-        path (str): path to the file.
+    Parameters
+    ----------
+    path : str
+        Path to the file.
     """
     SESSION.delete(
         url=f"{URL_CONTENTS}/{path}",
@@ -97,13 +119,18 @@ def delete_file(path):
 
 
 def read_parameters(path):
-    """Lists the parameters declared in a notebook.
+    """
+    Lists the parameters declared in a notebook.
 
-    Args:
-        path (str): path to the .ipynb file.
+    Parameters
+    ----------
+    path : str
+        Path to the .ipynb file.
 
-    Returns:
-        list: a list of parameters (name, default, type, label, description).
+    Returns
+    -------
+    list:
+        A list of parameters (name, default, type, label, description).
     """
     if not path:
         return []
@@ -130,13 +157,18 @@ def read_parameters(path):
 
 
 def read_parameters_from_source(source):
-    """Lists the parameters declared in source code.
+    """
+    Lists the parameters declared in source code.
 
-    Args:
-        source (list): source code lines.
+    Parameters
+    ----------
+    source : list
+        Source code lines.
 
-    Returns:
-        list: a list of parameters (name, default, type, label, description).
+    Returns
+    -------
+    list:
+        A list of parameters (name, default, type, label, description).
     """
     parameters = []
     # Regex to capture a parameter declaration
@@ -156,7 +188,7 @@ def read_parameters_from_source(source):
 
                 parameter = {"name": name}
 
-                if default and default != 'None':
+                if default and default != "None":
                     if default in ["True", "False"]:
                         default = default.lower()
                     parameter["default"] = loads(default)
@@ -173,3 +205,87 @@ def read_parameters_from_source(source):
                 pass
 
     return parameters
+
+
+def get_notebook_logs(experiment_id, operator_id):
+    """
+    Get logs from a Experiment notebook.
+
+    Parameters
+    ----------
+    experiment_id : str
+    operator_id : str
+
+    Returns
+    -------
+    dict
+        Operator's notebook logs.
+
+    Raises
+    ------
+    InternalServerError
+        When an error is encountered when trying to recover from the contents of a notebook.
+    """
+    notebook = get_jupyter_notebook(experiment_id, operator_id)
+
+    if not notebook:
+        raise InternalServerError("An error occured while trying to recover Notebook content.")
+
+    notebook = notebook["content"]
+    logs = {}
+
+    for cell in notebook["cells"]:
+        try:
+            metadata = cell["metadata"]["papermill"]
+
+            if metadata["exception"] and metadata["status"] == "failed":
+                for output in cell["outputs"]:
+                    if output["output_type"] == "error":
+                        error_log = output["traceback"]
+                        traceback = remove_ansi_escapes(error_log)
+                        logs = {"exception": output["ename"], "traceback": traceback}
+        except KeyError:
+            pass
+
+    return logs
+
+
+def get_jupyter_notebook(experiment_id, operator_id, notebook_type='Experiment'):
+    """
+    Get JSON content from a notebook using the JupyterLab API.
+
+    Parameters
+    ----------
+    experiment_id : str
+    operator_id : str
+    notebook_type : str
+        Notebook type: `Deployment` or `Experiment`. Default to Experiment.
+
+    Returns
+    -------
+    dict
+        The notebook content.
+
+    Raises
+    ------
+    HTTPError
+        When a error occured while trying to access Jupyter API.
+
+    ValueError
+        When the `notebook_type` isn't a supported type.
+    """
+    operator_endpoint = f"experiments/{experiment_id}/operators/{operator_id}/{notebook_type}.ipynb"
+
+    if notebook_type not in SUPPORTED_TYPES:
+        raise ValueError(f"The type {notebook_type} is not a valid one.")
+
+    try:
+        r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
+        content = loads(r.decode("utf-8"))
+
+        return content
+    except HTTPError as e:
+        status_code = e.response.status_code
+        if status_code == 404:
+            return {}
+        raise HTTPError("Error occured while trying to access Jupyter API.")
