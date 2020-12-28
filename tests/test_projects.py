@@ -141,7 +141,7 @@ class TestProjects(TestCase):
                 "operators": [],
             }
             self.assertEqual(len(result_experiments), 1)
-            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt"]
+            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt", "deployments"]
             for attr in machine_generated:
                 self.assertIn(attr, result_experiments[0])
                 del result_experiments[0][attr]
@@ -174,6 +174,7 @@ class TestProjects(TestCase):
                 "position": 0,
                 "isActive": True,
                 "operators": [],
+                "deployments": [],
             }
             self.assertEqual(len(result_experiments), 1)
             machine_generated = ["createdAt", "updatedAt"]
@@ -233,6 +234,7 @@ class TestProjects(TestCase):
                 "position": 0,
                 "isActive": True,
                 "operators": [],
+                "deployments": [],
             }
             self.assertEqual(len(result_experiments), 1)
             machine_generated = ["createdAt", "updatedAt"]
