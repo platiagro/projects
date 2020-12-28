@@ -130,6 +130,8 @@ def create_container_op(operator, experiment_id, notebook_path=None, dataset=Non
         arguments=operator.task.arguments,
     )
 
+    container_op.add_pod_annotation(name='name', value=operator.task.name)
+
     container_op.container.set_image_pull_policy("Always") \
         .add_env_variable(
             k8s_client.V1EnvVar(

@@ -161,6 +161,7 @@ class TestExperiments(TestCase):
                 "position": 2,
                 "isActive": IS_ACTIVE,
                 "operators": [],
+                "deployments": [],
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -203,6 +204,7 @@ class TestExperiments(TestCase):
             expected = {
                 "uuid": EXPERIMENT_ID,
                 "name": NAME,
+                "deployments": [],
                 "projectId": PROJECT_ID,
                 "position": POSITION,
                 "isActive": IS_ACTIVE,
@@ -265,6 +267,7 @@ class TestExperiments(TestCase):
                 "isActive": IS_ACTIVE,
                 "operators": result['operators'],
                 "createdAt": CREATED_AT_ISO,
+                "deployments": [],
             }
             machine_generated = ["updatedAt"]
             for attr in machine_generated:
@@ -284,6 +287,7 @@ class TestExperiments(TestCase):
                 "position": POSITION,
                 "isActive": IS_ACTIVE,
                 "createdAt": CREATED_AT_ISO,
+                "deployments": [],
             }
             result_operators = result["operators"]
             machine_generated = ["updatedAt", "operators"]
