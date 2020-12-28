@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Functions that access MinIO object storage."""
 from io import BytesIO
 from os import getenv, SEEK_SET
 
@@ -17,10 +18,13 @@ MINIO_CLIENT = Minio(
 
 
 def make_bucket(name):
-    """Creates the bucket in MinIO. Ignores exception if bucket already exists.
+    """
+    Creates the bucket in MinIO. Ignores exception if bucket already exists.
 
-    Args:
-        name (str): the bucket name
+    Parameters
+    ----------
+    name : str
+        The bucket name.
     """
     try:
         MINIO_CLIENT.make_bucket(name)
@@ -29,13 +33,18 @@ def make_bucket(name):
 
 
 def get_object(source):
-    """Get an object in MinIO.
+    """
+    Get an object in MinIO.
 
-    Args:
-        source (str): the path to source object.
+    Parameters
+    ----------
+    source : str
+        The path to source object.
 
-    Returns:
-        bytes: the file contents as bytes.
+    Returns
+    -------
+    bytes
+        The file contents as bytes.
     """
     # ensures MinIO bucket exists
     make_bucket(BUCKET_NAME)
@@ -54,11 +63,15 @@ def get_object(source):
 
 
 def put_object(name, data):
-    """Puts an object into MinIO.
+    """
+    Puts an object into MinIO.
 
-    Args:
-        name (str): the object name
-        data (bytes): the content of the object.
+    Parameters
+    ----------
+    name : str
+        The object name.
+    data : bytes
+        The content of the object.
     """
     # ensures MinIO bucket exists
     make_bucket(BUCKET_NAME)
@@ -74,12 +87,19 @@ def put_object(name, data):
 
 
 def duplicate_object(source, destination):
-    """Makes a copy of an object in MinIO.
-
-    Args:
-        source (str): the path to source object.
-        destination (str): the destination path.
     """
+    Makes a copy of an object in MinIO.
+
+    Parameters
+    ----------
+    source : str
+        The path to source object.
+    destination : str
+        The destination path.
+    """
+    # ensures MinIO bucket exists
+    make_bucket(BUCKET_NAME)
+
     MINIO_CLIENT.copy_object(
         bucket_name=BUCKET_NAME,
         object_name=destination,
@@ -88,11 +108,20 @@ def duplicate_object(source, destination):
 
 
 def list_objects(prefix):
-    """Get objects from MinIO.
-
-    Args:
-        prefix (str): String specifying objects returned must begin with
     """
+    Get objects from MinIO.
+
+    Parameters
+    ----------
+    prefix : str
+        String specifying objects returned must begin with.
+
+    Returns
+    -------
+    list
+    """
+    # ensures MinIO bucket exists
+    make_bucket(BUCKET_NAME)
 
     objects = MINIO_CLIENT.list_objects(
         bucket_name=BUCKET_NAME,
@@ -104,11 +133,16 @@ def list_objects(prefix):
 
 
 def remove_object(object_name):
-    """Remove object from MinIO.
-
-    Args:
-        object_name (str): Name of object to remove
     """
+    Remove object from MinIO.
+
+    Parameters
+    ----------
+    object_name : str
+        Name of object to remove.
+    """
+    # ensures MinIO bucket exists
+    make_bucket(BUCKET_NAME)
 
     MINIO_CLIENT.remove_object(
         bucket_name=BUCKET_NAME,
@@ -117,10 +151,15 @@ def remove_object(object_name):
 
 
 def remove_objects(prefix):
-    """Remove objects from MinIO that starts with a prefix.
-
-    Args:
-        prefix (str): prefix.
     """
+    Remove objects from MinIO that starts with a prefix.
+
+    Parameters
+    ----------
+    prefix : str
+    """
+    # ensures MinIO bucket exists
+    make_bucket(BUCKET_NAME)
+
     for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
         MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)

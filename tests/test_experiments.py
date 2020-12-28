@@ -25,7 +25,7 @@ IS_ACTIVE = True
 PARAMETERS = {"coef": 0.1}
 PARAMETERS_JSON = dumps(PARAMETERS)
 DESCRIPTION = "long foo"
-IMAGE = "platiagro/platiagro-notebook-image-test:0.2.0"
+IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
 ARGUMENTS = ["ARG"]
@@ -46,7 +46,7 @@ CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
-NAME_COPYFROM = "TEST_COPY"
+NAME_COPYFROM = "test copyFrom"
 
 DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
@@ -168,6 +168,7 @@ class TestExperiments(TestCase):
                 "position": 2,
                 "isActive": IS_ACTIVE,
                 "operators": [],
+                "deployments": [],
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -181,13 +182,13 @@ class TestExperiments(TestCase):
         with app.test_client() as c:
             rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
                 "name": f"{NAME_COPYFROM}",
-                "copy_from": f"{EXPERIMENT_ID}"
+                "copyFrom": f"{EXPERIMENT_ID}"
             })
             self.assertEqual(rv.status_code, 200)
 
             rv = c.post(f"/projects/{PROJECT_ID}/experiments", json={
-                "name": f"TESCOPY",
-                "copy_from": f"4555"
+                "name": f"test copyFrom 2",
+                "copyFrom": f"4555"
             })
             self.assertEqual(rv.status_code, 400)
 
@@ -210,6 +211,7 @@ class TestExperiments(TestCase):
             expected = {
                 "uuid": EXPERIMENT_ID,
                 "name": NAME,
+                "deployments": [],
                 "projectId": PROJECT_ID,
                 "position": POSITION,
                 "isActive": IS_ACTIVE,
@@ -272,6 +274,7 @@ class TestExperiments(TestCase):
                 "isActive": IS_ACTIVE,
                 "operators": result['operators'],
                 "createdAt": CREATED_AT_ISO,
+                "deployments": [],
             }
             machine_generated = ["updatedAt"]
             for attr in machine_generated:
@@ -291,6 +294,7 @@ class TestExperiments(TestCase):
                 "position": POSITION,
                 "isActive": IS_ACTIVE,
                 "createdAt": CREATED_AT_ISO,
+                "deployments": [],
             }
             result_operators = result["operators"]
             machine_generated = ["updatedAt", "operators"]
