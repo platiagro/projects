@@ -16,6 +16,7 @@ POSITION_2 = 1
 PROJECT_ID = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
+TASK_ID_2 = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 OPERATOR_ID_3 = str(uuid_alpha())
@@ -26,20 +27,26 @@ PARAMETERS = {"coef": 0.1}
 PARAMETERS_JSON = dumps(PARAMETERS)
 DESCRIPTION = "long foo"
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
-COMMANDS = ["CMD"]
-COMMANDS_JSON = dumps(COMMANDS)
-ARGUMENTS = ["ARG"]
-ARGUMENTS_JSON = dumps(ARGUMENTS)
+COMMANDS = None
+ARGUMENTS = None
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
-TASK = {
-    'dependencies': [],
-    'position_x': None,
-    'position_y': None,
-    'task_id': TASK_ID,
-    'uuid': OPERATOR_ID
-}
-TASKS_JSON = dumps([TASK])
+TASKS_JSON = dumps([
+    {
+        "uuid": OPERATOR_ID,
+        "position_x": 0.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID,
+        "dependencies": []
+    },
+    {
+        "uuid": OPERATOR_ID_2,
+        "position_x": 200.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID_2,
+        "dependencies": [OPERATOR_ID]
+    },
+])
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
@@ -60,9 +67,16 @@ class TestExperiments(TestCase):
         conn = engine.connect()
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', null, null, '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
+
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID_2}', '{NAME_2}', '{DESCRIPTION}', '{IMAGE}', null, null, '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
             f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}')"
@@ -109,14 +123,19 @@ class TestExperiments(TestCase):
         text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM operators WHERE experiment_id =" \
-               f" (SELECT uuid FROM experiments where name = '{NAME_COPYFROM}')"
+        text = (
+            f"DELETE FROM operators WHERE experiment_id = "
+            f"(SELECT uuid FROM experiments where name = '{NAME_COPYFROM}')"
+        )
         conn.execute(text)
 
         text = f"DELETE FROM experiments WHERE project_id in ('{PROJECT_ID}')"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID_2}'"
         conn.execute(text)
 
         text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
@@ -303,15 +322,21 @@ class TestExperiments(TestCase):
                 del result[attr]
             self.assertDictEqual(expected, result)
             expected = [{
+                "taskId": TASK_ID_2,
+                "experimentId": EXPERIMENT_ID,
+                "parameters": {},
+                "positionX": 200.0,
+                "positionY": 0.0,
+                "deploymentId": None
+            }, {
                 "taskId": TASK_ID,
                 "experimentId": EXPERIMENT_ID,
                 "parameters": {},
-                "dependencies": [],
-                "positionX": None,
-                "positionY": None,
+                "positionX": 0.0,
+                "positionY": 0.0,
                 "deploymentId": None
             }]
-            machine_generated = ["uuid", "createdAt", "updatedAt"]
+            machine_generated = ["uuid", "dependencies", "createdAt", "updatedAt"]
             for attr in machine_generated:
                 for operator in result_operators:
                     self.assertIn(attr, operator)

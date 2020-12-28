@@ -1712,11 +1712,14 @@ components:
           format: uuid
         name:
           type: string
-        operators:
+        tasks:
           type: array
           items:
             type: object
             properties:
+              uuid:
+                type: string
+                format: uuid
               taskId:
                 type: string
                 format: uuid
@@ -1725,6 +1728,12 @@ components:
                 items:
                   type: string
                   format: uuid
+              positionX:
+                type: number
+                format: float
+              positionY:
+                type: number
+                format: float
         createdAt:
           type: string
           format: date-time
