@@ -1,0 +1,160 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: experiment-
+  annotations: {pipelines.kubeflow.org/pipeline_spec: '{"name": "Experiment"}'}
+spec:
+  entrypoint: experiment
+  templates:
+  - name: experiment
+    dag:
+      tasks:
+      - name: deployment
+        template: deployment
+        dependencies: [export-notebook]
+      - {name: efe1dd49-9b2b-4dc4-8876-9567d092c056, template: efe1dd49-9b2b-4dc4-8876-9567d092c056}
+      - {name: export-notebook, template: export-notebook}
+  - name: deployment
+    resource:
+      action: create
+      successCondition: status.state == Available
+      manifest: |
+        apiVersion: machinelearning.seldon.io/v1alpha2
+        kind: SeldonDeployment
+        metadata:
+          deploymentName: Experiment 4
+          labels:
+            app: seldon
+          name: e75ba6d1-3a70-4158-bdca-85eb13311576
+          namespace: deployments
+        spec:
+          annotations:
+            deployment_version: v1
+            prometheus.io/scrape: 'false'
+            seldon.io/engine-separate-pod: 'true'
+            seldon.io/grpc-read-timeout: '60000'
+            seldon.io/rest-connection-timeout: '60000'
+            seldon.io/rest-read-timeout: '60000'
+          name: e75ba6d1-3a70-4158-bdca-85eb13311576
+          predictors:
+          - componentSpecs:
+            - spec:
+                containers:
+                - env:
+                  - name: EXPERIMENT_ID
+                    value: e75ba6d1-3a70-4158-bdca-85eb13311576
+                  - name: OPERATOR_ID
+                    value: efe1dd49-9b2b-4dc4-8876-9567d092c056
+                  - name: PARAMETERS
+                    value: '[]'
+                  image: platiagro/platiagro-deployment-image:0.2.0
+                  name: efe1dd49-9b2b-4dc4-8876-9567d092c056
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    runAsUser: 0
+                  volumeMounts:
+                  - mountPath: /app
+                    name: workspace
+                  - mountPath: /tmp/data
+                    name: data
+                volumes:
+                - name: workspace
+                  persistentVolumeClaim:
+                    claimName: '{{workflow.name}}-efe1dd49-9b2b-4dc4-8876-9567d092c056'
+                - name: data
+                  persistentVolumeClaim:
+                    claimName: vol-e75ba6d1-3a70-4158-bdca-85eb13311576
+            graph:
+              children: []
+              endpoint:
+                type: REST
+              name: efe1dd49-9b2b-4dc4-8876-9567d092c056
+              type: MODEL
+            labels:
+              version: v1
+            name: model
+            replicas: 1
+            svcOrchSpec:
+              env:
+              - name: SELDON_LOG_LEVEL
+                value: DEBUG
+          resources:
+            requests:
+              memory: 2G
+    outputs:
+      parameters:
+      - name: deployment-manifest
+        valueFrom: {jsonPath: '{}'}
+      - name: deployment-name
+        valueFrom: {jsonPath: '{.metadata.name}'}
+    activeDeadlineSeconds: 300
+  - name: efe1dd49-9b2b-4dc4-8876-9567d092c056
+    resource:
+      action: create
+      manifest: |
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: '{{workflow.name}}-efe1dd49-9b2b-4dc4-8876-9567d092c056'
+          namespace: deployments
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 50Mi
+    outputs:
+      parameters:
+      - name: efe1dd49-9b2b-4dc4-8876-9567d092c056-manifest
+        valueFrom: {jsonPath: '{}'}
+      - name: efe1dd49-9b2b-4dc4-8876-9567d092c056-name
+        valueFrom: {jsonPath: '{.metadata.name}'}
+  - name: export-notebook
+    resource:
+      action: create
+      manifest: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          annotations:
+            sidecar.istio.io/inject: 'false'
+          name: '{{workflow.name}}-efe1dd49-9b2b-4dc4-8876-9567d092c056'
+          namespace: deployments
+        spec:
+          containers:
+          - args:
+            - papermill s3://anonymous/tasks/dff8f35e-61e1-49d4-93b7-e2c83e580def/Deployment.ipynb
+              output.ipynb --log-level DEBUG;                      status=$?;                      bash
+              upload-to-jupyter.sh e75ba6d1-3a70-4158-bdca-85eb13311576 efe1dd49-9b2b-4dc4-8876-9567d092c056
+              Deployment.ipynb;                      touch -t 197001010000 Model.py;                      exit
+              $status
+            command:
+            - sh
+            - -c
+            env:
+            - name: EXPERIMENT_ID
+              value: e75ba6d1-3a70-4158-bdca-85eb13311576
+            - name: OPERATOR_ID
+              value: efe1dd49-9b2b-4dc4-8876-9567d092c056
+            image: platiagro/platiagro-experiment-image:0.2.0
+            name: export-notebook
+            resources:
+              requests:
+                memory: 2G
+            volumeMounts:
+            - mountPath: /home/jovyan
+              name: workspace
+          restartPolicy: Never
+          volumes:
+          - name: workspace
+            persistentVolumeClaim:
+              claimName: '{{workflow.name}}-c'
+    outputs:
+      parameters:
+      - name: export-notebook-manifest
+        valueFrom: {jsonPath: '{}'}
+      - name: export-notebook-name
+        valueFrom: {jsonPath: '{.metadata.name}'}
+  arguments:
+    parameters: []
+  serviceAccountName: pipeline-runner
