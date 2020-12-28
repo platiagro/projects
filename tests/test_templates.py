@@ -12,36 +12,51 @@ OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 PROJECT_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
+TASK_ID_2 = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
 NAME = "foo"
 PARAMETERS = {"coef": 0.1}
 OPERATORS = [{"taskId": TASK_ID}]
 DESCRIPTION = "long foo"
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
-COMMANDS = ["CMD"]
-COMMANDS_JSON = dumps(COMMANDS)
-ARGUMENTS = ["ARG"]
-ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 TASKS_JSON = dumps([TASK_ID])
 PARAMETERS_JSON = dumps(PARAMETERS)
 POSITION_X = 0.3
 POSITION_Y = 0.5
-TASK = {
-    'dependencies': [],
-    'positionX': None,
-    'positionY': None,
-    'taskId': TASK_ID,
-    'uuid': OPERATOR_ID
-}
-TASKS_JSON = dumps([{
-    'dependencies': [],
-    'position_x': None,
-    'position_y': None,
-    'task_id': TASK_ID,
-    'uuid': OPERATOR_ID
-}])
+TASKS = [
+    {
+        "dependencies": [],
+        "positionX": 0.0,
+        "positionY": 0.0,
+        "taskId": TASK_ID,
+        "uuid": OPERATOR_ID,
+    },
+    {
+        "dependencies": [OPERATOR_ID],
+        "positionX": 200.0,
+        "positionY": 0.0,
+        "taskId": TASK_ID_2,
+        "uuid": OPERATOR_ID_2,
+    },
+]
+TASKS_JSON = dumps([
+    {
+        "uuid": OPERATOR_ID,
+        "position_x": 0.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID,
+        "dependencies": []
+    },
+    {
+        "uuid": OPERATOR_ID_2,
+        "position_x": 200.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID_2,
+        "dependencies": [OPERATOR_ID]
+    },
+])
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -59,7 +74,13 @@ class TestTemplates(TestCase):
         conn = engine.connect()
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID}', 'name', 'desc', 'image', '{dumps(['CMD'])}', '{dumps(['ARG'])}', '{dumps(['TAGS'])}', 'experiment_path', 'deploy_path', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES ('{TASK_ID}', 'name', 'desc', 'image', null, null, '{dumps(['TAGS'])}', 'experiment_path', 'deploy_path', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID_2}', 'name', 'desc', 'image', null, null, '{dumps(['TAGS'])}', 'experiment_path', 'deploy_path', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
 
@@ -110,6 +131,9 @@ class TestTemplates(TestCase):
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
 
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID_2}'"
+        conn.execute(text)
+
         text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
         conn.execute(text)
         conn.close()
@@ -154,18 +178,18 @@ class TestTemplates(TestCase):
                 "name": "foo",
                 "tasks": [
                     {
-                        'dependencies': [],
-                        'positionX': POSITION_X,
-                        'positionY': POSITION_Y,
-                        'taskId': TASK_ID,
-                        'uuid': OPERATOR_ID
+                        "dependencies": [],
+                        "positionX": POSITION_X,
+                        "positionY": POSITION_Y,
+                        "taskId": TASK_ID,
+                        "uuid": OPERATOR_ID
                     },
                     {
-                        'dependencies': [OPERATOR_ID],
-                        'positionX': POSITION_X,
-                        'positionY': POSITION_Y,
-                        'taskId': TASK_ID,
-                        'uuid': OPERATOR_ID_2
+                        "dependencies": [OPERATOR_ID],
+                        "positionX": POSITION_X,
+                        "positionY": POSITION_Y,
+                        "taskId": TASK_ID,
+                        "uuid": OPERATOR_ID_2
                     }
                 ],
             }
@@ -190,7 +214,7 @@ class TestTemplates(TestCase):
             expected = {
                 "uuid": TEMPLATE_ID,
                 "name": NAME,
-                "tasks": [TASK],
+                "tasks": TASKS,
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
             }
@@ -217,7 +241,7 @@ class TestTemplates(TestCase):
             expected = {
                 "uuid": TEMPLATE_ID,
                 "name": "bar",
-                "tasks": [TASK],
+                "tasks": TASKS,
                 "createdAt": CREATED_AT_ISO,
             }
             machine_generated = ["updatedAt"]
