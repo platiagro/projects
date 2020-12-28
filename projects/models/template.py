@@ -21,6 +21,5 @@ class Template(Base):
 
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
-        del d["tasks"]
-        d["operators"] = [{"taskId": o} for i, o in enumerate(self.tasks)]
+        d["tasks"] = [{to_camel_case(k): v for k, v in task.items()} for task in self.tasks]
         return d

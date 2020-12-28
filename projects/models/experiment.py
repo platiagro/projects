@@ -24,7 +24,7 @@ class Experiment(Base):
     operators = relationship("Operator", backref="experiment",
                              primaryjoin=uuid == Operator.experiment_id)
     deployments = relationship("Deployment", backref="experiment",
-                                primaryjoin=uuid == Deployment.experiment_id)
+                               primaryjoin=uuid == Deployment.experiment_id)
 
     def __repr__(self):
         return f"<Experiment {self.name}>"
