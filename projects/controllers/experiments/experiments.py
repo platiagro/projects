@@ -203,38 +203,8 @@ def update_experiment(project_id, experiment_id, **kwargs):
     if "template_id" in kwargs:
         template_id = kwargs["template_id"]
         del kwargs["template_id"]
-        template = Template.query.get(template_id)
 
-        if template is None:
-            raise BadRequest("The specified template does not exist")
-
-        # remove operators
-        Operator.query.filter(Operator.experiment_id == experiment_id).delete()
-
-        # save the operators created to get the created_uuid to use on dependencies
-        operators_created = []
-        for task in template.tasks:
-            dependencies = []
-            task_dependencies = task["dependencies"]
-            if len(task_dependencies) > 0:
-                for d in task_dependencies:
-                    op_created = next((o for o in operators_created if o["uuid"] == d), None)
-                    dependencies.append(op_created["created_uuid"])
-
-            operator_id = uuid_alpha()
-            objects = [
-                Operator(
-                    uuid=operator_id,
-                    experiment_id=experiment_id,
-                    task_id=task["task_id"],
-                    dependencies=dependencies,
-                    position_x=task["position_x"],
-                    position_y=task["position_y"],
-                )
-            ]
-            db_session.bulk_save_objects(objects)
-            task["created_uuid"] = operator_id
-            operators_created.append(task)
+        update_experiment_from_template(template_id, experiment_id)
 
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
@@ -369,3 +339,46 @@ def find_by_experiment_id(experiment_id):
         raise NOT_FOUND
 
     return experiment.as_dict()
+
+
+def update_experiment_from_template(template_id, experiment_id):
+    """
+    Recreates the operators of experiment using a template.
+
+    Parameters
+    ----------
+    template_id : str
+    experiment_id : str
+    """
+    template = Template.query.get(template_id)
+
+    if template is None:
+        raise BadRequest("The specified template does not exist")
+
+    # remove operators
+    Operator.query.filter(Operator.experiment_id == experiment_id).delete()
+
+    # save the operators created to get the created_uuid to use on dependencies
+    operators_created = []
+    for task in template.tasks:
+        dependencies = []
+        task_dependencies = task["dependencies"]
+        if len(task_dependencies) > 0:
+            for d in task_dependencies:
+                op_created = next((o for o in operators_created if o["uuid"] == d), None)
+                dependencies.append(op_created["created_uuid"])
+
+        operator_id = uuid_alpha()
+        objects = [
+            Operator(
+                uuid=operator_id,
+                experiment_id=experiment_id,
+                task_id=task["task_id"],
+                dependencies=dependencies,
+                position_x=task["position_x"],
+                position_y=task["position_y"],
+            )
+        ]
+        db_session.bulk_save_objects(objects)
+        task["created_uuid"] = operator_id
+        operators_created.append(task)
