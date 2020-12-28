@@ -30,12 +30,18 @@ POSITION_X = 0.3
 POSITION_Y = 0.5
 TASK = {
     'dependencies': [],
+    'positionX': None,
+    'positionY': None,
+    'taskId': TASK_ID,
+    'uuid': OPERATOR_ID
+}
+TASKS_JSON = dumps([{
+    'dependencies': [],
     'position_x': None,
     'position_y': None,
     'task_id': TASK_ID,
     'uuid': OPERATOR_ID
-}
-TASKS_JSON = dumps([TASK])
+}])
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -149,16 +155,16 @@ class TestTemplates(TestCase):
                 "tasks": [
                     {
                         'dependencies': [],
-                        'position_x': POSITION_X,
-                        'position_y': POSITION_Y,
-                        'task_id': TASK_ID,
+                        'positionX': POSITION_X,
+                        'positionY': POSITION_Y,
+                        'taskId': TASK_ID,
                         'uuid': OPERATOR_ID
                     },
                     {
                         'dependencies': [OPERATOR_ID],
-                        'position_x': POSITION_X,
-                        'position_y': POSITION_Y,
-                        'task_id': TASK_ID,
+                        'positionX': POSITION_X,
+                        'positionY': POSITION_Y,
+                        'taskId': TASK_ID,
                         'uuid': OPERATOR_ID_2
                     }
                 ],
