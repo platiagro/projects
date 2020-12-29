@@ -6,11 +6,12 @@ from werkzeug.exceptions import BadRequest
 
 from projects.controllers.tasks import create_task
 from projects.models.task import DEFAULT_IMAGE
+from projects.object_storage import put_object
 
 
 def init_tasks(config_path):
     """
-    Installs the tasks from a config file. Avoids duplicates.
+    Creates tasks from a config file. Avoids duplicates.
 
     Parameters
     ----------
@@ -22,16 +23,14 @@ def init_tasks(config_path):
 
         for task in tasks:
             name = task["name"]
-            description = task["description"]
-            tags = task["tags"]
+            description = task.get("description")
+            tags = task.get("tags", ["DEFAULT"])
 
-            if "image" in task:
-                image = task["image"]
-            else:
-                image = environ.get("PLATIAGRO_NOTEBOOK_IMAGE", DEFAULT_IMAGE)
+            default_image = environ.get("PLATIAGRO_NOTEBOOK_IMAGE", DEFAULT_IMAGE)
+            image = task.get("image", default_image)
 
-            commands = task["commands"]
-            arguments = task["arguments"]
+            commands = task.get("commands")
+            arguments = task.get("arguments")
 
             try:
                 experiment_notebook = read_notebook(task["experimentNotebook"])
@@ -59,7 +58,7 @@ def init_tasks(config_path):
 
 def read_notebook(notebook_path):
     """
-    Reads the contents of a notebook.
+    Reads the contents of a notebook file.
 
     Parameters
     ----------
@@ -74,3 +73,23 @@ def read_notebook(notebook_path):
     with open(notebook_path, "rb") as f:
         notebook = load(f)
     return notebook
+
+
+def init_artifacts(config_path):
+    """
+    Copies the artifacts from a config file to MinIO.
+
+    Parameters
+    ----------
+    config_path : str
+        The path to the config file.
+    """
+    with open(config_path) as f:
+        artifacts = load(f)
+
+    for artifact in artifacts:
+        file_path = artifact["file_path"]
+        object_name = artifact["object_name"]
+
+        with open(file_path, "rb") as f:
+            put_object(object_name, f.read())

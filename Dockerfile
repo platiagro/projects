@@ -20,14 +20,16 @@ COPY ./requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
 COPY ./projects /app/projects
+COPY ./task_config.json /app/tasks
+COPY ./artifacts_config.json /app/artifacts
 COPY ./setup.py /app/setup.py
 
 RUN pip install /app/
 
 RUN wget https://github.com/platiagro/tasks/archive/main.zip && \
     unzip main.zip && \
-    mv tasks-main/tasks /samples && \
-    mv tasks-main/config.json /samples && \
+    mv tasks-main/tasks /tasks && \
+    mv tasks-main/artifacts /artifacts && \
     rm -rf main.zip tasks-main/
 
 WORKDIR /app/
@@ -35,4 +37,4 @@ WORKDIR /app/
 EXPOSE 8080
 
 ENTRYPOINT ["python", "-m", "projects.api.main"]
-CMD ["--init-db", "--samples-config", "/samples/config.json"]
+CMD ["--init-db", "--tasks-config", "/tasks/config.json", "--artifacts-config", "/artifacts/config.json"]

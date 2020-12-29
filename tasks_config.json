@@ -1,0 +1,294 @@
+[
+    {
+        "name": "Classificador AutoML",
+        "description": "Utiliza o auto-sklearn para obter um ou mais modelos classificadores já otimizados.",
+        "experimentNotebook": "/tasks/automl-classifier/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/automl-classifier/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Regressor AutoML",
+        "description": "Utiliza o auto-sklearn para obter um ou mais modelos regressores já otimizados.",
+        "experimentNotebook": "/tasks/automl-regressor/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/automl-regressor/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Regressão Logística",
+        "description": "Treina um modelo de Regressão Logística para classificação usando scikit-learn.",
+        "experimentNotebook": "/tasks/logistic-regression/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/logistic-regression/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Regressão Linear",
+        "description": "Treina um modelo de Regressão Linear para regressão usando scikit-learn.",
+        "experimentNotebook": "/tasks/linear-regression/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/linear-regression/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Classificador SVM",
+        "description": "Treina um modelo Support Vector Classification usando scikit-learn.",
+        "experimentNotebook": "/tasks/svc/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/svc/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Regressor SVM",
+        "description": "Treina um modelo Support Vector Regression usando scikit-learn.",
+        "experimentNotebook": "/tasks/svr/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/svr/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Classificador MLP",
+        "description": "Treina um modelo classificador Multi-layer Perceptron (MLP) usando scikit-learn.",
+        "experimentNotebook": "/tasks/mlp-classifier/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/mlp-classifier/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Regressor MLP",
+        "description": "Treina um modelo regressor Multi-layer Perceptron (MLP) usando scikit-learn.",
+        "experimentNotebook": "/tasks/mlp-regressor/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/mlp-regressor/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Classificador Random Forest",
+        "description": "Treina um modelo classificador Random Forest usando scikit-learn.",
+        "experimentNotebook": "/tasks/random-forest-classifier/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/random-forest-classifier/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Regressor Random Forest",
+        "description": "Treina um modelo regressor Random Forest usando scikit-learn.",
+        "experimentNotebook": "/tasks/random-forest-regressor/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/random-forest-regressor/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Análise Descritiva",
+        "description": "Gera estatísticas descritivas para um determinado conjunto de dados.",
+        "experimentNotebook": "/tasks/descriptive-analysis/Experiment.ipynb",
+        "tags": [
+            "DESCRIPTIVE_STATISTICS"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Feature Tools",
+        "description": "Usa a biblioteca Feature Tools para Feature Engineering.",
+        "experimentNotebook": "/tasks/feature-tools/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/feature-tools/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Seleção Manual de Atributos",
+        "description": "Remove as features específicas do conjunto de dados.",
+        "experimentNotebook": "/tasks/filter-selection/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/filter-selection/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Agrupamento de Atributos Categóricos",
+        "description": "Faz o agrupamento de features categóricas com elevado número de classes.",
+        "experimentNotebook": "/tasks/grouping-categorical-features/Experiment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Imputação de Valores Faltantes",
+        "description": "Imputa valores ausentes usando média, mediana ou mais frequente.",
+        "experimentNotebook": "/tasks/imputer/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/imputer/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Detecção de Anomalias por Isolation Forest",
+        "description": "Treina um modelo Isolation Forest para detecção de anomalias usando scikit-learn.",
+        "experimentNotebook": "/tasks/isolation-forest-clustering/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/isolation-forest-clustering/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Clusterização KMeans",
+        "description": "Treina um modelo KMeans para clusterização usando scikit-learn.",
+        "experimentNotebook": "/tasks/kmeans-clustering/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/kmeans-clustering/Deployment.ipynb",
+        "tags": [
+            "PREDICTOR"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Normalizador de Amostras",
+        "description": "Normaliza amostras individualmente para o modelo de norma de unidade usando scikit-learn.",
+        "experimentNotebook": "/tasks/normalizer/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/normalizer/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Seleção de Atributos por Correlação",
+        "description": "Remove todas as features de baixa variação e altamente correlacionadas.",
+        "experimentNotebook": "/tasks/pre-selection/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/pre-selection/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Seleção de Atributos por Método de Eliminação Recursiva",
+        "description": "Realiza a seleção de features baseado no método de eliminação recursiva usando um estimador Random Forest.",
+        "experimentNotebook": "/tasks/rfe-selector/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/rfe-selector/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Scaler Robusto",
+        "description": "Dimensiona features usando estatísticas robustas para outliers.",
+        "experimentNotebook": "/tasks/robust-scaler/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/robust-scaler/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Simulated Annealing",
+        "description": "Aplica a estratégia simulated annealing para Feature Engineering.",
+        "experimentNotebook": "/tasks/simulated-annealing/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/simulated-annealing/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Transformation Graph",
+        "description": "Usa uma estratégia de gráfico de transformação para o Feature Engineering.",
+        "experimentNotebook": "/tasks/transformation-graph/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/transformation-graph/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Seleção de Atributos por Limiar de Variância",
+        "description": "Remove todos os atributos de baixa variância.",
+        "experimentNotebook": "/tasks/variance-threshold/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/variance-threshold/Deployment.ipynb",
+        "tags": [
+            "FEATURE_ENGINEERING"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Face Detection",
+        "description": "Utiliza a biblioteca facenet-pytorch, a qual disponibiliza o algorítimo MTCNN.",
+        "experimentNotebook": "/tasks/cv-mtcnn-face-detection/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/cv-mtcnn-face-detection/Deployment.ipynb",
+        "tags": [
+            "COMPUTER_VISION"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "OCR (Optical Character Recognition)",
+        "description": "Utiliza a biblioteca Pytesseract para converter textos em imagem para string.",
+        "experimentNotebook": "/tasks/cv-ocr/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/cv-ocr/Deployment.ipynb",
+        "tags": [
+            "COMPUTER_VISION"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "YOLO (You Only Look Once)",
+        "description": "Utiliza uma biblioteca do Yolov4 para detecção e classificação de objetos em imagens.",
+        "experimentNotebook": "/tasks/default-yolo/Experiment.ipynb",
+        "deploymentNotebook": "/tasks/default-yolo/Deployment.ipynb",
+        "tags": [
+            "COMPUTER_VISION"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Upload de arquivo",
+        "description": "Importa arquivos para utilização em experimentos.",
+        "tags": [
+            "DATASETS"
+        ],
+        "commands": ["python3", "-c"],
+        "arguments": [
+            "import json, os; import platiagro; dataset = json.loads(os.environ[\"PARAMETER_dataset\"]); platiagro.download_dataset(dataset, f\"/tmp/data/{dataset}\")"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    },
+    {
+        "name": "Google Drive",
+        "description": "Importa arquivos do Google Drive para utilização em experimentos.",
+        "tags": [
+            "DATASETS"
+        ],
+        "commands": ["python3", "-c"],
+        "arguments": [
+            "import json, os; import platiagro; dataset = json.loads(os.environ[\"PARAMETER_dataset\"]); platiagro.download_dataset(dataset, f\"/tmp/data/{dataset}\")"
+        ],
+        "image": "platiagro/platiagro-experiment-image:0.2.0"
+    }
+]

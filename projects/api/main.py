@@ -25,7 +25,7 @@ from projects.api.tasks import bp as tasks_blueprint
 from projects.api.tasks.parameters import bp as tasks_parameters_blueprint
 from projects.api.templates import bp as templates_blueprint
 from projects.database import db_session, init_db
-from projects.samples import init_tasks
+from projects.initializer import init_artifacts, init_tasks
 
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
@@ -130,7 +130,10 @@ def parse_args(args):
         "--init-db", action="count", help="Create database and tables before the HTTP server starts"
     )
     parser.add_argument(
-        "--samples-config", help="Path to sample tasks config file."
+        "--tasks-config", help="Path to tasks config file."
+    )
+    parser.add_argument(
+        "--artifacts-config", help="Path to artifacts config file."
     )
     return parser.parse_args(args)
 
@@ -146,8 +149,12 @@ if __name__ == "__main__":
     if args.init_db:
         init_db()
 
-    # Install sample tasks if required
-    if args.samples_config:
-        init_tasks(args.samples_config)
+    # Install tasks from config file
+    if args.tasks_config:
+        init_tasks(args.tasks_config)
+
+    # Install artifacts from config file
+    if args.artifacts_config:
+        init_artifacts(args.artifacts_config)
 
     app.run(host="0.0.0.0", port=args.port, debug=args.debug)
