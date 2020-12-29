@@ -341,7 +341,7 @@ class TestExperiments(TestCase):
                 for operator in result_operators:
                     self.assertIn(attr, operator)
                     del operator[attr]
-            self.assertListEqual(expected, result_operators)
+            self.assertListEqual(sorted(expected, key=lambda o: o["taskId"]), sorted(result_operators, key=lambda o: o["taskId"]))
 
     def test_delete_experiment(self):
         with app.test_client() as c:
