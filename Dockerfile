@@ -11,7 +11,7 @@ ENV COMMIT=${COMMIT}
 ENV BRANCH=${BRANCH}
 
 RUN apt-get update && \
-    apt-get install wget unzip && \
+    apt-get install wget unzip jq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -20,8 +20,6 @@ COPY ./requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
 COPY ./projects /app/projects
-COPY ./tasks_config.json /tasks/config.json
-COPY ./artifacts_config.json /artifacts/config.json
 COPY ./setup.py /app/setup.py
 
 RUN pip install /app/
@@ -29,8 +27,16 @@ RUN pip install /app/
 RUN wget https://github.com/platiagro/tasks/archive/main.zip && \
     unzip main.zip && \
     mv tasks-main/tasks /tasks && \
-    mv tasks-main/artifacts /artifacts && \
     rm -rf main.zip tasks-main/
+
+COPY ./tasks_config.json /tasks/config.json
+COPY ./artifacts_config.json /artifacts/config.json
+
+RUN jq -c ".[]" /artifacts/config.json | while read a; do \
+    URL=$(echo $a | jq -r .url); \
+    FILE_PATH=$(echo $a | jq -r .file_name); \
+    wget -O "$FILE_PATH" "$URL"; \
+    done
 
 WORKDIR /app/
 

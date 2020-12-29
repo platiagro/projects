@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from json import load
-from os import environ
+import json
+import os
 
+import requests
 from werkzeug.exceptions import BadRequest
 
 from projects.controllers.tasks import create_task
@@ -26,7 +27,7 @@ def init_tasks(config_path):
             description = task.get("description")
             tags = task.get("tags", ["DEFAULT"])
 
-            default_image = environ.get("PLATIAGRO_NOTEBOOK_IMAGE", DEFAULT_IMAGE)
+            default_image = os.environ.get("PLATIAGRO_NOTEBOOK_IMAGE", DEFAULT_IMAGE)
             image = task.get("image", default_image)
 
             commands = task.get("commands")
@@ -71,7 +72,7 @@ def read_notebook(notebook_path):
         The notebook content as bytes.
     """
     with open(notebook_path, "rb") as f:
-        notebook = load(f)
+        notebook = json.load(f)
     return notebook
 
 
@@ -85,7 +86,7 @@ def init_artifacts(config_path):
         The path to the config file.
     """
     with open(config_path) as f:
-        artifacts = load(f)
+        artifacts = json.load(f)
 
     for artifact in artifacts:
         file_path = artifact["file_path"]
