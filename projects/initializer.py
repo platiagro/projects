@@ -20,7 +20,7 @@ def init_tasks(config_path):
         The path to the config file.
     """
     with open(config_path) as f:
-        tasks = load(f)
+        tasks = json.load(f)
 
         for task in tasks:
             name = task["name"]
