@@ -20,8 +20,8 @@ COPY ./requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
 COPY ./projects /app/projects
-COPY ./task_config.json /app/tasks
-COPY ./artifacts_config.json /app/artifacts
+COPY ./tasks_config.json /tasks/config.json
+COPY ./artifacts_config.json /artifacts/config.json
 COPY ./setup.py /app/setup.py
 
 RUN pip install /app/
