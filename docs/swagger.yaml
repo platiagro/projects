@@ -1564,6 +1564,20 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Deployment"
+    DeploymentExperiments:
+      type: object
+      properties:
+        experiments:
+          type: array
+          items:
+            type: string
+            format: uuid
+    DeploymentTemplate:
+      type: object
+      properties:
+        templateId:
+          type: string
+          format: uuid
     Operator:
       type: object
       properties:
@@ -2005,16 +2019,21 @@ components:
                 type: string
                 format: uuid
     DeploymentPost:
-      description: Necessary body if experimentDeploy equals true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-              copyFrom:
-                type: string
+            oneOf:
+              - $ref: "#/components/schemas/DeploymentExperiments"
+              - $ref: "#/components/schemas/DeploymentTemplate"
+          examples:
+            experiments:
+              summary: From a list of experiments
+              value:
+                experiments: ["3fa85f64-5717-4562-b3fc-2c963f66afa6"]
+            template:
+              summary: From a template
+              value:
+                templateId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
     DeploymentPatch:
       content:
         application/json:

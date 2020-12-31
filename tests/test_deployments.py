@@ -172,27 +172,25 @@ class TestDeployments(TestCase):
             expected = {"message": "The specified project does not exist"}
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": None})
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "templateId": "mock",
+            })
             result = rv.get_json()
-            expected = {"message": "name is required"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": DEPLOYMENT_MOCK_NAME})
-            result = rv.get_json()
-            expected = {"message": "experiment id was not specified"}
+            expected = {"message": "templateId is not implemented yet"}
             self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": NAME,
-                                                                     "experimentId": EXPERIMENT_ID})
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "experiments": [],
+            })
             result = rv.get_json()
-            expected = {"message": "a deployment with that name already exists"}
-            self.assertDictEqual(expected, result)
+            expected = {"message": "experiments were not specified"}
+            self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": DEPLOYMENT_MOCK_NAME,
-                                                                     "experimentId": EXPERIMENT_ID_2})
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "experiments": [EXPERIMENT_ID_2],
+            })
             result = rv.get_json()
             operator = result["operators"][0]
             self.assertIsInstance(result, dict)
