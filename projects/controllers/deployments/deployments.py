@@ -6,6 +6,7 @@ from datetime import datetime
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
+from projects.controllers.deployments.runs import create_run
 from projects.controllers.experiments import list_experiments
 from projects.controllers.operators import create_operator
 from projects.controllers.utils import raise_if_project_does_not_exist, \
@@ -84,6 +85,8 @@ def create_deployment(project_id,
         if experiment_id not in experiments_dict:
             raise BadRequest("some experiments do not exist")
 
+    deployments = []
+
     for experiment_id in experiments:
         experiment = experiments_dict[experiment_id]
 
@@ -94,6 +97,8 @@ def create_deployment(project_id,
         db_session.add(deployment)
         db_session.flush()
 
+        deployments.append(deployment.uuid)
+
         copy_operators(project_id=project_id,
                        experiment_id=experiment_id,
                        deployment_id=deployment.uuid)
@@ -103,6 +108,12 @@ def create_deployment(project_id,
                       new_position=sys.maxsize)  # will add to end of list
 
     db_session.commit()
+
+    # Temporary: also run deployment (while web-ui isn't ready)
+    for deployment_id in deployments:
+        create_run(project_id=project_id,
+                   deployment_id=deployment_id)
+
     return deployment.as_dict()
 
 
