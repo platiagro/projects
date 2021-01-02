@@ -2097,15 +2097,7 @@ components:
         application/json:
           schema:
             type: object
-            properties:
-              experimentId:
-                type: string
-                format: uuid
-              operators:
-                type: array
-                items:
-                  oneOf:
-                    - $ref: "#/components/schemas/Operator"
+            properties: {}
     TemplatePost:
       content:
         application/json:
