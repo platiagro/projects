@@ -6,6 +6,7 @@ from json import dumps, loads
 from kfp import compiler, dsl
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
+from unicodedata import normalize
 
 from projects.kfp import CPU_LIMIT, CPU_REQUEST, KFP_CLIENT, \
     KF_PIPELINES_NAMESPACE, MEMORY_LIMIT, MEMORY_REQUEST
@@ -27,13 +28,14 @@ def compile_pipeline(name, operators, experiment_id, deployment_id, deployment_n
     """
     @dsl.pipeline(name=name)
     def pipeline_func():
-        # Create a volume to share data between container_ops
-        volume_op = create_volume_op(name)
+        # Creates a volume to share data among container_ops
+        volume_op_tmp_data = create_volume_op(name="tmp-data",
+                                              experiment_id=experiment_id)
 
         # Gets dataset from any operator that has a dataset
         dataset = get_dataset(operators)
 
-        # Create a container_op for each operator
+        # Creates a container_op for each operator
         containers = {}
         for operator in operators:
             if deployment_id is not None:
@@ -47,10 +49,11 @@ def compile_pipeline(name, operators, experiment_id, deployment_id, deployment_n
                                                dataset=dataset)
             containers[operator.uuid] = (operator, container_op)
 
-        if deployment_id is None:
-            mount_path = "/tmp/data"
-        else:
-            mount_path = "/home/jovyan"
+        if deployment_id is not None:
+            # Creates a volume to share Model.py with seldon deployment
+            volume_op_home_jovyan = create_volume_op(name="home-jovyan",
+                                                     experiment_id=experiment_id)
+
             # Creates resource_op that creates a seldondeployment
             resource_op = create_resource_op(operators=operators,
                                              experiment_id=experiment_id,
@@ -61,22 +64,25 @@ def compile_pipeline(name, operators, experiment_id, deployment_id, deployment_n
         for operator, container_op in containers.values():
             dependencies = [containers[dependency_id][1] for dependency_id in operator.dependencies]
             container_op.after(*dependencies)
-            container_op.add_pvolumes({mount_path: volume_op.volume})
+            container_op.add_pvolumes({"/tmp/data": volume_op_tmp_data.volume})
 
             if deployment_id is not None:
+                container_op.add_pvolumes({"/home/jovyan": volume_op_home_jovyan.volume})
+
                 resource_op.after(container_op)
 
     compiler.Compiler() \
         .compile(pipeline_func, f"{name}.yaml")
 
 
-def create_volume_op(name):
+def create_volume_op(name, experiment_id):
     """
     Creates a kfp.dsl.VolumeOp container.
 
     Parameters
     ----------
     name : str
+    experiment_id : str
 
     Returns
     -------
@@ -86,7 +92,7 @@ def create_volume_op(name):
         api_version="v1",
         kind="PersistentVolumeClaim",
         metadata={
-            "name": f"vol-{name}",
+            "name": f"vol-{name}-{experiment_id}",
             "namespace": KF_PIPELINES_NAMESPACE,
         },
         spec={
@@ -100,7 +106,7 @@ def create_volume_op(name):
     )
 
     volume_op = dsl.VolumeOp(
-        name="vol-tmp-data",
+        name=f"vol-{name}",
         k8s_resource=pvc,
         action="apply",
     )
@@ -244,9 +250,11 @@ def create_resource_op(operators, experiment_id, deployment_id, deployment_name)
 
     graph = build_graph(operator_id=first, children=graph[first])
 
+    subdomain = generate_subdomain(deployment_name=deployment_name)
+
     seldon_deployment = SELDON_DEPLOYMENT.substitute({
         "namespace": KF_PIPELINES_NAMESPACE,
-        "deploymentName": deployment_name,
+        "subdomain": subdomain,
         "deploymentId": deployment_id,
         "componentSpecs": ",".join(component_specs),
         "graph": graph,
@@ -255,8 +263,7 @@ def create_resource_op(operators, experiment_id, deployment_id, deployment_name)
     sdep_resource = loads(seldon_deployment)
 
     # mounts the "/tmp/data" volume from experiment (if exists)
-    if volume_exists(f"vol-experiment-{experiment_id}", KF_PIPELINES_NAMESPACE):
-        sdep_resource = mount_volume_from_experiment(sdep_resource, experiment_id)
+    sdep_resource = mount_volume_from_experiment(sdep_resource, experiment_id)
 
     resource_op = dsl.ResourceOp(
         name="deployment",
@@ -329,16 +336,40 @@ def mount_volume_from_experiment(sdep_resource, experiment_id):
     -------
     dict
     """
-    for predictor in sdep_resource["spec"]["predictors"]:
-        for spec in predictor["componentSpecs"]:
-            spec["spec"]["containers"][0]["volumeMounts"].append({
-                "name": "data",
-                "mountPath": "/tmp/data",
-            })
-            spec["spec"]["volumes"].append({
-                "name": "data",
-                "persistentVolumeClaim": {
-                    "claimName": f"vol-experiment-{experiment_id}",
-                },
-            })
+    if volume_exists(f"vol-tmp-data-{experiment_id}", KF_PIPELINES_NAMESPACE):
+        for predictor in sdep_resource["spec"]["predictors"]:
+            for spec in predictor["componentSpecs"]:
+                spec["spec"]["containers"][0]["volumeMounts"].append({
+                    "name": "data",
+                    "mountPath": "/tmp/data",
+                })
+                spec["spec"]["volumes"].append({
+                    "name": "data",
+                    "persistentVolumeClaim": {
+                        "claimName": f"vol-tmp-data-{experiment_id}",
+                    },
+                })
     return sdep_resource
+
+
+def generate_subdomain(deployment_name):
+    """
+    Generates a valid DNS-1123 subdomain from a given deployment name.
+
+    Parameters
+    ----------
+    deployment_name : str
+
+    Returns
+    -------
+    str
+    """
+    # normalize to ASCII characters
+    # replace spaces by dashes
+    subdomain = normalize("NFKD", deployment_name) \
+        .encode("ASCII", "ignore") \
+        .replace(b" ", b"-") \
+        .decode() \
+        .lower()
+
+    return subdomain
