@@ -97,7 +97,7 @@ def create_deployment(project_id,
         db_session.add(deployment)
         db_session.flush()
 
-        deployments.append(deployment.uuid)
+        deployments.append(deployment)
 
         copy_operators(project_id=project_id,
                        experiment_id=experiment_id,
@@ -110,11 +110,11 @@ def create_deployment(project_id,
     db_session.commit()
 
     # Temporary: also run deployment (while web-ui isn't ready)
-    for deployment_id in deployments:
+    for deployment in deployments:
         create_run(project_id=project_id,
-                   deployment_id=deployment_id)
+                   deployment_id=deployment.uuid)
 
-    return deployment.as_dict()
+    return [deployment.as_dict() for deployment in deployments]
 
 
 def get_deployment(project_id, deployment_id):

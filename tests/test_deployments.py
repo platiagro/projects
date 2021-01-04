@@ -192,9 +192,9 @@ class TestDeployments(TestCase):
                 "experiments": [EXPERIMENT_ID_2],
             })
             result = rv.get_json()
-            operator = result["operators"][0]
-            self.assertIsInstance(result, dict)
-            self.assertIn("operators", result)
+            self.assertIsInstance(result, list)
+            self.assertIn("operators", result[0])
+            operator = result[0]["operators"][0]
             self.assertEqual(TASK_ID, operator["taskId"])
 
     def test_get_deployment(self):

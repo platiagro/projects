@@ -1019,7 +1019,7 @@ paths:
         $ref: "#/components/requestBodies/DeploymentPost"
       responses:
         "200":
-          $ref: "#/components/responses/Deployment"
+          $ref: "#/components/responses/Deployments"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
