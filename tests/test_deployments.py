@@ -21,7 +21,7 @@ DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
-PARAMETERS = {"coef": 0.1}
+PARAMETERS = {"coef": 0.1, "dataset": "dataset_name.csv"}
 POSITION = 0
 POSITION_2 = 1
 POSITION_X = 0.3
@@ -185,6 +185,14 @@ class TestDeployments(TestCase):
             })
             result = rv.get_json()
             expected = {"message": "experiments were not specified"}
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "experiments": ["unk"],
+            })
+            result = rv.get_json()
+            expected = {"message": "some experiments do not exist"}
             self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 400)
 
