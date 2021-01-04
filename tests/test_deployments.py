@@ -21,7 +21,7 @@ DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
-PARAMETERS = {"coef": 0.1}
+PARAMETERS = {"coef": 0.1, "dataset": "dataset_name.csv"}
 POSITION = 0
 POSITION_2 = 1
 POSITION_X = 0.3
@@ -172,31 +172,37 @@ class TestDeployments(TestCase):
             expected = {"message": "The specified project does not exist"}
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": None})
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "templateId": "mock",
+            })
             result = rv.get_json()
-            expected = {"message": "name is required"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": DEPLOYMENT_MOCK_NAME})
-            result = rv.get_json()
-            expected = {"message": "experiment id was not specified"}
+            expected = {"message": "templateId is not implemented yet"}
             self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": NAME,
-                                                                     "experimentId": EXPERIMENT_ID})
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "experiments": [],
+            })
             result = rv.get_json()
-            expected = {"message": "a deployment with that name already exists"}
-            self.assertDictEqual(expected, result)
+            expected = {"message": "experiments were not specified"}
+            self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={"name": DEPLOYMENT_MOCK_NAME,
-                                                                     "experimentId": EXPERIMENT_ID_2})
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "experiments": ["unk"],
+            })
             result = rv.get_json()
-            operator = result["operators"][0]
+            expected = {"message": "some experiments do not exist"}
             self.assertIsInstance(result, dict)
-            self.assertIn("operators", result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "experiments": [EXPERIMENT_ID_2],
+            })
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+            self.assertIn("operators", result[0])
+            operator = result[0]["operators"][0]
             self.assertEqual(TASK_ID, operator["taskId"])
 
     def test_get_deployment(self):

@@ -978,7 +978,7 @@ paths:
             format: uuid
       responses:
         "200":
-          $ref: "#/components/responses/Logs"
+          $ref: "#/components/responses/ExperimentLog"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -1019,7 +1019,7 @@ paths:
         $ref: "#/components/requestBodies/DeploymentPost"
       responses:
         "200":
-          $ref: "#/components/responses/Deployment"
+          $ref: "#/components/responses/Deployments"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -1219,6 +1219,35 @@ paths:
           $ref: "#/components/responses/Message"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/deployments/{deploymentId}/runs/{runId}/logs:
+    get:
+      summary: "Get logs from a deployment run."
+      tags:
+        - "Results"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/DeploymentLog"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -1564,6 +1593,32 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Deployment"
+    DeploymentExperiments:
+      type: object
+      properties:
+        experiments:
+          type: array
+          items:
+            type: string
+            format: uuid
+    DeploymentTemplate:
+      type: object
+      properties:
+        templateId:
+          type: string
+          format: uuid
+    DeploymentLog:
+      type: array
+      items:
+        type: object
+        properties:
+          containerName:
+            type: string
+          logs:
+            type: array
+            items:
+              oneOf:
+                - $ref: "#/components/schemas/Log"
     Operator:
       type: object
       properties:
@@ -1608,7 +1663,7 @@ components:
                 type: string
                 enum: [Unset, Setted up]
                 example: Setted up
-    Logs:
+    ExperimentLog:
       type: object
       properties:
         exception:
@@ -1633,6 +1688,15 @@ components:
               - "   4861 "
               - ""
               - "KeyError: ['species']"
+    Log:
+      type: object
+      properties:
+        level:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
     Datasets:
       type: array
       items:
@@ -2005,16 +2069,21 @@ components:
                 type: string
                 format: uuid
     DeploymentPost:
-      description: Necessary body if experimentDeploy equals true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-              copyFrom:
-                type: string
+            oneOf:
+              - $ref: "#/components/schemas/DeploymentExperiments"
+              - $ref: "#/components/schemas/DeploymentTemplate"
+          examples:
+            experiments:
+              summary: From a list of experiments
+              value:
+                experiments: ["3fa85f64-5717-4562-b3fc-2c963f66afa6"]
+            template:
+              summary: From a template
+              value:
+                templateId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
     DeploymentPatch:
       content:
         application/json:
@@ -2078,15 +2147,7 @@ components:
         application/json:
           schema:
             type: object
-            properties:
-              experimentId:
-                type: string
-                format: uuid
-              operators:
-                type: array
-                items:
-                  oneOf:
-                    - $ref: "#/components/schemas/Operator"
+            properties: {}
     TemplatePost:
       content:
         application/json:
@@ -2185,12 +2246,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Operators"
-    Logs:
+    ExperimentLog:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Logs"
+            $ref: "#/components/schemas/ExperimentLog"
+    DeploymentLog:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DeploymentLog"
     Datasets:
       description: ""
       content:

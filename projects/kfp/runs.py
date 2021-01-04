@@ -130,7 +130,7 @@ def get_run(run_id, experiment_id):
 
     # initializes all operators with status=Pending and parameters={}
     template = next(t for t in workflow_manifest["spec"]["templates"] if "dag" in t)
-    tasks = (tsk for tsk in template["dag"]["tasks"] if tsk["name"] != "vol-tmp-data")
+    tasks = (tsk for tsk in template["dag"]["tasks"] if not tsk["name"].startswith("vol-"))
     operators = dict((t["name"], {"status": "Pending", "parameters": {}}) for t in tasks)
 
     # sets statuses for each operator
