@@ -40,12 +40,10 @@ def list_logs(project_id, deployment_id, run_id):
     raise_if_deployment_does_not_exist(deployment_id)
 
     deployment_pods = list_deployment_pods(deployment_id)
-    response = []
-    container_ = {'status': 'Starting'}
+    log = {'status': 'Starting'}
 
     if not deployment_pods:
-        container_.update({'status': 'Creating'})
-        return container_
+        log.update({'status': 'Creating'})
 
     for pod in deployment_pods:
         for container in pod.spec.containers:
@@ -53,16 +51,14 @@ def list_logs(project_id, deployment_id, run_id):
                 pod_log = get_pod_log(pod, container)
 
                 if not pod_log:
-                    container_.update({'status': 'Creating'})
-                    return container_
+                    log.update({'status': 'Creating'})
+                    return log
 
-                container_ = {}
-                container_['containerName'] = get_operator_name(container.name)
-                container_['logs'] = log_parser(pod_log)
-                container_['status'] = 'Completed'
-                response.append(container_)
-
-    return response
+                log['containerName'] = get_operator_name(container.name)
+                log['logs'] = log_parser(pod_log)
+                log['status'] = 'Completed'
+                log = [log]
+    return log
 
 
 def log_parser(raw_log):

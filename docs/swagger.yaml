@@ -978,7 +978,7 @@ paths:
             format: uuid
       responses:
         "200":
-          $ref: "#/components/responses/Logs"
+          $ref: "#/components/responses/ExperimentLog"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -1219,6 +1219,35 @@ paths:
           $ref: "#/components/responses/Message"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectsId}/deployments/{deploymentId}/runs/{runId}/logs:
+    get:
+      summary: "Get logs from a deployment run."
+      tags:
+        - "Results"
+      parameters:
+        - in: path
+          name: projectsId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/DeploymentLog"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -1578,6 +1607,18 @@ components:
         templateId:
           type: string
           format: uuid
+    DeploymentLog:
+      type: array
+      items:
+        type: object
+        properties:
+          containerName:
+            type: string
+          logs:
+            type: array
+            items:
+              oneOf:
+                - $ref: "#/components/schemas/Log"
     Operator:
       type: object
       properties:
@@ -1622,7 +1663,7 @@ components:
                 type: string
                 enum: [Unset, Setted up]
                 example: Setted up
-    Logs:
+    ExperimentLog:
       type: object
       properties:
         exception:
@@ -1647,6 +1688,15 @@ components:
               - "   4861 "
               - ""
               - "KeyError: ['species']"
+    Log:
+      type: object
+      properties:
+        level:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
     Datasets:
       type: array
       items:
@@ -2196,12 +2246,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Operators"
-    Logs:
+    ExperimentLog:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Logs"
+            $ref: "#/components/schemas/ExperimentLog"
+    DeploymentLog:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DeploymentLog"
     Datasets:
       description: ""
       content:

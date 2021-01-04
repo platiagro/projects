@@ -6,7 +6,6 @@ from json import dumps, loads
 from kfp import compiler, dsl
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
-from unicodedata import normalize
 
 from projects.kfp import CPU_LIMIT, CPU_REQUEST, KFP_CLIENT, \
     KF_PIPELINES_NAMESPACE, MEMORY_LIMIT, MEMORY_REQUEST
@@ -250,11 +249,8 @@ def create_resource_op(operators, experiment_id, deployment_id, deployment_name)
 
     graph = build_graph(operator_id=first, children=graph[first])
 
-    subdomain = generate_subdomain(deployment_name=deployment_name)
-
     seldon_deployment = SELDON_DEPLOYMENT.substitute({
         "namespace": KF_PIPELINES_NAMESPACE,
-        "subdomain": subdomain,
         "deploymentId": deployment_id,
         "componentSpecs": ",".join(component_specs),
         "graph": graph,
@@ -350,26 +346,3 @@ def mount_volume_from_experiment(sdep_resource, experiment_id):
                     },
                 })
     return sdep_resource
-
-
-def generate_subdomain(deployment_name):
-    """
-    Generates a valid DNS-1123 subdomain from a given deployment name.
-
-    Parameters
-    ----------
-    deployment_name : str
-
-    Returns
-    -------
-    str
-    """
-    # normalize to ASCII characters
-    # replace spaces by dashes
-    subdomain = normalize("NFKD", deployment_name) \
-        .encode("ASCII", "ignore") \
-        .replace(b" ", b"-") \
-        .decode() \
-        .lower()
-
-    return subdomain

@@ -8,7 +8,7 @@ SELDON_DEPLOYMENT = Template("""{
         "labels": {
             "app": "seldon"
         },
-        "name": "$subdomain",
+        "name": "$deploymentId",
         "deploymentId": "$deploymentId",
         "namespace": "$namespace"
     },
