@@ -20,7 +20,7 @@ SELDON_DEPLOYMENT = Template("""{
             "seldon.io/grpc-read-timeout": "60000",
             "seldon.io/engine-separate-pod": "true"
         },
-        "name": "$subdomain",
+        "name": "$deploymentId",
         "resources": {
             "requests": {
                 "memory": "2G"
