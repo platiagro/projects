@@ -55,7 +55,7 @@ def get_parameters_with_values(parameters):
 
 def remove_parameter(parameters, target):
     """
-    Remove specific parameter from a list of parameters.
+    Remove a specific parameter from a list of parameters.
 
     Parameters
     ----------

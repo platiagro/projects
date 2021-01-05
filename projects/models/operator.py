@@ -21,15 +21,13 @@ class Operator(Base):
     position_y = Column("position_y", Float, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    status = Column(String(255), nullable=True, default=None)
     task = relationship("Task", backref=backref("operator", uselist=False))
 
     def __repr__(self):
         return f"<Operator {self.uuid}>"
 
     def as_dict(self):
-        # get status only when different from None
-        d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns if not (c.name == "status" and getattr(self, c.name) is None)}
+        d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
         status = getattr(self, "status", None)
         if status:
             d["status"] = status
