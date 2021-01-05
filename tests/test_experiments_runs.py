@@ -132,6 +132,11 @@ class TestExperimentsRuns(TestCase):
             self.assertIn("uuid", result)
             self.assertEqual(rv.status_code, 200)
 
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}")
+            result = rv.get_json()
+            operator = result["operators"][0]
+            self.assertEqual("Pending", operator["status"])
+
     def test_get_run(self):
         with app.test_client() as c:
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun")
