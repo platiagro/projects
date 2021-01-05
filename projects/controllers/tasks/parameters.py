@@ -6,7 +6,7 @@ from projects.jupyter import read_parameters
 from projects.models import Task
 
 
-def list_parameters(task_id, is_checked=False):
+def list_parameters(task_id):
     """
     Lists all parameters from the experiment notebook of a task.
 
@@ -29,3 +29,49 @@ def list_parameters(task_id, is_checked=False):
         raise NotFound("The specified task does not exist")
 
     return read_parameters(task.experiment_notebook_path)
+
+
+def get_parameters_with_values(parameters):
+    """
+    Get parameters with values from operator.
+
+    Parameters
+    ----------
+    parameters : list
+
+    Returns
+    -------
+    list
+        Operator parameters with values.
+    """
+    params = []
+
+    for key, value in parameters.items():
+        if value != '':
+            params.append(key)
+
+    return params
+
+
+def remove_parameter(parameters, target):
+    """
+    Remove specific parameter from a list of parameters.
+
+    Parameters
+    ----------
+    parameters : list
+    target : str
+        The target to be removed.
+
+    Returns
+    -------
+    list
+        The new list.
+    """
+    params = []
+
+    for parameter in parameters:
+        if parameter["name"] != target:
+            params.append(parameter)
+
+    return params

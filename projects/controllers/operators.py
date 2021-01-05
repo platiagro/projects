@@ -5,11 +5,13 @@ from datetime import datetime
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from projects.controllers.tasks.parameters import list_parameters
+from projects.controllers.tasks.parameters import list_parameters, \
+    get_parameters_with_values, remove_parameter
 from projects.controllers.utils import raise_if_task_does_not_exist, \
     raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
     raise_if_operator_does_not_exist, uuid_alpha
 from projects.database import db_session
+from projects.kfp.runs import get_container_status
 from projects.models import Operator, Task
 
 
@@ -45,7 +47,7 @@ def list_operators(project_id, experiment_id):
 
     response = []
     for operator in operators:
-        check_status(operator)
+        update_status(operator)
         response.append(operator.as_dict())
 
     return response
@@ -123,7 +125,7 @@ def create_operator(project_id, experiment_id=None, deployment_id=None,
     db_session.add(operator)
     db_session.commit()
 
-    check_status(operator)
+    update_status(operator)
 
     return operator.as_dict()
 
@@ -175,7 +177,7 @@ def update_operator(project_id, experiment_id, operator_id, **kwargs):
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
 
-    check_status(operator)
+    update_status(operator)
 
     return operator.as_dict()
 
@@ -357,36 +359,32 @@ def has_cycles_util(operator_id, visited, recursion_stack, new_dependencies, new
     return False
 
 
-def check_status(operator):
+def update_status(operator):
     """
-    Check operator status
+    Update operator status.
 
     Parameters
     ----------
-    operator : str
-
-    Returns
-    ------
-    str
-        The operator status.
+    operator : projects.models.operator.Operator
     """
     # get total operator parameters with value
-    op_params_keys = [key for key in operator.parameters.keys() if operator.parameters[key] != '']
-    total_op_params = len(op_params_keys)
-
+    parameters = get_parameters_with_values(operator.parameters)
     task = Task.query.get(operator.task_id)
-    if "DATASETS" not in task.tags:
-        # get task parameters and remove dataset parameter
-        comp_params = list_parameters(operator.task_id)
-        comp_params = [parameter for parameter in comp_params if parameter['name'] != 'dataset']
-        total_comp_params = len(comp_params)
+    status = get_container_status(operator.experiment_id, operator.uuid)
 
-        if total_op_params == total_comp_params:
-            operator.status = 'Setted up'
+    if status:
+        operator.status = status
+    elif "DATASETS" in task.tags:
+        if parameters:
+            operator.status = "Setted up"
         else:
-            operator.status = 'Unset'
+            operator.status = "Unset"
     else:
-        if total_op_params == 1:
-            operator.status = 'Setted up'
+        # get task parameters and remove dataset parameter
+        task_parameters = list_parameters(operator.task_id)
+        task_parameters = remove_parameter(task_parameters, "dataset")
+
+        if len(parameters) == len(task_parameters):
+            operator.status = "Setted up"
         else:
-            operator.status = 'Unset'
+            operator.status = "Unset"
