@@ -36,7 +36,7 @@ IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 COMMANDS = None
 ARGUMENTS = None
 TAGS = ["PREDICTOR"]
-TAGS_2 = ["DATASET"]
+TAGS_2 = ["DATASETS"]
 TAGS_JSON = dumps(TAGS)
 TAGS_JSON_2 = dumps(TAGS_2)
 TASKS_JSON = dumps([
@@ -184,17 +184,17 @@ class TestExperiments(TestCase):
 
         conn.close()
 
-    # def test_list_experiments(self):
-    #     with app.test_client() as c:
-    #         rv = c.get("/projects/unk/experiments")
-    #         result = rv.get_json()
-    #         expected = {"message": "The specified project does not exist"}
-    #         self.assertDictEqual(expected, result)
-    #         self.assertEqual(rv.status_code, 404)
+    def test_list_experiments(self):
+        with app.test_client() as c:
+            rv = c.get("/projects/unk/experiments")
+            result = rv.get_json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
-    #         rv = c.get(f"/projects/{PROJECT_ID}/experiments")
-    #         result = rv.get_json()
-    #         self.assertIsInstance(result, list)
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments")
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
 
     def test_create_experiment(self):
         with app.test_client() as c:
@@ -281,7 +281,7 @@ class TestExperiments(TestCase):
             }
             self.assertDictEqual(expected, result)
             operator = result['operators'][0]
-            self.assertEqual('Unset', operator["status"])
+            self.assertEqual("Setted up", operator["status"])
 
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_3}")
             result = rv.get_json()

@@ -94,20 +94,20 @@ def create_experiment(project_id=None, name=None, copy_from=None):
             source_operators = {}
             for source_operator in experiment_find["operators"]:
 
-                source_dependencies = source_operator.dependencies
+                source_dependencies = source_operator["dependencies"]
 
                 kwargs = {
-                    "task_id": source_operator.task_id,
-                    "parameters": source_operator.parameters,
+                    "task_id": source_operator["taskId"],
+                    "parameters": source_operator["parameters"],
                     "dependencies": [],
-                    "position_x": source_operator.position_x,
-                    "position_y": source_operator.position_y
+                    "position_x": source_operator["positionX"],
+                    "position_y": source_operator["positionY"]
                 }
                 operator = create_operator(project_id=project_id,
                                            experiment_id=experiment.uuid,
                                            **kwargs)
 
-                source_operators[source_operator.uuid] = {
+                source_operators[source_operator["uuid"]] = {
                     "copy_uuid": operator["uuid"],
                     "dependencies": source_dependencies
                 }

@@ -28,7 +28,7 @@ class Operator(Base):
         return f"<Operator {self.uuid}>"
 
     def as_dict(self):
-        # get status only when is different from None
+        # get status only when different from None
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns if not (c.name == "status" and getattr(self, c.name) is None)}
         status = getattr(self, "status", None)
         if status:
