@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Kubeflow Pipelines interface."""
-from os import getenv
+from os import getenv, makedirs, path
+from pathlib import Path
 
 from kfp import Client
 
@@ -12,5 +13,7 @@ KF_PIPELINES_ENDPOINT = getenv("KF_PIPELINES_ENDPOINT", "ml-pipeline.deployments
 KF_PIPELINES_NAMESPACE = getenv("KF_PIPELINES_NAMESPACE", "deployments")
 KFP_CLIENT = Client(
     host=KF_PIPELINES_ENDPOINT,
-    namespace=KF_PIPELINES_NAMESPACE,
 )
+# user namespace is stored in a configuration file at $HOME/.config/kfp/context.json
+makedirs(path.join(str(Path.home()), ".config", "kfp"))
+KFP_CLIENT.set_user_namespace(namespace=KF_PIPELINES_NAMESPACE)
