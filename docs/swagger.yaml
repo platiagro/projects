@@ -1530,6 +1530,7 @@ components:
                     type: string
                     enum: [Unset, Setted up, Pending, Running, Failed, Successful]
                     example: Setted up
+                    nullable: true
         createdAt:
           type: string
           format: date-time

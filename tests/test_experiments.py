@@ -387,6 +387,7 @@ class TestExperiments(TestCase):
                 "parameters": {},
                 "positionX": 200.0,
                 "positionY": 0.0,
+                "status": "Setted up",
                 "deploymentId": None
             }, {
                 "taskId": TASK_ID,
@@ -394,6 +395,7 @@ class TestExperiments(TestCase):
                 "parameters": {},
                 "positionX": 0.0,
                 "positionY": 0.0,
+                "status": "Setted up",
                 "deploymentId": None
             }]
             machine_generated = ["uuid", "dependencies", "createdAt", "updatedAt"]
@@ -401,7 +403,7 @@ class TestExperiments(TestCase):
                 for operator in result_operators:
                     self.assertIn(attr, operator)
                     del operator[attr]
-            self.assertListEqual(expected, result_operators)
+            self.assertCountEqual(expected, result_operators)
 
     def test_delete_experiment(self):
         with app.test_client() as c:

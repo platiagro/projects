@@ -7,8 +7,7 @@ from os.path import join
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from projects.controllers.operators import create_operator, update_operator, \
-    update_status
+from projects.controllers.operators import create_operator, update_operator
 from projects.controllers.utils import raise_if_project_does_not_exist, \
     raise_if_experiment_does_not_exist, uuid_alpha
 from projects.database import db_session
@@ -157,10 +156,6 @@ def get_experiment(project_id, experiment_id):
 
     if experiment is None:
         raise NOT_FOUND
-
-    if experiment.operators:
-        for operator in experiment.operators:
-            update_status(operator)
 
     return experiment.as_dict()
 
