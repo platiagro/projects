@@ -26,9 +26,9 @@ class Project(Base):
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
         d["experiments"] = self.experiments
-        d["hasExperiment"] = getattr(self, "hasExperiment", None)
-        d["hasDeployment"] = getattr(self, "hasDeployment", None)
-        d["hasPreDeployment"] = getattr(self, "hasPreDeployment", None)
+        d["hasExperiment"] = self.hasExperiment
+        d["hasPreDeployment"] = self.hasPreDeployment
+        d["hasDeployment"] = self.hasDeployment
         return d
 
     @hybrid_property
@@ -36,16 +36,13 @@ class Project(Base):
         return True if self.experiments else False
 
     @hybrid_property
+    def hasPreDeployment(self):
+        return any([True for experiment in self.experiments if experiment.deployments])
+
+    @hybrid_property
     def hasDeployment(self):
         for experiment in self.experiments:
             for deployment in experiment.deployments:
                 if get_deployment_runs(deployment.uuid):
                     return True
-        return False
-
-    @hybrid_property
-    def hasPreDeployment(self):
-        for experiment in self.experiments:
-            if experiment.deployments:
-                return True
         return False

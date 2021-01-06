@@ -341,7 +341,7 @@ class TestExperiments(TestCase):
                 for operator in result_operators:
                     self.assertIn(attr, operator)
                     del operator[attr]
-            self.assertListEqual(expected, result_operators)
+            self.assertCountEqual(expected, result_operators)
 
     def test_delete_experiment(self):
         with app.test_client() as c:
