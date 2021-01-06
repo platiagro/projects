@@ -7,15 +7,20 @@ from projects.database import engine
 
 PROJECT_ID = str(uuid_alpha())
 NAME = "foo"
+NAME_2 = "foo 2"
+NAME_3 = "foo 3"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_NAME = "Experimento 1"
+EXPERIMENT_ID_2 = str(uuid_alpha())
+DEPLOYMENT_ID = str(uuid_alpha())
 DESCRIPTION = "Description"
 
 PROJECT_ID_2 = str(uuid_alpha())
+PROJECT_ID_3 = str(uuid_alpha())
 NAME_2 = "foo 2"
 
 
@@ -36,22 +41,48 @@ class TestProjects(TestCase):
         conn.execute(text)
 
         text = (
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, description) "
+            f"VALUES ('{PROJECT_ID_3}', '{NAME_3}', '{CREATED_AT}', '{UPDATED_AT}', '{DESCRIPTION}')"
+        )
+        conn.execute(text)
+
+        text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
             f"VALUES ('{EXPERIMENT_ID}', '{EXPERIMENT_NAME}', '{PROJECT_ID}', 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
         )
+        conn.execute(text)
 
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID_2}', '{EXPERIMENT_NAME}', '{PROJECT_ID_3}', 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{DEPLOYMENT_ID}', '{NAME}', '{PROJECT_ID_3}', '{EXPERIMENT_ID_2}', '0', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
         conn.execute(text)
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
+        text = f"DELETE FROM deployments WHERE uuid = '{DEPLOYMENT_ID}'"
+        conn.execute(text)
+
         text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID_2}'"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_2}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_3}'"
         conn.execute(text)
         conn.close()
 
@@ -125,6 +156,9 @@ class TestProjects(TestCase):
             expected = {
                 "name": project_name,
                 "description": "description",
+                "hasDeployment": False,
+                "hasExperiment": True,
+                "hasPreDeployment": False,
             }
             # uuid, created_at, updated_at are machine-generated
             # we assert they exist, but we don't assert their values
@@ -164,6 +198,9 @@ class TestProjects(TestCase):
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
                 "description": DESCRIPTION,
+                "hasDeployment": False,
+                "hasExperiment": True,
+                "hasPreDeployment": False,
             }
             self.assertDictEqual(expected, result)
 
@@ -182,6 +219,21 @@ class TestProjects(TestCase):
                 self.assertIn(attr, result_experiments[0])
                 del result_experiments[0][attr]
             self.assertDictEqual(expected, result_experiments[0])
+
+            rv = c.get(f"/projects/{PROJECT_ID_3}")
+            result = rv.get_json()
+            result_experiments = result.pop("experiments")
+            expected = {
+                "uuid": PROJECT_ID_3,
+                "name": NAME_3,
+                "createdAt": CREATED_AT_ISO,
+                "updatedAt": UPDATED_AT_ISO,
+                "description": DESCRIPTION,
+                "hasDeployment": False,
+                "hasExperiment": True,
+                "hasPreDeployment": True,
+            }
+            self.assertDictEqual(expected, result)
 
     def test_update_project(self):
         with app.test_client() as c:
@@ -220,6 +272,9 @@ class TestProjects(TestCase):
                 "name": "bar",
                 "createdAt": CREATED_AT_ISO,
                 "description": DESCRIPTION,
+                "hasPreDeployment": False,
+                "hasDeployment": False,
+                "hasExperiment": True,
             }
             machine_generated = ["updatedAt"]
             for attr in machine_generated:

@@ -1494,16 +1494,17 @@ components:
         updatedAt:
           type: string
           format: date-time
+        hasExperiment:
+          type: string
+        hasDeployment:
+          type: string
+        hasPreDeployment:
+          type: string
     Projects:
-      type: object
-      properties:
-        projects:
-          type: array
-          items:
-            oneOf:
-              - $ref: "#/components/schemas/Project"
-        total:
-          type: integer
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Project"
     Experiment:
       type: object
       properties:
