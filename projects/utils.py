@@ -84,3 +84,37 @@ def convert_json_values(value):
             pass
 
     return value
+
+
+def get_parameters_with_values(parameters):
+    """
+    Get parameters with values from operator.
+
+    Parameters
+    ----------
+    parameters : list
+
+    Returns
+    -------
+    list
+        Operator parameters with values.
+    """
+    return [key for key, value in parameters.items() if value != '']
+
+
+def remove_parameter(parameters, target):
+    """
+    Remove a specific parameter from a list of parameters.
+
+    Parameters
+    ----------
+    parameters : list
+    target : str
+        The target to be removed.
+
+    Returns
+    -------
+    list
+        The new list.
+    """
+    return [parameter for parameter in parameters if parameter["name"] != target]

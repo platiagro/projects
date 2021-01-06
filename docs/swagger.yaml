@@ -1551,8 +1551,15 @@ components:
         operators:
           type: array
           items:
-            oneOf:
+            allOf:
               - $ref: "#/components/schemas/Operator"
+              - type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [Unset, Setted up, Pending, Running, Failed, Successful]
+                    example: Setted up
+                    nullable: true
         createdAt:
           type: string
           format: date-time
@@ -1661,7 +1668,7 @@ components:
             properties:
               status:
                 type: string
-                enum: [Unset, Setted up]
+                enum: [Unset, Setted up, Pending, Running, Failed, Successful]
                 example: Setted up
     ExperimentLog:
       type: object

@@ -31,6 +31,6 @@ class Experiment(Base):
 
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
-        d["operators"] = self.operators
+        d["operators"] = [operator.as_dict() for operator in self.operators]
         d["deployments"] = self.deployments
         return d
