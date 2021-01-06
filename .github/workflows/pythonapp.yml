@@ -14,6 +14,16 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: platiagro
+        ports:
+        - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
     - uses: actions/checkout@v2
 
@@ -99,17 +109,16 @@ jobs:
         sudo systemctl daemon-reload
         sudo systemctl restart kubelet
         sudo kubeadm init
+        sudo sed -i '/^    - --service-account-key-file.*/a \ \ \ \ - --service-account-issuer=kubernetes.default.svc' /etc/kubernetes/manifests/kube-apiserver.yaml
+        sudo sed -i '/^    - --service-account-key-file.*/a \ \ \ \ - --service-account-signing-key-file=/etc/kubernetes/pki/sa.key' /etc/kubernetes/manifests/kube-apiserver.yaml
         sudo mkdir -p $HOME/.kube
+        sleep 5
         sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
         sudo chown $(id -u):$(id -g) $HOME/.kube/config
         kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
         kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=admin --user=kubelet --group=system:serviceaccounts
         kubectl taint nodes --all node-role.kubernetes.io/master-
         while [ $(kubectl get node | tail -n 1 |awk '{print $2}') != "Ready" ]; do echo waiting nodes to be ready...; sleep 1; done
-
-    - name: Install Kustomize
-      run: |
-        curl -sL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
 
     - name: Add Persistent Volumes to Kubernetes
       run: |
@@ -267,18 +276,6 @@ jobs:
         sleep 10
         kubectl wait --for=condition=Ready pods --all --timeout=60s
 
-    - name: Install Cert Manager
-      run: |
-        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
-        # https://github.com/kubernetes-sigs/kustomize/issues/2205
-        ./kustomize build "github.com/platiagro/manifests/cert-manager/cert-manager-crds/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/cert-manager/cert-manager-kube-system-resources/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/cert-manager/cert-manager/base?ref=$BRANCH" | kubectl apply -f -
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
-      env:
-        BRANCH: v0.2.0-kubeflow-v1.1-branch
-
     - name: Create load balancer
       id: lb
       run: |
@@ -300,60 +297,83 @@ jobs:
                 - ${KUBEFLOW_MASTER_IP_ADDRESS}-${KUBEFLOW_MASTER_IP_ADDRESS}
         EOF
         sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
+        kubectl -n metallb-system wait --for=condition=Ready pods --all --timeout=60s
 
-    - name: Install Istio
+    - name: Install PlatIAgro for tests
       run: |
-        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
-        # https://github.com/kubernetes-sigs/kustomize/issues/2205
-        ./kustomize build "github.com/platiagro/manifests/namespaces/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/istio/istio-crds/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/istio/istio-install/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/istio/istio/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/istio/add-anonymous-user-filter/base?ref=$BRANCH" | kubectl apply -f -
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
-      env:
-        BRANCH: v0.2.0-kubeflow-v1.1-branch
+        curl -sL https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz | tar xvz
+        chmod +x kfctl
+        export KF_NAME=platiagro
+        export BASE_DIR=$(pwd)
+        export KF_DIR=${BASE_DIR}/${KF_NAME}
+        export CONFIG_URI="https://raw.githubusercontent.com/platiagro/manifests/v0.2.0-kubeflow-v1.2-branch/kfdef/kfctl_k8s_tests.v0.2.0.yaml"
+        mkdir -p ${KF_DIR}
+        cd ${KF_DIR}
+        ../kfctl apply -V -f ${CONFIG_URI}
 
-    - name: Install Kubeflow Pipelines
-      run: |
-        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
-        # https://github.com/kubernetes-sigs/kustomize/issues/2205
-        ./kustomize build "github.com/platiagro/manifests/argo/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/api-service/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/minio/base?ref=$BRANCH" | kubectl -n kubeflow apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/mysql/base?ref=$BRANCH" | kubectl -n kubeflow apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/persistent-agent/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/pipelines-runner/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/pipelines-ui/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/pipelines-viewer/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/scheduledworkflow/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/pipeline-visualization-service/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
-        kubectl -n deployments patch svc ml-pipeline --patch \
+        # Removes resource requests because the VM has fewer CPUs than requests
+        for NAMESPACE in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
+          kubectl -n ${NAMESPACE} get deployments -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'| while read DEPLOYMENT; do
+            kubectl -n ${NAMESPACE} patch deployment ${DEPLOYMENT} --type='json' --patch \
+              '[{"op": "remove", "path": "/spec/template/spec/containers/0/resources"}]'
+          done
+
+          kubectl -n ${NAMESPACE} get statefulset -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'| while read DEPLOYMENT; do
+            kubectl -n ${NAMESPACE} patch statefulset ${DEPLOYMENT} --type='json' --patch \
+              '[{"op": "remove", "path": "/spec/template/spec/containers/0/resources"}]'
+          done
+        done
+
+        # Exposes MinIO, and KFP APIs for tests
+        kubectl -n kubeflow patch svc ml-pipeline --patch \
           '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
-        kubectl -n kubeflow patch svc mysql --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 31000, "port": 3306, "protocol": "TCP", "targetPort": 3306 } ] } }'
         kubectl -n kubeflow patch svc minio-service --patch \
           '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 32000, "port": 9000, "protocol": "TCP", "targetPort": 9000 } ] } }'
-      env:
-        BRANCH: v0.2.0-kubeflow-v1.1-branch
 
-    - name: Install Seldon
-      run: |
-        kubectl apply -k "github.com/platiagro/manifests/cert-manager/cert-manager-crds/base?ref=$BRANCH"
-        kubectl apply -k "github.com/platiagro/manifests/seldon/seldon-core-operator/base?ref=$BRANCH"
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
-      env:
-        BRANCH: v0.2.0-kubeflow-v1.1-branch
+        # Creates an envoy filter to inject the kubeflow-userid header in requests to ml-pipeline service
+        cat <<EOF | kubectl -n kubeflow apply -f -
+        apiVersion: networking.istio.io/v1alpha3
+        kind: EnvoyFilter
+        metadata:
+          name: add-header-kubeflow-userid
+          namespace: kubeflow
+        spec:
+          configPatches:
+          - applyTo: VIRTUAL_HOST
+            match:
+              context: SIDECAR_INBOUND
+              routeConfiguration:
+                vhost:
+                  name: ml-pipeline.kubeflow.svc.cluster.local:8888
+                  route:
+                    name: default
+            patch:
+              operation: MERGE
+              value:
+                request_headers_to_add:
+                - append: true
+                  header:
+                    key: kubeflow-userid
+                    value: anonymous
+          workloadSelector:
+            labels:
+              app: ml-pipeline
+        EOF
+
+        sleep 5
+
+        kubectl describe nodes
+        kubectl get pod --all-namespaces
+        sleep 900
+        kubectl -n kubeflow describe pod
+        kubectl describe nodes
+        kubectl get pod --all-namespaces
+        #kubectl -n kubeflow wait --for=condition=Ready pods --all --timeout=1200s
+        #kubectl -n anonymous wait --for=condition=Ready pods --all --timeout=120s
 
     - name: Run jupyter image
       run: |
-        VERSION=$(python -c "import projects; print(projects.__version__)")
-        docker run --name jupyter -d -p 8888:8888 platiagro/platiagro-notebook-image:${VERSION}
+        docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook
 
     - name: Install dependencies
       run: |
@@ -372,12 +392,12 @@ jobs:
         MINIO_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:32000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
-        MYSQL_DB_HOST: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:31000
+        MYSQL_DB_HOST: localhost
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://localhost:8888
         KF_PIPELINES_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:30000
-        KF_PIPELINES_NAMESPACE: deployments
+        KF_PIPELINES_NAMESPACE: anonymous
 
     - name: SonarCloud Scan
       if: ${{ always() }}
