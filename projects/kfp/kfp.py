@@ -15,5 +15,5 @@ KFP_CLIENT = Client(
     host=KF_PIPELINES_ENDPOINT,
 )
 # user namespace is stored in a configuration file at $HOME/.config/kfp/context.json
-makedirs(path.join(str(Path.home()), ".config", "kfp"))
+makedirs(path.join(str(Path.home()), ".config", "kfp"), exist_ok=True)
 KFP_CLIENT.set_user_namespace(namespace=KF_PIPELINES_NAMESPACE)
