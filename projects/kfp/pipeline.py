@@ -222,6 +222,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "operatorId": operator.uuid,
                 "experimentId": experiment_id,
                 "deploymentId": deployment_id,
+                "taskId": operator.task.uuid,
             })
         )
 

@@ -87,7 +87,7 @@ COMPONENT_SPEC = Template("""
             {
                 "name": "workspace",
                 "persistentVolumeClaim": {
-                    "claimName": "vol-home-jovyan-$experimentId"
+                    "claimName": "vol-task-$taskId"
                 }
             }
         ]
