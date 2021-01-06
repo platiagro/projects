@@ -11,6 +11,6 @@ PyMySQL==0.9.3
 # Requests
 requests==2.23.0
 # Kubeflow Pipelines SDK
-kfp==1.1.1
+kfp==1.2.0
 # Kubernetes python client
 kubernetes==10.0
