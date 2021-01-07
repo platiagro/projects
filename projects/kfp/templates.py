@@ -7,6 +7,7 @@ SELDON_DEPLOYMENT = Template("""{
     "metadata": {
         "labels": {
             "app": "seldon"
+            "projectId": "$projectId"
         },
         "name": "$deploymentName",
         "deploymentId": "$deploymentId",

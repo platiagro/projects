@@ -13,7 +13,7 @@ from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
 
 
-def compile_pipeline(name, operators, experiment_id, deployment_id, deployment_name):
+def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, deployment_name):
     """
     Compile the pipeline in a .yaml file.
 
@@ -21,6 +21,7 @@ def compile_pipeline(name, operators, experiment_id, deployment_id, deployment_n
     ----------
     name : str
     operators : list
+    project_id : str
     experiment_id : str
     deployment_id : str or None
     deployment_name : str
@@ -53,6 +54,7 @@ def compile_pipeline(name, operators, experiment_id, deployment_id, deployment_n
             mount_path = "/home/jovyan"
             # Creates resource_op that creates a seldondeployment
             resource_op = create_resource_op(operators=operators,
+                                             project_id=project_id,
                                              experiment_id=experiment_id,
                                              deployment_id=deployment_id,
                                              deployment_name=deployment_name)
@@ -191,13 +193,14 @@ def create_container_op(operator, experiment_id, notebook_path=None, dataset=Non
     return container_op
 
 
-def create_resource_op(operators, experiment_id, deployment_id, deployment_name):
+def create_resource_op(operators, project_id, experiment_id, deployment_id, deployment_name):
     """
     Create kfp.dsl.ResourceOp container from an operator list.
 
     Parameters
     ----------
     operators : list
+    project_id : str
     experiment_id : str
     deployment_id : str
     deployment_name : str
@@ -250,6 +253,7 @@ def create_resource_op(operators, experiment_id, deployment_id, deployment_name)
         "deploymentId": deployment_id,
         "componentSpecs": ",".join(component_specs),
         "graph": graph,
+        "projectId": project_id,
     })
 
     sdep_resource = loads(seldon_deployment)

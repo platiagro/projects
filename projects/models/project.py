@@ -7,8 +7,8 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from projects.database import Base
+from projects.kubernetes.seldon import list_project_seldon_deployments
 from projects.utils import to_camel_case
-from projects.kfp.deployments import get_deployment_runs
 
 
 class Project(Base):
@@ -41,8 +41,5 @@ class Project(Base):
 
     @hybrid_property
     def hasDeployment(self):
-        for experiment in self.experiments:
-            for deployment in experiment.deployments:
-                if get_deployment_runs(deployment.uuid):
-                    return True
-        return False
+        deployments = list_project_seldon_deployments(self.uuid)
+        return True if deployments else False
