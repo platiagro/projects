@@ -6,7 +6,7 @@ SELDON_DEPLOYMENT = Template("""{
     "kind": "SeldonDeployment",
     "metadata": {
         "labels": {
-            "app": "seldon"
+            "app": "seldon",
             "projectId": "$projectId"
         },
         "name": "$deploymentName",
