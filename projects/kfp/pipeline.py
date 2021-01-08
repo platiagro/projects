@@ -215,7 +215,10 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     kfp.dsl.ResourceOp
     """
     component_specs = []
+    tasks = {}
+
     for operator in operators:
+        tasks.update({operator.uuid: operator.task.name})
         component_specs.append(
             COMPONENT_SPEC.substitute({
                 "operatorId": operator.uuid,
@@ -258,6 +261,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         "componentSpecs": ",".join(component_specs),
         "graph": graph,
         "projectId": project_id,
+        "tasks": tasks,
     })
 
     sdep_resource = loads(seldon_deployment)
