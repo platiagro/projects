@@ -1019,7 +1019,7 @@ paths:
         $ref: "#/components/requestBodies/DeploymentPost"
       responses:
         "200":
-          $ref: "#/components/responses/Deployment"
+          $ref: "#/components/responses/Deployments"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -1557,7 +1557,7 @@ components:
         operators:
           type: array
           items:
-            oneOf:
+            allOf:
               - $ref: "#/components/schemas/Operator"
               - type: object
                 properties:
@@ -1662,7 +1662,7 @@ components:
             properties:
               status:
                 type: string
-                enum: [Unset, Setted up]
+                enum: [Unset, Setted up, Pending, Running, Failed, Successful]
                 example: Setted up
     ExperimentLog:
       type: object
@@ -2090,16 +2090,21 @@ components:
                 type: string
                 format: uuid
     DeploymentPost:
-      description: Necessary body if experimentDeploy equals true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-              copyFrom:
-                type: string
+            oneOf:
+              - $ref: "#/components/schemas/DeploymentExperiments"
+              - $ref: "#/components/schemas/DeploymentTemplate"
+          examples:
+            experiments:
+              summary: From a list of experiments
+              value:
+                experiments: ["3fa85f64-5717-4562-b3fc-2c963f66afa6"]
+            template:
+              summary: From a template
+              value:
+                templateId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
     DeploymentPatch:
       content:
         application/json:
@@ -2163,15 +2168,7 @@ components:
         application/json:
           schema:
             type: object
-            properties:
-              experimentId:
-                type: string
-                format: uuid
-              operators:
-                type: array
-                items:
-                  oneOf:
-                    - $ref: "#/components/schemas/Operator"
+            properties: {}
     TemplatePost:
       content:
         application/json:
