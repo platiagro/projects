@@ -10,7 +10,7 @@ bp = Blueprint("projects", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_list_projects(pagination_parameters):
+def handle_list_projects():
     """
     Handles GET requests to /.
 
@@ -20,10 +20,10 @@ def handle_list_projects(pagination_parameters):
     """
     filters = request.args.copy()
     order_by = filters.pop("order", None)
-    filters.pop("page", None)
-    filters.pop("page_size", None)
-    projects = list_projects(page=pagination_parameters.page,
-                             page_size=pagination_parameters.page_size,
+    page = filters.pop("page", 1)
+    page_size = filters.pop("page_size", 10)
+    projects = list_projects(page=int(page),
+                             page_size=int(page_size),
                              order_by=order_by,
                              **filters)
     return jsonify(projects)
