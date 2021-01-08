@@ -31,6 +31,9 @@ SELDON_DEPLOYMENT = Template("""{
             {
                 "componentSpecs": [$componentSpecs
                 ],
+                "annotations": {
+                    "tasks": "$tasks"
+                },
                 "graph": $graph,
                 "labels": {
                     "version": "v1"

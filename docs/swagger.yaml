@@ -1223,14 +1223,14 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectsId}/deployments/{deploymentId}/runs/{runId}/logs:
+  /projects/{projectId}/deployments/{deploymentId}/runs/{runId}/logs:
     get:
-      summary: "Get logs from a deployment run."
+      summary: "Get logs from a deployment run"
       tags:
         - "Results"
       parameters:
         - in: path
-          name: projectsId
+          name: projectId
           required: true
           schema:
             type: string
@@ -1530,10 +1530,15 @@ components:
         hasPreDeployment:
           type: string
     Projects:
-      type: array
-      items:
-        oneOf:
-          - $ref: "#/components/schemas/Project"
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/Project"
+        total:
+          type: integer
     Experiment:
       type: object
       properties:
@@ -1615,18 +1620,6 @@ components:
         templateId:
           type: string
           format: uuid
-    DeploymentLog:
-      type: array
-      items:
-        type: object
-        properties:
-          containerName:
-            type: string
-          logs:
-            type: array
-            items:
-              oneOf:
-                - $ref: "#/components/schemas/Log"
     Operator:
       type: object
       properties:
@@ -1696,15 +1689,35 @@ components:
               - "   4861 "
               - ""
               - "KeyError: ['species']"
-    Log:
-      type: object
-      properties:
-        level:
-          type: string
-        message:
-          type: string
-        timestamp:
-          type: string
+    DeploymentLog:
+      type: array
+      items:
+        oneOf:
+        - type: object
+          properties:
+            containerName:
+              type: string
+              example: Regressor Random Forest
+            logs:
+              type: array
+              items:
+                allOf:
+                - type: object
+                  properties:
+                    level:
+                      type: string
+                      enum: [DEBUG, INFO, WARNING, ERROR]
+                      example: INFO
+                    message:
+                      type: string
+                      example: seldon_core.microservice:load_annotations:114 Found annotation deployment_version
+                    timestamp:
+                      type: string
+                      format: date-time
+            status:
+              type: string
+              enum: [Creating, Completed]
+              example: Completed
     Datasets:
       type: array
       items:
