@@ -62,11 +62,11 @@ def list_logs(project_id, deployment_id, run_id):
                 tasks = pod.metadata.annotations.get("tasks")
                 tasks = literal_eval(tasks)
 
-                operatorInfo = {}
-                operatorInfo['containerName'] = tasks[container.name]
-                operatorInfo['logs'] = log_parser(pod_log)
-                operatorInfo.update({'status': 'Completed'})
-                response.append(operatorInfo)
+                operator_info = {}
+                operator_info['containerName'] = tasks[container.name]
+                operator_info['logs'] = log_parser(pod_log)
+                operator_info.update({'status': 'Completed'})
+                response.append(operator_info)
 
     return response
 
