@@ -102,5 +102,9 @@ GRAPH = Template("""{
     },
     "children": [
         $children
-    ]
+    ],
+    "logger": {
+        "mode": "response",
+        "url": "http://logger.anonymous"
+    }
 }""")

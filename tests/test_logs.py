@@ -170,7 +170,7 @@ class TestOperators(TestCase):
             self.assertDictEqual(result, expected)
 
             # Run experiment to succeed
-            experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID, namespace="deployments")
+            experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID)
             run = KFP_CLIENT.run_pipeline(experiment.id, OPERATOR_ID_2, "tests/resources/mocked_operator_succeed.yaml")
 
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{run.id}/operators/{OPERATOR_ID_2}/logs")
