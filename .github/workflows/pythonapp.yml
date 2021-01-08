@@ -345,7 +345,7 @@ jobs:
 
     - name: Run jupyter image
       run: |
-        docker run --name jupyter -d -p 8888:8888 jupyter/base-notebook
+        docker run --name jupyter -d -p 8888:8888 platiagro/platiagro-notebook-image:0.2.0
 
     - name: Install dependencies
       run: |
