@@ -25,7 +25,6 @@ from projects.api.tasks import bp as tasks_blueprint
 from projects.api.tasks.parameters import bp as tasks_parameters_blueprint
 from projects.api.templates import bp as templates_blueprint
 from projects.database import db_session, init_db
-from projects.samples import init_tasks
 
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
@@ -129,9 +128,6 @@ def parse_args(args):
     parser.add_argument(
         "--init-db", action="count", help="Create database and tables before the HTTP server starts"
     )
-    parser.add_argument(
-        "--samples-config", help="Path to sample tasks config file."
-    )
     return parser.parse_args(args)
 
 
@@ -145,9 +141,5 @@ if __name__ == "__main__":
     # Initializes DB if required
     if args.init_db:
         init_db()
-
-    # Install sample tasks if required
-    if args.samples_config:
-        init_tasks(args.samples_config)
 
     app.run(host="0.0.0.0", port=args.port, debug=args.debug)
