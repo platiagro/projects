@@ -324,41 +324,13 @@ jobs:
           done
         done
 
-        # Exposes MinIO, and KFP APIs for tests
-        kubectl -n kubeflow patch svc ml-pipeline --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
+        # Exposes MinIO for tests
         kubectl -n kubeflow patch svc minio-service --patch \
           '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 32000, "port": 9000, "protocol": "TCP", "targetPort": 9000 } ] } }'
 
-        # Creates an envoy filter to inject the kubeflow-userid header in requests to ml-pipeline service
-        cat <<EOF | kubectl -n kubeflow apply -f -
-        apiVersion: networking.istio.io/v1alpha3
-        kind: EnvoyFilter
-        metadata:
-          name: add-header-kubeflow-userid
-          namespace: kubeflow
-        spec:
-          configPatches:
-          - applyTo: VIRTUAL_HOST
-            match:
-              context: SIDECAR_INBOUND
-              routeConfiguration:
-                vhost:
-                  name: ml-pipeline.kubeflow.svc.cluster.local:8888
-                  route:
-                    name: default
-            patch:
-              operation: MERGE
-              value:
-                request_headers_to_add:
-                - append: true
-                  header:
-                    key: kubeflow-userid
-                    value: anonymous
-          workloadSelector:
-            labels:
-              app: ml-pipeline
-        EOF
+        # Change Ingress from HTTPS to HTTP
+        kubectl -n kubeflow patch gateway kubeflow-gateway --type='json' --patch \
+          '[{"op": "remove", "path": "/spec/servers/0/tls"}, {"op": "replace", "path": "/spec/servers/0/port/name", "value": "http"}, {"op": "replace", "path": "/spec/servers/0/port/number", "value": 80}, {"op": "replace", "path": "/spec/servers/0/port/protocol", "value": "HTTP"}]'
 
         sleep 5
 
@@ -396,7 +368,7 @@ jobs:
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://localhost:8888
-        KF_PIPELINES_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:30000
+        KF_PIPELINES_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}/pipeline
         KF_PIPELINES_NAMESPACE: anonymous
 
     - name: SonarCloud Scan
