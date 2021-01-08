@@ -96,3 +96,30 @@ def list_seldon_deployment_objects(deployment_id, namespace=None):
         # At this point, it's still being created,
         # and does not contain any `deploymentStatus` key yet.
         return []
+
+
+def list_project_seldon_deployments(project_id):
+    """
+    List deployments under a project.
+
+    Parameters
+    ----------
+    project_id : str
+
+    Returns
+    -------
+    list
+        A list of deployment's pod.
+    """
+    load_kube_config()
+    custom_api = client.CustomObjectsApi()
+
+    deployments = custom_api.list_namespaced_custom_object(
+            group='machinelearning.seldon.io',
+            version='v1',
+            namespace=KF_PIPELINES_NAMESPACE,
+            plural='seldondeployments',
+            label_selector=f'projectId={project_id}',
+    )["items"]
+
+    return deployments

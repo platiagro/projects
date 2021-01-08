@@ -63,7 +63,8 @@ def create_run(project_id, experiment_id):
     if experiment is None:
         raise NOT_FOUND
 
-    run = kfp_runs.start_run(experiment_id=experiment_id,
+    run = kfp_runs.start_run(project_id=project_id,
+                             experiment_id=experiment_id,
                              operators=experiment.operators)
     run["experimentId"] = experiment_id
     return run
