@@ -326,7 +326,7 @@ jobs:
 
         # Exposes MinIO for tests
         kubectl -n kubeflow patch svc minio-service --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 32000, "port": 9000, "protocol": "TCP", "targetPort": 9000 } ] } }'
+          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 9000, "protocol": "TCP", "targetPort": 9000 } ] } }'
 
         # Change Ingress from HTTPS to HTTP
         kubectl -n kubeflow patch gateway kubeflow-gateway --type='json' --patch \
@@ -352,7 +352,7 @@ jobs:
         coverage run --branch --source=projects -m pytest
         coverage xml -i
       env:
-        MINIO_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:32000
+        MINIO_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:30000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
         MYSQL_DB_HOST: localhost
