@@ -333,6 +333,8 @@ jobs:
           '[{"op": "remove", "path": "/spec/servers/0/tls"}, {"op": "replace", "path": "/spec/servers/0/port/name", "value": "http"}, {"op": "replace", "path": "/spec/servers/0/port/number", "value": 80}, {"op": "replace", "path": "/spec/servers/0/port/protocol", "value": "HTTP"}]'
 
         sleep 900
+        kubectl -n anonymous logs server-0 -c server
+        kubectl -n anonymous describe pod
         kubectl -n kubeflow describe pod
         kubectl describe nodes
         #kubectl -n kubeflow wait --for=condition=Ready pods --all --timeout=120s
