@@ -324,6 +324,10 @@ jobs:
           done
         done
 
+        # Changes notebook image for a smaller one
+        kubectl -n anonymous patch notebook server --type='json' --patch \
+          '[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "gcr.io/kubeflow-images-public/tensorflow-2.1.0-notebook-cpu:1.0.0"}]'
+
         # Exposes MinIO for tests
         kubectl -n kubeflow patch svc minio-service --patch \
           '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 9000, "protocol": "TCP", "targetPort": 9000 } ] } }'
@@ -333,6 +337,7 @@ jobs:
           '[{"op": "remove", "path": "/spec/servers/0/tls"}, {"op": "replace", "path": "/spec/servers/0/port/name", "value": "http"}, {"op": "replace", "path": "/spec/servers/0/port/number", "value": 80}, {"op": "replace", "path": "/spec/servers/0/port/protocol", "value": "HTTP"}]'
 
         sleep 900
+        kubectl -n anonymous describe pod
         kubectl -n anonymous logs server-0 -c server
         kubectl -n anonymous describe pod
         kubectl -n kubeflow describe pod
