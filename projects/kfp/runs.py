@@ -7,7 +7,7 @@ from datetime import datetime
 from kfp_server_api.exceptions import ApiValueError
 from werkzeug.exceptions import BadRequest
 
-from projects.kfp import KFP_CLIENT
+from projects.kfp import kfp_client
 from projects.kfp.pipeline import compile_pipeline
 
 
@@ -26,14 +26,14 @@ def list_runs(experiment_id):
     """
     # In order to list_runs, we need to find KFP experiment id.
     # KFP experiment id is different from PlatIAgro's experiment_id,
-    # so calling KFP_CLIENT.get_experiment(experiment_name='..') is required first.
+    # so calling kfp_client().get_experiment(experiment_name='..') is required first.
     try:
-        kfp_experiment = KFP_CLIENT.get_experiment(experiment_name=experiment_id)
+        kfp_experiment = kfp_client().get_experiment(experiment_name=experiment_id)
     except ValueError:
         return []
 
     # Now, lists runs
-    kfp_runs = KFP_CLIENT.list_runs(
+    kfp_runs = kfp_client().list_runs(
         page_size="100",
         sort_by="created_at desc",
         experiment_id=kfp_experiment.id,
@@ -87,12 +87,12 @@ def start_run(operators, project_id, experiment_id, deployment_id=None, deployme
                      deployment_id=deployment_id,
                      deployment_name=deployment_name)
 
-    kfp_experiment = KFP_CLIENT.create_experiment(name=experiment_id)
+    kfp_experiment = kfp_client().create_experiment(name=experiment_id)
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
 
     job_name = f"{name}-{tag}"
     pipeline_package_path = f"{name}.yaml"
-    run = KFP_CLIENT.run_pipeline(
+    run = kfp_client().run_pipeline(
         experiment_id=kfp_experiment.id,
         job_name=job_name,
         pipeline_package_path=pipeline_package_path,
@@ -123,7 +123,7 @@ def get_run(run_id, experiment_id):
     if run_id == "latest":
         run_id = get_latest_run_id(experiment_id)
 
-    kfp_run = KFP_CLIENT.get_run(
+    kfp_run = kfp_client().get_run(
         run_id=run_id,
     )
 
@@ -168,12 +168,12 @@ def get_latest_run_id(experiment_id):
     str
     """
     try:
-        kfp_experiment = KFP_CLIENT.get_experiment(experiment_name=experiment_id)
+        kfp_experiment = kfp_client().get_experiment(experiment_name=experiment_id)
     except ValueError:
         return None
 
     # lists runs for trainings and deployments of an experiment
-    kfp_runs = KFP_CLIENT.list_runs(
+    kfp_runs = kfp_client().list_runs(
         page_size="100",
         sort_by="created_at desc",
         experiment_id=kfp_experiment.id,
@@ -212,7 +212,7 @@ def terminate_run(run_id, experiment_id):
         run_id = get_latest_run_id(experiment_id)
     print("run_id")
     print(run_id)
-    KFP_CLIENT.runs.terminate_run(run_id=run_id)
+    kfp_client().runs.terminate_run(run_id=run_id)
 
     return {"message": "Run terminated."}
 
@@ -239,12 +239,12 @@ def retry_run(run_id, experiment_id):
     if run_id == "latest":
         run_id = get_latest_run_id(experiment_id)
 
-    kfp_run = KFP_CLIENT.get_run(
+    kfp_run = kfp_client().get_run(
         run_id=run_id,
     )
 
     if kfp_run.run.status == "Failed":
-        KFP_CLIENT.runs.retry_run(run_id=kfp_run.run.id)
+        kfp_client().runs.retry_run(run_id=kfp_run.run.id)
     else:
         raise BadRequest("Not a failed run")
 
@@ -320,7 +320,7 @@ def get_container_status(experiment_id, operator_id):
     run_id = get_latest_run_id(experiment_id)
 
     try:
-        kfp_run = KFP_CLIENT.get_run(
+        kfp_run = kfp_client().get_run(
             run_id=run_id,
         )
         status = "Pending"

@@ -8,7 +8,7 @@ from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
 from projects.kfp import CPU_LIMIT, CPU_REQUEST, KF_PIPELINES_NAMESPACE, \
-    MEMORY_LIMIT, MEMORY_REQUEST, KFP_CLIENT
+    MEMORY_LIMIT, MEMORY_REQUEST, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
 
@@ -294,7 +294,7 @@ def undeploy_pipeline(resource):
             action="delete"
         )
 
-    KFP_CLIENT.create_run_from_pipeline_func(
+    kfp_client().create_run_from_pipeline_func(
         undeploy,
         {},
         run_name="undeploy",

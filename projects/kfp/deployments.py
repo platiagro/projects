@@ -3,7 +3,7 @@
 import json
 import yaml
 
-from projects.kfp import KFP_CLIENT
+from projects.kfp import kfp_client
 from projects.kubernetes.istio import get_cluster_ip, get_protocol
 
 
@@ -42,7 +42,7 @@ def list_deployments_runs():
     runs = []
 
     while True:
-        list_runs = KFP_CLIENT.list_runs(
+        list_runs = kfp_client().list_runs(
             page_token=token, sort_by="created_at desc", page_size=100)
 
         if list_runs.runs:

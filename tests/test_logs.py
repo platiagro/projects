@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 from json import dumps, loads
 from unittest import TestCase
 
@@ -9,7 +8,7 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.jupyter import COOKIES, HEADERS, JUPYTER_ENDPOINT
-from projects.kfp import KFP_CLIENT
+from projects.kfp import kfp_client
 from projects.object_storage import BUCKET_NAME
 from tests.mock.api import start_mock_api
 
@@ -49,8 +48,8 @@ class TestOperators(TestCase):
 
         self.proc = start_mock_api()
         # Run experiment to succeed
-        experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID)
-        self.run = KFP_CLIENT.run_pipeline(experiment.id, OPERATOR_ID_2, "tests/resources/mocked_operator_succeed.yaml")
+        experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
+        self.run = kfp_client().run_pipeline(experiment.id, OPERATOR_ID_2, "tests/resources/mocked_operator_succeed.yaml")
 
         session = requests.Session()
         session.cookies.update(COOKIES)

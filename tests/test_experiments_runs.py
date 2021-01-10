@@ -6,7 +6,7 @@ from unittest import TestCase
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.kfp import KFP_CLIENT
+from projects.kfp import kfp_client
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 from tests.mock.api import start_mock_api
 
@@ -56,8 +56,8 @@ class TestExperimentsRuns(TestCase):
             file.write(content)
 
         # Run a default pipeline for tests
-        kfp_experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID)
-        KFP_CLIENT.run_pipeline(
+        kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
+        kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=EXPERIMENT_ID,
             pipeline_package_path="tests/resources/mocked.yaml",

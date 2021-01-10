@@ -1,6 +1,5 @@
 import json
 import multiprocessing
-import os
 from datetime import datetime
 
 from flask import Flask, jsonify, request
