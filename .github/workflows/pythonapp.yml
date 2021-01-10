@@ -109,7 +109,10 @@ jobs:
         sudo systemctl daemon-reload
         sudo systemctl restart kubelet
         sudo kubeadm init
+        sudo sed -i '/^    - --service-account-key-file.*/a \ \ \ \ - --service-account-issuer=kubernetes.default.svc' /etc/kubernetes/manifests/kube-apiserver.yaml
+        sudo sed -i '/^    - --service-account-key-file.*/a \ \ \ \ - --service-account-signing-key-file=/etc/kubernetes/pki/sa.key' /etc/kubernetes/manifests/kube-apiserver.yaml
         sudo mkdir -p $HOME/.kube
+        sleep 5
         sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
         sudo chown $(id -u):$(id -g) $HOME/.kube/config
         kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
@@ -117,184 +120,75 @@ jobs:
         kubectl taint nodes --all node-role.kubernetes.io/master-
         while [ $(kubectl get node | tail -n 1 |awk '{print $2}') != "Ready" ]; do echo waiting nodes to be ready...; sleep 1; done
 
-    - name: Add Persistent Volumes to Kubernetes
+    - name: Install Kubernetes Resources (eg. Istio/Seldon)
       run: |
-        for i in `seq 1 10`; do
-          sudo mkdir -p "/mnt/disks/vol-$i"
-          sudo mount -t tmpfs -o size=20G "vol-$i" "/mnt/disks/vol-$i"
-        done
-        cat <<EOF | kubectl apply -f -
-          kind: StorageClass
-          apiVersion: storage.k8s.io/v1
-          metadata:
-            name: local-storage
-          provisioner: kubernetes.io/no-provisioner
-          reclaimPolicy: Delete
-        EOF
-        kubectl patch storageclass local-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-        cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: local-provisioner-config
-            namespace: default
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          data:
-            storageClassMap: |
-              local-storage:
-                hostDir: /mnt/disks
-                mountDir: /mnt/disks
-                blockCleanerCommand:
-                  - "/scripts/shred.sh"
-                  - "2"
-                volumeMode: Filesystem
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: apps/v1
-          kind: DaemonSet
-          metadata:
-            name: local-volume-provisioner
-            namespace: default
-            labels:
-              app: local-volume-provisioner
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          spec:
-            selector:
-              matchLabels:
-                app: local-volume-provisioner
-            template:
-              metadata:
-                labels:
-                  app: local-volume-provisioner
-              spec:
-                serviceAccountName: local-storage-admin
-                containers:
-                  - image: "quay.io/external_storage/local-volume-provisioner:v2.3.2"
-                    name: provisioner
-                    securityContext:
-                      privileged: true
-                    env:
-                    - name: MY_NODE_NAME
-                      valueFrom:
-                        fieldRef:
-                          fieldPath: spec.nodeName
-                    - name: MY_NAMESPACE
-                      valueFrom:
-                        fieldRef:
-                          fieldPath: metadata.namespace
-                    - name: JOB_CONTAINER_IMAGE
-                      value: "quay.io/external_storage/local-volume-provisioner:v2.3.2"
-                    volumeMounts:
-                      - mountPath: /etc/provisioner/config
-                        name: provisioner-config
-                        readOnly: true
-                      - mountPath: /dev
-                        name: provisioner-dev
-                      - mountPath: /mnt/disks
-                        name: disks
-                        mountPropagation: "HostToContainer"
-                volumes:
-                  - name: provisioner-config
-                    configMap:
-                      name: local-provisioner-config
-                  - name: provisioner-dev
-                    hostPath:
-                      path: /dev
-                  - name: disks
-                    hostPath:
-                      path: /mnt/disks
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: ServiceAccount
-          metadata:
-            name: local-storage-admin
-            namespace: default
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: rbac.authorization.k8s.io/v1
-          kind: ClusterRoleBinding
-          metadata:
-            name: local-storage-provisioner-pv-binding
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          subjects:
-          - kind: ServiceAccount
-            name: local-storage-admin
-            namespace: default
-          roleRef:
-            kind: ClusterRole
-            name: system:persistent-volume-provisioner
-            apiGroup: rbac.authorization.k8s.io
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: rbac.authorization.k8s.io/v1
-          kind: ClusterRole
-          metadata:
-            name: local-storage-provisioner-node-clusterrole
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          rules:
-          - apiGroups: [""]
-            resources: ["nodes"]
-            verbs: ["get"]
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: rbac.authorization.k8s.io/v1
-          kind: ClusterRoleBinding
-          metadata:
-            name: local-storage-provisioner-node-binding
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          subjects:
-          - kind: ServiceAccount
-            name: local-storage-admin
-            namespace: default
-          roleRef:
-            kind: ClusterRole
-            name: local-storage-provisioner-node-clusterrole
-            apiGroup: rbac.authorization.k8s.io
-        EOF
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
+        curl -sL "https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz" | tar xvz
+        chmod +x ./kfctl
 
-    - name: Create load balancer
-      id: lb
-      run: |
-        kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.3/manifests/metallb.yaml
-        KUBEFLOW_MASTER_IP_ADDRESS=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
-        echo ::set-output name=KUBEFLOW_MASTER_IP_ADDRESS::${KUBEFLOW_MASTER_IP_ADDRESS}
-        cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            namespace: metallb-system
-            name: config
-          data:
-            config: |
-              address-pools:
-              - name: default
-                protocol: layer2
-                addresses:
-                - ${KUBEFLOW_MASTER_IP_ADDRESS}-${KUBEFLOW_MASTER_IP_ADDRESS}
-        EOF
+        export KF_NAME=platiagro
+        export BASE_DIR=$(pwd)
+        export KF_DIR=${BASE_DIR}/${KF_NAME}
+        export CONFIG_URI="https://raw.githubusercontent.com/platiagro/manifests/v0.2.0-kubeflow-v1.2-branch/kfdef/kfctl_k8s_tests.v0.2.0.yaml"
+        mkdir -p ${KF_DIR}
+        cd ${KF_DIR}
+        ../kfctl apply -V -f ${CONFIG_URI}
         sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
+
+        kubectl -n kubeflow delete deployment admission-webhook-deployment
+        kubectl -n kubeflow delete deployment argo-ui
+        kubectl -n kubeflow delete deployment cache-deployer-deployment
+        kubectl -n kubeflow delete deployment cache-server
+        kubectl -n kubeflow delete deployment centraldashboard
+        kubectl -n kubeflow delete deployment jupyter-web-app-deployment
+        kubectl -n kubeflow delete deployment kubeflow-pipelines-profile-controller
+        kubectl -n kubeflow delete deployment metadata-db
+        kubectl -n kubeflow delete deployment metadata-envoy-deployment
+        kubectl -n kubeflow delete deployment metadata-grpc-deployment
+        kubectl -n kubeflow delete deployment metadata-writer
+        kubectl -n kubeflow delete deployment minio
+        kubectl -n kubeflow delete deployment ml-pipeline
+        kubectl -n kubeflow delete deployment ml-pipeline-persistenceagent
+        kubectl -n kubeflow delete deployment ml-pipeline-scheduledworkflow
+        kubectl -n kubeflow delete deployment ml-pipeline-ui
+        kubectl -n kubeflow delete deployment ml-pipeline-viewer-crd
+        kubectl -n kubeflow delete deployment ml-pipeline-visualizationserver
+        kubectl -n kubeflow delete deployment mysql
+        kubectl -n kubeflow delete deployment notebook-controller-deployment
+        kubectl -n kubeflow delete deployment profiles-deployment
+        kubectl -n kubeflow delete deployment seldon-controller-manager
+        kubectl -n kubeflow delete deployment workflow-controller
+
+        kubectl -n kubeflow delete statefulset admission-webhook-bootstrap-stateful-set
+        kubectl -n kubeflow delete statefulset application-controller-stateful-set
+        kubectl -n kubeflow delete statefulset metacontroller
+
+        # kubectl -n istio-system patch deployment cluster-local-gateway --type='json' --patch \
+        #   '[{"op":"remove","path":"/spec/template/spec/containers/0/resources"}]'
+        kubectl -n istio-system patch deployment istio-citadel --type='json' --patch \
+          '[{"op":"remove","path":"/spec/template/spec/containers/0/resources"}]'
+        kubectl -n istio-system patch deployment istio-galley --type='json' --patch \
+          '[{"op":"remove","path":"/spec/template/spec/containers/0/resources"}]'
+        # kubectl -n istio-system patch deployment istio-ingressgateway --type='json' --patch \
+        #   '[{"op":"remove","path":"/spec/template/spec/containers/0/resources"}]'
+        kubectl -n istio-system patch deployment istio-pilot --type='json' --patch \
+          '[{"op":"remove","path":"/spec/template/spec/containers/0/resources"},{"op":"remove","path":"/spec/template/spec/containers/1/resources"}]'
+        kubectl -n istio-system patch deployment istio-policy --type='json' --patch \
+          '[{"op":"remove","path":"/spec/template/spec/containers/0/resources"},{"op":"remove","path":"/spec/template/spec/containers/1/resources"}]'
+        kubectl -n istio-system patch deployment istio-sidecar-injector --type='json' --patch \
+          '[{"op":"remove","path":"/spec/template/spec/containers/0/resources"}]'
+        kubectl -n istio-system patch deployment istio-telemetry --type='json' --patch \
+          '[{"op":"remove","path":"/spec/template/spec/containers/0/resources"},{"op":"remove","path":"/spec/template/spec/containers/1/resources"}]'
+        kubectl -n istio-system patch deployment prometheus --type='json' --patch \
+          '[{"op":"remove","path":"/spec/template/spec/containers/0/resources"}]'
+        kubectl -n istio-system patch service istio-ingressgateway --type='json' --patch \
+          '[{"op":"replace","path":"/spec/type","value":"NodePort"}]'
+        sleep 120
+        # kubectl -n istio-system wait --for=condition=Ready pods --all --timeout=120s
+        kubectl describe nodes
+        kubectl -n istio-system logs --tail 1000 -l app=cluster-local-gateway
+        kubectl -n istio-system logs --tail 1000 -l app=istio-ingressgateway
+        kubectl -n istio-system get pod
+        kubectl -n istio-system logs --tail 1000 -l app=istio-policy
 
     - name: Run MinIO
       run: |
