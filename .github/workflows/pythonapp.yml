@@ -304,7 +304,7 @@ jobs:
           -p 9000:9000 \
           -e MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY} \
           -e MINIO_SECRET_KEY=${MINIO_SECRET_KEY} \
-          minio/minio:RELEASE.2018-02-09T22-40-05Z
+          minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
       env:
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
@@ -338,7 +338,7 @@ jobs:
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://localhost:8888
-        KF_PIPELINES_ENDPOINT: localhost:5000
+        KF_PIPELINES_ENDPOINT: http://localhost:5000
 
     - name: SonarCloud Scan
       if: ${{ always() }}
