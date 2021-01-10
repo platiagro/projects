@@ -147,11 +147,11 @@ def terminate_run(project_id, deployment_id, run_id):
         "deployments",
         "seldondeployments"
     )
-    deployments_objects = custom_objects['items']
+    deployments_objects = custom_objects["items"]
 
     if deployments_objects:
         for deployment in deployments_objects:
-            if deployment['metadata']['name'] == deployment_id:
+            if deployment["metadata"]["name"] == deployment_id:
                 undeploy_pipeline(deployment)
 
     deployment_run = get_deployment_runs(deployment_id)

@@ -210,7 +210,8 @@ def terminate_run(run_id, experiment_id):
     """
     if run_id == "latest":
         run_id = get_latest_run_id(experiment_id)
-
+    print("run_id")
+    print(run_id)
     KFP_CLIENT.runs.terminate_run(run_id=run_id)
 
     return {"message": "Run terminated."}

@@ -9,7 +9,7 @@ from minio.error import BucketAlreadyOwnedByYou
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.jupyter import JUPYTER_ENDPOINT, COOKIES, HEADERS
+from projects.jupyter import COOKIES, HEADERS, JUPYTER_ENDPOINT
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 TASK_ID = str(uuid_alpha())

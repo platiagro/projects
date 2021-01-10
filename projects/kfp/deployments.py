@@ -26,7 +26,6 @@ def get_deployment_runs(deployment_id):
         if deployment_run["deploymentId"] == deployment_id:
             deployment = deployment_run
             break
-
     return deployment
 
 
@@ -103,6 +102,8 @@ def get_deployment_details(runs, ip=None, protocol=None):
 
                 deployment_runs.append(deployment_details)
 
+    print("get_deployment_details")
+    print(deployment_runs)
     return deployment_runs
 
 

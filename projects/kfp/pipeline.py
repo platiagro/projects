@@ -7,8 +7,8 @@ from kfp import compiler, dsl
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
-from projects.kfp import CPU_LIMIT, CPU_REQUEST, KFP_CLIENT, \
-    KF_PIPELINES_NAMESPACE, MEMORY_LIMIT, MEMORY_REQUEST
+from projects.kfp import CPU_LIMIT, CPU_REQUEST, KF_PIPELINES_NAMESPACE, \
+    MEMORY_LIMIT, MEMORY_REQUEST, KFP_CLIENT
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
 
@@ -286,18 +286,18 @@ def undeploy_pipeline(resource):
     resource : dict
         A k8s resource which will be submitted to the cluster.
     """
-    @dsl.pipeline(name='Undeploy')
+    @dsl.pipeline(name="Undeploy")
     def undeploy():
         dsl.ResourceOp(
-            name='undeploy',
+            name="undeploy",
             k8s_resource=resource,
-            action='delete'
+            action="delete"
         )
 
     KFP_CLIENT.create_run_from_pipeline_func(
         undeploy,
         {},
-        run_name='undeploy',
+        run_name="undeploy",
         namespace=KF_PIPELINES_NAMESPACE
     )
 

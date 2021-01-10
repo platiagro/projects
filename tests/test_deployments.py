@@ -5,8 +5,8 @@ from unittest import TestCase
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.kfp import KFP_CLIENT
 from projects.object_storage import BUCKET_NAME
+from tests.mock.api import start_mock_api
 
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
@@ -53,20 +53,7 @@ class TestDeployments(TestCase):
     def setUp(self):
         self.maxDiff = None
 
-        with open("tests/resources/mocked_deployment.yaml", "r") as file:
-            content = file.read()
-
-        content = content.replace("$deploymentId", DEPLOYMENT_ID)
-        with open("tests/resources/mocked.yaml", "w") as file:
-            file.write(content)
-
-        # Run a default pipeline for tests
-        kfp_experiment = KFP_CLIENT.create_experiment(name=DEPLOYMENT_ID)
-        KFP_CLIENT.run_pipeline(
-            experiment_id=kfp_experiment.id,
-            job_name=DEPLOYMENT_ID,
-            pipeline_package_path="tests/resources/mocked.yaml",
-        )
+        self.proc = start_mock_api()
 
         conn = engine.connect()
         text = (
@@ -127,6 +114,7 @@ class TestDeployments(TestCase):
         conn.close()
 
     def tearDown(self):
+        self.proc.terminate()
         conn = engine.connect()
 
         text = f"DELETE FROM operators WHERE experiment_id in" \

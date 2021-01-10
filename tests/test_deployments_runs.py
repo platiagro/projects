@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from json import dumps
 from os import remove
 from unittest import TestCase
@@ -7,7 +8,8 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.kfp import KFP_CLIENT
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from projects.object_storage import BUCKET_NAME
+from tests.mock.api import start_mock_api
 
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
@@ -31,15 +33,10 @@ EX_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 
 class TestDeploymentsRuns(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.maxDiff = None
+    def setUp(self):
+        self.maxDiff = None
 
-        MINIO_CLIENT.fput_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"tasks/{TASK_ID}/Deployment.ipynb",
-            file_path="tests/resources/mocked_deployment_task.ipynb",
-        )
+        self.proc = start_mock_api()
 
         with open("tests/resources/mocked_deployment.yaml", "r") as file:
             content = file.read()
@@ -105,8 +102,8 @@ class TestDeploymentsRuns(TestCase):
         conn.execute(text)
         conn.close()
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
+        self.proc.terminate()
         conn = engine.connect()
 
         text = f"DELETE FROM operators WHERE experiment_id in" \
@@ -120,6 +117,9 @@ class TestDeploymentsRuns(TestCase):
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_ID_2}')"
         conn.execute(text)
 
         conn.close()
