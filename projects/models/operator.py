@@ -7,10 +7,9 @@ from sqlalchemy.orm import backref, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from projects.database import Base
+from projects.kfp.runs import get_container_status
 from projects.utils import to_camel_case, get_parameters_with_values, \
     remove_parameter
-from projects.jupyter import read_parameters
-from projects.kfp.runs import get_container_status
 
 
 class Operator(Base):
@@ -49,11 +48,7 @@ class Operator(Base):
             else:
                 status = "Unset"
         else:
-            task_parameters = []
-
-            if self.task.experiment_notebook_path is not None:
-                task_parameters = read_parameters(self.task.experiment_notebook_path)
-                task_parameters = remove_parameter(task_parameters, "dataset")
+            task_parameters = remove_parameter(self.task.parameters, "dataset")
 
             if len(parameters) == len(task_parameters):
                 status = "Setted up"
