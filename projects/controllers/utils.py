@@ -3,8 +3,9 @@
 import random
 import re
 import uuid
+import csv
 
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import BadRequest, NotFound
 from kfp_server_api.exceptions import ApiException
 
 from projects.database import db_session
@@ -208,3 +209,49 @@ def text_to_list(order):
     for match in matches:
         order_by.append(match.group(2)) if match.group(1) is None else order_by.append(match.group(1))
     return order_by
+
+
+def parse_csv_buffer_to_seldon_request(file):
+    """
+    Reads CSV buffer and parse to seldon request.
+
+    Parameters
+    ----------
+    file : dict
+        CSV file buffer.
+
+    Returns
+    -------
+    dict
+        { data: { "name": list, "ndarray": list } }
+
+    Raises
+    ------
+    BadRequest
+        `file` needs a header.
+    """
+
+    # read file content and parse to string
+    file_buffer = file.read()
+    file_buffer_str = file_buffer.decode("utf-8")
+
+    if not csv.Sniffer().has_header(file_buffer_str):
+        raise BadRequest("`file` needs a header.")
+
+    # infer file delimiter
+    dialect = csv.Sniffer().sniff(file_buffer_str, delimiters=";,")
+
+    # build seldon request
+    lines = file_buffer_str.split('\n')
+    lines_splitted = [line.split(dialect.delimiter) for line in lines]
+    columns = lines_splitted[0]
+    data = lines_splitted[1:]
+
+    request = {
+        "data": {
+            "name": columns,
+            "ndarray": data,
+        }
+    }
+
+    return request
