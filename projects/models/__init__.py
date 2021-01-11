@@ -2,6 +2,7 @@ from projects.models.comparison import Comparison
 from projects.models.deployment import Deployment
 from projects.models.experiment import Experiment
 from projects.models.operator import Operator
+from projects.models.prediction import Prediction
 from projects.models.project import Project
 from projects.models.task import Task
 from projects.models.template import Template
@@ -11,6 +12,7 @@ __all__ = [
     'Deployment',
     'Experiment',
     'Operator',
+    'Prediction',
     'Project',
     'Task',
     'Template',
