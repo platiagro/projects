@@ -223,12 +223,12 @@ def parse_csv_buffer_to_seldon_request(file):
     Returns
     -------
     dict
-        { data: { "name": list, "ndarray": list } }
+        { data: { "names": list, "ndarray": list } }
 
     Raises
     ------
     BadRequest
-        `file` needs a header.
+        When `file` has no header.
     """
 
     # read file content and parse to string
@@ -243,13 +243,14 @@ def parse_csv_buffer_to_seldon_request(file):
 
     # build seldon request
     lines = file_buffer_str.split('\n')
-    lines_splitted = [line.split(dialect.delimiter) for line in lines]
+    # split values and remove blank lines
+    lines_splitted = [line.split(dialect.delimiter) for line in lines if line]
     columns = lines_splitted[0]
     data = lines_splitted[1:]
 
     request = {
         "data": {
-            "name": columns,
+            "names": columns,
             "ndarray": data,
         }
     }
