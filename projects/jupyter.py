@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 """Functions that access Jupyter Notebook API."""
 import json
-import re
 import os
 
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
-
-from minio.error import NoSuchKey
 from werkzeug.exceptions import InternalServerError
 
-from projects.object_storage import BUCKET_NAME, get_object
 from projects.utils import remove_ansi_escapes
 
 DEFAULT_ENDPOINT = "http://server.anonymous:80/notebook/anonymous/server"
@@ -116,95 +112,6 @@ def delete_file(path):
     SESSION.delete(
         url=f"{JUPYTER_ENDPOINT}/api/contents/{path}",
     )
-
-
-def read_parameters(path):
-    """
-    Lists the parameters declared in a notebook.
-
-    Parameters
-    ----------
-    path : str
-        Path to the .ipynb file.
-
-    Returns
-    -------
-    list:
-        A list of parameters (name, default, type, label, description).
-    """
-    if not path:
-        return []
-
-    object_name = path[len(f"minio://{BUCKET_NAME}/"):]
-    try:
-        experiment_notebook = json.loads(get_object(object_name).decode("utf-8"))
-    except (NoSuchKey, json.JSONDecodeError):
-        return []
-
-    parameters = []
-    cells = experiment_notebook.get("cells", [])
-    for cell in cells:
-        cell_type = cell["cell_type"]
-        tags = cell["metadata"].get("tags", [])
-        if cell_type == "code" and "parameters" in tags:
-            source = cell["source"]
-
-            parameters.extend(
-                read_parameters_from_source(source),
-            )
-
-    return parameters
-
-
-def read_parameters_from_source(source):
-    """
-    Lists the parameters declared in source code.
-
-    Parameters
-    ----------
-    source : list
-        Source code lines.
-
-    Returns
-    -------
-    list:
-        A list of parameters (name, default, type, label, description).
-    """
-    parameters = []
-    # Regex to capture a parameter declaration
-    # Inspired by Google Colaboratory Forms
-    # Example of a parameter declaration:
-    # name = "value" #@param ["1st option", "2nd option"] {type:"string", label:"Foo Bar", description:"Foo Bar"}
-    pattern = re.compile(r"^(\w+)\s*=\s*(.+)\s+#@param(?:(\s+\[.*\]))?(\s+\{.*\})")
-
-    for line in source:
-        match = pattern.search(line)
-        if match:
-            try:
-                name = match.group(1)
-                default = match.group(2)
-                options = match.group(3)
-                metadata = match.group(4)
-
-                parameter = {"name": name}
-
-                if default and default != "None":
-                    if default in ["True", "False"]:
-                        default = default.lower()
-                    parameter["default"] = json.loads(default)
-
-                if options:
-                    parameter["options"] = json.loads(options)
-
-                # adds quotes to metadata keys
-                metadata = re.sub(r"(\w+):", r'"\1":', metadata)
-                parameter.update(json.loads(metadata))
-
-                parameters.append(parameter)
-            except json.JSONDecodeError:
-                pass
-
-    return parameters
 
 
 def get_notebook_logs(experiment_id, operator_id):
