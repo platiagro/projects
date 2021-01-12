@@ -166,6 +166,7 @@ jobs:
         echo ::set-output name=COMMIT::${{ github.sha }}
 
     - name: Build and push image
+      if: ${{ always() }}
       uses: docker/build-push-action@v1
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
