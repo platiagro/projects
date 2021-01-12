@@ -1226,7 +1226,6 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-
   /projects/{projectId}/deployments/{deploymentId}/predictions:
     post:
       summary: "Create a new prediction sending a CSV file."
