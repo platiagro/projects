@@ -1,7 +1,6 @@
 # WSGI server
 Flask==1.1.1
 Flask-Cors==3.0.8
-flask-smorest==0.21.2
 # PlatIAgro SDK
 platiagro @ git+https://github.com/platiagro/sdk.git@master
 # ORM
@@ -11,6 +10,6 @@ PyMySQL==0.9.3
 # Requests
 requests==2.23.0
 # Kubeflow Pipelines SDK
-kfp==1.1.1
+kfp==1.2.0
 # Kubernetes python client
 kubernetes==10.0

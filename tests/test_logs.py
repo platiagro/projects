@@ -7,9 +7,10 @@ import requests
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.jupyter import JUPYTER_ENDPOINT, COOKIES, HEADERS
+from projects.jupyter import COOKIES, HEADERS, JUPYTER_ENDPOINT
+from projects.kfp import kfp_client
 from projects.object_storage import BUCKET_NAME
-from projects.kfp import KFP_CLIENT
+from tests.mock.api import start_mock_api
 
 PROJECT_ID = str(uuid_alpha())
 NAME = "foo"
@@ -44,6 +45,12 @@ class TestOperators(TestCase):
 
     def setUp(self):
         self.maxDiff = None
+
+        self.proc = start_mock_api()
+        # Run experiment to succeed
+        experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
+        self.run = kfp_client().run_pipeline(experiment.id, OPERATOR_ID_2, "tests/resources/mocked_operator_succeed.yaml")
+
         session = requests.Session()
         session.cookies.update(COOKIES)
         session.headers.update(HEADERS)
@@ -121,6 +128,8 @@ class TestOperators(TestCase):
         )
 
     def tearDown(self):
+        self.proc.terminate()
+
         session = requests.Session()
         session.cookies.update(COOKIES)
         session.headers.update(HEADERS)
@@ -128,6 +137,21 @@ class TestOperators(TestCase):
             "response": lambda r, *args, **kwargs: r.raise_for_status(),
         }
 
+        session.delete(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/Experiment.ipynb",
+        )
+        session.delete(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_2}/Experiment.ipynb",
+        )
+        session.delete(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}",
+        )
+        session.delete(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_2}",
+        )
+        session.delete(
+            url=f"{JUPYTER_ENDPOINT}/api/contents/experiments/{EXPERIMENT_ID}/operators",
+        )
         session.delete(
             url=f"{JUPYTER_ENDPOINT}/api/contents/experiments/{EXPERIMENT_ID}",
         )
@@ -169,11 +193,7 @@ class TestOperators(TestCase):
             self.assertEqual(rv.status_code, 200)
             self.assertDictEqual(result, expected)
 
-            # Run experiment to succeed
-            experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID, namespace="deployments")
-            run = KFP_CLIENT.run_pipeline(experiment.id, OPERATOR_ID_2, "tests/resources/mocked_operator_succeed.yaml")
-
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{run.id}/operators/{OPERATOR_ID_2}/logs")
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{self.run.id}/operators/{OPERATOR_ID_2}/logs")
             result = rv.get_json()
             expected = {"message": "Notebook finished with status completed."}
             self.assertDictEqual(result, expected)

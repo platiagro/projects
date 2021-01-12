@@ -9,7 +9,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from kfp_server_api.exceptions import ApiException
 
 from projects.database import db_session
-from projects.kfp import KFP_CLIENT
+from projects.kfp import kfp_client
 from projects.models import Deployment, Experiment, Operator, Project, Task
 
 
@@ -130,7 +130,7 @@ def raise_if_run_does_not_exist(run_id):
     NotFound
     """
     try:
-        KFP_CLIENT.get_run(run_id=run_id)
+        kfp_client().get_run(run_id=run_id)
     except ApiException:
         raise NotFound("The specified run does not exist")
 

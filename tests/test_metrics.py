@@ -107,4 +107,4 @@ class TestMetrics(TestCase):
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/metrics")
             result = rv.get_json()
             self.assertIsInstance(result, list)
-            self.assertEquals(result, [{"accuracy": 1.0}])
+            self.assertEqual(result, [{"accuracy": 1.0}])

@@ -18,7 +18,6 @@ def handle_get_dataset(project_id, experiment_id, run_id, operator_id):
     experiment_id : str
     run_id : str
     operator_id : str
-    pagination_parameters : flask_smorest.pagination.PaginationParameters
 
     Returns
     -------

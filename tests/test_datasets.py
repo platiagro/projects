@@ -10,6 +10,7 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from tests.mock.api import start_mock_api
 
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
@@ -48,6 +49,9 @@ UPDATED_AT = "2000-01-01 00:00:00"
 class TestDatasets(TestCase):
     def setUp(self):
         self.maxDiff = None
+
+        self.proc = start_mock_api()
+
         conn = engine.connect()
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
@@ -169,6 +173,8 @@ class TestDatasets(TestCase):
         )
 
     def tearDown(self):
+        self.proc.terminate()
+
         MINIO_CLIENT.remove_object(
             bucket_name=BUCKET_NAME,
             object_name=f"datasets/{DATASET}/runs/{RUN_ID}/operators/{OPERATOR_ID}/{DATASET}/{DATASET}.metadata",
@@ -279,7 +285,7 @@ class TestDatasets(TestCase):
                         headers={'Accept': 'application/csv'})
             result = rv.data
             expected = b'col0,col1,col2,col3,col4,col5\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
-            self.assertEquals(expected, result)
+            self.assertEqual(expected, result)
 
             rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets?page_size=-1")
             result = rv.get_json()
@@ -297,4 +303,4 @@ class TestDatasets(TestCase):
                        headers={'Accept': 'application/csv'})
             result = rv.data
             expected = b'col0,col1,col2,col3,col4,col5\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
-            self.assertEquals(expected, result)
+            self.assertEqual(expected, result)
