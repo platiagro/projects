@@ -35,6 +35,9 @@ tags:
     description: >
       Runs are the executions of a deployment.
       Each run start from the first step and generates its own results.
+  - name: "Predictions"
+    description: >
+      Predictions send a request with file data to seldon deployment.
   - name: "Results"
     description: >
       Results are the outputs of experiment runs.
@@ -1223,6 +1226,35 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/predictions:
+    post:
+      summary: "Create a new prediction sending a CSV file."
+      tags:
+        - "Predictions"
+      requestBody:
+        $ref: "#/components/requestBodies/PredictionPost"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Prediction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /templates:
     get:
       summary: "List all templates sorted by name in natural sort order."
@@ -1564,6 +1596,36 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Deployment"
+    Prediction:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            names:
+              type: array
+              items:
+                type: string
+            ndarray:
+              type: array
+              items:
+                type: string
+        meta:
+          type: object
+          properties:
+            puid:
+              type: string
+            tags:
+              type: object
+            routing:
+              type: object
+            requestPath:
+              type: object
+            metrics:
+              type: array
+              items:
+                type: string
+              example: []
     Operator:
       type: object
       properties:
@@ -2027,6 +2089,15 @@ components:
                 type: string
               position:
                 type: integer
+    PredictionPost:
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
     OperatorPost:
       content:
         application/json:
@@ -2173,6 +2244,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Deployments"
+    Prediction:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Prediction"
     Operator:
       description: ""
       content:
