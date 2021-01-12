@@ -11,26 +11,38 @@ EXPERIMENT_ID = str(uuid_alpha())
 NAME = "foo"
 POSITION = 0
 EXPERIMENT_ID_2 = str(uuid_alpha())
+EXPERIMENT_ID_3 = str(uuid_alpha())
+EXPERIMENT_ID_4 = str(uuid_alpha())
 NAME_2 = "foo 2"
+NAME_3 = "foo 3"
+NAME_4 = "foo 4"
 POSITION_2 = 1
+POSITION_3 = 2
+POSITION_4 = 3
 PROJECT_ID = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 TASK_ID_2 = str(uuid_alpha())
+TASK_ID_3 = str(uuid_alpha())
+TASK_ID_4 = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 OPERATOR_ID_3 = str(uuid_alpha())
 OPERATOR_ID_4 = str(uuid_alpha())
+OPERATOR_ID_5 = str(uuid_alpha())
 DEPENDENCY_ID = str(uuid_alpha())
 IS_ACTIVE = True
 PARAMETERS = {"coef": 0.1}
 PARAMETERS_JSON = dumps(PARAMETERS)
+PARAMETERS_JSON_2 = dumps({})
 DESCRIPTION = "long foo"
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 COMMANDS = None
 ARGUMENTS = None
 TAGS = ["PREDICTOR"]
+TAGS_2 = ["DATASETS"]
 TAGS_JSON = dumps(TAGS)
+TAGS_JSON_2 = dumps(TAGS_2)
 TASKS_JSON = dumps([
     {
         "uuid": OPERATOR_ID,
@@ -49,6 +61,7 @@ TASKS_JSON = dumps([
 ])
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH_2 = {}
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -78,6 +91,18 @@ class TestExperiments(TestCase):
         conn.execute(text)
 
         text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID_3}', '{NAME_3}', '{DESCRIPTION}', '{IMAGE}', null, null, '{TAGS_JSON_2}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID_4}', '{NAME_4}', '{DESCRIPTION}', '{IMAGE}', null, null, '{TAGS_JSON_2}', '{EXPERIMENT_NOTEBOOK_PATH_2}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
             f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
@@ -96,6 +121,18 @@ class TestExperiments(TestCase):
         conn.execute(text)
 
         text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID_3}', '{NAME_3}', '{PROJECT_ID}', '{POSITION_3}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{EXPERIMENT_ID_4}', '{NAME_4}', '{PROJECT_ID}', '{POSITION_4}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
@@ -104,6 +141,24 @@ class TestExperiments(TestCase):
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID_3}', '{EXPERIMENT_ID_2}', '{TASK_ID_3}', '{PARAMETERS_JSON_2}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID_4}', '{EXPERIMENT_ID_3}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID_5}', '{EXPERIMENT_ID_4}', '{TASK_ID_4}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
         )
         conn.execute(text)
 
@@ -123,6 +178,15 @@ class TestExperiments(TestCase):
         text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
+        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_2}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_3}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_4}'"
+        conn.execute(text)
+
         text = (
             f"DELETE FROM operators WHERE experiment_id = "
             f"(SELECT uuid FROM experiments where name = '{NAME_COPYFROM}')"
@@ -133,6 +197,12 @@ class TestExperiments(TestCase):
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID_4}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID_3}'"
         conn.execute(text)
 
         text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID_2}'"
@@ -184,7 +254,7 @@ class TestExperiments(TestCase):
             expected = {
                 "name": "test",
                 "projectId": PROJECT_ID,
-                "position": 2,
+                "position": 4,
                 "isActive": IS_ACTIVE,
                 "operators": [],
                 "deployments": [],
@@ -225,20 +295,56 @@ class TestExperiments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}")
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_2}")
             result = rv.get_json()
             expected = {
-                "uuid": EXPERIMENT_ID,
-                "name": NAME,
+                "uuid": EXPERIMENT_ID_2,
+                "name": NAME_2,
                 "deployments": [],
                 "projectId": PROJECT_ID,
-                "position": POSITION,
+                "position": POSITION_2,
                 "isActive": IS_ACTIVE,
                 "operators": result['operators'],
                 "createdAt": CREATED_AT_ISO,
                 "updatedAt": UPDATED_AT_ISO,
             }
             self.assertDictEqual(expected, result)
+            operator = result["operators"][0]
+            self.assertEqual("Unset", operator["status"])
+
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_3}")
+            result = rv.get_json()
+            expected = {
+                "uuid": EXPERIMENT_ID_3,
+                "name": NAME_3,
+                "deployments": [],
+                "projectId": PROJECT_ID,
+                "position": POSITION_3,
+                "isActive": IS_ACTIVE,
+                "operators": result['operators'],
+                "createdAt": CREATED_AT_ISO,
+                "updatedAt": UPDATED_AT_ISO,
+            }
+            self.assertDictEqual(expected, result)
+            operator = result["operators"][0]
+            self.assertEqual("Unset", operator["status"])
+
+            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_4}")
+            result = rv.get_json()
+            expected = {
+                "uuid": EXPERIMENT_ID_4,
+                "name": NAME_4,
+                "deployments": [],
+                "projectId": PROJECT_ID,
+                "position": POSITION_4,
+                "isActive": IS_ACTIVE,
+                "operators": result['operators'],
+                "createdAt": CREATED_AT_ISO,
+                "updatedAt": UPDATED_AT_ISO,
+            }
+            self.assertDictEqual(expected, result)
+            operator = result["operators"][0]
+            self.assertEqual("Setted up", operator["status"])
 
     def test_update_experiment(self):
         with app.test_client() as c:
@@ -327,6 +433,7 @@ class TestExperiments(TestCase):
                 "parameters": {},
                 "positionX": 200.0,
                 "positionY": 0.0,
+                "status": "Setted up",
                 "deploymentId": None
             }, {
                 "taskId": TASK_ID,
@@ -334,6 +441,7 @@ class TestExperiments(TestCase):
                 "parameters": {},
                 "positionX": 0.0,
                 "positionY": 0.0,
+                "status": "Setted up",
                 "deploymentId": None
             }]
             machine_generated = ["uuid", "dependencies", "createdAt", "updatedAt"]
@@ -341,7 +449,7 @@ class TestExperiments(TestCase):
                 for operator in result_operators:
                     self.assertIn(attr, operator)
                     del operator[attr]
-            self.assertListEqual(expected, result_operators)
+            self.assertCountEqual(expected, result_operators)
 
     def test_delete_experiment(self):
         with app.test_client() as c:

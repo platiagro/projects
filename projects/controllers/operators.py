@@ -5,12 +5,11 @@ from datetime import datetime
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from projects.controllers.tasks.parameters import list_parameters
 from projects.controllers.utils import raise_if_task_does_not_exist, \
     raise_if_project_does_not_exist, raise_if_experiment_does_not_exist, \
     raise_if_operator_does_not_exist, uuid_alpha
 from projects.database import db_session
-from projects.models import Operator, Task
+from projects.models import Operator
 
 
 PARAMETERS_EXCEPTION_MSG = "The specified parameters are not valid"
@@ -45,7 +44,6 @@ def list_operators(project_id, experiment_id):
 
     response = []
     for operator in operators:
-        check_status(operator)
         response.append(operator.as_dict())
 
     return response
@@ -123,8 +121,6 @@ def create_operator(project_id, experiment_id=None, deployment_id=None,
     db_session.add(operator)
     db_session.commit()
 
-    check_status(operator)
-
     return operator.as_dict()
 
 
@@ -174,8 +170,6 @@ def update_operator(project_id, experiment_id, operator_id, **kwargs):
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
-
-    check_status(operator)
 
     return operator.as_dict()
 
@@ -355,38 +349,3 @@ def has_cycles_util(operator_id, visited, recursion_stack, new_dependencies, new
 
     recursion_stack[operator_id] = False
     return False
-
-
-def check_status(operator):
-    """
-    Check operator status
-
-    Parameters
-    ----------
-    operator : str
-
-    Returns
-    ------
-    str
-        The operator status.
-    """
-    # get total operator parameters with value
-    op_params_keys = [key for key in operator.parameters.keys() if operator.parameters[key] != '']
-    total_op_params = len(op_params_keys)
-
-    task = Task.query.get(operator.task_id)
-    if "DATASETS" not in task.tags:
-        # get task parameters and remove dataset parameter
-        comp_params = list_parameters(operator.task_id)
-        comp_params = [parameter for parameter in comp_params if parameter['name'] != 'dataset']
-        total_comp_params = len(comp_params)
-
-        if total_op_params == total_comp_params:
-            operator.status = 'Setted up'
-        else:
-            operator.status = 'Unset'
-    else:
-        if total_op_params == 1:
-            operator.status = 'Setted up'
-        else:
-            operator.status = 'Unset'

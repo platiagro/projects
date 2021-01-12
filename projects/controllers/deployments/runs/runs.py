@@ -77,6 +77,7 @@ def create_run(project_id, deployment_id):
 
     try:
         run = kfp_runs.start_run(operators=operators,
+                                 project_id=deployment.project_id,
                                  experiment_id=deployment.experiment_id,
                                  deployment_id=deployment_id,
                                  deployment_name=deployment.name)

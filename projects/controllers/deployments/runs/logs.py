@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Deployments Logs controller."""
 import re
+
+from ast import literal_eval
 from io import StringIO
 
 from projects.controllers.utils import raise_if_project_does_not_exist, \
@@ -41,11 +43,10 @@ def list_logs(project_id, deployment_id, run_id):
 
     deployment_pods = list_deployment_pods(deployment_id)
     response = []
-    container_ = {'status': 'Starting'}
+    status = {'status': 'Starting'}
 
     if not deployment_pods:
-        container_.update({'status': 'Creating'})
-        return container_
+        return status
 
     for pod in deployment_pods:
         for container in pod.spec.containers:
@@ -53,14 +54,19 @@ def list_logs(project_id, deployment_id, run_id):
                 pod_log = get_pod_log(pod, container)
 
                 if not pod_log:
-                    container_.update({'status': 'Creating'})
-                    return container_
+                    status.update({'status': 'Creating'})
+                    return status
 
-                container_ = {}
-                container_['containerName'] = get_operator_name(container.name)
-                container_['logs'] = log_parser(pod_log)
-                container_['status'] = 'Completed'
-                response.append(container_)
+                # retrieves the name of the task linked to the operator 
+                # in the pod "metadata.annotations.tasks"
+                tasks = pod.metadata.annotations.get("tasks")
+                tasks = literal_eval(tasks)
+
+                operator_info = {}
+                operator_info['containerName'] = tasks[container.name]
+                operator_info['logs'] = log_parser(pod_log)
+                operator_info.update({'status': 'Completed'})
+                response.append(operator_info)
 
     return response
 
@@ -106,32 +112,3 @@ def log_parser(raw_log):
         line = buf.readline()
 
     return logs
-
-
-def get_operator_name(container_name):
-    """
-    Get task name from a container.
-
-    Parameters
-    ----------
-    container_name : str
-
-    Returns
-    -------
-    str
-        The task name.
-
-    Notes
-    -----
-    If the container is not linked to any operator, it returns the name of the container.
-    """
-    # get task name
-    # TODO: deixar o nome da task visivel no arquivo yaml deste container
-    operator = Operator.query.get(container_name)
-
-    if operator:
-        task = Task.query.get(operator.task_id)
-        if task:
-            return task.name
-
-    return container_name

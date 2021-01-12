@@ -6,9 +6,10 @@ SELDON_DEPLOYMENT = Template("""{
     "kind": "SeldonDeployment",
     "metadata": {
         "labels": {
-            "app": "seldon"
+            "app": "seldon",
+            "projectId": "$projectId"
         },
-        "name": "$deploymentName",
+        "name": "$deploymentId",
         "deploymentId": "$deploymentId",
         "namespace": "$namespace"
     },
@@ -20,7 +21,7 @@ SELDON_DEPLOYMENT = Template("""{
             "seldon.io/grpc-read-timeout": "60000",
             "seldon.io/engine-separate-pod": "true"
         },
-        "name": "$deploymentName",
+        "name": "$deploymentId",
         "resources": {
             "requests": {
                 "memory": "2G"
@@ -30,6 +31,9 @@ SELDON_DEPLOYMENT = Template("""{
             {
                 "componentSpecs": [$componentSpecs
                 ],
+                "annotations": {
+                    "tasks": "$tasks"
+                },
                 "graph": $graph,
                 "labels": {
                     "version": "v1"
@@ -83,7 +87,7 @@ COMPONENT_SPEC = Template("""
             {
                 "name": "workspace",
                 "persistentVolumeClaim": {
-                    "claimName": "vol-deployment-$deploymentId"
+                    "claimName": "vol-home-jovyan-$experimentId"
                 }
             }
         ]

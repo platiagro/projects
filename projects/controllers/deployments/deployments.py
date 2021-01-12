@@ -6,6 +6,8 @@ from datetime import datetime
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
+from projects.controllers.deployments.runs import create_run
+from projects.controllers.experiments import list_experiments
 from projects.controllers.operators import create_operator
 from projects.controllers.utils import raise_if_project_does_not_exist, \
     uuid_alpha
@@ -45,27 +47,18 @@ def list_deployments(project_id):
     return [deployment.as_dict() for deployment in deployments]
 
 
-def create_deployment(project_id=None,
-                      experiment_id=None,
-                      is_active=None,
-                      name=None,
-                      position=None,
-                      status=None):
+def create_deployment(project_id,
+                      experiments=None,
+                      template_id=None):
     """
-    Creates a new deployment in our database and adjusts the position of others.
+    Creates new deployments in our database and adjusts the position of others.
 
     Parameters
     ----------
     project_id : str
-    experiment_id : str
-    is_active : bool
-        Whether deployment is active.
-    name : str
-    operators : list
-        The deployment operators.
-    position : int
-        The deployment position.
-
+    experiments : list
+        A list of experiment ids to be copied to deployments.
+    template_id : str
     Returns
     -------
     dict
@@ -76,65 +69,52 @@ def create_deployment(project_id=None,
     NotFound
         When project_id does not exist.
     BadRequest
-        When name is not a str instance.
-        When name is already the name of another deployment.
+        When any experiment does not exist.
     """
     raise_if_project_does_not_exist(project_id)
 
-    if not isinstance(name, str):
-        raise BadRequest("name is required")
+    if template_id is not None:
+        raise BadRequest("templateId is not implemented yet")
 
-    if not experiment_id:
-        raise BadRequest("experiment id was not specified")
+    if not experiments:
+        raise BadRequest("experiments were not specified")
 
-    check_deployment_name = db_session.query(Deployment) \
-        .filter(Deployment.project_id == project_id) \
-        .filter(Deployment.name == name) \
-        .first()
-    if check_deployment_name:
-        raise BadRequest("a deployment with that name already exists")
+    experiments_dict = {e["uuid"]: e for e in list_experiments(project_id=project_id)}
 
-    deployment = Deployment(uuid=uuid_alpha(),
-                            experiment_id=experiment_id,
-                            is_active=is_active,
-                            name=name,
-                            project_id=project_id)
-    db_session.add(deployment)
-    db_session.flush()
+    for experiment_id in experiments:
+        if experiment_id not in experiments_dict:
+            raise BadRequest("some experiments do not exist")
 
-    operators = db_session.query(Operator) \
-        .filter_by(experiment_id=experiment_id) \
-        .order_by(Operator.dependencies.asc()) \
-        .all()
+    deployments = []
 
-    if operators and len(operators) > 0:
-        operators_mapper = {}
+    for experiment_id in experiments:
+        experiment = experiments_dict[experiment_id]
 
-        for operator in operators:
-            dependencies = []
+        deployment = Deployment(uuid=uuid_alpha(),
+                                experiment_id=experiment_id,
+                                name=experiment["name"],
+                                project_id=project_id)
+        db_session.add(deployment)
+        db_session.flush()
 
-            if operator.dependencies:
-                # Get the new id's of the dependencies
-                dependencies = [operators_mapper[dependencie_uuid] for dependencie_uuid in operator.dependencies]
+        deployments.append(deployment)
 
-            operator_ = create_operator(deployment_id=deployment.uuid,
-                                        project_id=project_id,
-                                        task_id=operator.task_id,
-                                        parameters=operator.parameters,
-                                        dependencies=dependencies,
-                                        position_x=operator.position_x,
-                                        position_y=operator.position_y)
+        copy_operators(project_id=project_id,
+                       experiment_id=experiment_id,
+                       deployment_id=deployment.uuid)
 
-            # Keys is the old uuid and values the new one
-            operators_mapper.update({operator.uuid: operator_["uuid"]})
+        fix_positions(project_id=project_id,
+                      deployment_id=deployment.uuid,
+                      new_position=sys.maxsize)  # will add to end of list
 
     db_session.commit()
 
-    if position is None:
-        position = sys.maxsize  # will add to end of list
-    fix_positions(project_id=project_id, deployment_id=deployment.uuid, new_position=position)
+    # Temporary: also run deployment (while web-ui isn't ready)
+    for deployment in deployments:
+        create_run(project_id=project_id,
+                   deployment_id=deployment.uuid)
 
-    return deployment.as_dict()
+    return [deployment.as_dict() for deployment in deployments]
 
 
 def get_deployment(project_id, deployment_id):
@@ -303,4 +283,43 @@ def fix_positions(project_id, deployment_id=None, new_position=None):
             data["is_active"] = False
 
         db_session.query(Deployment).filter_by(uuid=deployment.uuid).update(data)
+    db_session.commit()
+
+
+def copy_operators(project_id, experiment_id, deployment_id):
+    """
+    Copies the operators from an experiment to a deployment.
+    Creates new uuids and don't keep the experiment_id relationship.
+
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
+    deployment_id : str
+    """
+    operators = db_session.query(Operator) \
+        .filter_by(experiment_id=experiment_id) \
+        .order_by(Operator.dependencies.asc()) \
+        .all()
+
+    operators_mapper = {}
+
+    for operator in operators:
+        dependencies = []
+
+        if operator.dependencies:
+            # Get the new id's of the dependencies
+            dependencies = [operators_mapper[dependencie_uuid] for dependencie_uuid in operator.dependencies]
+
+        operator_ = create_operator(deployment_id=deployment_id,
+                                    project_id=project_id,
+                                    task_id=operator.task_id,
+                                    parameters=operator.parameters,
+                                    dependencies=dependencies,
+                                    position_x=operator.position_x,
+                                    position_y=operator.position_y)
+
+        # Keys is the old uuid and values the new one
+        operators_mapper.update({operator.uuid: operator_["uuid"]})
+
     db_session.commit()

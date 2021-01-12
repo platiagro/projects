@@ -4,6 +4,7 @@ import json
 import os
 
 from datetime import datetime
+from kfp_server_api.exceptions import ApiValueError
 from werkzeug.exceptions import BadRequest
 
 from projects.kfp import KFP_CLIENT
@@ -51,13 +52,14 @@ def list_runs(experiment_id):
     return runs
 
 
-def start_run(operators, experiment_id, deployment_id=None, deployment_name=None):
+def start_run(operators, project_id, experiment_id, deployment_id=None, deployment_name=None):
     """
     Start a new run in Kubeflow Pipelines.
 
     Parameters
     ----------
     operators : list
+    project_id : str
     experiment_id : str
     deployment_id : str or None
     deployment_name : str or None
@@ -80,6 +82,7 @@ def start_run(operators, experiment_id, deployment_id=None, deployment_name=None
 
     compile_pipeline(name=name,
                      operators=operators,
+                     project_id=project_id,
                      experiment_id=experiment_id,
                      deployment_id=deployment_id,
                      deployment_name=deployment_name)
@@ -130,10 +133,10 @@ def get_run(run_id, experiment_id):
 
     # initializes all operators with status=Pending and parameters={}
     template = next(t for t in workflow_manifest["spec"]["templates"] if "dag" in t)
-    tasks = (tsk for tsk in template["dag"]["tasks"] if tsk["name"] != "vol-tmp-data")
+    tasks = (tsk for tsk in template["dag"]["tasks"] if not tsk["name"].startswith("vol-"))
     operators = dict((t["name"], {"status": "Pending", "parameters": {}}) for t in tasks)
 
-    # sets statuses for each operator
+    # set status for each operator
     for node in workflow_manifest["status"].get("nodes", {}).values():
         if node["displayName"] in operators:
             operator_id = node["displayName"]
@@ -296,3 +299,38 @@ def get_status(node):
         status = str(node["phase"])
 
     return status
+
+
+def get_container_status(experiment_id, operator_id):
+    """
+    Get operator container status.
+
+    Parameters
+    ----------
+    experiment_id : str
+    operator_id : str
+
+    Returns
+    -------
+    str
+        The container status.
+    """
+    # always get the status from the latest run
+    run_id = get_latest_run_id(experiment_id)
+
+    try:
+        kfp_run = KFP_CLIENT.get_run(
+            run_id=run_id,
+        )
+        status = "Pending"
+        workflow_manifest = json.loads(kfp_run.pipeline_runtime.workflow_manifest)
+
+        for node in workflow_manifest["status"].get("nodes", {}).values():
+            if node["displayName"] == operator_id:
+                if "message" in node and str(node["message"]) == "terminated":
+                    status = "Terminated"
+                else:
+                    status = str(node["phase"])
+        return status
+    except ApiValueError:
+        return ""

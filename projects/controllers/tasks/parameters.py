@@ -6,7 +6,7 @@ from projects.jupyter import read_parameters
 from projects.models import Task
 
 
-def list_parameters(task_id, is_checked=False):
+def list_parameters(task_id):
     """
     Lists all parameters from the experiment notebook of a task.
 

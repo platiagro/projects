@@ -4,9 +4,13 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, JSON, String, ForeignKey, Float
 from sqlalchemy.orm import backref, relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from projects.database import Base
-from projects.utils import to_camel_case
+from projects.utils import to_camel_case, get_parameters_with_values, \
+    remove_parameter
+from projects.jupyter import read_parameters
+from projects.kfp.runs import get_container_status
 
 
 class Operator(Base):
@@ -29,6 +33,31 @@ class Operator(Base):
     def as_dict(self):
         d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
         status = getattr(self, "status", None)
-        if status:
-            d["status"] = status
+        d["status"] = status
         return d
+
+    @hybrid_property
+    def status(self):
+        parameters = get_parameters_with_values(self.parameters)
+        status = get_container_status(self.experiment_id, self.uuid)
+
+        if status:
+            return status
+        elif "DATASETS" in self.task.tags:
+            if parameters:
+                status = "Setted up"
+            else:
+                status = "Unset"
+        else:
+            task_parameters = []
+
+            if self.task.experiment_notebook_path is not None:
+                task_parameters = read_parameters(self.task.experiment_notebook_path)
+                task_parameters = remove_parameter(task_parameters, "dataset")
+
+            if len(parameters) == len(task_parameters):
+                status = "Setted up"
+            else:
+                status = "Unset"
+
+        return status
