@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """Kubeflow notebook server utility functions."""
+import time
+import warnings
+
 from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
@@ -7,8 +10,9 @@ from werkzeug.exceptions import InternalServerError
 
 from projects.kubernetes.kube_config import load_kube_config
 
-NOTEBOOK_NAMESPACE = "anonymous"
 NOTEBOOK_NAME = "server"
+NOTEBOOK_NAMESPACE = "anonymous"
+NOTEBOOK_POD_NAME = "server-0"
 
 
 def create_persistent_volume_claim(name, mount_path):
@@ -74,6 +78,28 @@ def create_persistent_volume_claim(name, mount_path):
             name=NOTEBOOK_NAME,
             body=body,
         )
+
+        api_instance = client.CoreV1Api()
+        # Wait for the pod to be ready and have all containers running
+        while True:
+            try:
+                pod = api_instance.read_namespaced_pod(
+                    name=NOTEBOOK_POD_NAME,
+                    namespace=NOTEBOOK_NAMESPACE,
+                    _request_timeout=5,
+                )
+
+                if pod.status.phase == "Running" \
+                   and all([c.state.running for c in pod.status.container_statuses]) \
+                   and any([v for v in pod.spec.volumes if v.name == f"{name}"]):
+                    print(f"Mounted volume vol-{name} in notebook server!", flush=True)
+                    break
+            except ApiException:
+                pass
+            finally:
+                warnings.warn(f"Waiting for notebook server to be ready...")
+                time.sleep(5)
+
     except ApiException as e:
         body = literal_eval(e.body)
         message = body["message"]
