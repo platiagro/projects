@@ -19,6 +19,7 @@ EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_ID_2 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
+TEMPLATE_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1, "dataset": "dataset_name.csv"}
@@ -33,6 +34,22 @@ ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
+TASKS_JSON = dumps([
+    {
+        "uuid": OPERATOR_ID,
+        "position_x": 0.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID,
+        "dependencies": []
+    },
+    {
+        "uuid": OPERATOR_ID_2,
+        "position_x": 200.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID_2,
+        "dependencies": [OPERATOR_ID]
+    },
+])
 PARAMETERS_JSON = dumps(PARAMETERS)
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
@@ -124,10 +141,19 @@ class TestDeployments(TestCase):
             f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
+
+        text = (
+            f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
+            f"VALUES ('{TEMPLATE_ID}', '{NAME}', '{TASKS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
+
+        text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
+        conn.execute(text)
 
         text = f"DELETE FROM operators WHERE experiment_id in" \
                f"(SELECT uuid FROM experiments where project_id = '{PROJECT_ID}')"
@@ -260,7 +286,63 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={
+                "templateId": "unk",
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified template does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={
+                "unk": "bar",
+            })
+            self.assertEqual(rv.status_code, 400)
+            
             rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={"name": "Foo Bar"})
             result = rv.get_json()
             self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 200)
+
+            # update operators using template
+            rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={
+                "templateId": TEMPLATE_ID,
+            })
+            result = rv.get_json()
+            expected = {
+                "uuid": DEPLOYMENT_ID,
+                "name": "bar",
+                "projectId": PROJECT_ID,
+                "position": POSITION,
+                "isActive": IS_ACTIVE,
+                "createdAt": CREATED_AT_ISO,
+            }
+            result_operators = result["operators"]
+            machine_generated = ["updatedAt", "operators"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+            expected = [{
+                "taskId": TASK_ID_2,
+                "deploymentId": DEPLOYMENT_ID,
+                "parameters": {},
+                "positionX": 200.0,
+                "positionY": 0.0,
+                "status": "Setted up",
+                "experimentId": None
+            }, {
+                "taskId": TASK_ID,
+                "deploymentId": DEPLOYMENT_ID,
+                "parameters": {},
+                "positionX": 0.0,
+                "positionY": 0.0,
+                "status": "Setted up",
+                "experimentId": None
+            }]
+            machine_generated = ["uuid", "dependencies", "createdAt", "updatedAt"]
+            for attr in machine_generated:
+                for operator in result_operators:
+                    self.assertIn(attr, operator)
+                    del operator[attr]
+            self.assertCountEqual(expected, result_operators)
