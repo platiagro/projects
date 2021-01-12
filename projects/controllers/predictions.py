@@ -6,9 +6,10 @@ import requests
 from werkzeug.datastructures import FileStorage
 from werkzeug.exceptions import BadRequest
 
-from projects.controllers.utils import uuid_alpha, parse_csv_buffer_to_seldon_request, \
+from projects.controllers.utils import parse_csv_buffer_to_seldon_request, \
     raise_if_deployment_does_not_exist, raise_if_project_does_not_exist
 from projects.kubernetes.seldon import get_seldon_deployment_url
+
 
 def create_prediction(project_id=None, deployment_id=None, file=None):
     """

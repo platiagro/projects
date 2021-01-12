@@ -8,6 +8,7 @@ from projects.controllers.predictions import create_prediction
 
 bp = Blueprint("predictions", __name__)
 
+
 @bp.route("", methods=["POST"])
 def handle_post_prediction(project_id, deployment_id):
     """
