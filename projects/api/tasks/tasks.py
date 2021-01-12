@@ -14,10 +14,6 @@ def handle_list_tasks():
     """
     Handles GET requests to /.
 
-    Parameters
-    ----------
-    pagination_parameters : flask_smorest.pagination.PaginationParameters
-
     Returns
     -------
     str

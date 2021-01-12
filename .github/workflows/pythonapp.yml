@@ -14,6 +14,16 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: platiagro
+        ports:
+        - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
     - uses: actions/checkout@v2
 
@@ -89,271 +99,26 @@ jobs:
             ex: `PATCH /resources/{resourceId}`
           - Em dúvidas? Mantenha uma consistência com as URLs já existem.
 
-    - name: Install Kubernetes 1.15.7
+    - name: Run MinIO
       run: |
-        curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
-        sudo swapoff -a
-        sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-        sudo apt-get install -y --allow-downgrades kubeadm=1.15.7-00 kubelet=1.15.7-00 kubectl=1.15.7-00
-        echo 'KUBELET_EXTRA_ARGS=--eviction-hard=nodefs.available<1%,nodefs.inodesFree<1%,imagefs.available<1% --image-gc-high-threshold=99' | sudo tee /etc/default/kubelet
-        sudo systemctl daemon-reload
-        sudo systemctl restart kubelet
-        sudo kubeadm init
-        sudo mkdir -p $HOME/.kube
-        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-        sudo chown $(id -u):$(id -g) $HOME/.kube/config
-        kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-        kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=admin --user=kubelet --group=system:serviceaccounts
-        kubectl taint nodes --all node-role.kubernetes.io/master-
-        while [ $(kubectl get node | tail -n 1 |awk '{print $2}') != "Ready" ]; do echo waiting nodes to be ready...; sleep 1; done
-
-    - name: Install Kustomize
-      run: |
-        curl -sL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-
-    - name: Add Persistent Volumes to Kubernetes
-      run: |
-        for i in `seq 1 10`; do
-          sudo mkdir -p "/mnt/disks/vol-$i"
-          sudo mount -t tmpfs -o size=20G "vol-$i" "/mnt/disks/vol-$i"
-        done
-        cat <<EOF | kubectl apply -f -
-          kind: StorageClass
-          apiVersion: storage.k8s.io/v1
-          metadata:
-            name: local-storage
-          provisioner: kubernetes.io/no-provisioner
-          reclaimPolicy: Delete
-        EOF
-        kubectl patch storageclass local-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-        cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: local-provisioner-config
-            namespace: default
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          data:
-            storageClassMap: |
-              local-storage:
-                hostDir: /mnt/disks
-                mountDir: /mnt/disks
-                blockCleanerCommand:
-                  - "/scripts/shred.sh"
-                  - "2"
-                volumeMode: Filesystem
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: apps/v1
-          kind: DaemonSet
-          metadata:
-            name: local-volume-provisioner
-            namespace: default
-            labels:
-              app: local-volume-provisioner
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          spec:
-            selector:
-              matchLabels:
-                app: local-volume-provisioner
-            template:
-              metadata:
-                labels:
-                  app: local-volume-provisioner
-              spec:
-                serviceAccountName: local-storage-admin
-                containers:
-                  - image: "quay.io/external_storage/local-volume-provisioner:v2.3.2"
-                    name: provisioner
-                    securityContext:
-                      privileged: true
-                    env:
-                    - name: MY_NODE_NAME
-                      valueFrom:
-                        fieldRef:
-                          fieldPath: spec.nodeName
-                    - name: MY_NAMESPACE
-                      valueFrom:
-                        fieldRef:
-                          fieldPath: metadata.namespace
-                    - name: JOB_CONTAINER_IMAGE
-                      value: "quay.io/external_storage/local-volume-provisioner:v2.3.2"
-                    volumeMounts:
-                      - mountPath: /etc/provisioner/config
-                        name: provisioner-config
-                        readOnly: true
-                      - mountPath: /dev
-                        name: provisioner-dev
-                      - mountPath: /mnt/disks
-                        name: disks
-                        mountPropagation: "HostToContainer"
-                volumes:
-                  - name: provisioner-config
-                    configMap:
-                      name: local-provisioner-config
-                  - name: provisioner-dev
-                    hostPath:
-                      path: /dev
-                  - name: disks
-                    hostPath:
-                      path: /mnt/disks
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: ServiceAccount
-          metadata:
-            name: local-storage-admin
-            namespace: default
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: rbac.authorization.k8s.io/v1
-          kind: ClusterRoleBinding
-          metadata:
-            name: local-storage-provisioner-pv-binding
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          subjects:
-          - kind: ServiceAccount
-            name: local-storage-admin
-            namespace: default
-          roleRef:
-            kind: ClusterRole
-            name: system:persistent-volume-provisioner
-            apiGroup: rbac.authorization.k8s.io
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: rbac.authorization.k8s.io/v1
-          kind: ClusterRole
-          metadata:
-            name: local-storage-provisioner-node-clusterrole
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          rules:
-          - apiGroups: [""]
-            resources: ["nodes"]
-            verbs: ["get"]
-        EOF
-        cat <<EOF | kubectl apply -f -
-          apiVersion: rbac.authorization.k8s.io/v1
-          kind: ClusterRoleBinding
-          metadata:
-            name: local-storage-provisioner-node-binding
-            labels:
-              heritage: "Tiller"
-              release: "release-name"
-              chart: provisioner-2.3.2
-          subjects:
-          - kind: ServiceAccount
-            name: local-storage-admin
-            namespace: default
-          roleRef:
-            kind: ClusterRole
-            name: local-storage-provisioner-node-clusterrole
-            apiGroup: rbac.authorization.k8s.io
-        EOF
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
-
-    - name: Install Cert Manager
-      run: |
-        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
-        # https://github.com/kubernetes-sigs/kustomize/issues/2205
-        ./kustomize build "github.com/platiagro/manifests/cert-manager/cert-manager-crds/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/cert-manager/cert-manager-kube-system-resources/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/cert-manager/cert-manager/base?ref=$BRANCH" | kubectl apply -f -
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
+        docker run \
+          --name minio \
+          -d \
+          -p 9000:9000 \
+          -e MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY} \
+          -e MINIO_SECRET_KEY=${MINIO_SECRET_KEY} \
+          minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
       env:
-        BRANCH: v0.2.0-kubeflow-v1.1-branch
+        MINIO_ACCESS_KEY: minio
+        MINIO_SECRET_KEY: minio123
 
-    - name: Create load balancer
-      id: lb
+    - name: Run Jupyter Notebook
       run: |
-        kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.3/manifests/metallb.yaml
-        KUBEFLOW_MASTER_IP_ADDRESS=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1)
-        echo ::set-output name=KUBEFLOW_MASTER_IP_ADDRESS::${KUBEFLOW_MASTER_IP_ADDRESS}
-        cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            namespace: metallb-system
-            name: config
-          data:
-            config: |
-              address-pools:
-              - name: default
-                protocol: layer2
-                addresses:
-                - ${KUBEFLOW_MASTER_IP_ADDRESS}-${KUBEFLOW_MASTER_IP_ADDRESS}
-        EOF
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
-
-    - name: Install Istio
-      run: |
-        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
-        # https://github.com/kubernetes-sigs/kustomize/issues/2205
-        ./kustomize build "github.com/platiagro/manifests/namespaces/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/istio/istio-crds/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/istio/istio-install/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/istio/istio/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/istio/add-anonymous-user-filter/base?ref=$BRANCH" | kubectl apply -f -
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
-      env:
-        BRANCH: v0.2.0-kubeflow-v1.1-branch
-
-    - name: Install Kubeflow Pipelines
-      run: |
-        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
-        # https://github.com/kubernetes-sigs/kustomize/issues/2205
-        ./kustomize build "github.com/platiagro/manifests/argo/base?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/api-service/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/minio/base?ref=$BRANCH" | kubectl -n kubeflow apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/mysql/base?ref=$BRANCH" | kubectl -n kubeflow apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/persistent-agent/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/pipelines-runner/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/pipelines-ui/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/pipelines-viewer/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/scheduledworkflow/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        ./kustomize build "github.com/platiagro/manifests/pipeline/pipeline-visualization-service/base?ref=$BRANCH" | kubectl -n deployments apply -f -
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
-        kubectl -n deployments patch svc ml-pipeline --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
-        kubectl -n kubeflow patch svc mysql --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 31000, "port": 3306, "protocol": "TCP", "targetPort": 3306 } ] } }'
-        kubectl -n kubeflow patch svc minio-service --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 32000, "port": 9000, "protocol": "TCP", "targetPort": 9000 } ] } }'
-      env:
-        BRANCH: v0.2.0-kubeflow-v1.1-branch
-
-    - name: Install Seldon
-      run: |
-        kubectl apply -k "github.com/platiagro/manifests/cert-manager/cert-manager-crds/base?ref=$BRANCH"
-        kubectl apply -k "github.com/platiagro/manifests/seldon/seldon-core-operator/base?ref=$BRANCH"
-        sleep 10
-        kubectl wait --for=condition=Ready pods --all --timeout=60s
-      env:
-        BRANCH: v0.2.0-kubeflow-v1.1-branch
-
-    - name: Run jupyter image
-      run: |
-        VERSION=$(python -c "import projects; print(projects.__version__)")
-        docker run --name jupyter -d -p 8888:8888 platiagro/platiagro-notebook-image:${VERSION}
+        docker run \
+          --name jupyter \
+          -d \
+          -p 8888:8888 \
+          jupyter/base-notebook
 
     - name: Install dependencies
       run: |
@@ -369,15 +134,14 @@ jobs:
         coverage run --branch --source=projects -m pytest
         coverage xml -i
       env:
-        MINIO_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:32000
+        MINIO_ENDPOINT: localhost:9000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
-        MYSQL_DB_HOST: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:31000
+        MYSQL_DB_HOST: localhost
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://localhost:8888
-        KF_PIPELINES_ENDPOINT: ${{ steps.lb.outputs.KUBEFLOW_MASTER_IP_ADDRESS }}:30000
-        KF_PIPELINES_NAMESPACE: deployments
+        KF_PIPELINES_ENDPOINT: http://localhost:5000
 
     - name: SonarCloud Scan
       if: ${{ always() }}

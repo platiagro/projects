@@ -7,7 +7,7 @@ from projects.controllers.utils import raise_if_project_does_not_exist, \
     raise_if_deployment_does_not_exist
 from projects.models import Deployment
 
-from projects.kfp import KFP_CLIENT
+from projects.kfp import kfp_client
 from projects.kfp import runs as kfp_runs
 from projects.kfp.pipeline import undeploy_pipeline
 from projects.kfp.deployments import get_deployment_runs
@@ -147,11 +147,11 @@ def terminate_run(project_id, deployment_id, run_id):
         "deployments",
         "seldondeployments"
     )
-    deployments_objects = custom_objects['items']
+    deployments_objects = custom_objects["items"]
 
     if deployments_objects:
         for deployment in deployments_objects:
-            if deployment['metadata']['name'] == deployment_id:
+            if deployment["metadata"]["name"] == deployment_id:
                 undeploy_pipeline(deployment)
 
     deployment_run = get_deployment_runs(deployment_id)
@@ -159,7 +159,7 @@ def terminate_run(project_id, deployment_id, run_id):
     if not deployment_run:
         raise NotFound("Deployment run does not exist.")
 
-    KFP_CLIENT.runs.delete_run(deployment_run["runId"])
+    kfp_client().runs.delete_run(deployment_run["runId"])
 
     return {"message": "Deployment deleted."}
 

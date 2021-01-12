@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+import os
 from json import dumps
 from unittest import TestCase
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.kfp import KFP_CLIENT
+from projects.kfp import kfp_client
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from tests.mock.api import start_mock_api
 
 OPERATOR_ID = str(uuid_alpha())
 NAME = "foo"
@@ -44,11 +46,7 @@ class TestExperimentsRuns(TestCase):
     def setUp(self):
         self.maxDiff = None
 
-        MINIO_CLIENT.fput_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"tasks/{TASK_ID}/Experiment.ipynb",
-            file_path="tests/resources/mocked_experiment_task.ipynb",
-        )
+        self.proc = start_mock_api()
 
         with open("tests/resources/mocked_experiment.yaml", "r") as file:
             content = file.read()
@@ -58,8 +56,8 @@ class TestExperimentsRuns(TestCase):
             file.write(content)
 
         # Run a default pipeline for tests
-        kfp_experiment = KFP_CLIENT.create_experiment(name=EXPERIMENT_ID)
-        a = KFP_CLIENT.run_pipeline(
+        kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
+        kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=EXPERIMENT_ID,
             pipeline_package_path="tests/resources/mocked.yaml",
@@ -99,6 +97,7 @@ class TestExperimentsRuns(TestCase):
         conn.close()
 
     def tearDown(self):
+        self.proc.terminate()
         conn = engine.connect()
 
         text = f"DELETE FROM operators WHERE experiment_id in" \

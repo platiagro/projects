@@ -7,8 +7,8 @@ from kfp import compiler, dsl
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
-from projects.kfp import CPU_LIMIT, CPU_REQUEST, KFP_CLIENT, \
-    KF_PIPELINES_NAMESPACE, MEMORY_LIMIT, MEMORY_REQUEST
+from projects.kfp import CPU_LIMIT, CPU_REQUEST, KF_PIPELINES_NAMESPACE, \
+    MEMORY_LIMIT, MEMORY_REQUEST, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
 
@@ -29,8 +29,7 @@ def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, 
     @dsl.pipeline(name=name)
     def pipeline_func():
         # Creates a volume to share data among container_ops
-        volume_op_tmp_data = create_volume_op(name="tmp-data",
-                                              experiment_id=experiment_id)
+        volume_op_tmp_data = create_volume_op(name=f"tmp-data-{experiment_id}")
 
         # Gets dataset from any operator that has a dataset
         dataset = get_dataset(operators)
@@ -50,10 +49,6 @@ def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, 
             containers[operator.uuid] = (operator, container_op)
 
         if deployment_id is not None:
-            # Creates a volume to share Model.py with seldon deployment
-            volume_op_home_jovyan = create_volume_op(name="home-jovyan",
-                                                     experiment_id=experiment_id)
-
             # Creates resource_op that creates a seldondeployment
             resource_op = create_resource_op(operators=operators,
                                              project_id=project_id,
@@ -65,25 +60,28 @@ def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, 
         for operator, container_op in containers.values():
             dependencies = [containers[dependency_id][1] for dependency_id in operator.dependencies]
             container_op.after(*dependencies)
+
+            # data volume
             container_op.add_pvolumes({"/tmp/data": volume_op_tmp_data.volume})
 
-            if deployment_id is not None:
-                container_op.add_pvolumes({"/home/jovyan": volume_op_home_jovyan.volume})
+            # task volume
+            volume_op_home_jovyan = create_volume_op(name=f"task-{operator.task_id}")
+            container_op.add_pvolumes({"/home/jovyan": volume_op_home_jovyan.volume})
 
+            if deployment_id is not None:
                 resource_op.after(container_op)
 
     compiler.Compiler() \
         .compile(pipeline_func, f"{name}.yaml")
 
 
-def create_volume_op(name, experiment_id):
+def create_volume_op(name):
     """
     Creates a kfp.dsl.VolumeOp container.
 
     Parameters
     ----------
     name : str
-    experiment_id : str
 
     Returns
     -------
@@ -93,14 +91,14 @@ def create_volume_op(name, experiment_id):
         api_version="v1",
         kind="PersistentVolumeClaim",
         metadata={
-            "name": f"vol-{name}-{experiment_id}",
+            "name": f"vol-{name}",
             "namespace": KF_PIPELINES_NAMESPACE,
         },
         spec={
             "accessModes": ["ReadWriteOnce"],
             "resources": {
                 "requests": {
-                    "storage": "1Gi",
+                    "storage": "10Gi",
                 },
             },
         },
@@ -224,6 +222,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "operatorId": operator.uuid,
                 "experimentId": experiment_id,
                 "deploymentId": deployment_id,
+                "taskId": operator.task.uuid,
             })
         )
 
@@ -287,18 +286,18 @@ def undeploy_pipeline(resource):
     resource : dict
         A k8s resource which will be submitted to the cluster.
     """
-    @dsl.pipeline(name='Undeploy')
+    @dsl.pipeline(name="Undeploy")
     def undeploy():
         dsl.ResourceOp(
-            name='undeploy',
+            name="undeploy",
             k8s_resource=resource,
-            action='delete'
+            action="delete"
         )
 
-    KFP_CLIENT.create_run_from_pipeline_func(
+    kfp_client().create_run_from_pipeline_func(
         undeploy,
         {},
-        run_name='undeploy',
+        run_name="undeploy",
         namespace=KF_PIPELINES_NAMESPACE
     )
 

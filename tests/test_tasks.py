@@ -9,7 +9,7 @@ from minio.error import BucketAlreadyOwnedByYou
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.jupyter import JUPYTER_ENDPOINT, COOKIES, HEADERS
+from projects.jupyter import COOKIES, HEADERS, JUPYTER_ENDPOINT
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 TASK_ID = str(uuid_alpha())
@@ -142,51 +142,51 @@ class TestTasks(TestCase):
         with app.test_client() as c:
             rv = c.get("/tasks")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             self.assertIsInstance(result["tasks"], list)
             self.assertIsInstance(result["total"], int)
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.get("/tasks?order=uuid asc")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             self.assertIsInstance(result["tasks"], list)
             self.assertIsInstance(result["total"], int)
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.get("/tasks?order=uuid desc")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             self.assertIsInstance(result["tasks"], list)
             self.assertIsInstance(result["total"], int)
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.get("/tasks?page=1&order=uuid asc")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             self.assertIsInstance(result["tasks"], list)
             self.assertIsInstance(result["total"], int)
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.get(f"/tasks?name={NAME}&page=1&order=uuid asc")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             self.assertIsInstance(result["tasks"], list)
             self.assertIsInstance(result["total"], int)
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.get(f"/tasks?name={NAME}&page=1&page_size=10&order=name desc")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             self.assertIsInstance(result["tasks"], list)
             self.assertIsInstance(result["total"], int)
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.get(f"/tasks?order=foo")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 400)
             expected = {"message": "Invalid order argument"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             rv = c.get(f"/tasks?order=foo bar")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 400)
             expected = {"message": "Invalid order argument"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
     def test_create_task(self):
         with app.test_client() as c:
@@ -214,9 +214,9 @@ class TestTasks(TestCase):
                 "name": "name foo",
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 400)
             expected = {"message": "a task with that name already exists"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             # when copyFrom and experimentNotebook/deploymentNotebook are sent
             # should raise bad request
@@ -229,9 +229,9 @@ class TestTasks(TestCase):
                 "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 400)
             expected = {"message": "Either provide notebooks or a task to copy from"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             # when copyFrom uuid does not exist
             # should raise bad request
@@ -242,9 +242,9 @@ class TestTasks(TestCase):
                 "copyFrom": "unk",
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 400)
             expected = {"message": "Source task does not exist"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             # when neither copyFrom nor experimentNotebook/deploymentNotebook are sent
             # should create a task using an empty template notebook
@@ -253,7 +253,6 @@ class TestTasks(TestCase):
                 "description": "long test",
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {
                 "name": "test create a task using an empty template notebook",
                 "description": "long test",
@@ -279,6 +278,7 @@ class TestTasks(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             # when copyFrom is sent
             # should create a task copying notebooks from copyFrom
@@ -289,7 +289,6 @@ class TestTasks(TestCase):
                 "copyFrom": TASK_ID,
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {
                 "name": "test copy",
                 "description": "long test",
@@ -311,6 +310,7 @@ class TestTasks(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             # when experimentNotebook and deploymentNotebook are sent
             # should create a task using their values as source
@@ -322,7 +322,6 @@ class TestTasks(TestCase):
                 "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {
                 "name": "test",
                 "description": "long test",
@@ -344,6 +343,7 @@ class TestTasks(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             # when image and commands are sent
             # should create a task using their values as source
@@ -356,7 +356,6 @@ class TestTasks(TestCase):
                 "tags": TAGS
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {
                 "name": "test tasks with image and command",
                 "description": "long test",
@@ -380,6 +379,7 @@ class TestTasks(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             # when image is invalid should receive bad request
             rv = c.post("/tasks", json={
@@ -387,9 +387,9 @@ class TestTasks(TestCase):
                 "image": "invalid name",
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 400)
             expected = {"message": "invalid docker image name"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             # dataset task that has null notebooks
             rv = c.post("/tasks", json={
@@ -398,7 +398,6 @@ class TestTasks(TestCase):
                 "image": IMAGE,
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {
                 "name": "test fake dataset task",
                 "description": None,
@@ -420,14 +419,15 @@ class TestTasks(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
     def test_get_task(self):
         with app.test_client() as c:
             rv = c.get("/tasks/foo")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 404)
             expected = {"message": "The specified task does not exist"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
             rv = c.get(f"/tasks/{TASK_ID}")
             result = rv.get_json()
@@ -447,24 +447,25 @@ class TestTasks(TestCase):
                 "updatedAt": UPDATED_AT_ISO,
             }
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
     def test_update_task(self):
         with app.test_client() as c:
             # task none
             rv = c.patch("/tasks/foo", json={})
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 404)
             expected = {"message": "The specified task does not exist"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
             # task name already exists
             rv = c.patch(f"/tasks/{TASK_ID}", json={
                 "name": "foo 2",
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 400)
             expected = {"message": "a task with that name already exists"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             # invalid tags
             rv = c.patch(f"/tasks/{TASK_ID}", json={
@@ -492,7 +493,6 @@ class TestTasks(TestCase):
                 "name": "new name foo",
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {
                 "uuid": TASK_ID,
                 "name": "new name foo",
@@ -512,13 +512,13 @@ class TestTasks(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             # update task tags
             rv = c.patch(f"/tasks/{TASK_ID}", json={
                 "tags": ["FEATURE_ENGINEERING"],
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {
                 "uuid": TASK_ID,
                 "name": "new name foo",
@@ -538,13 +538,13 @@ class TestTasks(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             # update task experiment notebook
             rv = c.patch(f"/tasks/{TASK_ID}", json={
                 "experimentNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {
                 "uuid": TASK_ID,
                 "name": "new name foo",
@@ -564,13 +564,13 @@ class TestTasks(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             # update task deployment notebook
             rv = c.patch(f"/tasks/{TASK_ID}", json={
                 "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
             })
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {
                 "uuid": TASK_ID,
                 "name": "new name foo",
@@ -590,26 +590,27 @@ class TestTasks(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
     def test_delete_task(self):
         with app.test_client() as c:
             # task is none
             rv = c.delete("/tasks/unk")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 404)
             expected = {"message": "The specified task does not exist"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
             # jupyter file is not none
             rv = c.delete(f"/tasks/{TASK_ID}")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {"message": "Task deleted"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             # jupyter file is none
             rv = c.delete(f"/tasks/{TASK_ID_2}")
             result = rv.get_json()
-            self.assertEqual(rv.status_code, 200)
             expected = {"message": "Task deleted"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
