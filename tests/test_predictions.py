@@ -19,6 +19,8 @@ POSITION = 0
 
 MOCKED_DATASET_PATH = "tests/resources/mocked_dataset.csv"
 MOCKED_DATASET_NO_HEADER_PATH = "tests/resources/mocked_dataset_no_header.csv"
+MOCKED_DATASET_BASE64_PATH = "tests/resources/mocked_dataset_base64.jpeg"
+MOCKED_DATASET_STRDATA_PATH = "tests/resources/mocked_dataset_strdata.txt"
 
 class TestPredictions(TestCase):
 
@@ -81,7 +83,7 @@ class TestPredictions(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions", content_type='multipart/form-data')
             result = rv.get_json()
-            expected = {"message": "`file` is required."}
+            expected = {"message": "file is required."}
             self.assertIsInstance(result, dict)
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
@@ -97,7 +99,7 @@ class TestPredictions(TestCase):
                 data=data
             )
             result = rv.get_json()
-            expected = {"message": "`file` needs a header."}
+            expected = {"message": "file needs a header."}
             self.assertIsInstance(result, dict)
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
@@ -122,4 +124,35 @@ class TestPredictions(TestCase):
             result = rv.get_json()
             self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 200)
+
+            # base64 request
+            # reading file for request
+            mocked_dataset = open(MOCKED_DATASET_BASE64_PATH, "rb")
+            data = dict(miles="1",
+                file=mocked_dataset,
+            )
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions", 
+                content_type='multipart/form-data',
+                data=data
+            )
+            result = rv.get_json()
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)
+
+            # strData request
+            # reading file for request
+            mocked_dataset = open(MOCKED_DATASET_STRDATA_PATH, "r")
+            data = dict(miles="1",
+                file=mocked_dataset,
+            )
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions", 
+                content_type='multipart/form-data',
+                data=data
+            )
+            result = rv.get_json()
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)
+            
 

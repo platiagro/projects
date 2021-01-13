@@ -6,7 +6,7 @@ import requests
 from werkzeug.datastructures import FileStorage
 from werkzeug.exceptions import BadRequest
 
-from projects.controllers.utils import parse_csv_buffer_to_seldon_request, \
+from projects.controllers.utils import parse_file_buffer_to_seldon_request, \
     raise_if_deployment_does_not_exist, raise_if_project_does_not_exist
 from projects.kubernetes.seldon import get_seldon_deployment_url
 
@@ -33,14 +33,13 @@ def create_prediction(project_id=None, deployment_id=None, file=None):
 
     """
     raise_if_project_does_not_exist(project_id)
-
     raise_if_deployment_does_not_exist(deployment_id)
 
     if not isinstance(file, FileStorage):
-        raise BadRequest("`file` is required.")
+        raise BadRequest("file is required.")
 
     url = get_seldon_deployment_url(deployment_id)
-    request = parse_csv_buffer_to_seldon_request(file)
+    request = parse_file_buffer_to_seldon_request(file)
     response = requests.post(url, json=request)
 
     return loads(response._content)
