@@ -176,6 +176,18 @@ def create_task(**kwargs):
     copy_file_to_pod(filepath, destination_path)
     os.remove(filepath)
 
+    # The new task must have its own task_id, experiment_id and operator_id.
+    # Notice these values are ignored when a notebook is run in a pipeline.
+    # They are only used by JupyterLab interface.
+    experiment_id = uuid_alpha()
+    operator_id = uuid_alpha()
+    set_notebook_metadata(
+        notebook_path=destination_path,
+        task_id=task_id,
+        experiment_id=experiment_id,
+        operator_id=operator_id,
+    )
+
     # copies deployment notebook file to pod
     with tempfile.NamedTemporaryFile("w", delete=False) as f:
         json.dump(deployment_notebook, f)
@@ -184,11 +196,12 @@ def create_task(**kwargs):
     destination_path = f"{name}/{deployment_notebook_path}"
     copy_file_to_pod(filepath, destination_path)
     os.remove(filepath)
-
-    # The new task must have its own task_id, experiment_id and operator_id.
-    # Notice these values are ignored when a notebook is run in a pipeline.
-    # They are only used by JupyterLab interface.
-    set_notebook_metadata(notebook_path=destination_path, task_id=task_id)
+    set_notebook_metadata(
+        notebook_path=destination_path,
+        task_id=task_id,
+        experiment_id=experiment_id,
+        operator_id=operator_id,
+    )
 
     # saves task info to the database
     task = Task(
@@ -404,6 +417,9 @@ def copy_task(name, description, tags, copy_from):
     destination_path = f"/home/jovyan/tasks/{name}/"
     copy_files_in_pod(source_path, destination_path)
 
+    experiment_id = uuid_alpha()
+    operator_id = uuid_alpha()
+
     if experiment_notebook_path:
         # Even though we are creating copies, the new task must have
         # its own task_id, experiment_id and operator_id.
@@ -411,11 +427,21 @@ def copy_task(name, description, tags, copy_from):
         # Notice these values are ignored when a notebook is run in a pipeline.
         # They are only used by JupyterLab interface.
         notebook_path = f"{destination_path}/{experiment_notebook_path}"
-        set_notebook_metadata(notebook_path=notebook_path, task_id=task_id)
+        set_notebook_metadata(
+            notebook_path=notebook_path,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            operator_id=operator_id,
+        )
 
     if deployment_notebook_path:
         notebook_path = f"{destination_path}/{deployment_notebook_path}"
-        set_notebook_metadata(notebook_path=notebook_path, task_id=task_id)
+        set_notebook_metadata(
+            notebook_path=notebook_path,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            operator_id=operator_id,
+        )
 
     # saves task info to the database
     task = Task(

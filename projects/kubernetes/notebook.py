@@ -222,7 +222,7 @@ def copy_files_in_pod(source_path, destination_path):
     print(f"Copied {source_path} to {destination_path}!", flush=True)
 
 
-def set_notebook_metadata(notebook_path, task_id):
+def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_id):
     """
     Sets metadata values in notebook file.
 
@@ -230,6 +230,8 @@ def set_notebook_metadata(notebook_path, task_id):
     ----------
     notebook_path : str
     task_id : str
+    experiment_id : str
+    operator_id : str
     """
     print(f"Setting metadata in {notebook_path}...", flush=True)
     load_kube_config()
@@ -238,11 +240,13 @@ def set_notebook_metadata(notebook_path, task_id):
     # The following command sets task_id in the metadata of a notebook
     python_script = (
         f"import json; "
-        f"f = open('{notebook_path}'); "
+        f"f = open('/home/jovyan/tasks/{notebook_path}'); "
         f"n = json.load(f); "
         f"n['metadata']['task_id'] = '{task_id}'; "
+        f"n['metadata']['experiment_id'] = '{experiment_id}'; "
+        f"n['metadata']['operator_id'] = '{operator_id}'; "
         f"f.close(); "
-        f"f = open('{notebook_path}', 'w') ;"
+        f"f = open('/home/jovyan/tasks/{notebook_path}', 'w'); "
         f"json.dump(n, f); "
         f"f.close()"
     )
