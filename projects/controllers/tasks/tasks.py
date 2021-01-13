@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tasks controller."""
 import json
+import os
 import pkgutil
 import re
 import tempfile
@@ -160,27 +161,29 @@ def create_task(**kwargs):
 
     # mounts a volume for the task in the notebook server
     create_persistent_volume_claim(name=f"task-{task_id}",
-                                   mount_path=f"/home/jovyan/{name}")
+                                   mount_path=f"/home/jovyan/tasks/{name}")
 
     # relative path to the mount_path
     experiment_notebook_path = "Experiment.ipynb"
     deployment_notebook_path = "Deployment.ipynb"
 
     # copies experiment notebook file to pod
-    with tempfile.NamedTemporaryFile() as f:
-        f.write(experiment_notebook)
+    with tempfile.NamedTemporaryFile("w", delete=False) as f:
+        json.dump(experiment_notebook, f)
 
     filepath = f.name
     destination_path = f"{name}/{experiment_notebook_path}"
     copy_file_to_pod(filepath, destination_path)
+    os.remove(filepath)
 
     # copies deployment notebook file to pod
-    with tempfile.NamedTemporaryFile() as f:
-        f.write(deployment_notebook)
+    with tempfile.NamedTemporaryFile("w", delete=False) as f:
+        json.dump(deployment_notebook, f)
 
     filepath = f.name
     destination_path = f"{name}/{deployment_notebook_path}"
     copy_file_to_pod(filepath, destination_path)
+    os.remove(filepath)
 
     # The new task must have its own task_id, experiment_id and operator_id.
     # Notice these values are ignored when a notebook is run in a pipeline.
@@ -274,22 +277,24 @@ def update_task(task_id, **kwargs):
             raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
     if "experiment_notebook" in kwargs:
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(kwargs["experiment_notebook"])
+        with tempfile.NamedTemporaryFile("w", delete=False) as f:
+            json.dump(kwargs["experiment_notebook"], f)
 
         filepath = f.name
         destination_path = f"{name}/{task.experiment_notebook_path}"
         copy_file_to_pod(filepath, destination_path)
         del kwargs["experiment_notebook"]
+        os.remove(filepath)
 
     if "deployment_notebook" in kwargs:
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(kwargs["deployment_notebook"])
+        with tempfile.NamedTemporaryFile("w", delete=False) as f:
+            json.dump(kwargs["deployment_notebook"], f)
 
         filepath = f.name
         destination_path = f"{name}/{task.deployment_notebook_path}"
         copy_file_to_pod(filepath, destination_path)
         del kwargs["deployment_notebook"]
+        os.remove(filepath)
 
     # store the name to use it after update
     old_name = task.name
@@ -392,11 +397,11 @@ def copy_task(name, description, tags, copy_from):
 
     # mounts a volume for the task in the notebook server
     create_persistent_volume_claim(name=f"task-{task_id}",
-                                   mount_path=f"/home/jovyan/{name}")
+                                   mount_path=f"/home/jovyan/tasks/{name}")
 
     # Copies files in the notebook server
-    source_path = f"/home/jovyan/{task.name}/*"
-    destination_path = f"/home/jovyan/{name}/"
+    source_path = f"/home/jovyan/tasks/{task.name}/*"
+    destination_path = f"/home/jovyan/tasks/{name}/"
     copy_files_in_pod(source_path, destination_path)
 
     if experiment_notebook_path:

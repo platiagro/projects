@@ -19,6 +19,19 @@ NOTEBOOK_POD_NAME = "server-0"
 NOTEBOOK_CONAINER_NAME = "server"
 
 
+class ApiClientForJsonPatch(client.ApiClient):
+    def call_api(self, resource_path, method,
+                 path_params=None, query_params=None, header_params=None,
+                 body=None, post_params=None, files=None,
+                 response_type=None, auth_settings=None, async_req=None,
+                 _return_http_data_only=None, collection_formats=None,
+                 _preload_content=True, _request_timeout=None):
+        header_params["Content-Type"] = self.select_header_content_type(["application/json-patch+json"])
+        return super().call_api(resource_path, method, path_params, query_params, header_params, body,
+                                post_params, files, response_type, auth_settings, async_req, _return_http_data_only,
+                                collection_formats, _preload_content, _request_timeout)
+
+
 def create_persistent_volume_claim(name, mount_path):
     """
     Creates a persistent volume claim and mounts it in the default notebook server.
@@ -30,7 +43,7 @@ def create_persistent_volume_claim(name, mount_path):
     load_kube_config()
 
     v1 = client.CoreV1Api()
-    custom_api = client.CustomObjectsApi()
+    custom_api = client.CustomObjectsApi(api_client=ApiClientForJsonPatch())
 
     try:
         body = {
@@ -125,8 +138,8 @@ def copy_file_to_pod(filepath, destination_path):
     load_kube_config()
     api_instance = client.CoreV1Api()
 
-    # The following command extracts the contents of STDIN to /home/jovyan/
-    exec_command = ["tar", "xvf", "-", "-C", f"/home/jovyan"]
+    # The following command extracts the contents of STDIN to /home/jovyan/tasks
+    exec_command = ["tar", "xvf", "-", "-C", f"/home/jovyan/tasks"]
 
     container_stream = stream(
         api_instance.connect_get_namespaced_pod_exec,
