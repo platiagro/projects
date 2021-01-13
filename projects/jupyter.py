@@ -125,18 +125,13 @@ def get_notebook_logs(experiment_id, operator_id):
 
     Returns
     -------
-    dict
-        Operator's notebook logs.
-
-    Raises
-    ------
-    InternalServerError
-        When an error is encountered when trying to recover from the contents of a notebook.
+    dict or None
+        Operator's notebook logs. Or None when the notebook file is not found.
     """
     notebook = get_jupyter_notebook(experiment_id, operator_id)
 
     if not notebook:
-        raise InternalServerError("An error occured while trying to recover Notebook content.")
+        return None
 
     notebook = notebook["content"]
     logs = {}
