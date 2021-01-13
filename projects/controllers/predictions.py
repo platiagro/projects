@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Predictions controller."""
-from json import loads
+import json
 
 import requests
 from werkzeug.datastructures import FileStorage
@@ -42,4 +42,7 @@ def create_prediction(project_id=None, deployment_id=None, file=None):
     request = parse_file_buffer_to_seldon_request(file)
     response = requests.post(url, json=request)
 
-    return loads(response._content)
+    try:
+        return json.loads(response._content)
+    except json.decoder.JSONDecodeError:
+        raise BadRequest("Invalid file.")
