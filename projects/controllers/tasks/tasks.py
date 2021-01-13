@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Tasks controller."""
+import json
+import os
+import pkgutil
 import re
+import tempfile
 from datetime import datetime
-from json import dumps, loads
-from os.path import join
-from pkgutil import get_data
 
 from minio.error import ResponseError
 from sqlalchemy import func
@@ -14,17 +15,16 @@ from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
 from projects.controllers.utils import uuid_alpha
 from projects.database import db_session
-from projects.jupyter import create_new_file, list_files, delete_file, update_folder_name
-from projects.kubernetes.notebook import create_persistent_volume_claim
+from projects.jupyter import list_files, delete_file, update_folder_name
+from projects.kubernetes.notebook import copy_file_to_pod, copy_files_in_pod, \
+    create_persistent_volume_claim, set_notebook_metadata
 from projects.models import Task
-from projects.object_storage import BUCKET_NAME, get_object, put_object, \
-    list_objects, remove_object
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
               "PREDICTOR", "COMPUTER_VISION", "NLP"]
-DEPLOYMENT_NOTEBOOK = loads(get_data("projects", "config/Deployment.ipynb"))
-EXPERIMENT_NOTEBOOK = loads(get_data("projects", "config/Experiment.ipynb"))
+DEPLOYMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Deployment.ipynb"))
+EXPERIMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Experiment.ipynb"))
 
 NOT_FOUND = NotFound("The specified task does not exist")
 
@@ -117,6 +117,7 @@ def create_task(**kwargs):
     image = kwargs.get("image", None)
     commands = kwargs.get("commands", None)
     arguments = kwargs.get("arguments", None)
+    parameters = kwargs.get("parameters", [])
     experiment_notebook = kwargs.get("experiment_notebook", None)
     deployment_notebook = kwargs.get("deployment_notebook", None)
     is_default = kwargs.get("is_default", None)
@@ -152,50 +153,70 @@ def create_task(**kwargs):
     task_id = str(uuid_alpha())
 
     # loads a sample notebook if none was sent
-    if experiment_notebook is None and "DATASETS" not in tags:
+    if experiment_notebook is None:
         experiment_notebook = EXPERIMENT_NOTEBOOK
 
-    if deployment_notebook is None and "DATASETS" not in tags:
+    if deployment_notebook is None:
         deployment_notebook = DEPLOYMENT_NOTEBOOK
+
+    # mounts a volume for the task in the notebook server
+    create_persistent_volume_claim(name=f"task-{task_id}",
+                                   mount_path=f"/home/jovyan/tasks/{name}")
+
+    # relative path to the mount_path
+    experiment_notebook_path = "Experiment.ipynb"
+    deployment_notebook_path = "Deployment.ipynb"
+
+    # copies experiment notebook file to pod
+    with tempfile.NamedTemporaryFile("w", delete=False) as f:
+        json.dump(experiment_notebook, f)
+
+    filepath = f.name
+    destination_path = f"{name}/{experiment_notebook_path}"
+    copy_file_to_pod(filepath, destination_path)
+    os.remove(filepath)
 
     # The new task must have its own task_id, experiment_id and operator_id.
     # Notice these values are ignored when a notebook is run in a pipeline.
     # They are only used by JupyterLab interface.
-    init_notebook_metadata(task_id, deployment_notebook, experiment_notebook)
+    experiment_id = uuid_alpha()
+    operator_id = uuid_alpha()
+    set_notebook_metadata(
+        notebook_path=destination_path,
+        task_id=task_id,
+        experiment_id=experiment_id,
+        operator_id=operator_id,
+    )
 
-    # saves new notebooks to object storage
-    if "DATASETS" not in tags:
-        obj_name = f"{PREFIX}/{task_id}/Experiment.ipynb"
-        experiment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
-        put_object(obj_name, dumps(experiment_notebook).encode())
+    # copies deployment notebook file to pod
+    with tempfile.NamedTemporaryFile("w", delete=False) as f:
+        json.dump(deployment_notebook, f)
 
-        obj_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
-        deployment_notebook_path = f"minio://{BUCKET_NAME}/{obj_name}"
-        put_object(obj_name, dumps(deployment_notebook).encode())
-
-        # create deployment notebook and experiment_notebook on jupyter
-        create_jupyter_files(task_name=name,
-                             deployment_notebook=dumps(deployment_notebook).encode(),
-                             experiment_notebook=dumps(experiment_notebook).encode())
-    else:
-        experiment_notebook_path = None
-        deployment_notebook_path = None
-
-    # mounts a volume for the task in the notebook server
-    create_persistent_volume_claim(name=f"task-{task_id}",
-                                   mount_path=f"/home/jovyan/{name}")
+    filepath = f.name
+    destination_path = f"{name}/{deployment_notebook_path}"
+    copy_file_to_pod(filepath, destination_path)
+    os.remove(filepath)
+    set_notebook_metadata(
+        notebook_path=destination_path,
+        task_id=task_id,
+        experiment_id=experiment_id,
+        operator_id=operator_id,
+    )
 
     # saves task info to the database
-    task = Task(uuid=task_id,
-                name=name,
-                description=description,
-                tags=tags,
-                image=image,
-                commands=commands,
-                arguments=arguments,
-                experiment_notebook_path=experiment_notebook_path,
-                deployment_notebook_path=deployment_notebook_path,
-                is_default=is_default)
+    task = Task(
+        uuid=task_id,
+        name=name,
+        description=description,
+        tags=tags,
+        image=image,
+        commands=commands,
+        arguments=arguments,
+        parameters=parameters,
+        experiment_notebook_path=experiment_notebook_path,
+        deployment_notebook_path=deployment_notebook_path,
+        is_default=is_default,
+    )
     db_session.add(task)
     db_session.commit()
 
@@ -269,14 +290,24 @@ def update_task(task_id, **kwargs):
             raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
     if "experiment_notebook" in kwargs:
-        obj_name = f"{PREFIX}/{task_id}/Experiment.ipynb"
-        put_object(obj_name, dumps(kwargs["experiment_notebook"]).encode())
+        with tempfile.NamedTemporaryFile("w", delete=False) as f:
+            json.dump(kwargs["experiment_notebook"], f)
+
+        filepath = f.name
+        destination_path = f"{name}/{task.experiment_notebook_path}"
+        copy_file_to_pod(filepath, destination_path)
         del kwargs["experiment_notebook"]
+        os.remove(filepath)
 
     if "deployment_notebook" in kwargs:
-        obj_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
-        put_object(obj_name, dumps(kwargs["deployment_notebook"]).encode())
+        with tempfile.NamedTemporaryFile("w", delete=False) as f:
+            json.dump(kwargs["deployment_notebook"], f)
+
+        filepath = f.name
+        destination_path = f"{name}/{task.deployment_notebook_path}"
+        copy_file_to_pod(filepath, destination_path)
         del kwargs["deployment_notebook"]
+        os.remove(filepath)
 
     # store the name to use it after update
     old_name = task.name
@@ -290,7 +321,9 @@ def update_task(task_id, **kwargs):
         raise BadRequest(str(e))
 
     # update jupyter folder name if name changed
+    # FIXME mudar o mount path
     if old_name != task.name:
+        raise BadRequest("Currently unavailable")
         update_folder_name(f"{PREFIX}/{old_name}", f"{PREFIX}/{task.name}")
 
     return task.as_dict()
@@ -329,13 +362,6 @@ def delete_task(task_id):
             for jupyter_file in jupyter_files["content"]:
                 delete_file(jupyter_file["path"])
             delete_file(source_name)
-
-        # remove MinIO files and directory
-        source_name = f"{PREFIX}/{task_id}"
-        minio_files = list_objects(source_name)
-        for minio_file in minio_files:
-            remove_object(minio_file.object_name)
-        remove_object(source_name)
 
         db_session.commit()
     except IntegrityError as e:
@@ -378,106 +404,63 @@ def copy_task(name, description, tags, copy_from):
     image = task.image
     commands = task.commands
     arguments = task.arguments
+    parameters = task.parameters
+    experiment_notebook_path = task.experiment_notebook_path
+    deployment_notebook_path = task.deployment_notebook_path
 
-    # reads source notebooks from object storage
-    source_name = f"{PREFIX}/{copy_from}/Deployment.ipynb"
-    deployment_notebook = loads(get_object(source_name))
+    # mounts a volume for the task in the notebook server
+    create_persistent_volume_claim(name=f"task-{task_id}",
+                                   mount_path=f"/home/jovyan/tasks/{name}")
 
-    source_name = f"{PREFIX}/{copy_from}/Experiment.ipynb"
-    experiment_notebook = loads(get_object(source_name))
+    # Copies files in the notebook server
+    source_path = f"/home/jovyan/tasks/{task.name}/*"
+    destination_path = f"/home/jovyan/tasks/{name}/"
+    copy_files_in_pod(source_path, destination_path)
 
-    # Even though we are creating copies, the new task must have
-    # its own task_id, experiment_id and operator_id.
-    # We don't want to mix models and metrics of different tasks.
-    # Notice these values are ignored when a notebook is run in a pipeline.
-    # They are only used by JupyterLab interface.
-    init_notebook_metadata(task_id, deployment_notebook, experiment_notebook)
+    experiment_id = uuid_alpha()
+    operator_id = uuid_alpha()
 
-    # saves new notebooks to object storage
-    destination_name = f"{PREFIX}/{task_id}/Deployment.ipynb"
-    deployment_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
-    put_object(destination_name, dumps(deployment_notebook).encode())
+    if experiment_notebook_path:
+        # Even though we are creating copies, the new task must have
+        # its own task_id, experiment_id and operator_id.
+        # We don't want to mix models and metrics of different tasks.
+        # Notice these values are ignored when a notebook is run in a pipeline.
+        # They are only used by JupyterLab interface.
+        notebook_path = f"{destination_path}/{experiment_notebook_path}"
+        set_notebook_metadata(
+            notebook_path=notebook_path,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            operator_id=operator_id,
+        )
 
-    destination_name = f"{PREFIX}/{task_id}/Experiment.ipynb"
-    experiment_notebook_path = f"minio://{BUCKET_NAME}/{destination_name}"
-    put_object(destination_name, dumps(experiment_notebook).encode())
-
-    # create deployment notebook and eperiment notebook on jupyter
-    create_jupyter_files(task_name=name,
-                         deployment_notebook=dumps(deployment_notebook).encode(),
-                         experiment_notebook=dumps(experiment_notebook).encode())
+    if deployment_notebook_path:
+        notebook_path = f"{destination_path}/{deployment_notebook_path}"
+        set_notebook_metadata(
+            notebook_path=notebook_path,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            operator_id=operator_id,
+        )
 
     # saves task info to the database
-    task = Task(uuid=task_id,
-                name=name,
-                description=description,
-                tags=tags,
-                image=image,
-                commands=commands,
-                arguments=arguments,
-                deployment_notebook_path=deployment_notebook_path,
-                experiment_notebook_path=experiment_notebook_path,
-                is_default=False)
+    task = Task(
+        uuid=task_id,
+        name=name,
+        description=description,
+        tags=tags,
+        image=image,
+        commands=commands,
+        arguments=arguments,
+        parameters=parameters,
+        deployment_notebook_path=deployment_notebook_path,
+        experiment_notebook_path=experiment_notebook_path,
+        is_default=False,
+    )
     db_session.add(task)
     db_session.commit()
 
     return task.as_dict()
-
-
-def create_jupyter_files(task_name, deployment_notebook, experiment_notebook):
-    """
-    Creates jupyter notebook files on jupyter server.
-
-    Parameters
-    ----------
-    task_name : str
-    deployment_notebook : bytes
-        The notebook content.
-    experiment_notebook : bytes
-        The notebook content.
-    """
-    # always try to create tasks folder to guarantee its existence
-    create_new_file(PREFIX, is_folder=True)
-
-    path = f"{PREFIX}/{task_name}"
-    create_new_file(path=path, is_folder=True)
-
-    if deployment_notebook is not None:
-        deployment_notebook_path = join(path, "Deployment.ipynb")
-        create_new_file(path=deployment_notebook_path,
-                        is_folder=False,
-                        content=deployment_notebook)
-
-    if experiment_notebook is not None:
-        experiment_notebook_path = join(path, "Experiment.ipynb")
-        create_new_file(path=experiment_notebook_path,
-                        is_folder=False,
-                        content=experiment_notebook)
-
-
-def init_notebook_metadata(task_id, deployment_notebook, experiment_notebook):
-    """
-    Sets random experiment_id and operator_id to notebooks metadata.
-    Dicts are passed by reference, so no need to return.
-
-    Parameters
-    ----------
-    task_id : str
-    deployment_notebook : dict
-    experiment_notebook : dict
-    """
-    experiment_id = uuid_alpha()
-    operator_id = uuid_alpha()
-
-    # sets these values to notebooks
-    if deployment_notebook is not None:
-        deployment_notebook["metadata"]["experiment_id"] = experiment_id
-        deployment_notebook["metadata"]["operator_id"] = operator_id
-        deployment_notebook["metadata"]["task_id"] = task_id
-    if experiment_notebook is not None:
-        experiment_notebook["metadata"]["experiment_id"] = experiment_id
-        experiment_notebook["metadata"]["operator_id"] = operator_id
-        experiment_notebook["metadata"]["task_id"] = task_id
 
 
 def raise_if_invalid_docker_image(image):

@@ -83,13 +83,11 @@ def get_deployment_details(runs):
                 created_at = deployment_details["createdAt"]
                 deployment_details["createdAt"] = str(created_at.isoformat(
                     timespec="milliseconds")).replace("+00:00", "Z")
-
+                
                 deployment_details["url"] = get_seldon_deployment_url(deploymentId)
 
                 deployment_runs.append(deployment_details)
 
-    print("get_deployment_details")
-    print(deployment_runs)
     return deployment_runs
 
 
