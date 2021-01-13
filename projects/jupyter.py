@@ -7,7 +7,6 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
-from werkzeug.exceptions import InternalServerError
 
 from projects.utils import remove_ansi_escapes
 
