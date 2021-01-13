@@ -257,7 +257,7 @@ def parse_file_buffer_to_seldon_request(file):
         }
     except UnicodeDecodeError:
         file.seek(0)
-        binData = base64.b64encode(file.read()).decode("utf-8")
+        bin_data = base64.b64encode(file.read()).decode("utf-8")
         request = {
             "binData": binData
         }
