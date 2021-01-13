@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Shared functions."""
+import base64
+import csv
 import random
 import re
 import uuid
 
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import BadRequest, NotFound
 from kfp_server_api.exceptions import ApiException
 
 from projects.database import db_session
@@ -208,3 +210,62 @@ def text_to_list(order):
     for match in matches:
         order_by.append(match.group(2)) if match.group(1) is None else order_by.append(match.group(1))
     return order_by
+
+
+def parse_file_buffer_to_seldon_request(file):
+    """
+    Reads file buffer and parse to seldon request.
+
+    Parameters
+    ----------
+    file : dict
+        File buffer.
+
+    Returns
+    -------
+    dict
+        Seldon API request
+
+    Raises
+    ------
+    BadRequest
+        When `file` has no header.
+    """
+    try:
+        # read file content and parse to string
+        file_buffer = file.read()
+        file_buffer_str = file_buffer.decode("utf-8")
+
+        if not csv.Sniffer().has_header(file_buffer_str):
+            raise BadRequest("file needs a header.")
+
+        # infer file delimiter
+        dialect = csv.Sniffer().sniff(file_buffer_str, delimiters=";,")
+
+        # build seldon request
+        lines = file_buffer_str.split('\n')
+        # split values and remove blank lines
+        lines_splitted = [line.split(dialect.delimiter) for line in lines if line]
+        columns = lines_splitted[0]
+        data = lines_splitted[1:]
+
+        request = {
+            "data": {
+                "names": columns,
+                "ndarray": data,
+            }
+        }
+    except UnicodeDecodeError:
+        file.seek(0)
+        binData = base64.b64encode(file.read()).decode("utf-8")
+        request = {
+            "binData": binData
+        }
+    except csv.Error:
+        file.seek(0)
+        with open(file, "r", buffering=0) as data:
+            request = {
+                "strData": data
+            }
+
+    return request

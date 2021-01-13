@@ -7,7 +7,38 @@ from kubernetes.client.rest import ApiException
 from werkzeug.exceptions import InternalServerError
 
 from projects.kfp import KF_PIPELINES_NAMESPACE
+from projects.kubernetes.istio import get_cluster_ip, get_protocol
 from projects.kubernetes.kube_config import load_kube_config
+
+
+def get_seldon_deployment_url(deployment_id, ip=None, protocol=None):
+    """
+    Get seldon deployment url.
+
+    Parameters
+    ----------
+    deployment_id: str
+    ip : str
+        The cluster ip. Default value is None.
+    protocol : str
+        Either http or https. Default value is None.
+
+    Returns
+    -------
+    str
+        Seldon deployment url.
+
+    Notes
+    -----
+    If the `ip` and `protocol` parameters are not given, it is recovered by Kubernetes resources.
+    """
+    if not ip:
+        ip = get_cluster_ip()
+
+    if not protocol:
+        protocol = get_protocol()
+
+    return f'{protocol}://{ip}/seldon/deployments/{deployment_id}/api/v1.0/predictions'
 
 
 def list_deployment_pods(deployment_id):
