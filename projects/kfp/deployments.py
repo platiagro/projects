@@ -4,7 +4,7 @@ import json
 import yaml
 
 from projects.kfp import kfp_client
-from projects.kubernetes.istio import get_cluster_ip, get_protocol
+from projects.kubernetes.seldon import get_seldon_deployment_url
 
 
 def get_deployment_runs(deployment_id):
@@ -58,34 +58,20 @@ def list_deployments_runs():
     return runs
 
 
-def get_deployment_details(runs, ip=None, protocol=None):
+def get_deployment_details(runs):
     """
     Get deployments run list.
 
     Parameters
     ----------
     runs : list
-    protocol : str
-        Either http or https. Default value is None.
-    ip : str
-        The cluster ip. Default value is None.
 
     Returns
     -------
     list
         Deployment runs details.
-
-    Notes
-    -----
-    If the `ip` and `protocol` parameters are not given, it is recovered by Kubernetes resources.
     """
     deployment_runs = []
-
-    if not ip:
-        ip = get_cluster_ip()
-
-    if not protocol:
-        protocol = get_protocol()
 
     for run in runs:
         manifest = run.pipeline_spec.workflow_manifest
@@ -98,7 +84,7 @@ def get_deployment_details(runs, ip=None, protocol=None):
                 deployment_details['createdAt'] = str(created_at.isoformat(
                     timespec='milliseconds')).replace('+00:00', 'Z')
 
-                deployment_details['url'] = f'{protocol}://{ip}/seldon/deployments/{experiment_id}/api/v1.0/predictions'
+                deployment_details['url'] = get_seldon_deployment_url(experiment_id)
 
                 deployment_runs.append(deployment_details)
 
