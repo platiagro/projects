@@ -38,7 +38,7 @@ def get_seldon_deployment_url(deployment_id, ip=None, protocol=None):
     if not protocol:
         protocol = get_protocol()
 
-    return f'{protocol}://{ip}/seldon/deployments/{deployment_id}/api/v1.0/predictions'
+    return f'{protocol}://{ip}/seldon/{KF_PIPELINES_NAMESPACE}/{deployment_id}/api/v1.0/predictions'
 
 
 def list_deployment_pods(deployment_id):
