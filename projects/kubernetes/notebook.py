@@ -19,6 +19,19 @@ NOTEBOOK_POD_NAME = "server-0"
 NOTEBOOK_CONAINER_NAME = "server"
 
 
+class ApiClientForJsonPatch(client.ApiClient):
+    def call_api(self, resource_path, method,
+                 path_params=None, query_params=None, header_params=None,
+                 body=None, post_params=None, files=None,
+                 response_type=None, auth_settings=None, async_req=None,
+                 _return_http_data_only=None, collection_formats=None,
+                 _preload_content=True, _request_timeout=None):
+        header_params["Content-Type"] = self.select_header_content_type(["application/json-patch+json"])
+        return super().call_api(resource_path, method, path_params, query_params, header_params, body,
+                                post_params, files, response_type, auth_settings, async_req, _return_http_data_only,
+                                collection_formats, _preload_content, _request_timeout)
+
+
 def create_persistent_volume_claim(name, mount_path):
     """
     Creates a persistent volume claim and mounts it in the default notebook server.
@@ -30,7 +43,7 @@ def create_persistent_volume_claim(name, mount_path):
     load_kube_config()
 
     v1 = client.CoreV1Api()
-    custom_api = client.CustomObjectsApi()
+    custom_api = client.CustomObjectsApi(api_client=ApiClientForJsonPatch())
 
     try:
         body = {
@@ -96,12 +109,12 @@ def create_persistent_volume_claim(name, mount_path):
                 if pod.status.phase == "Running" \
                    and all([c.state.running for c in pod.status.container_statuses]) \
                    and any([v for v in pod.spec.volumes if v.name == f"{name}"]):
-                    print(f"Mounted volume vol-{name} in notebook server!", flush=True)
+                    warnings.warn(f"Mounted volume vol-{name} in notebook server!", flush=True)
                     break
             except ApiException:
                 pass
             finally:
-                warnings.warn(f"Waiting for notebook server to be ready...")
+                warnings.warn("Waiting for notebook server to be ready...")
                 time.sleep(5)
 
     except ApiException as e:
@@ -121,12 +134,12 @@ def copy_file_to_pod(filepath, destination_path):
     filepath : str
     destination_path : str
     """
-    print(f"Copying {filepath} to {destination_path}...", flush=True)
+    warnings.warn(f"Copying '{filepath}' to '{destination_path}'...", flush=True)
     load_kube_config()
     api_instance = client.CoreV1Api()
 
-    # The following command extracts the contents of STDIN to /home/jovyan/
-    exec_command = ["tar", "xvf", "-", "-C", f"/home/jovyan"]
+    # The following command extracts the contents of STDIN to /home/jovyan/tasks
+    exec_command = ["tar", "xvf", "-", "-C", f"/home/jovyan/tasks"]
 
     container_stream = stream(
         api_instance.connect_get_namespaced_pod_exec,
@@ -156,9 +169,9 @@ def copy_file_to_pod(filepath, destination_path):
         while container_stream.is_open():
             container_stream.update(timeout=10)
             if container_stream.peek_stdout():
-                print("STDOUT: %s" % container_stream.read_stdout(), flush=True)
+                warnings.warn("STDOUT: %s" % container_stream.read_stdout(), flush=True)
             if container_stream.peek_stderr():
-                print("STDERR: %s" % container_stream.read_stderr(), flush=True)
+                warnings.warn("STDERR: %s" % container_stream.read_stderr(), flush=True)
             if data:
                 container_stream.write_stdin(data)
                 data = tar_buffer.read(1000000)
@@ -166,7 +179,7 @@ def copy_file_to_pod(filepath, destination_path):
                 break
         container_stream.close()
 
-    print(f"Copied {filepath} to {destination_path}!", flush=True)
+    warnings.warn(f"Copied '{filepath}' to '{destination_path}'!", flush=True)
 
 
 def copy_files_in_pod(source_path, destination_path):
@@ -178,7 +191,7 @@ def copy_files_in_pod(source_path, destination_path):
     source_path : str
     destination_path : str
     """
-    print(f"Copying {source_path} to {destination_path}...", flush=True)
+    warnings.warn(f"Copying '{source_path}' to '{destination_path}'...", flush=True)
     load_kube_config()
     api_instance = client.CoreV1Api()
 
@@ -201,15 +214,15 @@ def copy_files_in_pod(source_path, destination_path):
     while container_stream.is_open():
         container_stream.update(timeout=10)
         if container_stream.peek_stdout():
-            print("STDOUT: %s" % container_stream.read_stdout(), flush=True)
+            warnings.warn("STDOUT: %s" % container_stream.read_stdout(), flush=True)
         if container_stream.peek_stderr():
-            print("STDERR: %s" % container_stream.read_stderr(), flush=True)
+            warnings.warn("STDERR: %s" % container_stream.read_stderr(), flush=True)
     container_stream.close()
 
-    print(f"Copied {source_path} to {destination_path}!", flush=True)
+    warnings.warn(f"Copied '{source_path}' to '{destination_path}'!", flush=True)
 
 
-def set_notebook_metadata(notebook_path, task_id):
+def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_id):
     """
     Sets metadata values in notebook file.
 
@@ -217,19 +230,23 @@ def set_notebook_metadata(notebook_path, task_id):
     ----------
     notebook_path : str
     task_id : str
+    experiment_id : str
+    operator_id : str
     """
-    print(f"Setting metadata in {notebook_path}...", flush=True)
+    warnings.warn(f"Setting metadata in {notebook_path}...", flush=True)
     load_kube_config()
     api_instance = client.CoreV1Api()
 
     # The following command sets task_id in the metadata of a notebook
     python_script = (
         f"import json; "
-        f"f = open('{notebook_path}'); "
+        f"f = open('/home/jovyan/tasks/{notebook_path}'); "
         f"n = json.load(f); "
         f"n['metadata']['task_id'] = '{task_id}'; "
+        f"n['metadata']['experiment_id'] = '{experiment_id}'; "
+        f"n['metadata']['operator_id'] = '{operator_id}'; "
         f"f.close(); "
-        f"f = open('{notebook_path}', 'w') ;"
+        f"f = open('/home/jovyan/tasks/{notebook_path}', 'w'); "
         f"json.dump(n, f); "
         f"f.close()"
     )
@@ -255,9 +272,9 @@ def set_notebook_metadata(notebook_path, task_id):
     while container_stream.is_open():
         container_stream.update(timeout=10)
         if container_stream.peek_stdout():
-            print("STDOUT: %s" % container_stream.read_stdout(), flush=True)
+            warnings.warn("STDOUT: %s" % container_stream.read_stdout(), flush=True)
         if container_stream.peek_stderr():
-            print("STDERR: %s" % container_stream.read_stderr(), flush=True)
+            warnings.warn("STDERR: %s" % container_stream.read_stderr(), flush=True)
     container_stream.close()
 
-    print(f"Setting metadata in {notebook_path}...", flush=True)
+    warnings.warn(f"Setting metadata in {notebook_path}...", flush=True)
