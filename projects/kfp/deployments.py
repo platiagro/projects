@@ -88,8 +88,6 @@ def get_deployment_details(runs):
 
                 deployment_runs.append(deployment_details)
 
-    print("get_deployment_details")
-    print(deployment_runs)
     return deployment_runs
 
 

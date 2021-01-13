@@ -109,12 +109,12 @@ def create_persistent_volume_claim(name, mount_path):
                 if pod.status.phase == "Running" \
                    and all([c.state.running for c in pod.status.container_statuses]) \
                    and any([v for v in pod.spec.volumes if v.name == f"{name}"]):
-                    print(f"Mounted volume vol-{name} in notebook server!", flush=True)
+                    warnings.warn(f"Mounted volume vol-{name} in notebook server!", flush=True)
                     break
             except ApiException:
                 pass
             finally:
-                warnings.warn(f"Waiting for notebook server to be ready...")
+                warnings.warn("Waiting for notebook server to be ready...")
                 time.sleep(5)
 
     except ApiException as e:
@@ -134,7 +134,7 @@ def copy_file_to_pod(filepath, destination_path):
     filepath : str
     destination_path : str
     """
-    print(f"Copying {filepath} to {destination_path}...", flush=True)
+    warnings.warn(f"Copying '{filepath}' to '{destination_path}'...", flush=True)
     load_kube_config()
     api_instance = client.CoreV1Api()
 
@@ -169,9 +169,9 @@ def copy_file_to_pod(filepath, destination_path):
         while container_stream.is_open():
             container_stream.update(timeout=10)
             if container_stream.peek_stdout():
-                print("STDOUT: %s" % container_stream.read_stdout(), flush=True)
+                warnings.warn("STDOUT: %s" % container_stream.read_stdout(), flush=True)
             if container_stream.peek_stderr():
-                print("STDERR: %s" % container_stream.read_stderr(), flush=True)
+                warnings.warn("STDERR: %s" % container_stream.read_stderr(), flush=True)
             if data:
                 container_stream.write_stdin(data)
                 data = tar_buffer.read(1000000)
@@ -179,7 +179,7 @@ def copy_file_to_pod(filepath, destination_path):
                 break
         container_stream.close()
 
-    print(f"Copied {filepath} to {destination_path}!", flush=True)
+    warnings.warn(f"Copied '{filepath}' to '{destination_path}'!", flush=True)
 
 
 def copy_files_in_pod(source_path, destination_path):
@@ -191,7 +191,7 @@ def copy_files_in_pod(source_path, destination_path):
     source_path : str
     destination_path : str
     """
-    print(f"Copying {source_path} to {destination_path}...", flush=True)
+    warnings.warn(f"Copying '{source_path}' to '{destination_path}'...", flush=True)
     load_kube_config()
     api_instance = client.CoreV1Api()
 
@@ -214,12 +214,12 @@ def copy_files_in_pod(source_path, destination_path):
     while container_stream.is_open():
         container_stream.update(timeout=10)
         if container_stream.peek_stdout():
-            print("STDOUT: %s" % container_stream.read_stdout(), flush=True)
+            warnings.warn("STDOUT: %s" % container_stream.read_stdout(), flush=True)
         if container_stream.peek_stderr():
-            print("STDERR: %s" % container_stream.read_stderr(), flush=True)
+            warnings.warn("STDERR: %s" % container_stream.read_stderr(), flush=True)
     container_stream.close()
 
-    print(f"Copied {source_path} to {destination_path}!", flush=True)
+    warnings.warn(f"Copied '{source_path}' to '{destination_path}'!", flush=True)
 
 
 def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_id):
@@ -233,7 +233,7 @@ def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_id):
     experiment_id : str
     operator_id : str
     """
-    print(f"Setting metadata in {notebook_path}...", flush=True)
+    warnings.warn(f"Setting metadata in {notebook_path}...", flush=True)
     load_kube_config()
     api_instance = client.CoreV1Api()
 
@@ -272,9 +272,9 @@ def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_id):
     while container_stream.is_open():
         container_stream.update(timeout=10)
         if container_stream.peek_stdout():
-            print("STDOUT: %s" % container_stream.read_stdout(), flush=True)
+            warnings.warn("STDOUT: %s" % container_stream.read_stdout(), flush=True)
         if container_stream.peek_stderr():
-            print("STDERR: %s" % container_stream.read_stderr(), flush=True)
+            warnings.warn("STDERR: %s" % container_stream.read_stderr(), flush=True)
     container_stream.close()
 
-    print(f"Setting metadata in {notebook_path}...", flush=True)
+    warnings.warn(f"Setting metadata in {notebook_path}...", flush=True)
