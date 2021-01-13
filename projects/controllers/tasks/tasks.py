@@ -15,6 +15,7 @@ from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 from projects.controllers.utils import uuid_alpha
 from projects.database import db_session
 from projects.jupyter import create_new_file, list_files, delete_file, update_folder_name
+from projects.kubernetes.notebook import create_persistent_volume_claim
 from projects.models import Task
 from projects.object_storage import BUCKET_NAME, get_object, put_object, \
     list_objects, remove_object
@@ -179,6 +180,10 @@ def create_task(**kwargs):
     else:
         experiment_notebook_path = None
         deployment_notebook_path = None
+
+    # mounts a volume for the task in the notebook server
+    create_persistent_volume_claim(name=f"task-{task_id}",
+                                   mount_path=f"/home/jovyan/{name}")
 
     # saves task info to the database
     task = Task(uuid=task_id,

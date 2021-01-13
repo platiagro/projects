@@ -1,0 +1,15 @@
+{
+    "id": "f23e7f42-4819-4d27-bb2f-7c104a6841c7",
+    "name": "c8edc080-b74b-479f-9206-afc77d3aafc7",
+    "created_at": "2021-01-10T12:58:45Z",
+    "resource_references": [
+        {
+            "key": {
+                "type": "NAMESPACE",
+                "id": "anonymous"
+            },
+            "relationship": "OWNER"
+        }
+    ],
+    "storage_state": "STORAGESTATE_AVAILABLE"
+}

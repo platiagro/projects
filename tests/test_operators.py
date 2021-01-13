@@ -6,6 +6,7 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME
+from tests.mock.api import start_mock_api
 
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
@@ -57,6 +58,9 @@ TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
 class TestOperators(TestCase):
     def setUp(self):
         self.maxDiff = None
+
+        self.proc = start_mock_api()
+
         conn = engine.connect()
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
@@ -125,6 +129,8 @@ class TestOperators(TestCase):
         conn.close()
 
     def tearDown(self):
+        self.proc.terminate()
+
         conn = engine.connect()
 
         text = f"DELETE FROM operators WHERE experiment_id in" \

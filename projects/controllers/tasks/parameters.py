@@ -2,7 +2,6 @@
 """Parameters controller."""
 from werkzeug.exceptions import NotFound
 
-from projects.jupyter import read_parameters
 from projects.models import Task
 
 
@@ -28,4 +27,4 @@ def list_parameters(task_id):
     if task is None:
         raise NotFound("The specified task does not exist")
 
-    return read_parameters(task.experiment_notebook_path)
+    return task.parameters
