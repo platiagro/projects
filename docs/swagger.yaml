@@ -52,6 +52,9 @@ tags:
   - name: "Templates"
     description: >
       Templates are reusable workflows that a data-scientist may use to draw an experiment quickly.
+  - name: "Monitorings"
+    description: >
+      Monitorings allow to ensure that models are maintaining a predetermined desired level of performance.
 paths:
   /tasks:
     get:
@@ -1110,7 +1113,7 @@ paths:
     get:
       summary: "Lists all monitorings."
       tags:
-        - "Deployments"
+        - "Monitorings"
       parameters:
         - in: path
           name: projectId
@@ -1130,7 +1133,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DeploymentMonitorings"
+                $ref: "#/components/schemas/Monitorings"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -1138,7 +1141,7 @@ paths:
     post:
       summary: "Create a monitoring."
       tags:
-        - "Deployments"
+        - "Monitorings"
       parameters:
         - in: path
           name: projectId
@@ -1166,7 +1169,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DeploymentMonitoring"
+                $ref: "#/components/schemas/Monitoring"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -1177,7 +1180,7 @@ paths:
     delete:
       summary: "Delete a monitoring by ID."
       tags:
-        - "Deployments"
+        - "Monitorings"
       parameters:
         - in: path
           name: projectId
@@ -1891,7 +1894,7 @@ components:
           items:
             type: string
             format: uuid
-    DeploymentMonitoring:
+    Monitoring:
       type: object
       properties:
         createdAt:
@@ -1906,10 +1909,10 @@ components:
         uuid:
           type: string
           format: uuid
-    DeploymentMonitorings:
+    Monitorings:
       type: array
       items:
-        $ref: "#/components/schemas/DeploymentMonitoring"
+        $ref: "#/components/schemas/Monitoring"
     DeploymentTemplate:
       type: object
       properties:
