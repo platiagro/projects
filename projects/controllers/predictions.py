@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Predictions controller."""
-from json import loads
+import json
 
 import requests
 from werkzeug.datastructures import FileStorage
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, InternalServerError
 
 from projects.controllers.utils import parse_file_buffer_to_seldon_request, \
     raise_if_deployment_does_not_exist, raise_if_project_does_not_exist
@@ -42,4 +42,7 @@ def create_prediction(project_id=None, deployment_id=None, file=None):
     request = parse_file_buffer_to_seldon_request(file)
     response = requests.post(url, json=request)
 
-    return loads(response._content)
+    try:
+        return json.loads(response._content)
+    except json.decoder.JSONDecodeError:
+        raise InternalServerError(response._content)

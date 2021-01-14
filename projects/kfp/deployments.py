@@ -78,13 +78,13 @@ def get_deployment_details(runs):
         if "SeldonDeployment" in manifest:
             deployment_details = format_deployment_pipeline(run)
             if deployment_details:
-                experiment_id = deployment_details['experimentId']
+                deployment_id = deployment_details["deploymentId"]
 
                 created_at = deployment_details["createdAt"]
-                deployment_details['createdAt'] = str(created_at.isoformat(
-                    timespec='milliseconds')).replace('+00:00', 'Z')
+                deployment_details["createdAt"] = str(created_at.isoformat(
+                    timespec="milliseconds")).replace("+00:00", "Z")
 
-                deployment_details['url'] = get_seldon_deployment_url(experiment_id)
+                deployment_details["url"] = get_seldon_deployment_url(deployment_id)
 
                 deployment_runs.append(deployment_details)
 

@@ -249,23 +249,22 @@ def parse_file_buffer_to_seldon_request(file):
         columns = lines_splitted[0]
         data = lines_splitted[1:]
 
-        request = {
+        return {
             "data": {
                 "names": columns,
                 "ndarray": data,
             }
         }
+
     except UnicodeDecodeError:
         file.seek(0)
-        binData = base64.b64encode(file.read()).decode("utf-8")
-        request = {
-            "binData": binData
+        bin_data = base64.b64encode(file.read()).decode("utf-8")
+        return {
+            "binData": bin_data
         }
+
     except csv.Error:
         file.seek(0)
-        with open(file, "r", buffering=0) as data:
-            request = {
-                "strData": data
-            }
-
-    return request
+        return {
+            "strData": file.read().decode("utf-8")
+        }
