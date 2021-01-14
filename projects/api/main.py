@@ -20,6 +20,7 @@ from projects.api.experiments.runs.figures import bp as figures_blueprint
 from projects.api.experiments.runs.logs import bp as experiments_logs_blueprint
 from projects.api.experiments.runs.metrics import bp as metrics_blueprint
 from projects.api.json_encoder import CustomJSONEncoder
+from projects.api.monitorings import bp as monitorings_blueprint
 from projects.api.predictions import bp as predictions_blueprint
 from projects.api.projects import bp as projects_blueprint
 from projects.api.tasks import bp as tasks_blueprint
@@ -76,6 +77,10 @@ app.register_blueprint(
 app.register_blueprint(
     deployments_logs_blueprint,
     url_prefix="/projects/<project_id>/deployments/<deployment_id>/runs/<run_id>/logs",
+)
+app.register_blueprint(
+    monitorings_blueprint,
+    url_prefix="/projects/<project_id>/deployments/<deployment_id>/monitorings"
 )
 app.register_blueprint(
     predictions_blueprint,

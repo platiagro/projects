@@ -52,6 +52,9 @@ tags:
   - name: "Templates"
     description: >
       Templates are reusable workflows that a data-scientist may use to draw an experiment quickly.
+  - name: "Monitorings"
+    description: >
+      Monitorings allow to ensure that models are maintaining a predetermined desired level of performance.
 paths:
   /tasks:
     get:
@@ -1106,6 +1109,104 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/monitorings:
+    get:
+      summary: "Lists all monitorings."
+      tags:
+        - "Monitorings"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Monitorings"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a monitoring."
+      tags:
+        - "Monitorings"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                taskId:
+                  type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Monitoring"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/monitorings/{monitoringId}:
+    delete:
+      summary: "Delete a monitoring by ID."
+      tags:
+        - "Monitorings"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: monitoringId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/deployments/{deploymentId}/runs:
     get:
       summary: "List all experiment runs sorted by created_at in ascending order."
@@ -1793,6 +1894,25 @@ components:
           items:
             type: string
             format: uuid
+    Monitoring:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        deploymentId:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        uuid:
+          type: string
+          format: uuid
+    Monitorings:
+      type: array
+      items:
+        $ref: "#/components/schemas/Monitoring"
     DeploymentTemplate:
       type: object
       properties:
