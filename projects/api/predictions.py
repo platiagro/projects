@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """Predictions blueprint."""
 
-from flask import jsonify, request
-from flask_smorest import Blueprint
+from flask import jsonify, request, Blueprint
 
 from projects.controllers.predictions import create_prediction
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Functions that access MinIO object storage."""
-from io import BytesIO
-from os import getenv, SEEK_SET
+from os import getenv
 
 from minio import Minio
 from minio.error import BucketAlreadyOwnedByYou
@@ -30,81 +29,6 @@ def make_bucket(name):
         MINIO_CLIENT.make_bucket(name)
     except BucketAlreadyOwnedByYou:
         pass
-
-
-def get_object(source):
-    """
-    Get an object in MinIO.
-
-    Parameters
-    ----------
-    source : str
-        The path to source object.
-
-    Returns
-    -------
-    bytes
-        The file contents as bytes.
-    """
-    # ensures MinIO bucket exists
-    make_bucket(BUCKET_NAME)
-
-    data = MINIO_CLIENT.get_object(
-        bucket_name=BUCKET_NAME,
-        object_name=source,
-    )
-
-    buffer = BytesIO()
-    for d in data.stream(32*1024):
-        buffer.write(d)
-    buffer.seek(0, SEEK_SET)
-
-    return buffer.read()
-
-
-def put_object(name, data):
-    """
-    Puts an object into MinIO.
-
-    Parameters
-    ----------
-    name : str
-        The object name.
-    data : bytes
-        The content of the object.
-    """
-    # ensures MinIO bucket exists
-    make_bucket(BUCKET_NAME)
-
-    stream = BytesIO(data)
-
-    MINIO_CLIENT.put_object(
-        bucket_name=BUCKET_NAME,
-        object_name=name,
-        data=stream,
-        length=len(data),
-    )
-
-
-def duplicate_object(source, destination):
-    """
-    Makes a copy of an object in MinIO.
-
-    Parameters
-    ----------
-    source : str
-        The path to source object.
-    destination : str
-        The destination path.
-    """
-    # ensures MinIO bucket exists
-    make_bucket(BUCKET_NAME)
-
-    MINIO_CLIENT.copy_object(
-        bucket_name=BUCKET_NAME,
-        object_name=destination,
-        object_source=f"{BUCKET_NAME}/{source}"
-    )
 
 
 def list_objects(prefix):

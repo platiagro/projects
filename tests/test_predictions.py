@@ -62,7 +62,7 @@ class TestPredictions(TestCase):
         conn.execute(text)
 
         conn.close()
-
+        
     @patch("projects.controllers.predictions.requests")
     def test_create_prediction(self, mock_requests):
         with app.test_client() as c:
@@ -143,7 +143,7 @@ class TestPredictions(TestCase):
             )
 
             rv = c.post(
-                f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
+                f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions", 
                 content_type='multipart/form-data',
                 data=data
             )

@@ -72,7 +72,7 @@ def get_deployment_details(runs):
         Deployment runs details.
     """
     deployment_runs = []
-
+ment
     for run in runs:
         manifest = run.pipeline_spec.workflow_manifest
         if "SeldonDeployment" in manifest:
@@ -88,8 +88,6 @@ def get_deployment_details(runs):
 
                 deployment_runs.append(deployment_details)
 
-    print("get_deployment_details")
-    print(deployment_runs)
     return deployment_runs
 
 

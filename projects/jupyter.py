@@ -7,7 +7,6 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
-from werkzeug.exceptions import InternalServerError
 
 from projects.utils import remove_ansi_escapes
 
@@ -125,18 +124,13 @@ def get_notebook_logs(experiment_id, operator_id):
 
     Returns
     -------
-    dict
-        Operator's notebook logs.
-
-    Raises
-    ------
-    InternalServerError
-        When an error is encountered when trying to recover from the contents of a notebook.
+    dict or None
+        Operator's notebook logs. Or None when the notebook file is not found.
     """
     notebook = get_jupyter_notebook(experiment_id, operator_id)
 
     if not notebook:
-        raise InternalServerError("An error occured while trying to recover Notebook content.")
+        return None
 
     notebook = notebook["content"]
     logs = {}
