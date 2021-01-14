@@ -13,11 +13,17 @@ NOT_FOUND = NotFound("The specified monitoring does not exist")
 
 
 def list_monitorings(project_id, deployment_id):
-    """Lists all monitorings under a deployment.
-    Args:
-        project_id (str): the project uuid.
-        deployment_id (str): the deployment uuid.
-    Returns:
+    """
+    Lists all monitorings under a deployment.
+
+    Parameters
+    ----------
+    project_id : str
+    deployment_id : str
+
+    Returns
+    -------
+    list
         A list of all monitorings.
     """
     raise_if_project_does_not_exist(project_id)
@@ -34,13 +40,18 @@ def list_monitorings(project_id, deployment_id):
 def create_monitoring(project_id,
                       deployment_id=None,
                       task_id=None):
-    """Creates a new monitoring in our database.
-    Args:
-        project_id (str): the project uuid.
-        deployment_id (str): the deployment uuid.
-        task_id (str): the task uuid.
-    Returns:
-        The monitoring info.
+    """
+    Creates a new monitoring in our database.
+
+    Parameters
+    ----------
+    project_id : str
+    deployment_id : str
+    task_id : str
+
+    Returns
+    -------
+    dict
     """
     raise_if_project_does_not_exist(project_id)
     raise_if_deployment_does_not_exist(deployment_id)
@@ -57,13 +68,18 @@ def create_monitoring(project_id,
 
 
 def delete_monitoring(uuid, project_id, deployment_id):
-    """Delete a monitoring in our database.
-    Args:
-        uuid (str): the monitoring uuid to look for in our database.
-        project_id (str): the project uuid.
-        deployment_id (str): the deployment uuid.
-    Returns:
-        The deletion result.
+    """
+    Delete a monitoring in our database.
+
+    Parameters
+    ----------
+    uuid : str
+    project_id : str
+    deployment_id : str
+
+    Returns
+    -------
+    dict
     """
     raise_if_project_does_not_exist(project_id)
     raise_if_deployment_does_not_exist(deployment_id)
