@@ -7,7 +7,7 @@ from projects.controllers.utils import raise_if_project_does_not_exist, \
     raise_if_deployment_does_not_exist
 from projects.models import Deployment
 
-from projects.kfp import kfp_client
+from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp import runs as kfp_runs
 from projects.kfp.pipeline import undeploy_pipeline
 from projects.kfp.deployments import get_deployment_runs
@@ -144,7 +144,7 @@ def terminate_run(project_id, deployment_id, run_id):
     custom_objects = api.list_namespaced_custom_object(
         "machinelearning.seldon.io",
         "v1alpha2",
-        "deployments",
+        KF_PIPELINES_NAMESPACE,
         "seldondeployments"
     )
     deployments_objects = custom_objects["items"]
