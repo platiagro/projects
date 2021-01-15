@@ -381,4 +381,3 @@ def get_task_parameter(task_parameters, name):
         param_name = param.get('name')
         if param_name == name:
             return param
-    return
