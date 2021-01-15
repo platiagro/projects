@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Task model."""
+import os
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, JSON, String, Text
@@ -9,7 +10,7 @@ from projects import __version__
 from projects.database import Base
 from projects.utils import to_camel_case
 
-DEFAULT_IMAGE = f'platiagro/platiagro-experiment-image:{__version__}'
+DEFAULT_IMAGE = os.getenv("DEFAULT_IMAGE", f'platiagro/platiagro-experiment-image:{__version__}')
 
 
 class Task(Base):
