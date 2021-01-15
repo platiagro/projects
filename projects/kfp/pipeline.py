@@ -137,7 +137,7 @@ def create_container_op(operator, experiment_id, notebook_path=None, dataset=Non
 
     container_op.add_pod_annotation(name='name', value=operator.task.name)
 
-    container_op.container.set_image_pull_policy("Always") \
+    container_op.container.set_image_pull_policy("IfNotPresent") \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="EXPERIMENT_ID",
@@ -175,6 +175,15 @@ def create_container_op(operator, experiment_id, notebook_path=None, dataset=Non
         )
 
     for name, value in operator.parameters.items():
+        # format multipe parameter
+        task_parameter = get_task_parameter(operator.task.parameters, name)
+        if task_parameter:
+            parameter_multiple = task_parameter.get('multiple', False)
+            if parameter_multiple:
+                if value is None or not value:
+                    value = []
+                else:
+                    value = value.split(',')
         if value is not None:
             # fix for: cannot unmarshal number into
             # Go struct field EnvVar.value of type string
@@ -353,3 +362,23 @@ def mount_volume_from_experiment(sdep_resource, experiment_id):
                     },
                 })
     return sdep_resource
+
+
+def get_task_parameter(task_parameters, name):
+    """
+    Get task parameter.
+
+    Parameters
+    ----------
+    task_parameters : list
+    name : str
+
+    Returns
+    -------
+    dict
+    """
+    for param in task_parameters:
+        param_name = param.get('name')
+        if param_name == name:
+            return param
+    return

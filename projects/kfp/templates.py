@@ -16,6 +16,7 @@ SELDON_DEPLOYMENT = Template("""{
     "spec": {
         "annotations": {
             "deployment_version": "v1",
+            "prometheus.io/scrape": "false",
             "seldon.io/rest-read-timeout": "60000",
             "seldon.io/rest-connection-timeout": "60000",
             "seldon.io/grpc-read-timeout": "60000",
