@@ -10,7 +10,6 @@ from projects.controllers.utils import raise_if_project_does_not_exist, \
 
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_pod_log
-from projects.models import Operator, Task
 
 EXCLUDE_CONTAINERS = ['istio-proxy', 'seldon-container-engine']
 TIME_STAMP_PATTERN = r'\d{4}-\d{2}-\d{2}(:?\s|T)\d{2}:\d{2}:\d{2}(:?.|,)\d+Z?\s?'
@@ -57,7 +56,7 @@ def list_logs(project_id, deployment_id, run_id):
                     status.update({'status': 'Creating'})
                     return status
 
-                # retrieves the name of the task linked to the operator 
+                # retrieves the name of the task linked to the operator
                 # in the pod "metadata.annotations.tasks"
                 tasks = pod.metadata.annotations.get("tasks")
                 tasks = literal_eval(tasks)

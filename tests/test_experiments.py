@@ -6,6 +6,7 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME
+from tests.mock.api import start_mock_api
 
 EXPERIMENT_ID = str(uuid_alpha())
 NAME = "foo"
@@ -77,6 +78,9 @@ DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 class TestExperiments(TestCase):
     def setUp(self):
         self.maxDiff = None
+
+        self.proc = start_mock_api()
+
         conn = engine.connect()
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
@@ -170,6 +174,7 @@ class TestExperiments(TestCase):
         conn.close()
 
     def tearDown(self):
+        self.proc.terminate()
         conn = engine.connect()
 
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"

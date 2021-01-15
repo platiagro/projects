@@ -1,23 +1,18 @@
 # -*- coding: utf-8 -*-
 """Functions that access Jupyter Notebook API."""
-from json import dumps, loads, JSONDecodeError
-from os import getenv
-from re import compile, sub
+import json
+import os
 
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.util.retry import Retry
 
-from minio.error import NoSuchKey
-from werkzeug.exceptions import InternalServerError
-
-from projects.object_storage import BUCKET_NAME, get_object
 from projects.utils import remove_ansi_escapes
 
-JUPYTER_ENDPOINT = getenv("JUPYTER_ENDPOINT", "http://server.anonymous:80/notebook/anonymous/server")
-URL_CONTENTS = f"{JUPYTER_ENDPOINT}/api/contents"
-SUPPORTED_TYPES = ['Deployment', 'Experiment']
+DEFAULT_ENDPOINT = "http://server.anonymous:80/notebook/anonymous/server"
+JUPYTER_ENDPOINT = os.getenv("JUPYTER_ENDPOINT", DEFAULT_ENDPOINT)
+SUPPORTED_TYPES = ["Deployment", "Experiment"]
 
 COOKIES = {"_xsrf": "token"}
 HEADERS = {"content-type": "application/json", "X-XSRFToken": "token"}
@@ -53,7 +48,7 @@ def list_files(path):
         A list of filenames.
     """
     try:
-        r = SESSION.get(url=f"{URL_CONTENTS}/{path}")
+        r = SESSION.get(url=f"{JUPYTER_ENDPOINT}/api/contents/{path}")
         return r.json()
     except HTTPError as e:
         status_code = e.response.status_code
@@ -75,14 +70,14 @@ def create_new_file(path, is_folder, content=None):
         The file content.
     """
     if content is not None:
-        content = loads(content.decode("utf-8"))
+        content = json.loads(content.decode("utf-8"))
 
     filetype = "directory" if is_folder else "notebook"
     payload = {"type": filetype, "content": content}
 
     SESSION.put(
-        url=f"{URL_CONTENTS}/{path}",
-        data=dumps(payload),
+        url=f"{JUPYTER_ENDPOINT}/api/contents/{path}",
+        data=json.dumps(payload),
     )
 
 
@@ -99,8 +94,8 @@ def update_folder_name(path, new_path):
     """
     payload = {"path": new_path}
     SESSION.patch(
-        url=f"{URL_CONTENTS}/{path}",
-        data=dumps(payload),
+        url=f"{JUPYTER_ENDPOINT}/api/contents/{path}",
+        data=json.dumps(payload),
     )
 
 
@@ -114,97 +109,8 @@ def delete_file(path):
         Path to the file.
     """
     SESSION.delete(
-        url=f"{URL_CONTENTS}/{path}",
+        url=f"{JUPYTER_ENDPOINT}/api/contents/{path}",
     )
-
-
-def read_parameters(path):
-    """
-    Lists the parameters declared in a notebook.
-
-    Parameters
-    ----------
-    path : str
-        Path to the .ipynb file.
-
-    Returns
-    -------
-    list:
-        A list of parameters (name, default, type, label, description).
-    """
-    if not path:
-        return []
-
-    object_name = path[len(f"minio://{BUCKET_NAME}/"):]
-    try:
-        experiment_notebook = loads(get_object(object_name).decode("utf-8"))
-    except (NoSuchKey, JSONDecodeError):
-        return []
-
-    parameters = []
-    cells = experiment_notebook.get("cells", [])
-    for cell in cells:
-        cell_type = cell["cell_type"]
-        tags = cell["metadata"].get("tags", [])
-        if cell_type == "code" and "parameters" in tags:
-            source = cell["source"]
-
-            parameters.extend(
-                read_parameters_from_source(source),
-            )
-
-    return parameters
-
-
-def read_parameters_from_source(source):
-    """
-    Lists the parameters declared in source code.
-
-    Parameters
-    ----------
-    source : list
-        Source code lines.
-
-    Returns
-    -------
-    list:
-        A list of parameters (name, default, type, label, description).
-    """
-    parameters = []
-    # Regex to capture a parameter declaration
-    # Inspired by Google Colaboratory Forms
-    # Example of a parameter declaration:
-    # name = "value" #@param ["1st option", "2nd option"] {type:"string", label:"Foo Bar", description:"Foo Bar"}
-    pattern = compile(r"^(\w+)\s*=\s*(.+)\s+#@param(?:(\s+\[.*\]))?(\s+\{.*\})")
-
-    for line in source:
-        match = pattern.search(line)
-        if match:
-            try:
-                name = match.group(1)
-                default = match.group(2)
-                options = match.group(3)
-                metadata = match.group(4)
-
-                parameter = {"name": name}
-
-                if default and default != "None":
-                    if default in ["True", "False"]:
-                        default = default.lower()
-                    parameter["default"] = loads(default)
-
-                if options:
-                    parameter["options"] = loads(options)
-
-                # adds quotes to metadata keys
-                metadata = sub(r"(\w+):", r'"\1":', metadata)
-                parameter.update(loads(metadata))
-
-                parameters.append(parameter)
-            except JSONDecodeError:
-                pass
-
-    return parameters
 
 
 def get_notebook_logs(experiment_id, operator_id):
@@ -218,18 +124,13 @@ def get_notebook_logs(experiment_id, operator_id):
 
     Returns
     -------
-    dict
-        Operator's notebook logs.
-
-    Raises
-    ------
-    InternalServerError
-        When an error is encountered when trying to recover from the contents of a notebook.
+    dict or None
+        Operator's notebook logs. Or None when the notebook file is not found.
     """
     notebook = get_jupyter_notebook(experiment_id, operator_id)
 
     if not notebook:
-        raise InternalServerError("An error occured while trying to recover Notebook content.")
+        return None
 
     notebook = notebook["content"]
     logs = {}
@@ -250,7 +151,7 @@ def get_notebook_logs(experiment_id, operator_id):
     return logs
 
 
-def get_jupyter_notebook(experiment_id, operator_id, notebook_type='Experiment'):
+def get_jupyter_notebook(experiment_id, operator_id, notebook_type="Experiment"):
     """
     Get JSON content from a notebook using the JupyterLab API.
 
@@ -280,8 +181,8 @@ def get_jupyter_notebook(experiment_id, operator_id, notebook_type='Experiment')
         raise ValueError(f"The type {notebook_type} is not a valid one.")
 
     try:
-        r = SESSION.get(url=f"{URL_CONTENTS}/{operator_endpoint}").content
-        content = loads(r.decode("utf-8"))
+        r = SESSION.get(url=f"{JUPYTER_ENDPOINT}/api/contents/{operator_endpoint}").content
+        content = json.loads(r.decode("utf-8"))
 
         return content
     except HTTPError as e:

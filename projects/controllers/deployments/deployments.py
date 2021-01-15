@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from werkzeug.exceptions import BadRequest, NotFound
 
-from projects.controllers.deployments.runs import create_run
+from projects.controllers.deployments.runs import create_run, terminate_run
 from projects.controllers.experiments import list_experiments
 from projects.controllers.operators import create_operator
 from projects.controllers.templates import get_template
@@ -255,6 +255,13 @@ def delete_deployment(project_id, deployment_id):
     db_session.commit()
 
     fix_positions(project_id=project_id)
+
+    # Temporary: also delete run deployment (while web-ui isn't ready)
+    terminate_run(
+        project_id=project_id,
+        deployment_id=deployment_id,
+        run_id='latest'
+    )
 
     return {"message": "Deployment deleted"}
 

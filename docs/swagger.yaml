@@ -35,6 +35,9 @@ tags:
     description: >
       Runs are the executions of a deployment.
       Each run start from the first step and generates its own results.
+  - name: "Predictions"
+    description: >
+      Predictions send a request with file data to seldon deployment.
   - name: "Results"
     description: >
       Results are the outputs of experiment runs.
@@ -49,6 +52,9 @@ tags:
   - name: "Templates"
     description: >
       Templates are reusable workflows that a data-scientist may use to draw an experiment quickly.
+  - name: "Monitorings"
+    description: >
+      Monitorings allow to ensure that models are maintaining a predetermined desired level of performance.
 paths:
   /tasks:
     get:
@@ -1103,6 +1109,104 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/monitorings:
+    get:
+      summary: "Lists all monitorings."
+      tags:
+        - "Monitorings"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Monitorings"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a monitoring."
+      tags:
+        - "Monitorings"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                taskId:
+                  type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Monitoring"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/monitorings/{monitoringId}:
+    delete:
+      summary: "Delete a monitoring by ID."
+      tags:
+        - "Monitorings"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: monitoringId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/deployments/{deploymentId}/runs:
     get:
       summary: "List all experiment runs sorted by created_at in ascending order."
@@ -1223,6 +1327,35 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/predictions:
+    post:
+      summary: "Create a new prediction sending a file."
+      tags:
+        - "Predictions"
+      requestBody:
+        $ref: "#/components/requestBodies/PredictionPost"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Prediction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /projects/{projectId}/deployments/{deploymentId}/runs/{runId}/logs:
     get:
       summary: "Get logs from a deployment run"
@@ -1606,6 +1739,153 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Deployment"
+    Prediction:
+      additionalProperties: false
+      oneOf:
+        - $ref: "#/components/schemas/PredictionCsvFile"
+        - $ref: "#/components/schemas/PredictionBinData"
+        - $ref: "#/components/schemas/PredictionStrData"
+    PredictionCsvFile:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SeldonStatus'
+        meta:
+          $ref: '#/components/schemas/SeldonMeta'
+        data:
+          $ref: '#/components/schemas/SeldonDefaultData'
+    PredictionBinData:
+      type: string
+      format: byte
+      pattern: '^.{1,2097152}'
+      maxLength: 2097152
+    PredictionStrData:
+      type: string
+      pattern: '^.{1,2097152}'
+      maxLength: 2097152
+    SeldonMeta:
+      type: object
+      additionalProperties: false
+      properties:
+        puid:
+          type: string
+          pattern: '^.{1,2097152}'
+          maxLength: 2097152
+        tags:
+          type: object
+          additionalProperties:
+            description: 'Can be anything: string, number, array, object, etc.'
+          example:
+            mytag: myvalue
+        routing:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+          example:
+            router1: 1
+        requestPath:
+          type: object
+          additionalProperties:
+            type: string
+            pattern: '^.{1,2097152}'
+            maxLength: 2097152
+          example:
+            classifier: 'seldonio/mock_classifier:1.0'
+        metrics:
+          type: array
+          maxItems: 2097152
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              type:
+                type: string
+                pattern: '^.{1,2097152}'
+                maxLength: 2097152
+                enum:
+                  - COUNTER
+                  - GAUGE
+                  - TIMER
+                default: COUNTER
+              key:
+                type: string
+                pattern: '^.{1,2097152}'
+                maxLength: 2097152
+              value:
+                type: number
+                format: float
+    SeldonDefaultData:
+      type: object
+      additionalProperties: false
+      properties:
+        names:
+          type: array
+          maxItems: 2097152
+          items:
+            type: string
+            pattern: '^.{1,2097152}'
+            maxLength: 2097152
+        tensor:
+          type: object
+          additionalProperties: false
+          properties:
+            shape:
+              type: array
+              maxItems: 2097152
+              items:
+                type: integer
+                format: int32
+            values:
+              type: array
+              maxItems: 2097152
+              items:
+                type: number
+                format: double
+        ndarray:
+          type: array
+          maxItems: 2097152
+          items:
+            description: 'Can be anything: string, number, array, object, etc.'
+        tftensor:
+          type: object
+          additionalProperties: false
+          properties:
+            size:
+              type: string
+              pattern: '^.{1,2097152}'
+              maxLength: 2097152
+              format: int64
+              description: 'Size of the tensor in that dimension. This value must be >= -1, but values of -1 are reserved for "unknown" shapes (values of -1 mean "unknown" dimension).  Certain wrappers that work with TensorShapeProto may fail at runtime when deserializing a TensorShapeProto containing a dim value of -1.'
+            name:
+              type: string
+              pattern: '^.{1,2097152}'
+              maxLength: 2097152
+              description: Optional name of the tensor dimension.
+          description: One dimension of the tensor.
+    SeldonStatus:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: integer
+          format: int32
+        info:
+          type: string
+          pattern: '^.{1,2097152}'
+          maxLength: 2097152
+        reason:
+          type: string
+          pattern: '^.{1,2097152}'
+          maxLength: 2097152
+        status:
+          type: string
+          pattern: '^.{1,2097152}'
+          maxLength: 2097152
+          enum:
+            - SUCCESS
+            - FAILURE
+          default: SUCCESS
     DeploymentExperiments:
       type: object
       properties:
@@ -1614,6 +1894,25 @@ components:
           items:
             type: string
             format: uuid
+    Monitoring:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        deploymentId:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        uuid:
+          type: string
+          format: uuid
+    Monitorings:
+      type: array
+      items:
+        $ref: "#/components/schemas/Monitoring"
     DeploymentTemplate:
       type: object
       properties:
@@ -2132,6 +2431,15 @@ components:
               templateId:
                 type: string
                 format: uuid
+    PredictionPost:
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
     OperatorPost:
       content:
         application/json:
@@ -2276,6 +2584,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Deployments"
+    Prediction:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Prediction"
     Operator:
       description: ""
       content:

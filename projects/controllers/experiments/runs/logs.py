@@ -8,7 +8,7 @@ from projects.controllers.utils import raise_if_project_does_not_exist, \
 
 from projects.jupyter import get_notebook_logs
 
-from projects.kfp import KFP_CLIENT
+from projects.kfp import kfp_client
 from projects.kfp.runs import get_latest_run_id
 from projects.kubernetes.utils import search_for_pod_info
 
@@ -51,7 +51,7 @@ def get_logs(project_id, experiment_id, run_id, operator_id):
 
         raise_if_run_does_not_exist(run_id)
 
-        run_details = KFP_CLIENT.get_run(run_id=run_id)
+        run_details = kfp_client().get_run(run_id=run_id)
         details = loads(run_details.pipeline_runtime.workflow_manifest)
         operator = search_for_pod_info(details, operator_id)
 

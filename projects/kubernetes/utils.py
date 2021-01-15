@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utility functions."""
 from ast import literal_eval
-
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from werkzeug.exceptions import InternalServerError
