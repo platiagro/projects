@@ -6,43 +6,50 @@ import requests
 from werkzeug.datastructures import FileStorage
 from werkzeug.exceptions import BadRequest, InternalServerError
 
-from projects.controllers.utils import parse_file_buffer_to_seldon_request, \
-    raise_if_deployment_does_not_exist, raise_if_project_does_not_exist
+from projects.controllers.deployments import DeploymentController
+from projects.controllers.projects import ProjectController
+from projects.controllers.utils import parse_file_buffer_to_seldon_request
 from projects.kubernetes.seldon import get_seldon_deployment_url
 
 
-def create_prediction(project_id=None, deployment_id=None, file=None):
-    """
-    POST a prediction file to seldon deployment.
+class PredictionController:
+    def __init__(self, session):
+        self.session = session
+        self.project_controller = ProjectController(session)
+        self.deployment_controller = DeploymentController(session)
 
-    Parameters
-    ----------
-    project_id : str
-    deployment_id : str
-    file : dict
-        CSV file bufffer.
+    def create_prediction(self, project_id=None, deployment_id=None, file=None):
+        """
+        POST a prediction file to seldon deployment.
 
-    Returns
-    -------
-    dict
+        Parameters
+        ----------
+        project_id : str
+        deployment_id : str
+        file : dict
+            CSV file bufffer.
 
-    Raises
-    ------
-    BadRequest
-        When `file` is missing.
+        Returns
+        -------
+        dict
 
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
+        Raises
+        ------
+        BadRequest
+            When `file` is missing.
 
-    if not isinstance(file, FileStorage):
-        raise BadRequest("file is required.")
+        """
+        self.project_controller.raise_if_project_does_not_exist(project_id)
+        self.deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
-    url = get_seldon_deployment_url(deployment_id)
-    request = parse_file_buffer_to_seldon_request(file)
-    response = requests.post(url, json=request)
+        if not isinstance(file, FileStorage):
+            raise BadRequest("file is required.")
 
-    try:
-        return json.loads(response._content)
-    except json.decoder.JSONDecodeError:
-        raise InternalServerError(response._content)
+        url = get_seldon_deployment_url(deployment_id)
+        request = parse_file_buffer_to_seldon_request(file)
+        response = requests.post(url, json=request)
+
+        try:
+            return json.loads(response._content)
+        except json.decoder.JSONDecodeError:
+            raise InternalServerError(response._content)

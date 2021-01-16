@@ -7,7 +7,6 @@ from projects.database import Base
 
 
 class CustomJSONEncoder(JSONEncoder):
-    """JSON encoder that outputs dates as yyyy-mm-ddThh:mm:ss."""
 
     def default(self, obj):
         try:
@@ -16,7 +15,7 @@ class CustomJSONEncoder(JSONEncoder):
             if isinstance(obj, Base):
                 return obj.as_dict()
             iterable = iter(obj)
-        except TypeError:
+        except TypeError as e:
             pass
         else:
             return list(iterable)

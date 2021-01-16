@@ -3,13 +3,15 @@
 
 from flask import Blueprint, jsonify
 
-from projects.controllers.tasks.parameters import list_parameters
+from projects.controllers import ParameterController
+from projects.database import session_scope
 
 bp = Blueprint("parameters", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_list_parameters(task_id):
+@session_scope
+def handle_list_parameters(session, task_id):
     """
     Handles GET requests to /.
 
@@ -21,5 +23,6 @@ def handle_list_parameters(task_id):
     -------
     str
     """
-    parameters = list_parameters(task_id=task_id)
+    parameter_controller = ParameterController(session)
+    parameters = parameter_controller.list_parameters(task_id=task_id)
     return jsonify(parameters)

@@ -15,9 +15,9 @@ from projects.utils import to_camel_case, get_parameters_with_values, \
 class Operator(Base):
     __tablename__ = "operators"
     uuid = Column(String(255), primary_key=True)
-    deployment_id = Column(String(255), ForeignKey("deployments.uuid"), nullable=True)
-    experiment_id = Column(String(255), ForeignKey("experiments.uuid"), nullable=True)
-    task_id = Column(String(255), ForeignKey("tasks.uuid"), nullable=False)
+    deployment_id = Column(String(255), ForeignKey("deployments.uuid"), nullable=True, index=True)
+    experiment_id = Column(String(255), ForeignKey("experiments.uuid"), nullable=True, index=True)
+    task_id = Column(String(255), ForeignKey("tasks.uuid"), nullable=False, index=True)
     dependencies = Column(JSON, nullable=True, default=[])
     parameters = Column(JSON, nullable=False, default={})
     position_x = Column("position_x", Float, nullable=True)

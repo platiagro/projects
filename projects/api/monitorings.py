@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, jsonify, request
 
-from projects.controllers.monitorings import list_monitorings, \
-    create_monitoring, delete_monitoring
+from projects.controllers import MonitoringController, ProjectController
+from projects.database import session_scope
 from projects.utils import to_snake_case
 
 bp = Blueprint("monitorings", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_list_monitorings(project_id, deployment_id):
+@session_scope
+def handle_list_monitorings(session, project_id, deployment_id):
     """
     Handles GET requests to /.
 
@@ -22,11 +23,18 @@ def handle_list_monitorings(project_id, deployment_id):
     -------
     str
     """
-    return jsonify(list_monitorings(project_id=project_id, deployment_id=deployment_id))
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    controller = MonitoringController(session)
+    monitorings = controller.list_monitorings(project_id=project_id,
+                                              deployment_id=deployment_id)
+    return jsonify(monitorings)
 
 
 @bp.route("", methods=["POST"])
-def handle_post_monitorings(project_id, deployment_id):
+@session_scope
+def handle_post_monitorings(session, project_id, deployment_id):
     """
     Handles POST requests to /.
 
@@ -39,17 +47,21 @@ def handle_post_monitorings(project_id, deployment_id):
     -------
     str
     """
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    controller = MonitoringController(session)
     kwargs = request.get_json(force=True)
     kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    monitoring = create_monitoring(
-        project_id=project_id,
-        deployment_id=deployment_id,
-        **kwargs)
+    monitoring = controller.create_monitoring(project_id=project_id,
+                                              deployment_id=deployment_id,
+                                              **kwargs)
     return jsonify(monitoring)
 
 
 @bp.route("<monitoring_id>", methods=["DELETE"])
-def handle_delete_monitorings(project_id, deployment_id, monitoring_id):
+@session_scope
+def handle_delete_monitorings(session, project_id, deployment_id, monitoring_id):
     """
     Handles DELETE requests to /<monitoring_id>.
 
@@ -63,8 +75,11 @@ def handle_delete_monitorings(project_id, deployment_id, monitoring_id):
     -------
     str
     """
-    response = delete_monitoring(
-        uuid=monitoring_id,
-        project_id=project_id,
-        deployment_id=deployment_id)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    controller = MonitoringController(session)
+    response = controller.delete_monitoring(uuid=monitoring_id,
+                                            project_id=project_id,
+                                            deployment_id=deployment_id)
     return jsonify(response)

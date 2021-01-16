@@ -2,15 +2,17 @@
 """Operators blueprint."""
 from flask import Blueprint, jsonify, request
 
-from projects.controllers.operators import list_operators, create_operator, \
-    update_operator, delete_operator
+from projects.controllers import ExperimentController, \
+    OperatorController, ProjectController
+from projects.database import session_scope
 from projects.utils import to_snake_case
 
 bp = Blueprint("operators", __name__)
 
 
 @bp.route("", methods=["GET"])
-def handle_list_operators(project_id, experiment_id):
+@session_scope
+def handle_list_operators(session, project_id, experiment_id):
     """
     Handles GET requests to /.
 
@@ -23,12 +25,21 @@ def handle_list_operators(project_id, experiment_id):
     -------
     str
     """
-    return jsonify(list_operators(project_id=project_id,
-                                  experiment_id=experiment_id))
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
+
+    operator_controller = OperatorController(session)
+    operators = operator_controller.list_operators(project_id=project_id,
+                                                   experiment_id=experiment_id)
+    return jsonify(operators)
 
 
 @bp.route("", methods=["POST"])
-def handle_post_operator(project_id, experiment_id):
+@session_scope
+def handle_post_operator(session, project_id, experiment_id):
     """
     Handles POST requests to /.
 
@@ -41,16 +52,24 @@ def handle_post_operator(project_id, experiment_id):
     -------
     str
     """
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
+
+    operator_controller = OperatorController(session)
     kwargs = request.get_json(force=True)
     kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    operator = create_operator(project_id=project_id,
-                               experiment_id=experiment_id,
-                               **kwargs)
+    operator = operator_controller.create_operator(project_id=project_id,
+                                                   experiment_id=experiment_id,
+                                                   **kwargs)
     return jsonify(operator)
 
 
 @bp.route("<operator_id>", methods=["PATCH"])
-def handle_patch_operator(project_id, experiment_id, operator_id):
+@session_scope
+def handle_patch_operator(session, project_id, experiment_id, operator_id):
     """
     Handles PATCH requests to /<operator_id>.
 
@@ -64,17 +83,25 @@ def handle_patch_operator(project_id, experiment_id, operator_id):
     -------
     str
     """
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
+
+    operator_controller = OperatorController(session)
     kwargs = request.get_json(force=True)
     kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    operator = update_operator(operator_id=operator_id,
-                               project_id=project_id,
-                               experiment_id=experiment_id,
-                               **kwargs)
+    operator = operator_controller.update_operator(operator_id=operator_id,
+                                                   project_id=project_id,
+                                                   experiment_id=experiment_id,
+                                                   **kwargs)
     return jsonify(operator)
 
 
 @bp.route("<operator_id>", methods=["DELETE"])
-def handle_delete_operator(project_id, experiment_id, operator_id):
+@session_scope
+def handle_delete_operator(session, project_id, experiment_id, operator_id):
     """
     Handles DELETE requests to /<operator_id>.
 
@@ -88,7 +115,14 @@ def handle_delete_operator(project_id, experiment_id, operator_id):
     -------
     str
     """
-    operator = delete_operator(operator_id=operator_id,
-                               project_id=project_id,
-                               experiment_id=experiment_id)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
+
+    operator_controller = OperatorController(session)
+    operator = operator_controller.delete_operator(operator_id=operator_id,
+                                                   project_id=project_id,
+                                                   experiment_id=experiment_id)
     return jsonify(operator)

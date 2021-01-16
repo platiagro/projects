@@ -11,8 +11,8 @@ from projects.utils import to_camel_case
 class Monitoring(Base):
     __tablename__ = "monitoring"
     uuid = Column(String(255), primary_key=True)
-    deployment_id = Column(String(255), ForeignKey("deployments.uuid"), nullable=True)
-    task_id = Column(String(255), ForeignKey("tasks.uuid"), nullable=False)
+    deployment_id = Column(String(255), ForeignKey("deployments.uuid"), nullable=True, index=True)
+    task_id = Column(String(255), ForeignKey("tasks.uuid"), nullable=False, index=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):

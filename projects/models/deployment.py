@@ -18,9 +18,11 @@ class Deployment(Base):
     experiment_id = Column(String(255), ForeignKey("experiments.uuid"), nullable=True)
     is_active = Column(Boolean, nullable=False, server_default=expression.true())
     name = Column(Text, nullable=False)
-    operators = relationship("Operator", primaryjoin=uuid == Operator.deployment_id)
+    operators = relationship("Operator",
+                             primaryjoin=uuid == Operator.deployment_id,
+                             lazy="joined")
     position = Column(Integer, nullable=False, default=-1)
-    project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False)
+    project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False, index=True)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):

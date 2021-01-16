@@ -16,15 +16,19 @@ class Experiment(Base):
     __tablename__ = "experiments"
     uuid = Column(String(255), primary_key=True)
     name = Column(Text, nullable=False)
-    project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False)
+    project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False, index=True)
     position = Column(Integer, nullable=False, default=-1)
     is_active = Column(Boolean, nullable=False, server_default=expression.true())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    operators = relationship("Operator", backref="experiment",
-                             primaryjoin=uuid == Operator.experiment_id)
-    deployments = relationship("Deployment", backref="experiment",
-                               primaryjoin=uuid == Deployment.experiment_id)
+    operators = relationship("Operator",
+                             backref="experiment",
+                             primaryjoin=uuid == Operator.experiment_id,
+                             lazy="joined")
+    deployments = relationship("Deployment",
+                               backref="experiment",
+                               primaryjoin=uuid == Deployment.experiment_id,
+                               lazy="joined")
 
     def __repr__(self):
         return f"<Experiment {self.name}>"

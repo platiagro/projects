@@ -26,7 +26,7 @@ from projects.api.projects import bp as projects_blueprint
 from projects.api.tasks import bp as tasks_blueprint
 from projects.api.tasks.parameters import bp as tasks_parameters_blueprint
 from projects.api.templates import bp as templates_blueprint
-from projects.database import db_session, init_db
+from projects.database import Session, engine, init_db
 
 app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
@@ -102,7 +102,14 @@ app.register_blueprint(
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
-    db_session.remove()
+    """
+    Remove database sessions at the end of the request.
+
+    Parameters
+    ----------
+    exception : Exception
+    """
+    Session.remove()
 
 
 @app.route("/", methods=["GET"])
@@ -118,9 +125,19 @@ def ping():
 @app.errorhandler(MethodNotAllowed)
 @app.errorhandler(Forbidden)
 @app.errorhandler(InternalServerError)
-def handle_errors(e):
-    """Handles exceptions raised by the API."""
-    return jsonify({"message": e.description}), e.code
+def handle_errors(exception):
+    """
+    Handles exceptions raised by the API.
+
+    Parameters
+    ----------
+    exception : Exception
+
+    Returns
+    -------
+    str
+    """
+    return jsonify({"message": exception.description}), exception.code
 
 
 def parse_args(args):
@@ -151,5 +168,8 @@ if __name__ == "__main__":
     # Initializes DB if required
     if args.init_db:
         init_db()
+
+    if args.debug:
+        engine.echo = True
 
     app.run(host="0.0.0.0", port=args.port, debug=args.debug)

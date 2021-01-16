@@ -7,6 +7,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from projects.database import Base
+from projects.models import Deployment, Experiment
 from projects.kubernetes.seldon import list_project_seldon_deployments
 from projects.utils import to_camel_case
 
@@ -18,7 +19,12 @@ class Project(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     description = Column(Text)
-    experiments = relationship("Experiment", lazy="joined")
+    experiments = relationship("Experiment",
+                               primaryjoin=uuid == Experiment.project_id,
+                               lazy="joined")
+    deployments = relationship("Deployment",
+                               primaryjoin=uuid == Deployment.project_id,
+                               lazy="joined")
 
     def __repr__(self):
         return f"<Project {self.name}>"
@@ -37,7 +43,7 @@ class Project(Base):
 
     @hybrid_property
     def hasPreDeployment(self):
-        return any([True for experiment in self.experiments if experiment.deployments])
+        return any([True for deployment in self.deployments])
 
     @hybrid_property
     def hasDeployment(self):
