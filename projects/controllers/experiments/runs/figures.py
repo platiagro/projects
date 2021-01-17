@@ -2,17 +2,12 @@
 """Experiments Figures controller."""
 import platiagro
 
-from projects.controllers.experiments import ExperimentController
-from projects.controllers.projects import ProjectController
-
 
 class FigureController:
     def __init__(self, session):
         self.session = session
-        self.project_controller = ProjectController(session)
-        self.experiment_controller = ExperimentController(session)
 
-    def list_figures(self, project_id, experiment_id, run_id, operator_id):
+    def list_figures(self, project_id: str, experiment_id: str, run_id: str, operator_id: str):
         """
         Lists all figures from object storage as data URI scheme.
 
@@ -34,9 +29,6 @@ class FigureController:
         NotFound
             When any of project_id, experiment_id, run_id, or operator_id does not exist.
         """
-        self.project_controller.raise_if_project_does_not_exist(project_id)
-        self.experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
-
         figures = platiagro.list_figures(experiment_id=experiment_id,
                                          operator_id=operator_id,
                                          run_id=run_id)

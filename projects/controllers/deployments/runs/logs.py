@@ -5,8 +5,6 @@ import re
 from ast import literal_eval
 from io import StringIO
 
-from projects.controllers.deployments import DeploymentController
-from projects.controllers.projects import ProjectController
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_pod_log
 
@@ -19,10 +17,8 @@ LOG_LEVEL_PATTERN = r'(?<![\\w\\d])INFO(?![\\w\\d])|(?<![\\w\\d])WARN(?![\\w\\d]
 class LogController:
     def __init__(self, session):
         self.session = session
-        self.project_controller = ProjectController(session)
-        self.deployment_controller = DeploymentController(session)
 
-    def list_logs(self, project_id, deployment_id, run_id):
+    def list_logs(self, project_id: str, deployment_id: str, run_id: str):
         """
         Lists logs from a deployment run.
 
@@ -42,9 +38,6 @@ class LogController:
         NotFound
             When any of project_id or deployment_id does not exist.
         """
-        self.project_controller.raise_if_project_does_not_exist(project_id)
-        self.deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
-
         deployment_pods = list_deployment_pods(deployment_id)
         response = []
         status = {'status': 'Starting'}

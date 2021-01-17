@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
-"""Operators blueprint."""
-from flask import Blueprint, jsonify, request
+"""Operators API Router."""
+from fastapi import APIRouter, Depends
 
-from projects.controllers import ExperimentController, \
-    OperatorController, ProjectController
-from projects.database import session_scope
-from projects.utils import to_snake_case
+import projects.schemas.operator
+from projects.controllers import ExperimentController, OperatorController, \
+    ProjectController
+from projects.database import Session, session_scope
 
-bp = Blueprint("operators", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/experiments/{experiment_id}/operators",
+)
 
 
-@bp.route("", methods=["GET"])
-@session_scope
-def handle_list_operators(session, project_id, experiment_id):
+@router.get("", response_model=projects.schemas.operator.OperatorList)
+async def handle_list_operators(project_id: str,
+                                experiment_id: str,
+                                session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
@@ -20,10 +23,11 @@ def handle_list_operators(session, project_id, experiment_id):
     ----------
     project_id : str
     experiment_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.operator.OperatorList
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
@@ -34,12 +38,14 @@ def handle_list_operators(session, project_id, experiment_id):
     operator_controller = OperatorController(session)
     operators = operator_controller.list_operators(project_id=project_id,
                                                    experiment_id=experiment_id)
-    return jsonify(operators)
+    return operators
 
 
-@bp.route("", methods=["POST"])
-@session_scope
-def handle_post_operator(session, project_id, experiment_id):
+@router.post("", response_model=projects.schemas.operator.Operator)
+async def handle_post_operator(project_id: str,
+                               experiment_id: str,
+                               operator: projects.schemas.operator.OperatorCreate,
+                               session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
 
@@ -47,10 +53,12 @@ def handle_post_operator(session, project_id, experiment_id):
     ----------
     project_id : str
     experiment_id : str
+    operator : projects.schemas.operator.OperatorCreate
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.operator.Operator
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
@@ -59,17 +67,18 @@ def handle_post_operator(session, project_id, experiment_id):
     experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
 
     operator_controller = OperatorController(session)
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
     operator = operator_controller.create_operator(project_id=project_id,
                                                    experiment_id=experiment_id,
-                                                   **kwargs)
-    return jsonify(operator)
+                                                   operator=operator)
+    return operator
 
 
-@bp.route("<operator_id>", methods=["PATCH"])
-@session_scope
-def handle_patch_operator(session, project_id, experiment_id, operator_id):
+@router.patch("/{operator_id}", response_model=projects.schemas.operator.Operator)
+async def handle_patch_operator(project_id: str,
+                                experiment_id: str,
+                                operator_id: str,
+                                operator: projects.schemas.operator.OperatorUpdate,
+                                session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<operator_id>.
 
@@ -78,10 +87,12 @@ def handle_patch_operator(session, project_id, experiment_id, operator_id):
     project_id : str
     experiment_id : str
     operator_id : str
+    operator : projects.schemas.operator.OperatorUpdate
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.operator.Operator
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
@@ -90,18 +101,17 @@ def handle_patch_operator(session, project_id, experiment_id, operator_id):
     experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
 
     operator_controller = OperatorController(session)
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
     operator = operator_controller.update_operator(operator_id=operator_id,
                                                    project_id=project_id,
                                                    experiment_id=experiment_id,
-                                                   **kwargs)
-    return jsonify(operator)
+                                                   operator=operator)
+    return operator
 
 
-@bp.route("<operator_id>", methods=["DELETE"])
-@session_scope
-def handle_delete_operator(session, project_id, experiment_id, operator_id):
+@router.delete("/{operator_id}")
+async def handle_delete_operator(project_id: str,
+                                 experiment_id: str, operator_id: str,
+                                 session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<operator_id>.
 
@@ -110,10 +120,11 @@ def handle_delete_operator(session, project_id, experiment_id, operator_id):
     project_id : str
     experiment_id : str
     operator_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.message.Message
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
@@ -125,4 +136,4 @@ def handle_delete_operator(session, project_id, experiment_id, operator_id):
     operator = operator_controller.delete_operator(operator_id=operator_id,
                                                    project_id=project_id,
                                                    experiment_id=experiment_id)
-    return jsonify(operator)
+    return operator

@@ -6,28 +6,7 @@ import random
 import re
 import uuid
 
-from werkzeug.exceptions import BadRequest, NotFound
-from kfp_server_api.exceptions import ApiException
-
-from projects.kfp import kfp_client
-
-
-def raise_if_run_does_not_exist(run_id):
-    """
-    Raises an exception if the specified run does not exist.
-
-    Parameters
-    ----------
-    run_id : str
-
-    Raises
-    ------
-    NotFound
-    """
-    try:
-        kfp_client().get_run(run_id=run_id)
-    except ApiException:
-        raise NotFound("The specified run does not exist")
+from projects.exceptions import BadRequest
 
 
 def uuid_alpha():

@@ -5,7 +5,6 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, ForeignKey, JSON, String
 
 from projects.database import Base
-from projects.utils import to_camel_case
 
 
 class Comparison(Base):
@@ -19,10 +18,3 @@ class Comparison(Base):
     layout = Column(JSON)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"<Comparison {self.uuid}>"
-
-    def as_dict(self):
-        d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
-        return d

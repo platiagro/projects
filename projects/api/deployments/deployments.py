@@ -1,64 +1,69 @@
 # -*- coding: utf-8 -*-
-"""Deployments blueprint."""
-from flask import Blueprint, jsonify, request
+"""Deployments API Router."""
+from fastapi import APIRouter, Depends
 
+import projects.schemas.deployment
 from projects.controllers import DeploymentController, OperatorController, \
     ProjectController
-from projects.database import session_scope
-from projects.utils import to_snake_case
+from projects.database import Session, session_scope
 
-bp = Blueprint("deployments", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/deployments",
+)
 
 
-@bp.route("", methods=["GET"])
-@session_scope
-def handle_list_deployments(session, project_id):
+@router.get("", response_model=projects.schemas.deployment.DeploymentList)
+async def handle_list_deployments(project_id: str,
+                                  session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
     Parameters
     ----------
     project_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.deployment.DeploymentList
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
     deployments = deployment_controller.list_deployments(project_id=project_id)
-    return jsonify(deployments)
+    return deployments
 
 
-@bp.route("", methods=["POST"])
-@session_scope
-def handle_post_deployments(session, project_id):
+@router.post("", response_model=projects.schemas.deployment.Deployment)
+async def handle_post_deployments(project_id: str,
+                                  deployment: projects.schemas.deployment.DeploymentCreate,
+                                  session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
 
     Parameters
     ----------
     project_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.deployment.Deployment
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    deployment = deployment_controller.create_deployment(project_id=project_id, **kwargs)
-    return jsonify(deployment)
+    deployment = deployment_controller.create_deployment(project_id=project_id,
+                                                         deployment=deployment)
+    return deployment
 
 
-@bp.route("<deployment_id>", methods=["GET"])
-@session_scope
-def handle_get_deployment(session, project_id, deployment_id):
+@router.get("/{deployment_id}", response_model=projects.schemas.deployment.Deployment)
+async def handle_get_deployment(project_id: str,
+                                deployment_id: str,
+                                session: Session = Depends(session_scope)):
     """
     Handles GET requests to /<deployment_id>.
 
@@ -66,10 +71,11 @@ def handle_get_deployment(session, project_id, deployment_id):
     ----------
     project_id : str
     deployment_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.deployment.Deployment
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
@@ -77,12 +83,14 @@ def handle_get_deployment(session, project_id, deployment_id):
     deployment_controller = DeploymentController(session)
     deployment = deployment_controller.get_deployment(deployment_id=deployment_id,
                                                       project_id=project_id)
-    return jsonify(deployment)
+    return deployment
 
 
-@bp.route("<deployment_id>", methods=["PATCH"])
-@session_scope
-def handle_patch_deployment(session, project_id, deployment_id):
+@router.patch("/{deployment_id}", response_model=projects.schemas.deployment.Deployment)
+async def handle_patch_deployment(project_id: str,
+                                  deployment_id: str,
+                                  deployment: projects.schemas.deployment.DeploymentUpdate,
+                                  session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<deployment_id>.
 
@@ -90,26 +98,26 @@ def handle_patch_deployment(session, project_id, deployment_id):
     ----------
     project_id : str
     deployment_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.deployment.Deployment
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
     deployment = deployment_controller.update_deployment(deployment_id=deployment_id,
                                                          project_id=project_id,
-                                                         **kwargs)
-    return jsonify(deployment)
+                                                         deployment=deployment)
+    return deployment
 
 
-@bp.route("<deployment_id>", methods=["DELETE"])
-@session_scope
-def handle_delete_deployment(session, project_id, deployment_id):
+@router.delete("/{deployment_id}")
+async def handle_delete_deployment(project_id: str,
+                                   deployment_id: str,
+                                   session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<deployment_id>.
 
@@ -117,10 +125,11 @@ def handle_delete_deployment(session, project_id, deployment_id):
     ----------
     project_id : str
     deployment_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.message.Message
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
@@ -128,12 +137,15 @@ def handle_delete_deployment(session, project_id, deployment_id):
     deployment_controller = DeploymentController(session)
     deployment = deployment_controller.delete_deployment(deployment_id=deployment_id,
                                                          project_id=project_id)
-    return jsonify(deployment)
+    return deployment
 
 
-@bp.route("<deployment_id>/operators/<operator_id>", methods=["PATCH"])
-@session_scope
-def handle_patch_operator(session, project_id, deployment_id, operator_id):
+@router.patch("/{deployment_id}/operators/{operator_id}", response_model=projects.schemas.operator.Operator)
+async def handle_patch_operator(project_id: str,
+                                deployment_id: str,
+                                operator_id: str,
+                                operator: projects.schemas.operator.OperatorUpdate,
+                                session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<deployment_id>/operators/<operator_id>.
 
@@ -142,19 +154,21 @@ def handle_patch_operator(session, project_id, deployment_id, operator_id):
     project_id : str
     deployment_id : str
     operator_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.operator.Operator
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = OperatorController(session)
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    operator = deployment_controller.update_operator(operator_id=operator_id,
-                                                     project_id=project_id,
-                                                     deployment_id=deployment_id,
-                                                     **kwargs)
+    deployment_controller = DeploymentController(session)
+    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
+
+    operator_controller = OperatorController(session)
+    operator = operator_controller.update_operator(operator_id=operator_id,
+                                                   project_id=project_id,
+                                                   deployment_id=deployment_id,
+                                                   operator=operator)
     return operator

@@ -8,7 +8,6 @@ from sqlalchemy.sql import expression
 
 from projects.database import Base
 from projects.models.operator import Operator
-from projects.utils import to_camel_case
 
 
 class Deployment(Base):
@@ -24,12 +23,3 @@ class Deployment(Base):
     position = Column(Integer, nullable=False, default=-1)
     project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False, index=True)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"<Deployment {self.name}>"
-
-    def as_dict(self):
-        d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
-        d["operators"] = [operator.as_dict() for operator in self.operators]
-        d["status"] = None  # TODO
-        return d

@@ -6,18 +6,16 @@ import pkgutil
 import re
 import tempfile
 from datetime import datetime
+from typing import Optional
 
-from minio.error import ResponseError
 from sqlalchemy import func
 from sqlalchemy import asc, desc
-from sqlalchemy.exc import InvalidRequestError, IntegrityError, ProgrammingError
-from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
+from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
-from projects.jupyter import list_files, delete_file, update_folder_name
+from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, copy_files_in_pod, \
     create_persistent_volume_claim, set_notebook_metadata
-from projects.models import Task
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
@@ -32,7 +30,7 @@ class TaskController:
     def __init__(self, session):
         self.session = session
 
-    def raise_if_task_does_not_exist(self, task_id):
+    def raise_if_task_does_not_exist(self, task_id: str):
         """
         Raises an exception if the specified task does not exist.
 
@@ -44,14 +42,14 @@ class TaskController:
         ------
         NotFound
         """
-        exists = self.session.query(Task.uuid) \
+        exists = self.session.query(models.Task.uuid) \
             .filter_by(uuid=task_id) \
             .scalar() is not None
 
         if not exists:
-            raise NotFound("The specified task does not exist")
+            raise NOT_FOUND
 
-    def list_tasks(self, page, page_size, order_by=None, **filters):
+    def list_tasks(self, page: Optional[int] = None, page_size: Optional[int] = None, order_by: str = Optional[str]):
         """
         Lists tasks. Supports pagination, and sorting.
 
@@ -63,25 +61,23 @@ class TaskController:
             The page size.
         order_by : str
             Order by instruction. Format is "column [asc|desc]".
-        **filters : dict
 
         Returns
         -------
-        dict
-            One page of tasks and the total of records.
+        projects.schemas.task.TaskList
 
         Raises
         ------
         BadRequest
             When order_by is invalid.
         """
-        query = self.session.query(Task)
-        query_total = self.session.query(func.count(Task.uuid))
+        query = self.session.query(models.Task)
+        query_total = self.session.query(func.count(models.Task.uuid))
 
-        # Apply filters to the query
-        for column, value in filters.items():
-            query = query.filter(getattr(Task, column).ilike(f"%{value}%"))
-            query_total = query_total.filter(getattr(Task, column).ilike(f"%{value}%"))
+        # FIXME Apply filters to the query
+        # for column, value in filters.items():
+        #     query = query.filter(getattr(models.Task, column).ilike(f"%{value}%"))
+        #     query_total = query_total.filter(getattr(models.Task, column).ilike(f"%{value}%"))
 
         total = query_total.scalar()
 
@@ -93,14 +89,14 @@ class TaskController:
         try:
             (column, sort) = order_by.split()
             assert sort.lower() in ["asc", "desc"]
-            assert column in Task.__table__.columns.keys()
+            assert column in models.Task.__table__.columns.keys()
         except (AssertionError, ValueError):
             raise BadRequest("Invalid order argument")
 
         if sort.lower() == "asc":
-            query = query.order_by(asc(getattr(Task, column)))
+            query = query.order_by(asc(getattr(models.Task, column)))
         elif sort.lower() == "desc":
-            query = query.order_by(desc(getattr(Task, column)))
+            query = query.order_by(desc(getattr(models.Task, column)))
 
         if page and page_size:
             # Applies pagination
@@ -108,81 +104,64 @@ class TaskController:
 
         tasks = query.all()
 
-        return {
-            "total": total,
-            "tasks": tasks,
-        }
+        return schemas.TaskList.from_model(tasks, total)
 
-    def create_task(self, **kwargs):
+    def create_task(self, task: schemas.TaskCreate):
         """
-        Creates a new task in our database/object storage.
+        Creates a new task in our database and a volume claim in the cluster.
 
         Parameters
         ----------
-        **kwargs
-            Arbitrary keyword arguments.
+        task: projects.schemas.task.TaskCreate
 
         Returns
         -------
-        dict
-            The task attributes.
+        projects.schemas.task.Task
 
         Raises
         ------
         BadRequest
-            When the `**kwargs` (task attributes) are invalid.
+            When task attributes are invalid.
         """
-        name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
-        tags = kwargs.get("tags", ["DEFAULT"])
-        image = kwargs.get("image", None)
-        commands = kwargs.get("commands", None)
-        arguments = kwargs.get("arguments", None)
-        parameters = kwargs.get("parameters", [])
-        experiment_notebook = kwargs.get("experiment_notebook", None)
-        deployment_notebook = kwargs.get("deployment_notebook", None)
-        is_default = kwargs.get("is_default", None)
-        copy_from = kwargs.get("copy_from", None)
-
-        if not isinstance(name, str):
+        if not isinstance(task.name, str):
             raise BadRequest("name is required")
 
-        has_notebook = experiment_notebook or deployment_notebook
+        has_notebook = task.experiment_notebook or task.deployment_notebook
 
-        if copy_from and has_notebook:
+        if task.copy_from and has_notebook:
             raise BadRequest("Either provide notebooks or a task to copy from")
 
-        if len(tags) == 0:
-            tags = ["DEFAULT"]
+        if len(task.tags) == 0:
+            task.tags = ["DEFAULT"]
 
-        if any(tag not in VALID_TAGS for tag in tags):
+        if any(tag not in VALID_TAGS for tag in task.tags):
             valid_str = ",".join(VALID_TAGS)
             raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
         # check if image is a valid docker image
-        self.raise_if_invalid_docker_image(image)
+        self.raise_if_invalid_docker_image(task.image)
 
-        check_comp_name = self.session.query(Task).filter_by(name=name).first()
+        check_comp_name = self.session.query(models.Task).filter_by(name=task.name).first()
         if check_comp_name:
             raise BadRequest("a task with that name already exists")
 
         # creates a task with specified name,
         # but copies notebooks from a source task
-        if copy_from:
-            return self.copy_task(name, description, tags, copy_from)
+        if task.copy_from:
+            return self.copy_task(task)
 
         task_id = str(uuid_alpha())
 
         # loads a sample notebook if none was sent
-        if experiment_notebook is None:
-            experiment_notebook = EXPERIMENT_NOTEBOOK
+        if task.experiment_notebook is None:
+            task.experiment_notebook = EXPERIMENT_NOTEBOOK
 
-        if deployment_notebook is None:
-            deployment_notebook = DEPLOYMENT_NOTEBOOK
+        if task.deployment_notebook is None:
+            task.deployment_notebook = DEPLOYMENT_NOTEBOOK
 
         # mounts a volume for the task in the notebook server
-        create_persistent_volume_claim(name=f"task-{task_id}",
-                                       mount_path=f"/home/jovyan/tasks/{name}")
+        create_persistent_volume_claim(name=f"vol-task-{task_id}",
+                                       mount_path=f"/home/jovyan/tasks/{task.name}")
 
         # relative path to the mount_path
         experiment_notebook_path = "Experiment.ipynb"
@@ -190,10 +169,10 @@ class TaskController:
 
         # copies experiment notebook file to pod
         with tempfile.NamedTemporaryFile("w", delete=False) as f:
-            json.dump(experiment_notebook, f)
+            json.dump(task.experiment_notebook, f)
 
         filepath = f.name
-        destination_path = f"{name}/{experiment_notebook_path}"
+        destination_path = f"{task.name}/{experiment_notebook_path}"
         copy_file_to_pod(filepath, destination_path)
         os.remove(filepath)
 
@@ -211,10 +190,10 @@ class TaskController:
 
         # copies deployment notebook file to pod
         with tempfile.NamedTemporaryFile("w", delete=False) as f:
-            json.dump(deployment_notebook, f)
+            json.dump(task.deployment_notebook, f)
 
         filepath = f.name
-        destination_path = f"{name}/{deployment_notebook_path}"
+        destination_path = f"{task.name}/{deployment_notebook_path}"
         copy_file_to_pod(filepath, destination_path)
         os.remove(filepath)
         set_notebook_metadata(
@@ -225,22 +204,24 @@ class TaskController:
         )
 
         # saves task info to the database
-        task = Task(
+        task = models.Task(
             uuid=task_id,
-            name=name,
-            description=description,
-            tags=tags,
-            image=image,
-            commands=commands,
-            arguments=arguments,
-            parameters=parameters,
+            name=task.name,
+            description=task.description,
+            tags=task.tags,
+            image=task.image,
+            commands=task.commands,
+            arguments=task.arguments,
+            parameters=task.parameters,
             experiment_notebook_path=experiment_notebook_path,
             deployment_notebook_path=deployment_notebook_path,
-            is_default=is_default,
+            is_default=task.is_default,
         )
         self.session.add(task)
+        self.session.commit()
+        self.session.refresh(task)
 
-        return task
+        return schemas.Task.from_model(task)
 
     def get_task(self, task_id):
         """
@@ -252,102 +233,88 @@ class TaskController:
 
         Returns
         -------
-        dict
-            The task attributes.
+        projects.schemas.task.Task
 
         Raises
         ------
         NotFound
             When task_id does not exist.
         """
-        task = self.session.query(Task).get(task_id)
+        task = self.session.query(models.Task).get(task_id)
 
         if task is None:
             raise NOT_FOUND
 
-        return task
+        return schemas.Task.from_model(task)
 
-    def update_task(self, task_id, **kwargs):
+    def update_task(self, task: schemas.TaskUpdate, task_id: str):
         """
         Updates a task in our database/object storage.
 
         Parameters
         ----------
+        task: projects.schemas.task.TaskUpdate
         task_id : str
-        **kwargs:
-            Arbitrary keyword arguments.
 
         Returns
         -------
-        dict
-            The task attributes.
+        task: projects.schemas.task.Task
 
         Raises
         ------
         NotFound
             When task_id does not exist.
         BadRequest
-            When the `**kwargs` (task attributes) are invalid.
+            When task attributes are invalid.
         """
-        task = self.session.query(Task).get(task_id)
+        self.raise_if_task_does_not_exist(task_id)
 
-        if task is None:
-            raise NOT_FOUND
+        stored_task = self.session.query(models.Task) \
+            .filter_by(name=task.name) \
+            .first()
+        if stored_task and stored_task.uuid != task_id:
+            raise BadRequest("a task with that name already exists")
 
-        if "name" in kwargs:
-            name = kwargs["name"]
-            if name != task.name:
-                check_comp_name = self.session.query(Task).filter_by(name=name).first()
-                if check_comp_name:
-                    raise BadRequest("a task with that name already exists")
-
-        if "tags" in kwargs:
-            tags = kwargs["tags"]
-            if any(tag not in VALID_TAGS for tag in tags):
+        if task.tags:
+            if any(tag not in VALID_TAGS for tag in task.tags):
                 valid_str = ",".join(VALID_TAGS)
                 raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
-        if "experiment_notebook" in kwargs:
+        if task.experiment_notebook:
             with tempfile.NamedTemporaryFile("w", delete=False) as f:
-                json.dump(kwargs["experiment_notebook"], f)
+                json.dump(task.experiment_notebook, f)
 
             filepath = f.name
-            destination_path = f"{name}/{task.experiment_notebook_path}"
+            destination_path = f"{task.name}/{task.experiment_notebook_path}"
             copy_file_to_pod(filepath, destination_path)
-            del kwargs["experiment_notebook"]
             os.remove(filepath)
 
-        if "deployment_notebook" in kwargs:
+        if task.deployment_notebook:
             with tempfile.NamedTemporaryFile("w", delete=False) as f:
-                json.dump(kwargs["deployment_notebook"], f)
+                json.dump(task.deployment_notebook, f)
 
             filepath = f.name
-            destination_path = f"{name}/{task.deployment_notebook_path}"
+            destination_path = f"{task.name}/{task.deployment_notebook_path}"
             copy_file_to_pod(filepath, destination_path)
-            del kwargs["deployment_notebook"]
             os.remove(filepath)
 
-        # store the name to use it after update
-        old_name = task.name
+        # FIXME mudar o mount path no notebook server se o nome mudar
 
-        try:
-            data = {"updated_at": datetime.utcnow()}
-            data.update(kwargs)
-            self.session.query(Task).filter_by(uuid=task_id).update(data)
-        except (InvalidRequestError, ProgrammingError) as e:
-            raise BadRequest(str(e))
+        update_data = task.dict(exclude_unset=True)
+        del task["experiment_notebook"]
+        del task["deployment_notebook"]
+        update_data.update({"updated_at": datetime.utcnow()})
 
-        # update jupyter folder name if name changed
-        # FIXME mudar o mount path
-        if old_name != task.name:
-            raise BadRequest("Currently unavailable")
-            update_folder_name(f"{PREFIX}/{old_name}", f"{PREFIX}/{task.name}")
+        self.session.query(models.Task).filter_by(uuid=task_id).update(update_data)
+        self.session.commit()
 
-        return task
+        task = self.session.query(models.Task).get(task_id)
 
-    def delete_task(self, task_id):
+        return schemas.Task.from_model(task)
+
+    def delete_task(self, task_id: str):
         """
-        Delete a task in our database/object storage.
+        Delete a task in our database.
 
         Parameters
         ----------
@@ -355,79 +322,61 @@ class TaskController:
 
         Returns
         -------
-        dict
-            The deletion result.
+        projects.schemas.message.Message
 
         Raises
         ------
         NotFound
             When task_id does not exist.
         """
-        task = self.session.query(Task).get(task_id)
+        task = self.session.query(models.Task).get(task_id)
 
         if task is None:
             raise NOT_FOUND
 
-        try:
-            self.session.query(Task).filter_by(uuid=task_id).delete()
+        # FIXME remove persistent volume claim and patch notebook
 
-            # remove files and directory from jupyter notebook server
-            source_name = f"{PREFIX}/{task.name}"
-            jupyter_files = list_files(source_name)
-            if jupyter_files is not None:
-                for jupyter_file in jupyter_files["content"]:
-                    delete_file(jupyter_file["path"])
-                delete_file(source_name)
-        except IntegrityError as e:
-            raise Forbidden(str(e))
-        except (InvalidRequestError, ProgrammingError, ResponseError) as e:
-            raise BadRequest(str(e))
+        self.session.delete(task)
 
-        return {"message": "Task deleted"}
+        return schemas.Message(message="Task deleted")
 
-    def copy_task(self, name, description, tags, copy_from):
+    def copy_task(self, task: schemas.TaskCreate):
         """
-        Makes a copy of a task in our database/object storage.
+        Makes a copy of a task in our database.
 
         Parameters
         ----------
-        name : str
-        description : str
-        tags : list
-            The task tags list.
-        copy_from : str
-            The task_id from which the notebooks are copied.
+        task: projects.schemas.task.TaskCreate
 
         Returns
         -------
-        dict
-            The task attributes.
+        projects.schemas.task.Task
 
         Raises
         ------
         BadRequest
             When copy_from does not exist.
         """
-        task = self.session.query(Task).get(copy_from)
+        stored_task = self.session.query(models.Task).get(task.copy_from)
 
-        if task is None:
-            raise BadRequest("Source task does not exist")
+        if stored_task is None:
+            raise BadRequest("source task does not exist")
 
         task_id = uuid_alpha()
-        image = task.image
-        commands = task.commands
-        arguments = task.arguments
-        parameters = task.parameters
-        experiment_notebook_path = task.experiment_notebook_path
-        deployment_notebook_path = task.deployment_notebook_path
+        image = stored_task.image
+        commands = stored_task.commands
+        arguments = stored_task.arguments
+        parameters = stored_task.parameters
+        experiment_notebook_path = stored_task.experiment_notebook_path
+        deployment_notebook_path = stored_task.deployment_notebook_path
 
         # mounts a volume for the task in the notebook server
-        create_persistent_volume_claim(name=f"task-{task_id}",
-                                       mount_path=f"/home/jovyan/tasks/{name}")
+        create_persistent_volume_claim(name=f"vol-task-{task_id}",
+                                       mount_path=f"/home/jovyan/tasks/{task.name}")
 
         # Copies files in the notebook server
-        source_path = f"/home/jovyan/tasks/{task.name}/*"
-        destination_path = f"/home/jovyan/tasks/{name}/"
+        source_path = f"/home/jovyan/tasks/{stored_task.name}/*"
+        destination_path = f"/home/jovyan/tasks/{task.name}/"
         copy_files_in_pod(source_path, destination_path)
 
         experiment_id = uuid_alpha()
@@ -457,11 +406,11 @@ class TaskController:
             )
 
         # saves task info to the database
-        task = Task(
+        task = models.Task(
             uuid=task_id,
-            name=name,
-            description=description,
-            tags=tags,
+            name=task.name,
+            description=task.description,
+            tags=task.tags,
             image=image,
             commands=commands,
             arguments=arguments,
@@ -471,8 +420,10 @@ class TaskController:
             is_default=False,
         )
         self.session.add(task)
+        self.session.commit()
+        self.session.refresh(task)
 
-        return task
+        return schemas.Task.from_model(task)
 
     def raise_if_invalid_docker_image(self, image):
         """

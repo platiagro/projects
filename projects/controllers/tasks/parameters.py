@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """Parameters controller."""
-from werkzeug.exceptions import NotFound
-
-from projects.models import Task
+from projects import models
+from projects.exceptions import NotFound
 
 
 class ParameterController:
     def __init__(self, session):
         self.session = session
 
-    def list_parameters(self, task_id):
+    def list_parameters(self, task_id: str):
         """
         Lists all parameters from the experiment notebook of a task.
 
@@ -27,7 +26,7 @@ class ParameterController:
         NotFound
             When task_id does not exist.
         """
-        task = self.session.query(Task).query.get(task_id)
+        task = self.session.query(models.Task).query.get(task_id)
         if task is None:
             raise NotFound("The specified task does not exist")
 

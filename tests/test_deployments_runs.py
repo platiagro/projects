@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
-import os
 from json import dumps
 from os import remove
 from unittest import TestCase
+
+from fastapi.testclient import TestClient
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.kfp import kfp_client
 from projects.object_storage import BUCKET_NAME
-from tests.mock.api import start_mock_api
+
+TEST_CLIENT = TestClient(app)
 
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
@@ -36,8 +38,6 @@ class TestDeploymentsRuns(TestCase):
     def setUp(self):
         self.maxDiff = None
 
-        self.proc = start_mock_api()
-
         with open("tests/resources/mocked_deployment.yaml", "r") as file:
             content = file.read()
 
@@ -54,56 +54,56 @@ class TestDeploymentsRuns(TestCase):
 
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID}', 'name', 'desc', '{IMAGE}', NULL, NULL, '{TAGS_JSON}', '{EX_NOTEBOOK_PATH}', '{DEPLOY_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (TASK_ID, 'name', 'desc', IMAGE, None, None, TAGS_JSON, dumps(
+            []), EX_NOTEBOOK_PATH, DEPLOY_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID_2}', 'name', 'desc', '{IMAGE}', NULL, NULL, '{TAGS_JSON}', '{EX_NOTEBOOK_PATH}', NULL, 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (TASK_ID_2, 'name', 'desc', IMAGE, None, None, TAGS_JSON, dumps([]), EX_NOTEBOOK_PATH, None, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES (%s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
-            f"VALUES ('{DEPLOYMENT_ID}', '{NAME}', '{PROJECT_ID}', '{EXPERIMENT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
-            f"VALUES ('{DEPLOYMENT_ID_2}', '{NAME}', '{PROJECT_ID}', '{EXPERIMENT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (DEPLOYMENT_ID_2, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, deployment_id, task_id, parameters, created_at, updated_at, dependencies) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{DEPLOYMENT_ID}', '{TASK_ID_2}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '{DEP_EMPTY_JSON}')"
+            f"INSERT INTO operators (uuid, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (OPERATOR_ID, EXPERIMENT_ID, DEPLOYMENT_ID, TASK_ID_2, PARAMETERS_JSON, DEP_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, deployment_id, task_id, parameters, created_at, updated_at, dependencies) "
-            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{DEPLOYMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}', '[\"{OPERATOR_ID}\"]')"
+            f"INSERT INTO operators (uuid, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (OPERATOR_ID_2, EXPERIMENT_ID, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, dumps([OPERATOR_ID]), CREATED_AT, UPDATED_AT,))
         conn.close()
 
     def tearDown(self):
-        self.proc.terminate()
         conn = engine.connect()
 
         text = f"DELETE FROM operators WHERE experiment_id in" \
@@ -126,66 +126,61 @@ class TestDeploymentsRuns(TestCase):
 
         remove("tests/resources/mocked.yaml")
 
-    def test_create_run(self):
-        with app.test_client() as c:
-            rv = c.post(f"/projects/foo/deployments/{DEPLOYMENT_ID}/runs", json={})
-            result = rv.get_json()
-            expected = {'message': 'The specified project does not exist'}
-            self.assertIsInstance(result, dict)
-            self.assertEqual(rv.status_code, 404)
-
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments/foo/runs", json={})
-            result = rv.get_json()
-            expected = {'message': 'The specified deployment does not exist'}
-            self.assertIsInstance(result, dict)
-            self.assertEqual(rv.status_code, 404)
-
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID_2}/runs", json={})
-            result = rv.get_json()
-            expected = {'message': 'Necessary at least one operator.'}
-            self.assertIsInstance(result, dict)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
-            result = rv.get_json()
-            self.assertIsInstance(result, dict)
-            self.assertIn("uuid", result)
-            self.assertIn("operators", result)
-            self.assertEqual(DEPLOYMENT_ID, result["deploymentId"])
-            self.assertEqual(rv.status_code, 200)
-
     def test_list_runs(self):
-        with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
-            result = rv.get_json()
-            self.assertIsInstance(result, list)
-            self.assertGreater(len(result), 0)
-            self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
+        result = rv.json()
+        self.assertIsInstance(result["runs"], list)
+        self.assertIsInstance(result["total"], int)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_create_run(self):
+        rv = TEST_CLIENT.post(f"/projects/foo/deployments/{DEPLOYMENT_ID}/runs", json={})
+        result = rv.json()
+        expected = {'message': 'The specified project does not exist'}
+        self.assertIsInstance(result, dict)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/foo/runs", json={})
+        result = rv.json()
+        expected = {'message': 'The specified deployment does not exist'}
+        self.assertIsInstance(result, dict)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID_2}/runs", json={})
+        result = rv.json()
+        expected = {'message': 'Necessary at least one operator.'}
+        self.assertIsInstance(result, dict)
+        self.assertEqual(rv.status_code, 400)
+
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
+        result = rv.json()
+        self.assertIsInstance(result, dict)
+        self.assertIn("uuid", result)
+        self.assertIn("operators", result)
+        self.assertEqual(DEPLOYMENT_ID, result["deploymentId"])
+        self.assertEqual(rv.status_code, 200)
 
     def test_get_deployment_log(self):
-        with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/deployments/foo/runs/latest/logs")
-            result = rv.get_json()
-            expected = {"message": "The specified deployment does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/foo/runs/latest/logs")
+        result = rv.json()
+        expected = {"message": "The specified deployment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-            # rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
-            # result = rv.get_json()
-            # self.assertIsInstance(result, list)
-            # self.assertEqual(rv.status_code, 200)
+        # rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
+        # result = rv.json()
+        # self.assertIsInstance(result, list)
+        # self.assertEqual(rv.status_code, 200)
 
     def test_get_run(self):
-        with app.test_client() as c:
-            rv = c.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
-            result = rv.get_json()
-            self.assertIsInstance(result, dict)
-            self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
+        result = rv.json()
+        self.assertIsInstance(result, dict)
+        self.assertEqual(rv.status_code, 200)
 
     def test_delete_run(self):
-        with app.test_client() as c:
-            rv = c.delete(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
-            result = rv.get_json()
-            expected = {"message": "Deployment deleted."}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
+        result = rv.json()
+        expected = {"message": "Deployment deleted."}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)

@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 """Experiments Datasets controller."""
 from itertools import zip_longest
-from flask import make_response
-from pandas import DataFrame
-from platiagro import load_dataset, stat_dataset
-from werkzeug.exceptions import NotFound
+from typing import Optional
 
+import pandas as pd
+from fastapi.responses import StreamingResponse
+from platiagro import load_dataset, stat_dataset
+
+from projects import models
+from projects.exceptions import NotFound
 from projects.kfp.runs import get_latest_run_id
-from projects.models import Operator
 
 
 class DatasetController:
     def __init__(self, session):
         self.session = session
 
-    def get_dataset(self, project_id, experiment_id, run_id, operator_id,
-                    page=1, page_size=10, application_csv=False):
+    def get_dataset(self, project_id: str, experiment_id: str, run_id: str, operator_id: str,
+                    page: Optional[int] = 1, page_size: Optional[int] = 10, application_csv: bool = False):
         """
         Get dataset records from a run. Supports pagination.
 
@@ -60,13 +62,14 @@ class DatasetController:
             if page_size == -1:
                 content = dataset.to_csv(index=False)
             else:
-                df = DataFrame(columns=dataset.columns, data=paged_data)
+                df = pd.DataFrame(columns=dataset.columns, data=paged_data)
                 content = df.to_csv(index=False)
 
-            response = make_response(content)
-            response.headers["Content-Disposition"] = f"attachment; filename={name}"
-            response.headers["Content-type"] = "text/csv"
-            return response
+            return StreamingResponse(
+                content,
+                filename=name,
+                media_type="text/csv",
+            )
         else:
             if page_size == -1:
                 dataset = dataset.to_dict(orient="split")
@@ -126,13 +129,13 @@ class DatasetController:
         NotFound
             When a run does not have a dataset.
         """
-        operator = self.session.query(Operator).get(operator_id)
+        operator = self.session.query(models.Operator).get(operator_id)
         dataset_name = operator.parameters.get("dataset")
 
         if dataset_name is None:
-            operators = self.session.query(Operator) \
+            operators = self.session.query(models.Operator) \
                 .filter_by(experiment_id=experiment_id) \
-                .filter(Operator.uuid != operator_id) \
+                .filter(models.Operator.uuid != operator_id) \
                 .all()
 
             for operator in operators:

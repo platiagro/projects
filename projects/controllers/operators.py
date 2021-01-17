@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """Operator controller."""
 from datetime import datetime
+from typing import Dict, List, Optional
 
-from sqlalchemy.exc import InvalidRequestError, ProgrammingError
-from werkzeug.exceptions import BadRequest, NotFound
-
+from projects import models, schemas
 from projects.controllers.tasks import TaskController
 from projects.controllers.utils import uuid_alpha
-from projects.models import Operator
+from projects.exceptions import BadRequest, NotFound
 
+NOT_FOUND = NotFound("The specified operator does not exist")
 PARAMETERS_EXCEPTION_MSG = "The specified parameters are not valid"
 DEPENDENCIES_EXCEPTION_MSG = "The specified dependencies are not valid."
 
@@ -18,7 +18,7 @@ class OperatorController:
         self.session = session
         self.task_controller = TaskController(session)
 
-    def raise_if_operator_does_not_exist(self, operator_id, experiment_id=None):
+    def raise_if_operator_does_not_exist(self, operator_id: str, experiment_id: Optional[str] = None):
         """
         Raises an exception if the specified operator does not exist.
 
@@ -31,17 +31,17 @@ class OperatorController:
         ------
         NotFound
         """
-        operator = self.session.query(Operator) \
+        operator = self.session.query(models.Operator) \
             .filter_by(uuid=operator_id)
 
         if operator.scalar() is None:
-            raise NotFound("The specified operator does not exist")
+            raise NOT_FOUND
         else:
             # verify if operator is from the provided experiment
             if experiment_id and operator.one().experiment_id != experiment_id:
                 raise NotFound("The specified operator is from another experiment")
 
-    def list_operators(self, project_id, experiment_id):
+    def list_operators(self, project_id: str, experiment_id: str):
         """
         Lists all operators under an experiment.
 
@@ -52,139 +52,112 @@ class OperatorController:
 
         Returns
         -------
-        list
-            A list of all operators.
+        projects.schemas.ListOperator
 
         Raises
         ------
         NotFound
             When either project_id or experiment_id does not exist.
         """
-        operators = self.session.query(Operator) \
+        operators = self.session.query(models.Operator) \
             .filter_by(experiment_id=experiment_id) \
             .all()
 
-        return operators
+        return schemas.OperatorList.from_model(operators, len(operators))
 
-    def create_operator(self, project_id, experiment_id=None, deployment_id=None,
-                        task_id=None, parameters=None, dependencies=None,
-                        position_x=None, position_y=None, **kwargs):
+    def create_operator(self, operator: schemas.OperatorCreate, project_id: str, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
         """
         Creates a new operator in our database.
-        The new operator is added to the end of the operator list.
 
         Parameters
         ----------
+        operator: projects.schemas.operator.OperatorCreate
         project_id : str
         experiment_id : str
-        task_id :str
-        parameters : dict
-            The parameters dict.
-        dependencies : list
-            The dependencies array.
-        position_x : float
-            Position x.
-        position_y : float
-            Position y.
-        **kwargs
-            Arbitrary keyword arguments.
 
         Returns
         -------
-        dict
-            The operator attributes.
+        projects.schemas.operator.Operator
 
         Raises
         ------
         BadRequest
-            When task_id is not a str instance.
-            When the `**kwargs` (task attributes) are invalid.
-        NotFound
-            When either project_id or experiment_id does not exist.
+            When the operator attributes are invalid.
         """
-        if dependencies is None:
-            dependencies = []
+        if not isinstance(operator.task_id, str):
+            raise BadRequest("taskId is required")
+
+        try:
+            self.task_controller.raise_if_task_does_not_exist(operator.task_id)
+        except NotFound as e:
+            raise BadRequest(e.message)
+
+        if operator.dependencies is None:
+            operator.dependencies = []
 
         if experiment_id:
-            self.raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies)
+            self.raise_if_dependencies_are_invalid(project_id, experiment_id, operator.dependencies)
 
         if experiment_id and deployment_id:
             raise BadRequest("Operator cannot contain an experiment and a deployment simultaneously")
 
-        if not isinstance(task_id, str):
-            raise BadRequest("taskId is required")
+        if operator.parameters is None:
+            operator.parameters = {}
 
-        try:
-            self.task_controller.raise_if_task_does_not_exist(task_id)
-        except NotFound as e:
-            raise BadRequest(e.description)
+        self.raise_if_parameters_are_invalid(operator.parameters)
 
-        if parameters is None:
-            parameters = {}
-
-        self.raise_if_parameters_are_invalid(parameters)
-
-        operator = Operator(uuid=uuid_alpha(),
-                            experiment_id=experiment_id,
-                            deployment_id=deployment_id,
-                            task_id=task_id,
-                            dependencies=dependencies,
-                            parameters=parameters,
-                            position_x=position_x,
-                            position_y=position_y)
+        operator = models.Operator(uuid=uuid_alpha(),
+                                   experiment_id=experiment_id,
+                                   deployment_id=deployment_id,
+                                   task_id=operator.task_id,
+                                   dependencies=operator.dependencies,
+                                   parameters=operator.parameters,
+                                   position_x=operator.position_x,
+                                   position_y=operator.position_y)
         self.session.add(operator)
+        self.session.commit()
+        self.session.refresh(operator)
 
-        return operator
+        return schemas.Operator.from_model(operator)
 
-    def update_operator(self, project_id, experiment_id, operator_id, **kwargs):
+    def update_operator(self, operator: schemas.OperatorUpdate, project_id: str, experiment_id: str, operator_id: str):
         """
         Updates an operator in our database and adjusts the position of others.
 
         Parameters
         ----------
+        operator: projects.schemas.operator.OperatorUpdate
         project_id  :str
         experiment_id : str
         operator_id : str
-        **kwargs
-            Arbitrary keyword arguments.
 
         Returns
         -------
-        dict
-            The operator attributes.
+        projects.schemas.operator.Operator
 
         Raises
         ------
         NotFound
-            When any of project_id, experiment_id, or operator_id does not exist.
+            When operator_id does not exist.
         BadRequest
-            When the `**kwargs` (task attributes) are invalid.
+            When the operator attributes are invalid.
         """
-        self.project_controller.raise_if_project_does_not_exist(project_id)
-        self.experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
+        self.raise_if_operator_does_not_exist(operator_id)
 
-        operator = self.session.query(Operator).get(operator_id)
+        if operator.dependencies is not None:
+            self.raise_if_dependencies_are_invalid(project_id, experiment_id, operator.dependencies, operator_id=operator_id)
 
-        if operator is None:
-            raise NotFound("The specified operator does not exist")
+        update_data = operator.dict(exclude_unset=True)
+        update_data.update({"updated_at": datetime.utcnow()})
 
-        self.raise_if_parameters_are_invalid(kwargs.get("parameters", {}))
+        self.session.query(models.Operator).filter_by(uuid=operator_id).update(update_data)
+        self.session.commit()
 
-        dependencies = kwargs.get("dependencies")
-        if dependencies is not None:
-            self.raise_if_dependencies_are_invalid(project_id, experiment_id, dependencies, operator_id=operator_id)
+        operator = self.session.query(models.Operator).get(operator_id)
 
-        data = {"updated_at": datetime.utcnow()}
-        data.update(kwargs)
+        return schemas.Operator.from_model(operator)
 
-        try:
-            self.session.query(Operator).filter_by(uuid=operator_id).update(data)
-        except (InvalidRequestError, ProgrammingError) as e:
-            raise BadRequest(str(e))
-
-        return operator
-
-    def delete_operator(self, project_id, experiment_id, operator_id):
+    def delete_operator(self, project_id: str, experiment_id: str, operator_id: str):
         """
         Delete an operator in our database.
 
@@ -196,27 +169,23 @@ class OperatorController:
 
         Returns
         -------
-        dict
-            The deletion result.
+        projects.schemas.message.Message
 
         Raises
         ------
         NotFound
-            When any of project_id, experiment_id, or operator_id does not exist.
+            When operator_id does not exist.
         """
-        self.project_controller.raise_if_project_does_not_exist(project_id)
-        self.experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
-
-        operator = self.session.query(Operator).get(operator_id)
+        operator = self.session.query(models.Operator).get(operator_id)
 
         if operator is None:
-            raise NotFound("The specified operator does not exist")
+            raise NOT_FOUND
 
         # check if other operators contains the operator being deleted
         # in dependencies and remove this operator from dependencies
-        operators = self.session.query(Operator) \
+        operators = self.session.query(models.Operator) \
             .filter_by(experiment_id=experiment_id) \
-            .filter(Operator.uuid != operator_id) \
+            .filter(models.Operator.uuid != operator_id) \
             .all()
         for op in operators:
             if operator_id in op.dependencies:
@@ -230,9 +199,9 @@ class OperatorController:
 
         self.session.delete(operator)
 
-        return {"message": "Operator deleted"}
+        return schemas.Message(message="Operator deleted")
 
-    def raise_if_parameters_are_invalid(self, parameters):
+    def raise_if_parameters_are_invalid(self, parameters: List[Dict]):
         """
         Raises an exception if the specified parameters are not valid.
 
@@ -252,7 +221,7 @@ class OperatorController:
             if value is not None and not isinstance(value, (str, int, float, bool, list, dict)):
                 raise BadRequest(PARAMETERS_EXCEPTION_MSG)
 
-    def raise_if_dependencies_are_invalid(self, project_id, experiment_id, dependencies, operator_id=None):
+    def raise_if_dependencies_are_invalid(self, project_id: str, experiment_id: str, dependencies: List, operator_id: Optional[str] = None):
         """
         Raises an exception if the specified dependencies are not valid.
         The invalid dependencies are duplicate elements on the dependencies,
@@ -289,7 +258,7 @@ class OperatorController:
 
         self.raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies)
 
-    def raise_if_has_cycles(self, project_id, experiment_id, operator_id, dependencies):
+    def raise_if_has_cycles(self, project_id: str, experiment_id: str, operator_id: str, dependencies: List[str]):
         """
         Raises an exception if the dependencies of operators from experiment are cyclical.
 
@@ -317,7 +286,7 @@ class OperatorController:
                 raise BadRequest("Cyclical dependencies.")
         return False
 
-    def has_cycles_util(self, operator_id, visited, recursion_stack, new_dependencies, new_dependencies_op):
+    def has_cycles_util(self, operator_id: str, visited: bool, recursion_stack: List, new_dependencies: List[str], new_dependencies_op: List[models.Operator]):
         """
         Check if a run has cycle.
 
@@ -326,8 +295,8 @@ class OperatorController:
         operator_id : str
         visited : bool
         recursion_stack : list
-        new_dependencies :
-        new_dependencies_op :
+        new_dependencies : list
+        new_dependencies_op : list
 
         Returns
         -------
@@ -337,7 +306,7 @@ class OperatorController:
         visited[operator_id] = True
         recursion_stack[operator_id] = True
 
-        operator = self.session.query(Operator).get(operator_id)
+        operator = self.session.query(models.Operator).get(operator_id)
         dependencies = operator.dependencies
 
         if operator_id == new_dependencies_op:

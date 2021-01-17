@@ -3,8 +3,8 @@
 from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
-from werkzeug.exceptions import InternalServerError
 
+from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.kube_config import load_kube_config
 

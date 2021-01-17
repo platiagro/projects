@@ -5,7 +5,6 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, JSON, String, Text
 
 from projects.database import Base
-from projects.utils import to_camel_case
 
 
 class Template(Base):
@@ -15,11 +14,3 @@ class Template(Base):
     tasks = Column(JSON, nullable=False, default=[])
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"<Template {self.name}>"
-
-    def as_dict(self):
-        d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
-        d["tasks"] = [{to_camel_case(k): v for k, v in task.items()} for task in self.tasks]
-        return d

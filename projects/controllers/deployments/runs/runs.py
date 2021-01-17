@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """Deployments Runs controller."""
 from kubernetes import client
-from werkzeug.exceptions import BadRequest, NotFound
+from kubernetes.client.rest import ApiException
 
-from projects.models import Deployment
+from projects import models, schemas
+from projects.exceptions import BadRequest, NotFound
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp import runs as kfp_runs
 from projects.kfp.pipeline import undeploy_pipeline
 from projects.kfp.deployments import get_deployment_runs
-
 from projects.kubernetes.kube_config import load_kube_config
 
 
@@ -19,7 +19,24 @@ class RunController:
     def __init__(self, session):
         self.session = session
 
-    def list_runs(self, project_id, deployment_id):
+    def raise_if_run_does_not_exist(self, run_id: str):
+        """
+        Raises an exception if the specified run does not exist.
+
+        Parameters
+        ----------
+        run_id : str
+
+        Raises
+        ------
+        NotFound
+        """
+        try:
+            kfp_client().get_run(run_id=run_id)
+        except ApiException:
+            raise NOT_FOUND
+
+    def list_runs(self, project_id: str, deployment_id: str):
         """
         Lists all runs under a deployment.
 
@@ -30,22 +47,18 @@ class RunController:
 
         Returns
         -------
-        list
-            A list of all runs from a deployment.
+        projects.schemas.run.RunList
 
         Raises
         ------
         NotFound
             When either project_id or deployment_id does not exist.
         """
-        self.project_controller.raise_if_project_does_not_exist(project_id)
-        self.deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
-
         runs = get_deployment_runs(deployment_id)
 
-        return [runs]
+        return schemas.RunList.from_model(runs, len(runs))
 
-    def create_run(self, project_id, deployment_id):
+    def create_run(self, project_id: str, deployment_id: str):
         """
         Starts a new run in Kubeflow Pipelines.
 
@@ -56,17 +69,14 @@ class RunController:
 
         Returns
         -------
-        dict
-            The run attributes.
+        projects.schemas.run.Run
 
         Raises
         ------
         NotFound
             When any of project_id, or deployment_id does not exist.
         """
-        self.project_controller.raise_if_project_does_not_exist(project_id)
-
-        deployment = self.session.query(Deployment).get(self.session, deployment_id)
+        deployment = self.session.query(models.Deployment).get(self.session, deployment_id)
 
         if deployment is None:
             raise NOT_FOUND
@@ -87,7 +97,7 @@ class RunController:
         run["deploymentId"] = deployment_id
         return run
 
-    def get_run(self, project_id, deployment_id, run_id):
+    def get_run(self, project_id: str, deployment_id: str, run_id: str):
         """
         Details a run in Kubeflow Pipelines.
 
@@ -99,17 +109,13 @@ class RunController:
 
         Returns
         -------
-        dict
-            The run attributes.
+        projects.schemas.run.Run
 
         Raises
         ------
         NotFound
             When any of project_id, deployment_id, or run_id does not exist.
         """
-        self.project_controller.raise_if_project_does_not_exist(project_id)
-        self.deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
-
         run = get_deployment_runs(deployment_id)
 
         return run
@@ -126,17 +132,13 @@ class RunController:
 
         Returns
         -------
-        dict
-            The termination result.
+        projects.schemas.message.Message
 
         Raises
         ------
         NotFound
             When any of project_id, deployment_id, or run_id does not exist.
         """
-        self.project_controller.raise_if_project_does_not_exist(project_id)
-        self.deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
-
         load_kube_config()
         api = client.CustomObjectsApi()
         custom_objects = api.list_namespaced_custom_object(
@@ -159,7 +161,7 @@ class RunController:
 
         kfp_client().runs.delete_run(deployment_run["runId"])
 
-        return {"message": "Deployment deleted."}
+        return schemas.Message(message="Deployment deleted")
 
     def remove_non_deployable_operators(self, operators):
         """

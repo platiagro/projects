@@ -3,16 +3,13 @@
 import sys
 from datetime import datetime
 
-from sqlalchemy.exc import InvalidRequestError, ProgrammingError
-from werkzeug.exceptions import BadRequest, NotFound
-
+from projects import models, schemas
 from projects.controllers.deployments.runs import RunController
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.operators import OperatorController
 from projects.controllers.utils import uuid_alpha
-from projects.kfp.deployments import get_deployment_runs
-from projects.models import Deployment, Operator
-
+from projects.exceptions import BadRequest, NotFound
+from projects.kfp.deployments import get_deployment_runs, list_deployments_runs
 
 NOT_FOUND = NotFound("The specified deployment does not exist")
 
@@ -24,7 +21,7 @@ class DeploymentController:
         self.operator_controller = OperatorController(session)
         self.run_controller = RunController(session)
 
-    def raise_if_deployment_does_not_exist(self, deployment_id):
+    def raise_if_deployment_does_not_exist(self, deployment_id: str):
         """
         Raises an exception if the specified deployment does not exist.
 
@@ -36,14 +33,14 @@ class DeploymentController:
         ------
         NotFound
         """
-        exists = self.session.query(Deployment.uuid) \
+        exists = self.session.query(models.Deployment.uuid) \
             .filter_by(uuid=deployment_id) \
             .scalar() is not None
 
         if not exists:
-            raise NotFound("The specified deployment does not exist")
+            raise NOT_FOUND
 
-    def list_deployments(self, project_id):
+    def list_deployments(self, project_id: str):
         """
         Lists all deployments under a project.
 
@@ -53,37 +50,42 @@ class DeploymentController:
 
         Returns
         -------
-        list
-            A list of all experiments.
-
-        Raises
-        ------
-        NotFound
-            When project_id does not exist.
+        projects.schemas.deployment.DeploymentList
         """
-        deployments = self.session.query(Deployment) \
+        deployments = self.session.query(models.Deployment) \
             .filter_by(project_id=project_id) \
-            .order_by(Deployment.position.asc()) \
+            .order_by(models.Deployment.position.asc()) \
             .all()
+
+        deployments = schemas.DeploymentList.from_model(deployments, len(deployments))
+
+        deployment_runs = {}
+        for deployment_run in list_deployments_runs():
+            deployment_id = deployment_run["deploymentId"]
+            if deployment_id not in deployment_runs:
+                deployment_runs[deployment_id] = deployment_run
+
+        for deployment in deployments.deployments:
+            if deployment.uuid in deployment_runs:
+                deployment_run = deployment_runs[deployment.uuid]
+                deployment.deployed_at = deployment_run["createdAt"]
+                deployment.status = deployment_run["status"]
+                deployment.url = deployment_run["url"]
 
         return deployments
 
-    def create_deployment(self, project_id,
-                          experiments=None,
-                          template_id=None):
+    def create_deployment(self, deployment: schemas.DeploymentCreate, project_id: str):
         """
         Creates new deployments in our database and adjusts the position of others.
 
         Parameters
         ----------
+        deployment : DeploymentCreate
         project_id : str
-        experiments : list
-            A list of experiment ids to be copied to deployments.
-        template_id : str
+
         Returns
         -------
-        dict
-            The deployment attributes.
+        projects.schemas.deployment.Deployment
 
         Raises
         ------
@@ -92,27 +94,27 @@ class DeploymentController:
         BadRequest
             When any experiment does not exist.
         """
-        if template_id is not None:
+        if deployment.template_id is not None:
             raise BadRequest("templateId is not implemented yet")
 
-        if not experiments:
+        if not deployment.experiments:
             raise BadRequest("experiments were not specified")
 
         experiments_dict = {e["uuid"]: e for e in self.experiment_controller.list_experiments(project_id=project_id)}
 
-        for experiment_id in experiments:
+        for experiment_id in deployment.experiments:
             if experiment_id not in experiments_dict:
                 raise BadRequest("some experiments do not exist")
 
         deployments = []
 
-        for experiment_id in experiments:
+        for experiment_id in deployment.experiments:
             experiment = experiments_dict[experiment_id]
 
-            deployment = Deployment(uuid=uuid_alpha(),
-                                    experiment_id=experiment_id,
-                                    name=experiment["name"],
-                                    project_id=project_id)
+            deployment = models.Deployment(uuid=uuid_alpha(),
+                                           experiment_id=experiment_id,
+                                           name=experiment["name"],
+                                           project_id=project_id)
             self.session.add(deployment)
             self.session.flush()
 
@@ -131,9 +133,12 @@ class DeploymentController:
             self.run_controller.create_run(project_id=project_id,
                                            deployment_id=deployment.uuid)
 
-        return deployments
+        self.session.commit()
+        self.session.refresh(deployment)
 
-    def get_deployment(self, project_id, deployment_id):
+        return schemas.Deployment.from_model(deployment)
+
+    def get_deployment(self, project_id: str, deployment_id: str):
         """
         Details a deployment from our database.
 
@@ -144,46 +149,41 @@ class DeploymentController:
 
         Returns
         -------
-        dict
-            The deployment attributes.
+        projects.schemas.deployment.Deployment
 
         Raises
         ------
         NotFound
             When either project_id or deployment_id does not exist.
         """
-        deployment = self.session.query(Deployment).get(deployment_id)
+        deployment = self.session.query(models.Deployment).get(deployment_id)
         if deployment is None:
             raise NOT_FOUND
 
-        resp = deployment
-        deployment_details = get_deployment_runs(deployment_id)
+        deployment = schemas.Deployment.from_model(deployment)
 
-        if not deployment_details:
-            return resp
+        deployment_runs = get_deployment_runs(deployment_id)
 
-        resp["deployedAt"] = deployment_details["createdAt"]
-        resp["runId"] = deployment_details["runId"]
-        resp["status"] = deployment_details["status"]
-        resp["url"] = deployment_details["url"]
+        if not deployment_runs:
+            deployment.deployed_at = deployment_runs["createdAt"]
+            deployment.status = deployment_runs["status"]
+            deployment.url = deployment_runs["url"]
 
-        return resp
+        return deployment
 
-    def update_deployment(self, project_id, deployment_id, **kwargs):
+    def update_deployment(self, deployment: schemas.DeploymentUpdate, project_id: str, deployment_id: str):
         """
         Updates a deployment in our database and adjusts the position of others.
 
         Parameters
         ----------
+        deployment : projects.schemas.deployment.DeploymentUpdate
         project_id : str
         deployment_id : str
-        **kwargs
-            Arbitrary keyword arguments.
 
         Returns
         -------
-        dict
-            The deployment attributes.
+        projects.schemas.deployment.Deployment
 
         Raises
         ------
@@ -192,36 +192,32 @@ class DeploymentController:
         BadRequest
             When name is already the name of another deployment.
         """
-        deployment = self.session.query(Deployment).get(deployment_id)
+        self.raise_if_deployment_does_not_exist(deployment_id)
 
-        if deployment is None:
-            raise NOT_FOUND
+        stored_deployment = self.session.query(models.deployment.Deployment) \
+            .filter(models.deployment.Deployment.project_id == project_id) \
+            .filter_by(name=deployment.name) \
+            .first()
+        if stored_deployment and stored_deployment.uuid != deployment_id:
+            raise BadRequest("a deployment with that name already exists")
 
-        if "name" in kwargs:
-            name = kwargs["name"]
-            if name != deployment.name:
-                check_deployment_name = self.session.query(Deployment) \
-                    .filter(Deployment.project_id == project_id) \
-                    .filter(Deployment.name == name) \
-                    .first()
-                if check_deployment_name:
-                    raise BadRequest("a deployment with that name already exists")
+        update_data = deployment.dict(exclude_unset=True)
+        update_data.update({"updated_at": datetime.utcnow()})
 
-        data = {"updated_at": datetime.utcnow()}
-        data.update(kwargs)
+        self.session.query(models.Deployment).filter_by(uuid=deployment_id).update(update_data)
 
-        try:
-            self.session.query(Deployment).filter_by(uuid=deployment_id).update(data)
-        except (InvalidRequestError, ProgrammingError) as e:
-            raise BadRequest(str(e))
+        if deployment.position:
+            self.fix_positions(project_id=project_id,
+                               deployment_id=deployment_id,
+                               new_position=deployment.position)
 
-        self.fix_positions(project_id=deployment.project_id,
-                           deployment_id=deployment.uuid,
-                           new_position=deployment.position)
+        self.session.commit()
 
-        return deployment
+        deployment = self.session.query(models.Deployment).get(deployment_id)
 
-    def delete_deployment(self, project_id, deployment_id):
+        return schemas.Deployment.from_model(deployment)
+
+    def delete_deployment(self, project_id: str, deployment_id: str):
         """
         Delete a deployment in our database and in the object storage.
 
@@ -237,16 +233,15 @@ class DeploymentController:
 
         Returns
         -------
-        dict
-            The deletion result.
+        projects.schemas.message.Message
         """
-        deployment = self.session.query(Deployment).get(deployment_id)
+        deployment = self.session.query(models.Deployment).get(deployment_id)
 
         if deployment is None:
             raise NOT_FOUND
 
         # remove operators
-        self.session.query(Operator).filter(Operator.deployment_id == deployment_id).delete()
+        self.session.query(models.Operator).filter(models.Operator.deployment_id == deployment_id).delete()
 
         self.session.delete(deployment)
 
@@ -259,9 +254,9 @@ class DeploymentController:
             run_id="latest"
         )
 
-        return {"message": "Deployment deleted"}
+        return schemas.Message(message="Deployment deleted")
 
-    def fix_positions(self, project_id, deployment_id=None, new_position=None):
+    def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """
         Reorders the deployments in a project when a deployment is updated/deleted.
 
@@ -272,14 +267,14 @@ class DeploymentController:
         new_position : int
             The position where the experiment is shown.
         """
-        other_deployments = self.session.query(Deployment) \
+        other_deployments = self.session.query(models.Deployment) \
             .filter_by(project_id=project_id) \
-            .filter(Deployment.uuid != deployment_id) \
-            .order_by(Deployment.position.asc()) \
+            .filter(models.Deployment.uuid != deployment_id) \
+            .order_by(models.Deployment.position.asc()) \
             .all()
 
         if deployment_id is not None:
-            deployment = self.session.query(Deployment).get(deployment_id)
+            deployment = self.session.query(models.Deployment).get(deployment_id)
             other_deployments.insert(new_position, deployment)
 
         for index, deployment in enumerate(other_deployments):
@@ -294,9 +289,9 @@ class DeploymentController:
             else:
                 data["is_active"] = False
 
-            self.session.query(Deployment).filter_by(uuid=deployment.uuid).update(data)
+            self.session.query(models.Deployment).filter_by(uuid=deployment.uuid).update(data)
 
-    def copy_operators(self, project_id, experiment_id, deployment_id):
+    def copy_operators(self, project_id: str, experiment_id: str, deployment_id: str):
         """
         Copies the operators from an experiment to a deployment.
         Creates new uuids and don't keep the experiment_id relationship.
@@ -307,9 +302,9 @@ class DeploymentController:
         experiment_id : str
         deployment_id : str
         """
-        operators = self.session.query(Operator) \
+        operators = self.session.query(models.Operator) \
             .filter_by(experiment_id=experiment_id) \
-            .order_by(Operator.dependencies.asc()) \
+            .order_by(models.Operator.dependencies.asc()) \
             .all()
 
         operators_mapper = {}

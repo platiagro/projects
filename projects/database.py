@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-from functools import update_wrapper
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -37,24 +36,12 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-def session_scope(func):
+def session_scope():
     """
     Provide a transactional scope around a series of operations.
-
-    Parameters
-    ----------
-    func : function
     """
-    def wrapper(*args, **kwargs):
-        session = Session()
-        try:
-            result = func(session, *args, **kwargs)
-            session.commit()
-        except:
-            session.rollback()
-            Session.remove()
-            raise
-        else:
-            Session.remove()
-        return result
-    return update_wrapper(wrapper, func)
+    session = Session()
+    try:
+        yield session
+    finally:
+        session.close()

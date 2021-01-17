@@ -750,7 +750,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -782,7 +781,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -815,7 +813,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -848,7 +845,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
         - name: operatorId
           in: path
           required: true
@@ -897,7 +893,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
         - name: operatorId
           in: path
           required: true
@@ -936,7 +931,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
         - name: operatorId
           in: path
           required: true
@@ -975,7 +969,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
         - name: operatorId
           in: path
           required: true
@@ -1285,7 +1278,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -1317,7 +1309,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"

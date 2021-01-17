@@ -9,8 +9,8 @@ from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
-from werkzeug.exceptions import InternalServerError
 
+from projects.exceptions import InternalServerError
 from projects.kubernetes.kube_config import load_kube_config
 
 NOTEBOOK_NAME = "server"
@@ -48,7 +48,7 @@ def create_persistent_volume_claim(name, mount_path):
     try:
         body = {
             "metadata": {
-                "name": f"vol-{name}",
+                "name": name,
             },
             "spec": {
                 "accessModes": [
@@ -73,7 +73,7 @@ def create_persistent_volume_claim(name, mount_path):
                 "value": {
                     "name": name,
                     "persistentVolumeClaim": {
-                        "claimName": f"vol-{name}",
+                        "claimName": name,
                     },
                 },
             },
