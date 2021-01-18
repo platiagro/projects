@@ -8,6 +8,7 @@ from projects.database import engine
 
 
 EXPERIMENT_ID = str(uuid_alpha())
+DEPLOYMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 PROJECT_ID = str(uuid_alpha())
@@ -97,15 +98,21 @@ class TestTemplates(TestCase):
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
+            f"VALUES ('{DEPLOYMENT_ID}', '{NAME}', '{PROJECT_ID}', '{EXPERIMENT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO operators (uuid, deployment_id, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID}', '{DEPLOYMENT_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
             f"'{POSITION_Y}', '2000-01-02 00:00:00', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
         )
         conn.execute(text)
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
-            f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}',"
+            f"INSERT INTO operators (uuid, deployment_id, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
+            f"VALUES ('{OPERATOR_ID_2}', '{DEPLOYMENT_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}',"
             f" '{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
         )
         conn.execute(text)
@@ -126,6 +133,9 @@ class TestTemplates(TestCase):
         conn.execute(text)
 
         text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
@@ -156,13 +166,22 @@ class TestTemplates(TestCase):
                 "name": "foo",
             })
             result = rv.get_json()
-            expected = {"message": "experimentId is required"}
+            expected = {"message": "experimentId or deploymentId needed to create template."}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
             rv = c.post("/templates", json={
                 "name": "foo",
                 "experimentId": "UNK",
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified experiment does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.post("/templates", json={
+                "name": "foo",
+                "deploymentId": "UNK",
             })
             result = rv.get_json()
             expected = {"message": "The specified experiment does not exist"}
@@ -200,6 +219,40 @@ class TestTemplates(TestCase):
                 self.assertIn(attr, result)
                 del result[attr]
             self.assertDictEqual(expected, result)
+
+            rv = c.post("/templates", json={
+                "name": "foo",
+                "deploymentId": EXPERIMENT_ID,
+            })
+            result = rv.get_json()
+            expected = {
+                "name": "foo",
+                "tasks": [
+                    {
+                        "dependencies": [],
+                        "positionX": POSITION_X,
+                        "positionY": POSITION_Y,
+                        "taskId": TASK_ID,
+                        "uuid": OPERATOR_ID
+                    },
+                    {
+                        "dependencies": [OPERATOR_ID],
+                        "positionX": POSITION_X,
+                        "positionY": POSITION_Y,
+                        "taskId": TASK_ID,
+                        "uuid": OPERATOR_ID_2
+                    }
+                ],
+            }
+
+            # uuid, created_at, updated_at are machine-generated
+            # we assert they exist, but we don't assert their values
+            machine_generated = ["uuid", "createdAt", "updatedAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+
 
     def test_get_template(self):
         with app.test_client() as c:

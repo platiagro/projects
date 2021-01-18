@@ -77,20 +77,14 @@ def create_template(name=None, experiment_id=None, deployment_id=None, **kwargs)
         raise BadRequest("name is required")
 
     if experiment_id:
-        try:
-            raise_if_experiment_does_not_exist(experiment_id)
-        except NotFound as e:
-            raise BadRequest(e.description)
+        raise_if_experiment_does_not_exist(experiment_id)
 
         operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
         .all()
 
     elif deployment_id:
-        try:
-            raise_if_deployment_does_not_exist(deployment_id)
-        except NotFound as e:
-            raise BadRequest(e.description)
+        raise_if_deployment_does_not_exist(deployment_id)
 
         operators = db_session.query(Operator) \
         .filter_by(deployment_id=deployment_id) \

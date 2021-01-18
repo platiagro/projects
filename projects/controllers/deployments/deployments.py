@@ -315,7 +315,7 @@ def update_deployment_from_template(template_id, deployment_id):
     template = get_template(template_id)
 
     # remove operators
-    Operator.query.filter(Operator.deployment_id = deployment_id).delete()
+    Operator.query.filter(Operator.deployment_id == deployment_id).delete()
 
     # save the operators created to get the created_uuid to use on dependencies
     operators_created = []

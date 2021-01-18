@@ -21,6 +21,7 @@ DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
+TASK_ID_2 = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1, "dataset": "dataset_name.csv"}
 POSITION = 0
@@ -60,6 +61,8 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
+DEPENDENCIES_OP_ID = [OPERATOR_ID]
+DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
 TASK_DATASET_ID = str(uuid_alpha())
 TASK_DATASET_TAGS = ["DATASETS"]
@@ -111,6 +114,12 @@ class TestDeployments(TestCase):
 
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID_2}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES ('{TASK_DATASET_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TASK_DATASET_TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
@@ -125,7 +134,7 @@ class TestDeployments(TestCase):
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID_2}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
-            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
+            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
         )
         conn.execute(text)
 
@@ -151,7 +160,7 @@ class TestDeployments(TestCase):
                f"(SELECT uuid FROM deployments where project_id = '{PROJECT_ID}')"
         conn.execute(text)
 
-        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}')"
+        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}, {TASK_ID_2}')"
         conn.execute(text)
 
         text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
@@ -212,6 +221,15 @@ class TestDeployments(TestCase):
 
             rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
                 "experiments": [EXPERIMENT_ID_2],
+            })
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+            self.assertIn("operators", result[0])
+            operator = result[0]["operators"][0]
+            self.assertEqual(TASK_ID, operator["taskId"])
+
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "templateId": TEMPLATE_ID
             })
             result = rv.get_json()
             self.assertIsInstance(result, list)
