@@ -323,6 +323,7 @@ def get_container_status(experiment_id, operator_id):
         )
         status = "Pending"
         workflow_manifest = json.loads(kfp_run.pipeline_runtime.workflow_manifest)
+        workflow_status = workflow_manifest["status"].get("phase")
 
         for node in workflow_manifest["status"].get("nodes", {}).values():
             if node["displayName"] == operator_id:
@@ -330,6 +331,10 @@ def get_container_status(experiment_id, operator_id):
                     status = "Terminated"
                 else:
                     status = str(node["phase"])
+
+        if workflow_status == "Failed" and status == "Pending":
+            status = "Failed"
+
         return status
     except ApiValueError:
         return ""
