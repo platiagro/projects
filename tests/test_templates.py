@@ -184,7 +184,7 @@ class TestTemplates(TestCase):
                 "deploymentId": "UNK",
             })
             result = rv.get_json()
-            expected = {"message": "The specified experiment does not exist"}
+            expected = {"message": "The specified deployment does not exist"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
