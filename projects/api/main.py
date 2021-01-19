@@ -14,6 +14,7 @@ from projects.api.deployments.runs import bp as deployments_runs_blueprint
 from projects.api.deployments.runs.logs import bp as deployments_logs_blueprint
 from projects.api.experiments import bp as experiments_blueprint
 from projects.api.experiments.operators import bp as experiments_operators_blueprint
+from projects.api.experiments.operators.parameters import bp as operators_parameters_blueprint
 from projects.api.experiments.runs import bp as experiments_runs_blueprint
 from projects.api.experiments.runs.datasets import bp as datasets_blueprint
 from projects.api.experiments.runs.figures import bp as figures_blueprint
@@ -45,6 +46,10 @@ app.register_blueprint(
 app.register_blueprint(
     experiments_operators_blueprint,
     url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators",
+)
+app.register_blueprint(
+    operators_parameters_blueprint,
+    url_prefix="/projects/<project_id>/experiments/<experiment_id>/operators/<operator_id>/parameters",
 )
 app.register_blueprint(
     experiments_runs_blueprint,
