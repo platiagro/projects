@@ -9,8 +9,9 @@ from werkzeug.exceptions import BadRequest, NotFound
 from projects.controllers.deployments.runs import create_run, terminate_run
 from projects.controllers.experiments import list_experiments
 from projects.controllers.operators import create_operator
+from projects.controllers.templates import get_template
 from projects.controllers.utils import raise_if_project_does_not_exist, \
-    uuid_alpha
+    raise_if_deployment_does_not_exist, uuid_alpha
 from projects.database import db_session
 from projects.kfp.deployments import get_deployment_runs
 from projects.models import Deployment, Operator
@@ -109,6 +110,8 @@ def create_deployment(project_id,
 
     db_session.commit()
 
+    update_deployment_from_template(template_id, experiment_id)
+
     # Temporary: also run deployment (while web-ui isn't ready)
     for deployment in deployments:
         create_run(project_id=project_id,
@@ -180,11 +183,9 @@ def update_deployment(project_id, deployment_id, **kwargs):
         When name is already the name of another deployment.
     """
     raise_if_project_does_not_exist(project_id)
+    raise_if_deployment_does_not_exist(deployment_id)
 
     deployment = Deployment.query.get(deployment_id)
-
-    if deployment is None:
-        raise NOT_FOUND
 
     if "name" in kwargs:
         name = kwargs["name"]
@@ -196,11 +197,20 @@ def update_deployment(project_id, deployment_id, **kwargs):
             if check_deployment_name:
                 raise BadRequest("a deployment with that name already exists")
 
+    # updates operators
+    if "template_id" in kwargs:
+        template_id = kwargs["template_id"]
+        del kwargs["template_id"]
+
+        update_deployment_from_template(template_id, deployment_id)
+
     data = {"updated_at": datetime.utcnow()}
     data.update(kwargs)
 
     try:
-        db_session.query(Deployment).filter_by(uuid=deployment_id).update(data)
+        db_session.query(Deployment) \
+            .filter_by(uuid=deployment_id) \
+            .update(data)
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
@@ -291,6 +301,46 @@ def fix_positions(project_id, deployment_id=None, new_position=None):
 
         db_session.query(Deployment).filter_by(uuid=deployment.uuid).update(data)
     db_session.commit()
+
+
+def update_deployment_from_template(template_id, deployment_id):
+    """
+    Recreates the operators of deployment using a template.
+
+    Parameters
+    ----------
+    template_id : str
+    deployment_id : str
+    """
+    template = get_template(template_id)
+
+    # remove operators
+    Operator.query.filter(Operator.deployment_id == deployment_id).delete()
+
+    # save the operators created to get the created_uuid to use on dependencies
+    operators_created = []
+    for task in template.tasks:
+        dependencies = []
+        task_dependencies = task["dependencies"]
+        if len(task_dependencies) > 0:
+            for d in task_dependencies:
+                op_created = next((o for o in operators_created if o["uuid"] == d), None)
+                dependencies.append(op_created["created_uuid"])
+
+        operator_id = uuid_alpha()
+        objects = [
+            Operator(
+                uuid=operator_id,
+                deployment_id=deployment_id,
+                task_id=task["task_id"],
+                dependencies=dependencies,
+                position_x=task["position_x"],
+                position_y=task["position_y"],
+            )
+        ]
+        db_session.bulk_save_objects(objects)
+        task["created_uuid"] = operator_id
+        operators_created.append(task)
 
 
 def copy_operators(project_id, experiment_id, deployment_id):

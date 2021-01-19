@@ -50,7 +50,7 @@ def order_operators_by_dependencies(operators_ordered, operator):
                 operators_ordered.append(uuid)
 
 
-def create_template(name=None, experiment_id=None, **kwargs):
+def create_template(name=None, experiment_id=None, deployment_id=None, **kwargs):
     """
     Creates a new template in our database.
 
@@ -58,6 +58,7 @@ def create_template(name=None, experiment_id=None, **kwargs):
     ----------
     name : str
     experiment_id : str
+    deployment_id : str
     **kwargs
         Arbitrary keyword arguments.
 
@@ -75,17 +76,22 @@ def create_template(name=None, experiment_id=None, **kwargs):
     if not isinstance(name, str):
         raise BadRequest("name is required")
 
-    if not isinstance(experiment_id, str):
-        raise BadRequest("experimentId is required")
-
-    try:
+    if experiment_id:
         raise_if_experiment_does_not_exist(experiment_id)
-    except NotFound as e:
-        raise BadRequest(e.description)
 
-    operators = db_session.query(Operator) \
+        operators = db_session.query(Operator) \
         .filter_by(experiment_id=experiment_id) \
         .all()
+
+    elif deployment_id:
+        raise_if_deployment_does_not_exist(deployment_id)
+
+        operators = db_session.query(Operator) \
+        .filter_by(deployment_id=deployment_id) \
+        .all()
+    
+    else:
+        raise BadRequest("experimentId or deploymentId needed to create template.")
 
     # order operators by dependencies
     operators_ordered = []
