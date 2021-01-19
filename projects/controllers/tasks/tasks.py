@@ -15,9 +15,9 @@ from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
 from projects.controllers.utils import uuid_alpha
 from projects.database import db_session
-from projects.jupyter import list_files, delete_file, update_folder_name
 from projects.kubernetes.notebook import copy_file_to_pod, copy_files_in_pod, \
-    create_persistent_volume_claim, set_notebook_metadata
+    create_persistent_volume_claim, remove_persistent_volume_claim, \
+    update_persistent_volume_claim, set_notebook_metadata
 from projects.models import Task
 
 PREFIX = "tasks"
@@ -160,8 +160,10 @@ def create_task(**kwargs):
         deployment_notebook = DEPLOYMENT_NOTEBOOK
 
     # mounts a volume for the task in the notebook server
-    create_persistent_volume_claim(name=f"task-{task_id}",
-                                   mount_path=f"/home/jovyan/tasks/{name}")
+    create_persistent_volume_claim(
+        name=f"task-{task_id}",
+        mount_path=f"/home/jovyan/tasks/{name}"
+    )
 
     # relative path to the mount_path
     experiment_notebook_path = "Experiment.ipynb"
@@ -316,15 +318,17 @@ def update_task(task_id, **kwargs):
         data = {"updated_at": datetime.utcnow()}
         data.update(kwargs)
         db_session.query(Task).filter_by(uuid=task_id).update(data)
+
+        if old_name != task.name:
+            # update the volume for the task in the notebook server
+            update_persistent_volume_claim(
+                name=f"task-{task_id}",
+                mount_path=f"/home/jovyan/tasks/{name}",
+            )
+
         db_session.commit()
     except (InvalidRequestError, ProgrammingError) as e:
         raise BadRequest(str(e))
-
-    # update jupyter folder name if name changed
-    # FIXME mudar o mount path
-    if old_name != task.name:
-        raise BadRequest("Currently unavailable")
-        update_folder_name(f"{PREFIX}/{old_name}", f"{PREFIX}/{task.name}")
 
     return task.as_dict()
 
@@ -348,20 +352,17 @@ def delete_task(task_id):
         When task_id does not exist.
     """
     task = Task.query.get(task_id)
-
     if task is None:
         raise NOT_FOUND
 
     try:
         db_session.query(Task).filter_by(uuid=task_id).delete()
 
-        # remove files and directory from jupyter notebook server
-        source_name = f"{PREFIX}/{task.name}"
-        jupyter_files = list_files(source_name)
-        if jupyter_files is not None:
-            for jupyter_file in jupyter_files["content"]:
-                delete_file(jupyter_file["path"])
-            delete_file(source_name)
+        # remove the volume for the task in the notebook server
+        remove_persistent_volume_claim(
+            name=f"task-{task_id}",
+            mount_path=f"/home/jovyan/tasks/{task.name}",
+        )
 
         db_session.commit()
     except IntegrityError as e:

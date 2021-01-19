@@ -96,11 +96,10 @@ def create_persistent_volume_claim(name, mount_path):
             body=body,
         )
 
-        api_instance = client.CoreV1Api()
         # Wait for the pod to be ready and have all containers running
         while True:
             try:
-                pod = api_instance.read_namespaced_pod(
+                pod = v1.read_namespaced_pod(
                     name=NOTEBOOK_POD_NAME,
                     namespace=NOTEBOOK_NAMESPACE,
                     _request_timeout=5,
@@ -110,6 +109,145 @@ def create_persistent_volume_claim(name, mount_path):
                    and all([c.state.running for c in pod.status.container_statuses]) \
                    and any([v for v in pod.spec.volumes if v.name == f"{name}"]):
                     warnings.warn(f"Mounted volume vol-{name} in notebook server!")
+                    break
+            except ApiException:
+                pass
+            finally:
+                warnings.warn("Waiting for notebook server to be ready...")
+                time.sleep(5)
+
+    except ApiException as e:
+        body = literal_eval(e.body)
+        message = body["message"]
+        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+
+
+def update_persistent_volume_claim(name, mount_path):
+    """
+    Update a persistent volume mount in the default notebook server.
+    Parameters
+    ----------
+    name : str
+    mount_path : str
+    """
+    load_kube_config()
+    v1 = client.CoreV1Api()
+    custom_api = client.CustomObjectsApi(api_client=ApiClientForJsonPatch())
+
+    try:
+        pod = v1.read_namespaced_pod(
+            name=NOTEBOOK_POD_NAME,
+            namespace=NOTEBOOK_NAMESPACE,
+            _request_timeout=5,
+        )
+        pod_vols = enumerate(pod.spec.volumes)
+        vol_index = next((i for i, v in pod_vols if v.name == f"{name}"), -1)
+        if vol_index == -1:
+            raise InternalServerError(f"Not found volume: {name}")
+
+        body = [
+            {
+                "op": "replace",
+                "path": f"/spec/template/spec/containers/0/volumeMounts/{vol_index}/mountPath",
+                "value": mount_path,
+            },
+        ]
+
+        custom_api.patch_namespaced_custom_object(
+            group="kubeflow.org",
+            version="v1",
+            namespace=NOTEBOOK_NAMESPACE,
+            plural="notebooks",
+            name=NOTEBOOK_NAME,
+            body=body,
+        )
+
+        # Wait for the pod to be ready and have all containers running
+        while True:
+            try:
+                pod = v1.read_namespaced_pod(
+                    name=NOTEBOOK_POD_NAME,
+                    namespace=NOTEBOOK_NAMESPACE,
+                    _request_timeout=5,
+                )
+                pod_volume_mounts = pod.spec.containers[0].volume_mounts
+                if pod.status.phase == "Running" \
+                   and all([c.state.running for c in pod.status.container_statuses]) \
+                   and any([vm for vm in pod_volume_mounts if vm.mount_path == f"{mount_path}"]):
+                    warnings.warn(f"Updated volume mount path vol-{name} in notebook server!")
+                    break
+            except ApiException:
+                pass
+            finally:
+                warnings.warn("Waiting for notebook server to be ready...")
+                time.sleep(5)
+
+    except ApiException as e:
+        body = literal_eval(e.body)
+        message = body["message"]
+        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+
+
+def remove_persistent_volume_claim(name, mount_path):
+    """
+    Remove a persistent volume claim in the default notebook server.
+    Parameters
+    ----------
+    name : str
+    mount_path : str
+    """
+    load_kube_config()
+    v1 = client.CoreV1Api()
+    custom_api = client.CustomObjectsApi(api_client=ApiClientForJsonPatch())
+
+    try:
+        pod = v1.read_namespaced_pod(
+            name=NOTEBOOK_POD_NAME,
+            namespace=NOTEBOOK_NAMESPACE,
+            _request_timeout=5,
+        )
+        pod_vols = enumerate(pod.spec.volumes)
+        vol_index = next((i for i, v in pod_vols if v.name == f"{name}"), -1)
+        if vol_index == -1:
+            raise InternalServerError(f"Not found volume: {name}")
+
+        v1.delete_namespaced_persistent_volume_claim(
+            name=f"vol-{name}",
+            namespace=NOTEBOOK_NAMESPACE,
+        )
+
+        body = [
+            {
+                "op": "remove",
+                "path": f"/spec/template/spec/volumes/{vol_index}",
+            },
+            {
+                "op": "remove",
+                "path": f"/spec/template/spec/containers/0/volumeMounts/{vol_index}",
+            },
+        ]
+
+        custom_api.patch_namespaced_custom_object(
+            group="kubeflow.org",
+            version="v1",
+            namespace=NOTEBOOK_NAMESPACE,
+            plural="notebooks",
+            name=NOTEBOOK_NAME,
+            body=body,
+        )
+
+        # Wait for the pod to be ready and have all containers running
+        while True:
+            try:
+                pod = v1.read_namespaced_pod(
+                    name=NOTEBOOK_POD_NAME,
+                    namespace=NOTEBOOK_NAMESPACE,
+                    _request_timeout=5,
+                )
+                if pod.status.phase == "Running" \
+                   and all([c.state.running for c in pod.status.container_statuses]) \
+                   and not [v for v in pod.spec.volumes if v.name == f"{name}"]:
+                    warnings.warn(f"Removed volume vol-{name} in notebook server!")
                     break
             except ApiException:
                 pass
