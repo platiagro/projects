@@ -13,10 +13,12 @@ from werkzeug.exceptions import InternalServerError
 
 from projects.kubernetes.kube_config import load_kube_config
 
+NOTEBOOK_GROUP = "kubeflow.org"
 NOTEBOOK_NAME = "server"
 NOTEBOOK_NAMESPACE = "anonymous"
 NOTEBOOK_POD_NAME = "server-0"
 NOTEBOOK_CONAINER_NAME = "server"
+NOTEBOOK_WAITING_MSG = "Waiting for notebook server to be ready..."
 
 
 class ApiClientForJsonPatch(client.ApiClient):
@@ -88,7 +90,7 @@ def create_persistent_volume_claim(name, mount_path):
         ]
 
         custom_api.patch_namespaced_custom_object(
-            group="kubeflow.org",
+            group=NOTEBOOK_GROUP,
             version="v1",
             namespace=NOTEBOOK_NAMESPACE,
             plural="notebooks",
@@ -113,7 +115,7 @@ def create_persistent_volume_claim(name, mount_path):
             except ApiException:
                 pass
             finally:
-                warnings.warn("Waiting for notebook server to be ready...")
+                warnings.warn(NOTEBOOK_WAITING_MSG)
                 time.sleep(5)
 
     except ApiException as e:
@@ -154,7 +156,7 @@ def update_persistent_volume_claim(name, mount_path):
         ]
 
         custom_api.patch_namespaced_custom_object(
-            group="kubeflow.org",
+            group=NOTEBOOK_GROUP,
             version="v1",
             namespace=NOTEBOOK_NAMESPACE,
             plural="notebooks",
@@ -179,7 +181,7 @@ def update_persistent_volume_claim(name, mount_path):
             except ApiException:
                 pass
             finally:
-                warnings.warn("Waiting for notebook server to be ready...")
+                warnings.warn(NOTEBOOK_WAITING_MSG)
                 time.sleep(5)
 
     except ApiException as e:
@@ -228,7 +230,7 @@ def remove_persistent_volume_claim(name, mount_path):
         ]
 
         custom_api.patch_namespaced_custom_object(
-            group="kubeflow.org",
+            group=NOTEBOOK_GROUP,
             version="v1",
             namespace=NOTEBOOK_NAMESPACE,
             plural="notebooks",
@@ -252,7 +254,7 @@ def remove_persistent_volume_claim(name, mount_path):
             except ApiException:
                 pass
             finally:
-                warnings.warn("Waiting for notebook server to be ready...")
+                warnings.warn(NOTEBOOK_WAITING_MSG)
                 time.sleep(5)
 
     except ApiException as e:
