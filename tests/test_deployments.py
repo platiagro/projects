@@ -19,7 +19,9 @@ EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_ID_2 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
+TEMPLATE_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
+TASK_ID_2 = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1, "dataset": "dataset_name.csv"}
 POSITION = 0
@@ -33,6 +35,22 @@ ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
+TASKS_JSON = dumps([
+    {
+        "uuid": OPERATOR_ID,
+        "position_x": 0.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID,
+        "dependencies": []
+    },
+    {
+        "uuid": OPERATOR_ID_2,
+        "position_x": 200.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID_2,
+        "dependencies": [OPERATOR_ID]
+    },
+])
 PARAMETERS_JSON = dumps(PARAMETERS)
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
@@ -43,6 +61,8 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
+DEPENDENCIES_OP_ID = [OPERATOR_ID]
+DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
 TASK_DATASET_ID = str(uuid_alpha())
 TASK_DATASET_TAGS = ["DATASETS"]
@@ -94,6 +114,12 @@ class TestDeployments(TestCase):
 
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_ID_2}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES ('{TASK_DATASET_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TASK_DATASET_TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
@@ -108,7 +134,13 @@ class TestDeployments(TestCase):
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, created_at, updated_at, dependencies) "
             f"VALUES ('{OPERATOR_ID_2}', '{EXPERIMENT_ID_2}', '{TASK_ID}', '{PARAMETERS_JSON}', '{POSITION_X}', "
-            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_EMPTY_JSON}')"
+            f"'{POSITION_Y}', '{CREATED_AT}', '{UPDATED_AT}', '{DEPENDENCIES_OP_ID_JSON}')"
+        )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
+            f"VALUES ('{TEMPLATE_ID}', '{NAME}', '{TASKS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
         )
         conn.execute(text)
         conn.close()
@@ -116,6 +148,9 @@ class TestDeployments(TestCase):
     def tearDown(self):
         self.proc.terminate()
         conn = engine.connect()
+
+        text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
+        conn.execute(text)
 
         text = f"DELETE FROM operators WHERE experiment_id in" \
                f"(SELECT uuid FROM experiments where project_id = '{PROJECT_ID}')"
@@ -125,7 +160,7 @@ class TestDeployments(TestCase):
                f"(SELECT uuid FROM deployments where project_id = '{PROJECT_ID}')"
         conn.execute(text)
 
-        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}')"
+        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}, {TASK_ID_2}')"
         conn.execute(text)
 
         text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
@@ -193,6 +228,15 @@ class TestDeployments(TestCase):
             operator = result[0]["operators"][0]
             self.assertEqual(TASK_ID, operator["taskId"])
 
+            rv = c.post(f"/projects/{PROJECT_ID}/deployments", json={
+                "templateId": TEMPLATE_ID
+            })
+            result = rv.get_json()
+            self.assertIsInstance(result, list)
+            self.assertIn("operators", result[0])
+            operator = result[0]["operators"][0]
+            self.assertEqual(TASK_ID, operator["taskId"])
+
     def test_get_deployment(self):
         with app.test_client() as c:
             rv = c.get(f"/projects/foo/deployments/{DEPLOYMENT_ID}")
@@ -248,7 +292,63 @@ class TestDeployments(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
+            rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={
+                "templateId": "unk",
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified template does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={
+                "unk": "bar",
+            })
+            self.assertEqual(rv.status_code, 400)
+            
             rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={"name": "Foo Bar"})
             result = rv.get_json()
             self.assertIsInstance(result, dict)
             self.assertEqual(rv.status_code, 200)
+
+            # update operators using template
+            rv = c.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={
+                "templateId": TEMPLATE_ID,
+            })
+            result = rv.get_json()
+            expected = {
+                "uuid": DEPLOYMENT_ID,
+                "name": "bar",
+                "projectId": PROJECT_ID,
+                "position": POSITION,
+                "isActive": IS_ACTIVE,
+                "createdAt": CREATED_AT_ISO,
+            }
+            result_operators = result["operators"]
+            machine_generated = ["updatedAt", "operators"]
+            for attr in machine_generated:
+                self.assertIn(attr, result)
+                del result[attr]
+            self.assertDictEqual(expected, result)
+            expected = [{
+                "taskId": TASK_ID_2,
+                "deploymentId": DEPLOYMENT_ID,
+                "parameters": {},
+                "positionX": 200.0,
+                "positionY": 0.0,
+                "status": "Setted up",
+                "experimentId": None
+            }, {
+                "taskId": TASK_ID,
+                "deploymentId": DEPLOYMENT_ID,
+                "parameters": {},
+                "positionX": 0.0,
+                "positionY": 0.0,
+                "status": "Setted up",
+                "experimentId": None
+            }]
+            machine_generated = ["uuid", "dependencies", "createdAt", "updatedAt"]
+            for attr in machine_generated:
+                for operator in result_operators:
+                    self.assertIn(attr, operator)
+                    del operator[attr]
+            self.assertCountEqual(expected, result_operators)
