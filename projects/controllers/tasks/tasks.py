@@ -323,7 +323,7 @@ def update_task(task_id, **kwargs):
             # update the volume for the task in the notebook server
             update_persistent_volume_claim(
                 name=f"task-{task_id}",
-                mount_path=f"/home/jovyan/tasks/{name}",
+                mount_path=f"/home/jovyan/tasks/{task.name}",
             )
 
         db_session.commit()
