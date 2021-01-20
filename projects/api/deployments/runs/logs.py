@@ -23,7 +23,7 @@ async def handle_list_logs(project_id: str,
     Parameters
     ----------
     project_id : str
-    experiment_id : str
+    deployment_id : str
     run_id : str
     session : sqlalchemy.orm.session.Session
 
@@ -35,10 +35,11 @@ async def handle_list_logs(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
-    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
+    deployment = deployment_controller.get_deployment(deployment_id)
 
     run_controller = RunController(session)
-    run_controller.raise_if_run_does_not_exist(run_id)
+    run_controller.raise_if_run_does_not_exist(run_id=run_id,
+                                               experiment_id=deployment.experiment_id)
 
     log_controller = LogController(session)
     logs = log_controller.list_logs(project_id=project_id,
