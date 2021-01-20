@@ -22,7 +22,9 @@ EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_ID_2 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
+TEMPLATE_ID = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
+TASK_ID_2 = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1, "dataset": "dataset_name.csv"}
 POSITION = 0
@@ -36,6 +38,22 @@ ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
+TASKS_JSON = dumps([
+    {
+        "uuid": OPERATOR_ID,
+        "position_x": 0.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID,
+        "dependencies": []
+    },
+    {
+        "uuid": OPERATOR_ID_2,
+        "position_x": 200.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID_2,
+        "dependencies": [OPERATOR_ID]
+    },
+])
 PARAMETERS_JSON = dumps(PARAMETERS)
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
@@ -46,6 +64,8 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
+DEPENDENCIES_OP_ID = [OPERATOR_ID]
+DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
 TASK_DATASET_ID = str(uuid_alpha())
 TASK_DATASET_TAGS = ["DATASETS"]
@@ -98,6 +118,18 @@ class TestDeployments(TestCase):
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
+        conn.execute(text)
+
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ()"
+        )
+        conn.execute(text, (TASK_ID_2, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON, EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES ('{TASK_DATASET_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TASK_DATASET_TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+        )
         conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TASK_DATASET_TAGS_JSON,
                             dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
@@ -114,10 +146,20 @@ class TestDeployments(TestCase):
         )
         conn.execute(text, (OPERATOR_ID_2, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+
+        text = (
+            f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, CREATED_AT, UPDATED_AT,))
+
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
+
+        text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
+        conn.execute(text)
 
         text = f"DELETE FROM operators WHERE experiment_id in" \
                f"(SELECT uuid FROM experiments where project_id = '{PROJECT_ID}')"
@@ -127,7 +169,7 @@ class TestDeployments(TestCase):
                f"(SELECT uuid FROM deployments where project_id = '{PROJECT_ID}')"
         conn.execute(text)
 
-        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}')"
+        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}, {TASK_ID_2}')"
         conn.execute(text)
 
         text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
@@ -187,6 +229,15 @@ class TestDeployments(TestCase):
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
             "experiments": [EXPERIMENT_ID_2],
+        })
+        result = rv.json()
+        self.assertIsInstance(result, list)
+        self.assertIn("operators", result[0])
+        operator = result[0]["operators"][0]
+        self.assertEqual(TASK_ID, operator["taskId"])
+
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
+            "templateId": TEMPLATE_ID
         })
         result = rv.json()
         self.assertIsInstance(result, list)

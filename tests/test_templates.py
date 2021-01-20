@@ -11,6 +11,7 @@ from projects.database import engine
 TEST_CLIENT = TestClient(app)
 
 EXPERIMENT_ID = str(uuid_alpha())
+DEPLOYMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 PROJECT_ID = str(uuid_alpha())
@@ -102,6 +103,12 @@ class TestTemplates(TestCase):
         conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
+            f"VALUES ()"
+        )
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
+
+        text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
@@ -109,10 +116,10 @@ class TestTemplates(TestCase):
                             POSITION_Y, DEPENDENCIES_EMPTY_JSON, '2000-01-02 00:00:00', UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"INSERT INTO operators (uuid, deployment_id, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
+        conn.execute(text, (OPERATOR_ID_2, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -131,6 +138,9 @@ class TestTemplates(TestCase):
         conn.execute(text)
 
         text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
+        conn.execute(text)
+
+        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
@@ -161,7 +171,7 @@ class TestTemplates(TestCase):
             "name": "foo",
         })
         result = rv.json()
-        expected = {"message": "experimentId is required"}
+        expected = {"message": "experimentId or deploymentId needed to create template."}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -205,6 +215,81 @@ class TestTemplates(TestCase):
             self.assertIn(attr, result)
             del result[attr]
         self.assertDictEqual(expected, result)
+
+        rv = TEST_CLIENT.post("/templates", json={
+            "name": "foo",
+            "deploymentId": "UNK",
+        })
+        result = rv.get_json()
+        expected = {"message": "The specified deployment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+        rv = TEST_CLIENT.post("/templates", json={
+            "name": "foo",
+            "experimentId": EXPERIMENT_ID,
+        })
+        result = rv.get_json()
+        expected = {
+            "name": "foo",
+            "tasks": [
+                {
+                    "dependencies": [],
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
+                    "uuid": OPERATOR_ID
+                },
+                {
+                    "dependencies": [OPERATOR_ID],
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
+                    "uuid": OPERATOR_ID_2
+                }
+            ],
+        }
+        # uuid, created_at, updated_at are machine-generated
+        # we assert they exist, but we don't assert their values
+        machine_generated = ["uuid", "createdAt", "updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
+
+        rv = TEST_CLIENT.post("/templates", json={
+            "name": "foo",
+            "deploymentId": EXPERIMENT_ID,
+        })
+        result = rv.get_json()
+        expected = {
+            "name": "foo",
+            "tasks": [
+                {
+                    "dependencies": [],
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
+                    "uuid": OPERATOR_ID
+                },
+                {
+                    "dependencies": [OPERATOR_ID],
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
+                    "uuid": OPERATOR_ID_2
+                }
+            ],
+        }
+
+        # uuid, created_at, updated_at are machine-generated
+        # we assert they exist, but we don't assert their values
+        machine_generated = ["uuid", "createdAt", "updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
+
 
     def test_get_template(self):
         rv = TEST_CLIENT.get("/templates/foo")

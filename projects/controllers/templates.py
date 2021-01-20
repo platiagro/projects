@@ -4,7 +4,6 @@ import re
 from datetime import datetime
 
 from projects import models, schemas
-from projects.controllers.experiments import ExperimentController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 
@@ -14,7 +13,6 @@ NOT_FOUND = NotFound("The specified template does not exist")
 class TemplateController:
     def __init__(self, session):
         self.session = session
-        self.experiment_controller = ExperimentController(session)
 
     def raise_if_template_does_not_exist(self, template_id: str):
         """
@@ -70,13 +68,32 @@ class TemplateController:
         if not isinstance(template.name, str):
             raise BadRequest("name is required")
 
-        if not isinstance(template.experiment_id, str):
-            raise BadRequest("experimentId is required")
+        if template.experiment_id:
 
-        try:
-            self.experiment_controller.raise_if_experiment_does_not_exist(template.experiment_id)
-        except NotFound as e:
-            raise BadRequest(e.message)
+            exists = self.session.query(models.Experiment.uuid) \
+                .filter_by(uuid=template.experiment_id) \
+                .scalar() is not None
+
+            if not exists:
+                raise NotFound("The specified experiment does not exist")
+
+            operators = self.session.query(models.Operator) \
+                .filter_by(experiment_id=template.experiment_id) \
+                .all()
+        elif template.deployment_id:
+
+            exists = self.session.query(models.Deployment.uuid) \
+                .filter_by(uuid=template.deployment_id) \
+                .scalar() is not None
+
+            if not exists:
+                raise NotFound("The specified deployment does not exist")
+
+            operators = self.session.query(models.Operator) \
+                .filter_by(deployment_id=template.deployment_id) \
+                .all()
+        else:
+            raise BadRequest("experimentId or deploymentId needed to create template.")
 
         operators = self.session.query(models.Operator) \
             .filter_by(experiment_id=template.experiment_id) \

@@ -7,6 +7,7 @@ from projects import models, schemas
 from projects.controllers.deployments.runs import RunController
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.operators import OperatorController
+from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.kfp.deployments import get_deployment_runs, list_deployments_runs
@@ -20,6 +21,7 @@ class DeploymentController:
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
         self.run_controller = RunController(session)
+        self.template_controller = TemplateController(session)
 
     def raise_if_deployment_does_not_exist(self, deployment_id: str):
         """
@@ -94,11 +96,12 @@ class DeploymentController:
         BadRequest
             When any experiment does not exist.
         """
-        if deployment.template_id is not None:
-            raise BadRequest("templateId is not implemented yet")
+        # ^ is xor operator. it's equivalent to (a and not b) or (not a and b)
+        if bool(deployment.experiments) ^ bool(deployment.template_id):
+            raise BadRequest("either experiments or templateId is required")
 
-        if not deployment.experiments:
-            raise BadRequest("experiments were not specified")
+        if deployment.template_id:
+            return self.create_deployment_from_template(template_id=deployment.template_id, project_id=project_id)
 
         experiments_dict = {e["uuid"]: e for e in self.experiment_controller.list_experiments(project_id=project_id)}
 
@@ -111,6 +114,7 @@ class DeploymentController:
         for experiment_id in deployment.experiments:
             experiment = experiments_dict[experiment_id]
 
+            # FIXME dá erro se já foi criado deployment a partir deste experimento
             deployment = models.Deployment(uuid=uuid_alpha(),
                                            experiment_id=experiment_id,
                                            name=experiment["name"],
@@ -326,3 +330,51 @@ class DeploymentController:
 
             # Keys is the old uuid and values the new one
             operators_mapper.update({operator.uuid: operator_["uuid"]})
+
+    def create_deployment_from_template(self, template_id: str, project_id: str):
+        """
+        Creates the operators of deployment using a template.
+
+        Parameters
+        ----------
+        template_id : str
+        project_id : str
+        """
+        template = self.template_controller.get_template(template_id)
+
+        # FIXME dá erro se já foi criado deployment a partir deste template
+        deployment = models.Deployment(uuid=uuid_alpha(),
+                                       name=template.name,
+                                       project_id=project_id)
+        self.session.add(deployment)
+        self.session.flush()
+
+        # save the operators created to get the created_uuid to use on dependencies
+        operators_created = []
+        for task in template.tasks:
+            dependencies = []
+            task_dependencies = task["dependencies"]
+            if len(task_dependencies) > 0:
+                for d in task_dependencies:
+                    op_created = next((o for o in operators_created if o["uuid"] == d), None)
+                    dependencies.append(op_created["created_uuid"])
+
+            operator_id = uuid_alpha()
+            objects = [
+                models.Operator(
+                    uuid=operator_id,
+                    deployment_id=deployment.uuid,
+                    task_id=task["task_id"],
+                    dependencies=dependencies,
+                    position_x=task["position_x"],
+                    position_y=task["position_y"],
+                )
+            ]
+            self.session.bulk_save_objects(objects)
+            task["created_uuid"] = operator_id
+            operators_created.append(task)
+
+        self.session.commit()
+        self.session.refresh(deployment)
+
+        return schemas.Deployment.from_model(deployment)

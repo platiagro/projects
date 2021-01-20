@@ -15,7 +15,8 @@ from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, copy_files_in_pod, \
-    create_persistent_volume_claim, set_notebook_metadata
+    create_persistent_volume_claim, remove_persistent_volume_claim, \
+    update_persistent_volume_claim, set_notebook_metadata
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
@@ -298,7 +299,15 @@ class TaskController:
             copy_file_to_pod(filepath, destination_path)
             os.remove(filepath)
 
-        # FIXME mudar o mount path no notebook server se o nome mudar
+        # checks whether task.name has changed
+        stored_task = self.session.query(models.Task.uuid) \
+            .filter_by(uuid=task_id)
+        if stored_task.name != task.name:
+            # update the volume for the task in the notebook server
+            update_persistent_volume_claim(
+                name=f"vol-task-{task_id}",
+                mount_path=f"/home/jovyan/tasks/{task.name}",
+            )
 
         update_data = task.dict(exclude_unset=True)
         del task["experiment_notebook"]
@@ -334,7 +343,11 @@ class TaskController:
         if task is None:
             raise NOT_FOUND
 
-        # FIXME remove persistent volume claim and patch notebook
+        # remove the volume for the task in the notebook server
+        remove_persistent_volume_claim(
+            name=f"vol-task-{task_id}",
+            mount_path=f"/home/jovyan/tasks/{task.name}",
+        )
 
         self.session.delete(task)
 
