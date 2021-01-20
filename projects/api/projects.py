@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """Projects API Router."""
 import logging
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 import projects.schemas.project
 from projects.controllers import ProjectController
 from projects.database import Session, session_scope
+from projects.utils import format_query_params
 
 router = APIRouter(
     prefix="/projects",
@@ -15,18 +16,14 @@ router = APIRouter(
 
 
 @router.get("", response_model=projects.schemas.project.ProjectList)
-async def handle_list_projects(page: Optional[int] = 1,
-                               page_size: Optional[int] = 10,
-                               order: Optional[str] = None,
+async def handle_list_projects(request: Request,
                                session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
     Parameters
     ----------
-    page : int
-    page_size : int
-    order : str
+    request : fastapi.Request
     session : sqlalchemy.orm.session.Session
 
     Returns
@@ -34,9 +31,18 @@ async def handle_list_projects(page: Optional[int] = 1,
     projects.schemas.project.ProjectList
     """
     project_controller = ProjectController(session)
+    filters = format_query_params(str(request.query_params))
+    order_by = filters.pop("order", None)
+    page = filters.pop("page", 1)
+    if page:
+        page = int(page)
+    page_size = filters.pop("page_size", 10)
+    if page_size:
+        page_size = int(page_size)
     projects = project_controller.list_projects(page=page,
                                                 page_size=page_size,
-                                                order_by=order)
+                                                order_by=order_by,
+                                                **filters)
     return projects
 
 

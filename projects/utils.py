@@ -118,3 +118,23 @@ def remove_parameter(parameters, target):
         The new list.
     """
     return [parameter for parameter in parameters if parameter["name"] != target]
+
+
+def format_query_params(query_params):
+    """
+    Format query params to dict.
+
+    Parameters
+    ----------
+    query_params : str
+
+    Returns
+    -------
+    dict
+    """
+    params = {}
+    if query_params:
+        for query_param in query_params.split('&'):
+            splited = query_param.split('=')
+            params[splited[0]] = splited[1]
+    return params

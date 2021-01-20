@@ -50,7 +50,11 @@ class TaskController:
         if not exists:
             raise NOT_FOUND
 
-    def list_tasks(self, page: Optional[int] = None, page_size: Optional[int] = None, order_by: str = Optional[str]):
+    def list_tasks(self,
+                   page: Optional[int] = None,
+                   page_size: Optional[int] = None,
+                   order_by: str = Optional[str],
+                   **filters):
         """
         Lists tasks. Supports pagination, and sorting.
 
@@ -62,6 +66,7 @@ class TaskController:
             The page size.
         order_by : str
             Order by instruction. Format is "column [asc|desc]".
+        **filters : dict
 
         Returns
         -------
@@ -75,10 +80,9 @@ class TaskController:
         query = self.session.query(models.Task)
         query_total = self.session.query(func.count(models.Task.uuid))
 
-        # FIXME Apply filters to the query
-        # for column, value in filters.items():
-        #     query = query.filter(getattr(models.Task, column).ilike(f"%{value}%"))
-        #     query_total = query_total.filter(getattr(models.Task, column).ilike(f"%{value}%"))
+        for column, value in filters.items():
+            query = query.filter(getattr(models.Task, column).ilike(f"%{value}%"))
+            query_total = query_total.filter(getattr(models.Task, column).ilike(f"%{value}%"))
 
         total = query_total.scalar()
 
@@ -88,7 +92,7 @@ class TaskController:
 
         # Sorts records
         try:
-            (column, sort) = order_by.split()
+            (column, sort) = order_by.replace('+', ' ').strip().split()
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Task.__table__.columns.keys()
         except (AssertionError, ValueError):
@@ -101,7 +105,7 @@ class TaskController:
 
         if page and page_size:
             # Applies pagination
-            query = query.limit(page_size).offset((int(page) - 1) * int(page_size))
+            query = query.limit(page_size).offset((page - 1) * page_size)
 
         tasks = query.all()
 
