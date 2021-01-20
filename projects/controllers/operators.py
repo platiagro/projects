@@ -290,7 +290,7 @@ class OperatorController:
                 raise BadRequest("Cyclical dependencies.")
         return False
 
-    def has_cycles_util(self, operator_id: str, visited: Dict[bool], recursion_stack: Dict, new_dependencies: List[str], new_dependencies_op: str):
+    def has_cycles_util(self, operator_id: str, visited: Dict[str, bool], recursion_stack: Dict[str, bool], new_dependencies: List[str], new_dependencies_op: str):
         """
         Check if a run has cycle.
 

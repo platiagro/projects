@@ -42,6 +42,7 @@ class Operator(OperatorBase):
     position_y: int
     created_at: datetime
     updated_at: datetime
+    status: str
 
     @classmethod
     def from_model(cls, model):
@@ -55,6 +56,7 @@ class Operator(OperatorBase):
             position_y=model.position_y,
             created_at=model.created_at,
             updated_at=model.updated_at,
+            status=model.status,
         )
 
 
