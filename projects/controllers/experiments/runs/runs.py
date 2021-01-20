@@ -30,7 +30,7 @@ class RunController:
         except ApiException:
             raise NOT_FOUND
 
-    def list_runs(self, project_id, experiment_id):
+    def list_runs(self, project_id: str, experiment_id: str):
         """
         Lists all runs from an experiment.
 
@@ -52,7 +52,7 @@ class RunController:
         runs = kfp_runs.list_runs(experiment_id=experiment_id)
         return schemas.RunList.from_model(runs, len(runs))
 
-    def create_run(self, project_id, experiment_id):
+    def create_run(self, project_id: str, experiment_id: str):
         """
         Starts a new run in Kubeflow Pipelines.
 
@@ -83,7 +83,7 @@ class RunController:
 
         return schemas.Run.from_model(run)
 
-    def get_run(self, project_id, experiment_id, run_id):
+    def get_run(self, project_id: str, experiment_id: str, run_id: str):
         """
         Details a run in Kubeflow Pipelines.
 
@@ -111,7 +111,7 @@ class RunController:
 
         return schemas.Run.from_model(run)
 
-    def terminate_run(self, project_id, experiment_id, run_id):
+    def terminate_run(self, project_id: str, experiment_id: str, run_id: str):
         """
         Terminates a run in Kubeflow Pipelines.
 
@@ -139,7 +139,7 @@ class RunController:
 
         return run
 
-    def retry_run(self, project_id, experiment_id, run_id):
+    def retry_run(self, project_id: str, experiment_id: str, run_id: str):
         """
         Retry a run in Kubeflow Pipelines.
 
