@@ -318,21 +318,22 @@ def get_container_status(experiment_id, operator_id):
     run_id = get_latest_run_id(experiment_id)
 
     try:
-        kfp_run = kfp_client().get_run(
-            run_id=run_id,
-        )
+        kfp_run = kfp_client().get_run(run_id=run_id)
+        found_operator = False
         status = "Pending"
         workflow_manifest = json.loads(kfp_run.pipeline_runtime.workflow_manifest)
         workflow_status = workflow_manifest["status"].get("phase")
 
         for node in workflow_manifest["status"].get("nodes", {}).values():
             if node["displayName"] == operator_id:
+                found_operator = True
                 if "message" in node and str(node["message"]) == "terminated":
                     status = "Terminated"
                 else:
                     status = str(node["phase"])
+                break
 
-        if workflow_status == "Failed" and status == "Pending":
+        if found_operator and workflow_status == "Failed" and status == "Pending":
             status = "Failed"
 
         return status
