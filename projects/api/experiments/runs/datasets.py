@@ -21,7 +21,7 @@ async def handle_get_dataset(project_id: str,
                              operator_id: str,
                              page: Optional[int] = 1,
                              page_size: Optional[int] = 10,
-                             accept: Optional[str] = Header,
+                             accept: Optional[str] = Header(None),
                              session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
@@ -55,7 +55,7 @@ async def handle_get_dataset(project_id: str,
                                               experiment_id=experiment_id,
                                               run_id=run_id,
                                               operator_id=operator_id,
-                                              page=int(page),
-                                              page_size=int(page_size),
-                                              application_csv=accept)
+                                              page=page,
+                                              page_size=page_size,
+                                              accept=accept)
     return datasets
