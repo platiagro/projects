@@ -17,7 +17,7 @@ class DatasetController:
         self.session = session
 
     def get_dataset(self, project_id: str, experiment_id: str, run_id: str, operator_id: str,
-                    page: Optional[int] = 1, page_size: Optional[int] = 10, application_csv: bool = False):
+                    page: Optional[int] = 1, page_size: Optional[int] = 10, accept: Optional[str] = None):
         """
         Get dataset records from a run. Supports pagination.
 
@@ -32,8 +32,8 @@ class DatasetController:
             The page number. First page is 1.
         page_size : int
             The page size. Default value is 10.
-        application_csv : str or bool
-            Whenever dataset should be returned as csv file. Default to False.
+        accept : str
+            Whether dataset should be returned as csv file. Default to None.
 
         Returns
         -------
@@ -58,7 +58,7 @@ class DatasetController:
         content = dataset.values.tolist()
         paged_data = self.data_pagination(page, page_size, content)
 
-        if application_csv and "application/csv" in application_csv:
+        if accept and "application/csv" in accept:
             if page_size == -1:
                 content = dataset.to_csv(index=False)
             else:
@@ -72,11 +72,9 @@ class DatasetController:
             )
         else:
             if page_size == -1:
-                dataset = dataset.to_dict(orient="split")
-                del dataset["index"]
-                return dataset
+                return {"columns": dataset.columns.tolist(), "data": dataset.to_dict(orient="split"), "total": len(dataset)}
             else:
-                return {"columns": dataset.columns, "data": paged_data, "total": len(dataset)}
+                return {"columns": dataset.columns.tolist(), "data": paged_data, "total": len(dataset)}
 
     def data_pagination(self, page, page_size, content):
         """

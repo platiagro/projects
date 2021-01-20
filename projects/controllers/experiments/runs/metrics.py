@@ -9,7 +9,7 @@ class MetricController:
     def __init__(self, session):
         self.session = session
 
-    def list_metrics(self, project_id, experiment_id, run_id, operator_id):
+    def list_metrics(self, project_id: str, experiment_id: str, run_id: str, operator_id: str):
         """
         Lists all metrics from object storage.
 

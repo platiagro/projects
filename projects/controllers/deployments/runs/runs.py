@@ -19,21 +19,23 @@ class RunController:
     def __init__(self, session):
         self.session = session
 
-    def raise_if_run_does_not_exist(self, run_id: str):
+    def raise_if_run_does_not_exist(self, run_id: str, experiment_id: str):
         """
         Raises an exception if the specified run does not exist.
 
         Parameters
         ----------
         run_id : str
+        experiment_id : str
 
         Raises
         ------
         NotFound
         """
         try:
-            kfp_client().get_run(run_id=run_id)
-        except ApiException:
+            kfp_runs.get_run(experiment_id=experiment_id,
+                             run_id=run_id)
+        except (ApiException, ValueError):
             raise NOT_FOUND
 
     def list_runs(self, project_id: str, deployment_id: str):

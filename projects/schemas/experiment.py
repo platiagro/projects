@@ -18,6 +18,7 @@ class ExperimentBase(BaseModel):
 
 class ExperimentCreate(ExperimentBase):
     name: str
+    copy_from: Optional[str]
 
 
 class ExperimentUpdate(ExperimentBase):

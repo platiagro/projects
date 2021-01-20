@@ -124,7 +124,7 @@ class ProjectController:
         self.session.add(project)
         self.session.flush()
 
-        experiment = models.ExperimentCreate(name="Experimento 1")
+        experiment = schemas.ExperimentCreate(name="Experimento 1")
         self.experiment_controller.create_experiment(experiment=experiment, project_id=project.uuid)
 
         self.session.commit()

@@ -44,7 +44,6 @@ async def handle_list_runs(project_id: str,
 @router.post("", response_model=projects.schemas.run.Run)
 async def handle_post_run(project_id: str,
                           experiment_id: str,
-                          run: projects.schemas.run.RunCreate,
                           session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
@@ -53,7 +52,6 @@ async def handle_post_run(project_id: str,
     ----------
     project_id : str
     experiment_id : str
-    run : projects.schemas.run.RunCreate
     session : sqlalchemy.orm.session.Session
 
     Returns
@@ -68,8 +66,7 @@ async def handle_post_run(project_id: str,
 
     run_controller = RunController(session)
     run = run_controller.create_run(project_id=project_id,
-                                    experiment_id=experiment_id,
-                                    run=run)
+                                    experiment_id=experiment_id)
     return run
 
 

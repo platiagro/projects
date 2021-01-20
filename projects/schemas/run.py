@@ -17,23 +17,17 @@ class RunBase(BaseModel):
         orm_mode = True
 
 
-class RunCreate(BaseModel):
-    pass
-
-
 class Run(RunBase):
     uuid: str
     operators: List[Operator]
     created_at: datetime
-    updated_at: datetime
 
     @classmethod
     def from_model(cls, model):
         return Run(
-            uuid=model.uuid,
-            operators=model.operators,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
+            uuid=model["uuid"],
+            operators=model["operators"],
+            created_at=model["createdAt"],
         )
 
 
