@@ -8,7 +8,7 @@ from projects.controllers.deployments.runs.logs import LogController
 from projects.database import Session, session_scope
 
 router = APIRouter(
-    prefix="/projects/{project_id}/deployments/{deployment_id}/logs",
+    prefix="/projects/{project_id}/deployments/{deployment_id}/runs/{run_id}/logs",
 )
 
 
