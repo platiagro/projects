@@ -17,7 +17,8 @@ class DeploymentBase(BaseModel):
 
 
 class DeploymentCreate(DeploymentBase):
-    experiments: List[str]
+    experiments: Optional[List[str]]
+    template_id: Optional[str]
 
 
 class DeploymentUpdate(DeploymentBase):

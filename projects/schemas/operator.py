@@ -18,11 +18,10 @@ class OperatorBase(BaseModel):
 
 class OperatorCreate(OperatorBase):
     task_id: str
-    experiment_id: Optional[str]
-    deployment_id: Optional[str]
-    parameters: Dict
+    parameters: Optional[Dict]
     position_x: int
     position_y: int
+    dependencies: Optional[List[str]]
 
 
 class OperatorUpdate(OperatorBase):

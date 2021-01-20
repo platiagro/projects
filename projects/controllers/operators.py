@@ -65,7 +65,11 @@ class OperatorController:
 
         return schemas.OperatorList.from_model(operators, len(operators))
 
-    def create_operator(self, operator: schemas.OperatorCreate, project_id: str, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
+    def create_operator(self,
+                        operator: schemas.OperatorCreate,
+                        project_id: str,
+                        experiment_id: Optional[str] = None,
+                        deployment_id: Optional[str] = None):
         """
         Creates a new operator in our database.
 
@@ -96,7 +100,9 @@ class OperatorController:
             operator.dependencies = []
 
         if experiment_id:
-            self.raise_if_dependencies_are_invalid(project_id, experiment_id, operator.dependencies)
+            self.raise_if_dependencies_are_invalid(project_id=project_id,
+                                                   experiment_id=experiment_id,
+                                                   dependencies=operator.dependencies)
 
         if experiment_id and deployment_id:
             raise BadRequest("Operator cannot contain an experiment and a deployment simultaneously")
@@ -278,19 +284,26 @@ class OperatorController:
         BadRequest
             When dependencies are cyclic.
         """
-        operators = self.list_operators(project_id, experiment_id)
+        operators = self.session.query(models.Operator) \
+            .filter_by(experiment_id=experiment_id) \
+            .all()
 
-        visited = dict.fromkeys([op['uuid'] for op in operators], False)
-        recursion_stack = dict.fromkeys([op['uuid'] for op in operators], False)
+        visited = dict.fromkeys([op.uuid for op in operators], False)
+        recursion_stack = dict.fromkeys([op.uuid for op in operators], False)
 
         for op in operators:
-            op_uuid = op["uuid"]
-            if (visited[op_uuid] is False and
-                    self.has_cycles_util(op_uuid, visited, recursion_stack, dependencies, operator_id) is True):
+            op_uuid = op.uuid
+            if visited[op_uuid] is False \
+               and self.has_cycles_util(op_uuid, visited, recursion_stack, dependencies, operator_id) is True:
                 raise BadRequest("Cyclical dependencies.")
         return False
 
-    def has_cycles_util(self, operator_id: str, visited: Dict[str, bool], recursion_stack: Dict[str, bool], new_dependencies: List[str], new_dependencies_op: str):
+    def has_cycles_util(self,
+                        operator_id: str,
+                        visited: Dict[str, bool],
+                        recursion_stack: Dict[str, bool],
+                        new_dependencies: List[str],
+                        new_dependencies_op: str):
         """
         Check if a run has cycle.
 
