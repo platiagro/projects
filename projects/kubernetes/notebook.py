@@ -9,8 +9,8 @@ from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
-from werkzeug.exceptions import InternalServerError
 
+from projects.exceptions import InternalServerError
 from projects.kubernetes.kube_config import load_kube_config
 
 NOTEBOOK_GROUP = "kubeflow.org"
@@ -50,7 +50,7 @@ def create_persistent_volume_claim(name, mount_path):
     try:
         body = {
             "metadata": {
-                "name": f"vol-{name}",
+                "name": name,
             },
             "spec": {
                 "accessModes": [
@@ -75,7 +75,7 @@ def create_persistent_volume_claim(name, mount_path):
                 "value": {
                     "name": name,
                     "persistentVolumeClaim": {
-                        "claimName": f"vol-{name}",
+                        "claimName": name,
                     },
                 },
             },
@@ -110,7 +110,7 @@ def create_persistent_volume_claim(name, mount_path):
                 if pod.status.phase == "Running" \
                    and all([c.state.running for c in pod.status.container_statuses]) \
                    and any([v for v in pod.spec.volumes if v.name == f"{name}"]):
-                    warnings.warn(f"Mounted volume vol-{name} in notebook server!")
+                    warnings.warn(f"Mounted volume {name} in notebook server!")
                     break
             except ApiException:
                 pass
@@ -176,7 +176,7 @@ def update_persistent_volume_claim(name, mount_path):
                 if pod.status.phase == "Running" \
                    and all([c.state.running for c in pod.status.container_statuses]) \
                    and any([vm for vm in pod_volume_mounts if vm.mount_path == f"{mount_path}"]):
-                    warnings.warn(f"Updated volume mount path vol-{name} in notebook server!")
+                    warnings.warn(f"Updated volume mount path {name} in notebook server!")
                     break
             except ApiException:
                 pass
@@ -214,7 +214,7 @@ def remove_persistent_volume_claim(name, mount_path):
             raise InternalServerError(f"Not found volume: {name}")
 
         v1.delete_namespaced_persistent_volume_claim(
-            name=f"vol-{name}",
+            name=name,
             namespace=NOTEBOOK_NAMESPACE,
         )
 
@@ -249,7 +249,7 @@ def remove_persistent_volume_claim(name, mount_path):
                 if pod.status.phase == "Running" \
                    and all([c.state.running for c in pod.status.container_statuses]) \
                    and not [v for v in pod.spec.volumes if v.name == f"{name}"]:
-                    warnings.warn(f"Removed volume vol-{name} in notebook server!")
+                    warnings.warn(f"Removed volume {name} in notebook server!")
                     break
             except ApiException:
                 pass

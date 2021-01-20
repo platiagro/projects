@@ -1,95 +1,85 @@
 # -*- coding: utf-8 -*-
 """Monitorings controller."""
-from werkzeug.exceptions import NotFound
-
-from projects.controllers.utils import raise_if_project_does_not_exist, \
-    raise_if_deployment_does_not_exist, raise_if_task_does_not_exist, \
-    uuid_alpha
-from projects.database import db_session
-from projects.models import Monitoring
+from projects import models, schemas
+from projects.controllers.tasks import TaskController
+from projects.controllers.utils import uuid_alpha
+from projects.exceptions import NotFound
 
 
 NOT_FOUND = NotFound("The specified monitoring does not exist")
 
 
-def list_monitorings(project_id, deployment_id):
-    """
-    Lists all monitorings under a deployment.
+class MonitoringController:
+    def __init__(self, session):
+        self.session = session
+        self.task_controller = TaskController(session)
 
-    Parameters
-    ----------
-    project_id : str
-    deployment_id : str
+    def list_monitorings(self, project_id: str, deployment_id: str):
+        """
+        Lists all monitorings under a deployment.
 
-    Returns
-    -------
-    list
-        A list of all monitorings.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
+        Parameters
+        ----------
+        project_id : str
+        deployment_id : str
 
-    monitorings = db_session.query(Monitoring) \
-        .filter_by(deployment_id=deployment_id) \
-        .order_by(Monitoring.created_at.asc()) \
-        .all()
+        Returns
+        -------
+        projects.schemas.monitoring.MonitoringList
+        """
+        monitorings = self.session.query(models.Monitoring) \
+            .filter_by(deployment_id=deployment_id) \
+            .order_by(models.Monitoring.created_at.asc()) \
+            .all()
 
-    return [monitoring.as_dict() for monitoring in monitorings]
+        return schemas.MonitoringList.from_model(monitorings, len(monitorings))
 
+    def create_monitoring(self, monitoring: schemas.MonitoringCreate, project_id: str, deployment_id: str):
+        """
+        Creates a new monitoring in our database.
 
-def create_monitoring(project_id,
-                      deployment_id=None,
-                      task_id=None):
-    """
-    Creates a new monitoring in our database.
+        Parameters
+        ----------
+        monitoring : projects.schemas.monitoring.MonitoringCreate
+        project_id : str
+        deployment_id : str
 
-    Parameters
-    ----------
-    project_id : str
-    deployment_id : str
-    task_id : str
+        Returns
+        -------
+        projects.schemas.monitoring.Monitoring
+        """
+        self.task_controller.raise_if_task_does_not_exist(monitoring.task_id)
 
-    Returns
-    -------
-    dict
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
-    raise_if_task_does_not_exist(task_id)
+        monitoring = models.Monitoring(
+            uuid=uuid_alpha(),
+            deployment_id=deployment_id,
+            task_id=monitoring.task_id,
+        )
+        self.session.add(monitoring)
+        self.session.commit()
+        self.session.refresh(monitoring)
 
-    monitoring = Monitoring(
-        uuid=uuid_alpha(),
-        deployment_id=deployment_id,
-        task_id=task_id
-    )
-    db_session.add(monitoring)
-    db_session.commit()
-    return monitoring.as_dict()
+        return schemas.Monitoring.from_model(monitoring)
 
+    def delete_monitoring(self, uuid, project_id, deployment_id):
+        """
+        Delete a monitoring in our database.
 
-def delete_monitoring(uuid, project_id, deployment_id):
-    """
-    Delete a monitoring in our database.
+        Parameters
+        ----------
+        uuid : str
+        project_id : str
+        deployment_id : str
 
-    Parameters
-    ----------
-    uuid : str
-    project_id : str
-    deployment_id : str
+        Returns
+        -------
+        projects.schemas.message.Message
+        """
+        monitoring = self.session.query(models.Monitoring).get(uuid)
 
-    Returns
-    -------
-    dict
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
+        if monitoring is None:
+            raise NOT_FOUND
 
-    monitoring = Monitoring.query.get(uuid)
+        self.session.delete(monitoring)
 
-    if monitoring is None:
-        raise NOT_FOUND
-
-    db_session.delete(monitoring)
-    db_session.commit()
-
-    return {"message": "Monitoring deleted"}
+        return schemas.Message(message="Monitoring deleted")

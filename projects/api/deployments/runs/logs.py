@@ -1,14 +1,22 @@
 # -*- coding: utf-8 -*-
-"""Deployment Logs blueprint."""
-from flask import Blueprint, jsonify
+"""Logs API Router."""
+from fastapi import APIRouter, Depends
 
-from projects.controllers.deployments.runs.logs import list_logs
+from projects.controllers import DeploymentController, ProjectController
+from projects.controllers.deployments.runs import RunController
+from projects.controllers.deployments.runs.logs import LogController
+from projects.database import Session, session_scope
 
-bp = Blueprint("deployment_logs", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/deployments/{deployment_id}/runs/{run_id}/logs",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_logs(project_id, deployment_id, run_id):
+@router.get("")
+async def handle_list_logs(project_id: str,
+                           deployment_id: str,
+                           run_id: str,
+                           session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
@@ -17,12 +25,23 @@ def handle_list_logs(project_id, deployment_id, run_id):
     project_id : str
     experiment_id : str
     run_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     str
     """
-    logs = list_logs(project_id=project_id,
-                     deployment_id=deployment_id,
-                     run_id=run_id)
-    return jsonify(logs)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    deployment_controller = DeploymentController(session)
+    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
+
+    run_controller = RunController(session)
+    run_controller.raise_if_run_does_not_exist(run_id)
+
+    log_controller = LogController(session)
+    logs = log_controller.list_logs(project_id=project_id,
+                                    deployment_id=deployment_id,
+                                    run_id=run_id)
+    return logs

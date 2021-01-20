@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Kube-config functions."""
 from kubernetes import config
-from werkzeug.exceptions import InternalServerError
+
+from projects.exceptions import InternalServerError
 
 
 def load_kube_config():

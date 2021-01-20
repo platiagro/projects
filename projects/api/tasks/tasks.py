@@ -1,97 +1,121 @@
 # -*- coding: utf-8 -*-
-"""Tasks blueprint."""
-from flask import Blueprint, jsonify, request
+"""Tasks API Router."""
+from typing import Optional
 
-from projects.controllers.tasks import create_task, delete_task, get_task, \
-    list_tasks, update_task
-from projects.utils import to_snake_case
+from fastapi import APIRouter, Depends
 
-bp = Blueprint("tasks", __name__)
+import projects.schemas.task
+from projects.controllers import TaskController
+from projects.database import Session, session_scope
+
+router = APIRouter(
+    prefix="/tasks",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_tasks():
+@router.get("", response_model=projects.schemas.task.TaskList)
+async def handle_list_tasks(page: Optional[int] = None,
+                            page_size: Optional[int] = None,
+                            order: Optional[str] = None,
+                            session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
+    Parameters
+    ----------
+    page : int
+    page_size : int
+    order : str
+    session : sqlalchemy.orm.session.Session
+
     Returns
     -------
-    str
+    projects.schemas.task.TaskList
     """
-    filters = request.args.copy()
-    order_by = filters.pop("order", None)
-    page = filters.pop("page", None)
-    page_size = filters.pop("page_size", None)
-    tasks = list_tasks(page=page,
-                       page_size=page_size,
-                       order_by=order_by,
-                       **filters)
-    return jsonify(tasks)
+    task_controller = TaskController(session)
+    tasks = task_controller.list_tasks(page=page,
+                                       page_size=page_size,
+                                       order_by=order)
+    return tasks
 
 
-@bp.route("", methods=["POST"])
-def handle_post_tasks():
+@router.post("", response_model=projects.schemas.task.Task)
+async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
+                            session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
 
+    Parameters
+    ----------
+    task : projects.schemas.task.TaskCreate
+    session : sqlalchemy.orm.session.Session
+
     Returns
     -------
-    str
+    projects.schemas.task.Task
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    task = create_task(**kwargs)
-    return jsonify(task)
+    task_controller = TaskController(session)
+    task = task_controller.create_task(task=task)
+    return task
 
 
-@bp.route("<task_id>", methods=["GET"])
-def handle_get_task(task_id):
+@router.get("/{task_id}", response_model=projects.schemas.task.Task)
+async def handle_get_task(task_id: str,
+                          session: Session = Depends(session_scope)):
     """
     Handles GET requests to /<task_id>.
 
     Parameters
     ----------
     task_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.task.Task
     """
-    task = get_task(task_id=task_id)
-    return jsonify(task)
+    task_controller = TaskController(session)
+    task = task_controller.get_task(task_id=task_id)
+    return task
 
 
-@bp.route("<task_id>", methods=["PATCH"])
-def handle_patch_task(task_id):
+@router.patch("/{task_id}", response_model=projects.schemas.task.Task)
+async def handle_patch_task(task_id: str,
+                            task: projects.schemas.task.TaskUpdate,
+                            session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<task_id>.
 
     Parameters
     ----------
     task_id : str
+    task : projects.schemas.task.TaskUpdate
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.task.Task
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    task = update_task(task_id=task_id, **kwargs)
-    return jsonify(task)
+    task_controller = TaskController(session)
+    task = task_controller.update_task(task_id=task_id, task=task)
+    return task
 
 
-@bp.route("<task_id>", methods=["DELETE"])
-def handle_delete_task(task_id):
+@router.delete("/{task_id}")
+async def handle_delete_task(task_id: str,
+                             session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<task_id>.
 
     Parameters
     ----------
     task_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.message.Message
     """
-    result = delete_task(task_id=task_id)
-    return jsonify(result)
+    task_controller = TaskController(session)
+    result = task_controller.delete_task(task_id=task_id)
+    return result

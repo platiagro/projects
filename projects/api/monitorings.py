@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint, jsonify, request
+"""Monitorings API Router."""
+from fastapi import APIRouter, Depends
 
-from projects.controllers.monitorings import list_monitorings, \
-    create_monitoring, delete_monitoring
-from projects.utils import to_snake_case
+import projects.schemas.monitoring
+from projects.controllers import DeploymentController, MonitoringController, \
+    ProjectController
+from projects.database import Session, session_scope
 
-bp = Blueprint("monitorings", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/experiments/{experiment_id}/operators",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_monitorings(project_id, deployment_id):
+@router.get("", response_model=projects.schemas.monitoring.MonitoringList)
+async def handle_list_monitorings(project_id: str,
+                                  deployment_id: str,
+                                  session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
@@ -17,16 +23,29 @@ def handle_list_monitorings(project_id, deployment_id):
     ----------
     project_id : str
     deployment_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.monitoring.MonitoringList
     """
-    return jsonify(list_monitorings(project_id=project_id, deployment_id=deployment_id))
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    deployment_controller = DeploymentController(session)
+    deployment_controller.raise_if_deployment_does_not_exist(project_id)
+
+    monitoring_controller = MonitoringController(session)
+    monitorings = monitoring_controller.list_monitorings(project_id=project_id,
+                                                         deployment_id=deployment_id)
+    return monitorings
 
 
-@bp.route("", methods=["POST"])
-def handle_post_monitorings(project_id, deployment_id):
+@router.post("", response_model=projects.schemas.monitoring.Monitoring)
+async def handle_post_monitorings(project_id: str,
+                                  deployment_id: str,
+                                  monitoring: projects.schemas.monitoring.MonitoringCreate,
+                                  session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
 
@@ -34,22 +53,31 @@ def handle_post_monitorings(project_id, deployment_id):
     ----------
     project_id : str
     deployment_id : str
+    monitoring : projects.schemas.monitoring.MonitoringCreate
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.monitoring.Monitoring
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    monitoring = create_monitoring(
-        project_id=project_id,
-        deployment_id=deployment_id,
-        **kwargs)
-    return jsonify(monitoring)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    deployment_controller = DeploymentController(session)
+    deployment_controller.raise_if_deployment_does_not_exist(project_id)
+
+    monitoring_controller = MonitoringController(session)
+    monitoring = monitoring_controller.create_monitoring(project_id=project_id,
+                                                         deployment_id=deployment_id,
+                                                         monitoring=monitoring)
+    return monitoring
 
 
-@bp.route("<monitoring_id>", methods=["DELETE"])
-def handle_delete_monitorings(project_id, deployment_id, monitoring_id):
+@router.delete("/{monitoring_id}")
+async def handle_delete_monitorings(project_id: str,
+                                    deployment_id: str,
+                                    monitoring_id: str,
+                                    session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<monitoring_id>.
 
@@ -58,13 +86,20 @@ def handle_delete_monitorings(project_id, deployment_id, monitoring_id):
     project_id : str
     deployment_id : str
     monitoring_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.message.Message
     """
-    response = delete_monitoring(
-        uuid=monitoring_id,
-        project_id=project_id,
-        deployment_id=deployment_id)
-    return jsonify(response)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    deployment_controller = DeploymentController(session)
+    deployment_controller.raise_if_deployment_does_not_exist(project_id)
+
+    monitoring_controller = MonitoringController(session)
+    response = monitoring_controller.delete_monitoring(uuid=monitoring_id,
+                                                       project_id=project_id,
+                                                       deployment_id=deployment_id)
+    return response

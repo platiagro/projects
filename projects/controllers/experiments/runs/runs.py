@@ -1,166 +1,168 @@
 # -*- coding: utf-8 -*-
 """Experiments Runs controller."""
 from kfp_server_api.rest import ApiException
-from werkzeug.exceptions import NotFound
 
-from projects.kfp import runs as kfp_runs
-from projects.controllers.utils import raise_if_project_does_not_exist, \
-    raise_if_experiment_does_not_exist
-from projects.models import Experiment
+from projects import models, schemas
+from projects.exceptions import NotFound
+from projects.kfp import kfp_client, runs as kfp_runs
 
 NOT_FOUND = NotFound("The specified run does not exist")
 
 
-def list_runs(project_id, experiment_id):
-    """
-    Lists all runs from an experiment.
+class RunController:
+    def __init__(self, session):
+        self.session = session
 
-    Parameters
-    ----------
-    project_id : str
-    experiment_id : str
+    def raise_if_run_does_not_exist(self, run_id: str):
+        """
+        Raises an exception if the specified run does not exist.
 
-    Returns
-    -------
-    list
-        A list of all runs from an experiment.
+        Parameters
+        ----------
+        run_id : str
 
-    Raises
-    ------
-    NotFound
-        When either project_id or experiment_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_experiment_does_not_exist(experiment_id)
+        Raises
+        ------
+        NotFound
+        """
+        try:
+            kfp_client().get_run(run_id=run_id)
+        except ApiException:
+            raise NOT_FOUND
 
-    runs = kfp_runs.list_runs(experiment_id=experiment_id)
-    return runs
+    def list_runs(self, project_id, experiment_id):
+        """
+        Lists all runs from an experiment.
 
+        Parameters
+        ----------
+        project_id : str
+        experiment_id : str
 
-def create_run(project_id, experiment_id):
-    """
-    Starts a new run in Kubeflow Pipelines.
+        Returns
+        -------
+        list
+            A list of all runs from an experiment.
 
-    Parameters
-    ----------
-    project_id : str
-    experiment_id : str
+        Raises
+        ------
+        NotFound
+            When either project_id or experiment_id does not exist.
+        """
+        runs = kfp_runs.list_runs(experiment_id=experiment_id)
+        return schemas.RunList.from_model(runs, len(runs))
 
-    Returns
-    -------
-    dict
-        The run attributes.
+    def create_run(self, project_id, experiment_id):
+        """
+        Starts a new run in Kubeflow Pipelines.
 
-    Raises
-    ------
-    NotFound
-        When either project_id or experiment_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
+        Parameters
+        ----------
+        project_id : str
+        experiment_id : str
 
-    experiment = Experiment.query.get(experiment_id)
+        Returns
+        -------
+        dict
+            The run attributes.
 
-    if experiment is None:
-        raise NOT_FOUND
+        Raises
+        ------
+        NotFound
+            When either project_id or experiment_id does not exist.
+        """
+        experiment = self.session.query(models.Experiment).get(experiment_id)
 
-    run = kfp_runs.start_run(project_id=project_id,
-                             experiment_id=experiment_id,
-                             operators=experiment.operators)
-    run["experimentId"] = experiment_id
-    return run
+        if experiment is None:
+            raise NOT_FOUND
 
+        run = kfp_runs.start_run(project_id=project_id,
+                                 experiment_id=experiment_id,
+                                 operators=experiment.operators)
+        run["experimentId"] = experiment_id
 
-def get_run(project_id, experiment_id, run_id):
-    """
-    Details a run in Kubeflow Pipelines.
+        return schemas.Run.from_model(run)
 
-    Parameters
-    ----------
-    project_id : str
-    experiment_id : str
-    run_id : str
+    def get_run(self, project_id, experiment_id, run_id):
+        """
+        Details a run in Kubeflow Pipelines.
 
-    Returns
-    -------
-    dict
-        The run attributes.
+        Parameters
+        ----------
+        project_id : str
+        experiment_id : str
+        run_id : str
 
-    Raises
-    ------
-    NotFound
-        When any of project_id, experiment_id, or run_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_experiment_does_not_exist(experiment_id)
+        Returns
+        -------
+        dict
+            The run attributes.
 
-    try:
-        run = kfp_runs.get_run(experiment_id=experiment_id,
-                               run_id=run_id)
-    except (ApiException, ValueError):
-        raise NOT_FOUND
+        Raises
+        ------
+        NotFound
+            When any of project_id, experiment_id, or run_id does not exist.
+        """
+        try:
+            run = kfp_runs.get_run(experiment_id=experiment_id,
+                                   run_id=run_id)
+        except (ApiException, ValueError):
+            raise NOT_FOUND
 
-    return run
+        return schemas.Run.from_model(run)
 
+    def terminate_run(self, project_id, experiment_id, run_id):
+        """
+        Terminates a run in Kubeflow Pipelines.
 
-def terminate_run(project_id, experiment_id, run_id):
-    """
-    Terminates a run in Kubeflow Pipelines.
+        Parameters
+        ----------
+        project_id : str
+        experiment_id : str
+        run_id : str
 
-    Parameters
-    ----------
-    project_id : str
-    experiment_id : str
-    run_id : str
+        Returns
+        -------
+        dict
+            The termination result.
 
-    Returns
-    -------
-    dict
-        The termination result.
+        Raises
+        ------
+        NotFound
+            When any of project_id, experiment_id, or run_id does not exist.
+        """
+        try:
+            run = kfp_runs.terminate_run(experiment_id=experiment_id,
+                                         run_id=run_id)
+        except ApiException:
+            raise NOT_FOUND
 
-    Raises
-    ------
-    NotFound
-        When any of project_id, experiment_id, or run_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_experiment_does_not_exist(experiment_id)
+        return run
 
-    try:
-        run = kfp_runs.terminate_run(experiment_id=experiment_id,
+    def retry_run(self, project_id, experiment_id, run_id):
+        """
+        Retry a run in Kubeflow Pipelines.
+
+        Parameters
+        ----------
+        project_id : str
+        experiment_id : str
+        run_id : str
+
+        Returns
+        -------
+        dict
+            The retry result.
+
+        Raises
+        ------
+        NotFound
+            When any of project_id, experiment_id, or run_id does not exist.
+        """
+        try:
+            run = kfp_runs.retry_run(experiment_id=experiment_id,
                                      run_id=run_id)
-    except ApiException:
-        raise NOT_FOUND
+        except ApiException:
+            raise NOT_FOUND
 
-    return run
-
-
-def retry_run(project_id, experiment_id, run_id):
-    """
-    Retry a run in Kubeflow Pipelines.
-
-    Parameters
-    ----------
-    project_id : str
-    experiment_id : str
-    run_id : str
-
-    Returns
-    -------
-    dict
-        The retry result.
-
-    Raises
-    ------
-    NotFound
-        When any of project_id, experiment_id, or run_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_experiment_does_not_exist(experiment_id)
-
-    try:
-        run = kfp_runs.retry_run(experiment_id=experiment_id,
-                                 run_id=run_id)
-    except ApiException:
-        raise NOT_FOUND
-
-    return run
+        return run

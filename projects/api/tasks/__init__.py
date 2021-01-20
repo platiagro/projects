@@ -1,11 +1,5 @@
-from .tasks import bp, handle_list_tasks, handle_post_tasks, handle_get_task, \
-    handle_patch_task, handle_delete_task
+from .tasks import router
 
 __all__ = [
-    "bp",
-    "handle_list_tasks",
-    "handle_post_tasks",
-    "handle_get_task",
-    "handle_patch_task",
-    "handle_delete_task",
+    "router",
 ]

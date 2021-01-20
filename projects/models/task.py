@@ -8,7 +8,6 @@ from sqlalchemy.sql import expression
 
 from projects import __version__
 from projects.database import Base
-from projects.utils import to_camel_case
 
 DEFAULT_IMAGE = os.getenv("DEFAULT_IMAGE", f'platiagro/platiagro-experiment-image:{__version__}')
 
@@ -28,10 +27,3 @@ class Task(Base):
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"<Task {self.name}>"
-
-    def as_dict(self):
-        d = {to_camel_case(c.name): getattr(self, c.name) for c in self.__table__.columns}
-        return d

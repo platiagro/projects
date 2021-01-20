@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
+from fastapi.testclient import TestClient
+
 from projects.api.main import app, parse_args
+
+TEST_CLIENT = TestClient(app)
 
 
 class TestApi(TestCase):
@@ -16,9 +20,8 @@ class TestApi(TestCase):
         self.assertTrue(parser.enable_cors)
 
     def test_ping(self):
-        with app.test_client() as c:
-            rv = c.get("/")
-            result = rv.get_data(as_text=True)
-            expected = "pong"
-            self.assertEqual(result, expected)
-            self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.get("/")
+        result = rv.text
+        expected = "pong"
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)

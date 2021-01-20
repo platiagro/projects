@@ -1,25 +1,33 @@
 # -*- coding: utf-8 -*-
-"""Parameters blueprint."""
+"""Parameters API Router."""
+from fastapi import APIRouter, Depends
 
-from flask import Blueprint, jsonify
+from projects.controllers import ParameterController, TaskController
+from projects.database import Session, session_scope
 
-from projects.controllers.tasks.parameters import list_parameters
+router = APIRouter(
+    prefix="/tasks/{task_id}/parameters",
+)
 
-bp = Blueprint("parameters", __name__)
 
-
-@bp.route("", methods=["GET"])
-def handle_list_parameters(task_id):
+@router.get("")
+async def handle_list_parameters(task_id: str,
+                                 session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
     Parameters
     ----------
     task_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    dict
     """
-    parameters = list_parameters(task_id=task_id)
-    return jsonify(parameters)
+    task_controller = TaskController(session)
+    task_controller.raise_if_task_does_not_exist(session)
+
+    parameter_controller = ParameterController(session)
+    parameters = parameter_controller.list_parameters(task_id=task_id)
+    return parameters

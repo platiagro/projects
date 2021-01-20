@@ -1,14 +1,23 @@
 # -*- coding: utf-8 -*-
-"""Experiment Logs blueprint."""
-from flask import Blueprint, jsonify
+"""Logs API Router."""
+from fastapi import APIRouter, Depends
 
-from projects.controllers.experiments.runs.logs import get_logs
+from projects.controllers import ExperimentController, ProjectController
+from projects.controllers.experiments.runs.logs import LogController
+from projects.controllers.experiments.runs import RunController
+from projects.database import Session, session_scope
 
-bp = Blueprint("experiment_logs", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/logs",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_logs(project_id, experiment_id, run_id, operator_id):
+@router.get("")
+async def handle_list_logs(project_id: str,
+                           experiment_id: str,
+                           run_id: str,
+                           operator_id: str,
+                           session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
@@ -18,14 +27,24 @@ def handle_list_logs(project_id, experiment_id, run_id, operator_id):
     experiment_id : str
     run_id : str
     operator_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    list
     """
-    logs = get_logs(project_id=project_id,
-                    experiment_id=experiment_id,
-                    run_id=run_id,
-                    operator_id=operator_id)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
 
-    return jsonify(logs)
+    experiment_controller = ExperimentController(session)
+    experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
+
+    run_controller = RunController(session)
+    run_controller.raise_if_run_does_not_exist(run_id)
+
+    log_controller = LogController(session)
+    logs = log_controller.get_logs(project_id=project_id,
+                                   experiment_id=experiment_id,
+                                   run_id=run_id,
+                                   operator_id=operator_id)
+    return logs

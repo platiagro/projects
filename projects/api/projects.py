@@ -1,111 +1,143 @@
 # -*- coding: utf-8 -*-
-"""Projects blueprint."""
-from flask import Blueprint, jsonify, request
+"""Projects API Router."""
+import logging
+from typing import List, Optional
 
-from projects.controllers.projects import create_project, get_project, \
-    update_project, delete_project, list_projects, delete_multiple_projects
-from projects.utils import to_snake_case
+from fastapi import APIRouter, Depends
 
-bp = Blueprint("projects", __name__)
+import projects.schemas.project
+from projects.controllers import ProjectController
+from projects.database import Session, session_scope
+
+router = APIRouter(
+    prefix="/projects",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_projects():
+@router.get("", response_model=projects.schemas.project.ProjectList)
+async def handle_list_projects(page: Optional[int] = 1,
+                               page_size: Optional[int] = 10,
+                               order: Optional[str] = None,
+                               session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
+    Parameters
+    ----------
+    page : int
+    page_size : int
+    order : str
+    session : sqlalchemy.orm.session.Session
+
     Returns
     -------
-    str
+    projects.schemas.project.ProjectList
     """
-    filters = request.args.copy()
-    order_by = filters.pop("order", None)
-    page = filters.pop("page", 1)
-    page_size = filters.pop("page_size", 10)
-    projects = list_projects(page=int(page),
-                             page_size=int(page_size),
-                             order_by=order_by,
-                             **filters)
-    return jsonify(projects)
+    project_controller = ProjectController(session)
+    projects = project_controller.list_projects(page=page,
+                                                page_size=page_size,
+                                                order_by=order)
+    return projects
 
 
-@bp.route("", methods=["POST"])
-def handle_post_projects():
+@router.post("", response_model=projects.schemas.project.Project)
+async def handle_post_projects(project: projects.schemas.project.ProjectCreate,
+                               session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
 
+    Parameters
+    ----------
+    project : projects.schemas.project.ProjectCreate
+    session : sqlalchemy.orm.session.Session
+
     Returns
     -------
-    str
+    projects.schemas.project.Project
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    project = create_project(**kwargs)
-    return jsonify(project)
+    project_controller = ProjectController(session)
+    project = project_controller.create_project(project=project)
+    return project
 
 
-@bp.route("<project_id>", methods=["GET"])
-def handle_get_project(project_id):
+@router.get("/{project_id}", response_model=projects.schemas.project.Project)
+async def handle_get_project(project_id: str,
+                             session: Session = Depends(session_scope)):
     """
     Handles GET requests to /<project_id>.
 
     Parameters
     ----------
     project_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.project.Project
     """
-    project = get_project(project_id=project_id)
-    return jsonify(project)
+    logging.error(project_id)
+    project_controller = ProjectController(session)
+    project = project_controller.get_project(project_id=project_id)
+    return project
 
 
-@bp.route("<project_id>", methods=["PATCH"])
-def handle_patch_project(project_id):
+@router.patch("/{project_id}", response_model=projects.schemas.project.Project)
+async def handle_patch_project(project_id: str,
+                               project: projects.schemas.project.ProjectUpdate,
+                               session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<project_id>.
 
     Parameters
     ----------
     project_id : str
+    project : projects.schemas.project.ProjectUpdate
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.project.Project
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    project = update_project(project_id=project_id, **kwargs)
-    return jsonify(project)
+    project_controller = ProjectController(session)
+    project = project_controller.update_project(project_id=project_id, project=project)
+    return project
 
 
-@bp.route("<project_id>", methods=["DELETE"])
-def handle_delete_project(project_id):
+@router.delete("/{project_id}")
+async def handle_delete_project(project_id: str,
+                                session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<project_id>.
 
     Parameters
     ----------
     project_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.message.Message
     """
-    results = delete_project(project_id=project_id)
-    return jsonify(results)
+    project_controller = ProjectController(session)
+    results = project_controller.delete_project(project_id=project_id)
+    return results
 
 
-@bp.route("/deleteprojects", methods=["POST"])
-def handle_post_deleteprojects():
+@router.post("/deleteprojects")
+async def handle_post_deleteprojects(projects: List[str],
+                                     session: Session = Depends(session_scope)):
     """
     Handles POST requests to /deleteprojects.
 
+    Parameters
+    ----------
+    projects : List[str]
+    session : sqlalchemy.orm.session.Session
+
     Returns
     -------
-    str
+    projects.schemas.message.Message
     """
-    kwargs = request.get_json(force=True)
-    results = delete_multiple_projects(kwargs)
-    return jsonify(results)
+    project_controller = ProjectController(session)
+    results = project_controller.delete_multiple_projects(projects=projects)
+    return results

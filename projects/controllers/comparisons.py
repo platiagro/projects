@@ -2,148 +2,148 @@
 """Comparison controller."""
 from datetime import datetime
 
-from sqlalchemy.exc import InvalidRequestError, ProgrammingError
-from werkzeug.exceptions import BadRequest, NotFound
-
-from projects.controllers.utils import raise_if_project_does_not_exist, \
-    raise_if_experiment_does_not_exist, uuid_alpha
-from projects.database import db_session
-from projects.models import Comparison
-
+from projects import models, schemas
+from projects.controllers.experiments import ExperimentController
+from projects.controllers.utils import uuid_alpha
+from projects.exceptions import BadRequest, NotFound
 
 NOT_FOUND = NotFound("The specified comparison does not exist")
 
 
-def list_comparisons(project_id):
-    """
-    Lists all comparisons under a project.
+class ComparisonController:
+    def __init__(self, session):
+        self.session = session
+        self.experiment_controller = ExperimentController(session)
 
-    Parameters
-    ----------
-    project_id : str
+    def raise_if_comparison_does_not_exist(self, comparison_id: str):
+        """
+        Raises an exception if the specified comparison does not exist.
 
-    Returns
-    -------
-    list
-        A list of all comparisons.
+        Parameters
+        ----------
+        comparison_id : str
 
-    Raises
-    ------
-    NotFound
-        When project_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-
-    comparisons = db_session.query(Comparison) \
-        .filter_by(project_id=project_id) \
-        .order_by(Comparison.created_at.asc()) \
-        .all()
-
-    return [comparison.as_dict() for comparison in comparisons]
-
-
-def create_comparison(project_id=None):
-    """
-    Creates a new comparison in our database.
-
-    Parameters
-    ----------
-    project_id : str
-
-    Returns
-    -------
-    dict
-        The comparison attributes.
-
-    Raises
-    ------
-    NotFound
-        When project_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-
-    comparison = Comparison(uuid=uuid_alpha(), project_id=project_id)
-    db_session.add(comparison)
-    db_session.commit()
-
-    return comparison.as_dict()
-
-
-def update_comparison(project_id, comparison_id, **kwargs):
-    """
-    Updates a comparison in our database.
-
-    Parameters
-    ----------
-    project_id : str
-    comparison_id : str
-    **kwargs
-        Arbitrary keyword arguments.
-
-    Returns
-    -------
-    dict
-        The comparison attributes.
-
-    Raises
-    ------
-    BadRequest
-        When the `**kwargs` (comparison attributes) are invalid.
-    NotFound
-        When either project_id or comparison_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-
-    comparison = Comparison.query.get(comparison_id)
-
-    if comparison is None:
-        raise NOT_FOUND
-
-    experiment_id = kwargs.get("experiment_id", None)
-    if experiment_id:
-        raise_if_experiment_does_not_exist(experiment_id)
-
-    data = {"updated_at": datetime.utcnow()}
-    data.update(kwargs)
-
-    try:
-        db_session.query(Comparison) \
+        Raises
+        ------
+        NotFound
+        """
+        exists = self.session.query(models.Comparison.uuid) \
             .filter_by(uuid=comparison_id) \
-            .update(data)
-        db_session.commit()
-    except (InvalidRequestError, ProgrammingError) as e:
-        raise BadRequest(str(e))
+            .scalar() is not None
 
-    return comparison.as_dict()
+        if not exists:
+            raise NOT_FOUND
 
+    def list_comparisons(self, project_id: str):
+        """
+        Lists all comparisons under a project.
 
-def delete_comparison(project_id, comparison_id):
-    """
-    Delete a comparison in our database.
+        Parameters
+        ----------
+        project_id : str
 
-    Parameters
-    ----------
-    project_id : str
-    comparison_id : str
+        Returns
+        -------
+        projects.schemas.comparison.ComparisonList
 
-    Returns
-    -------
-    dict
-        The deletion result.
+        Raises
+        ------
+        NotFound
+            When project_id does not exist.
+        """
+        comparisons = self.session.query(models.Comparison) \
+            .filter_by(project_id=project_id) \
+            .order_by(models.Comparison.created_at.asc()) \
+            .all()
 
-    Raises
-    ------
-    NotFound
-        When either project_id or comparison_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
+        return schemas.ComparisonList.from_model(comparisons, len(comparisons))
 
-    comparison = Comparison.query.get(comparison_id)
+    def create_comparison(self, comparison: schemas.ComparisonCreate, project_id: str):
+        """
+        Creates a new comparison in our database.
 
-    if comparison is None:
-        raise NOT_FOUND
+        Parameters
+        ----------
+        comparison: projects.schemas.comparison.ComparisonCreate
+        project_id : str
 
-    db_session.delete(comparison)
-    db_session.commit()
+        Returns
+        -------
+        projects.schemas.comparison.Comparison
+        """
+        if comparison.experiment_id:
+            stored_experiment = self.session.query(models.Experiment).get(comparison.experiment_id)
+            if stored_experiment is None:
+                raise BadRequest("The specified experiment does not exist")
 
-    return {"message": "Comparison deleted"}
+        comparison = models.Comparison(uuid=uuid_alpha(), project_id=project_id)
+        self.session.add(comparison)
+        self.session.commit()
+        self.session.refresh(comparison)
+
+        return schemas.Comparison.from_model(comparison)
+
+    def update_comparison(self, comparison: schemas.ComparisonUpdate, project_id: str, comparison_id: str):
+        """
+        Updates a comparison in our database.
+
+        Parameters
+        ----------
+        comparison: projects.schemas.comparison.ComparisonUpdate
+        project_id : str
+        comparison_id : str
+
+        Returns
+        -------
+        projects.schemas.comparison.Comparison
+
+        Raises
+        ------
+        BadRequest
+            When comparison attributes are invalid.
+        NotFound
+            When comparison_id does not exist.
+        """
+        self.raise_if_comparison_does_not_exist(comparison_id)
+
+        if comparison.experiment_id:
+            stored_experiment = self.session.query(models.Experiment).get(comparison.experiment_id)
+            if stored_experiment is None:
+                raise BadRequest("The specified experiment does not exist")
+
+        update_data = comparison.dict(exclude_unset=True)
+        update_data.update({"updated_at": datetime.utcnow()})
+
+        self.session.query(models.Comparison).filter_by(uuid=comparison_id).update(update_data)
+        self.session.commit()
+
+        comparison = self.session.query(models.Comparison).get(comparison_id)
+
+        return schemas.Comparison.from_model(comparison)
+
+    def delete_comparison(self, project_id: str, comparison_id: str):
+        """
+        Delete a comparison in our database.
+
+        Parameters
+        ----------
+        project_id : str
+        comparison_id : str
+
+        Returns
+        -------
+        projects.schemas.message.Message
+
+        Raises
+        ------
+        NotFound
+            When comparison_id does not exist.
+        """
+        comparison = self.session.query(models.Comparison).get(comparison_id)
+
+        if comparison is None:
+            raise NOT_FOUND
+
+        self.session.delete(comparison)
+
+        return schemas.Message(message="Comparison deleted")

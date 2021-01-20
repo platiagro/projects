@@ -5,9 +5,6 @@ import re
 from ast import literal_eval
 from io import StringIO
 
-from projects.controllers.utils import raise_if_project_does_not_exist, \
-    raise_if_deployment_does_not_exist
-
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_pod_log
 
@@ -17,97 +14,97 @@ LOG_MESSAGE_PATTERN = r'[a-zA-Z0-9\"\'.\-@_!#$%^&*()<>?\/|}{~:]{1,}'
 LOG_LEVEL_PATTERN = r'(?<![\\w\\d])INFO(?![\\w\\d])|(?<![\\w\\d])WARN(?![\\w\\d])|(?<![\\w\\d])ERROR(?![\\w\\d])'
 
 
-def list_logs(project_id, deployment_id, run_id):
-    """
-    Lists logs from a deployment run.
+class LogController:
+    def __init__(self, session):
+        self.session = session
 
-    Parameters
-    ----------
-    project_id : str
-    deployment_id : str
-    run_id : str
+    def list_logs(self, project_id: str, deployment_id: str, run_id: str):
+        """
+        Lists logs from a deployment run.
 
-    Returns
-    -------
-    dict
-        A list of all logs from a run.
+        Parameters
+        ----------
+        project_id : str
+        deployment_id : str
+        run_id : str
 
-    Raises
-    ------
-    NotFound
-        When any of project_id or deployment_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
+        Returns
+        -------
+        dict
+            A list of all logs from a run.
 
-    deployment_pods = list_deployment_pods(deployment_id)
-    response = []
-    status = {'status': 'Starting'}
+        Raises
+        ------
+        NotFound
+            When any of project_id or deployment_id does not exist.
+        """
+        deployment_pods = list_deployment_pods(deployment_id)
+        response = []
+        status = {'status': 'Starting'}
 
-    if not deployment_pods:
-        return status
+        if not deployment_pods:
+            return status
 
-    for pod in deployment_pods:
-        for container in pod.spec.containers:
-            if container.name not in EXCLUDE_CONTAINERS:
-                pod_log = get_pod_log(pod, container)
+        for pod in deployment_pods:
+            for container in pod.spec.containers:
+                if container.name not in EXCLUDE_CONTAINERS:
+                    pod_log = get_pod_log(pod, container)
 
-                if not pod_log:
-                    status.update({'status': 'Creating'})
-                    return status
+                    if not pod_log:
+                        status.update({'status': 'Creating'})
+                        return status
 
-                # retrieves the name of the task linked to the operator
-                # in the pod "metadata.annotations.tasks"
-                tasks = pod.metadata.annotations.get("tasks")
-                tasks = literal_eval(tasks)
+                    # retrieves the name of the task linked to the operator
+                    # in the pod "metadata.annotations.tasks"
+                    tasks = pod.metadata.annotations.get("tasks")
+                    tasks = literal_eval(tasks)
 
-                operator_info = {}
-                operator_info['containerName'] = tasks[container.name]
-                operator_info['logs'] = log_parser(pod_log)
-                operator_info.update({'status': 'Completed'})
-                response.append(operator_info)
+                    operator_info = {}
+                    operator_info['containerName'] = tasks[container.name]
+                    operator_info['logs'] = self.log_parser(pod_log)
+                    operator_info.update({'status': 'Completed'})
+                    response.append(operator_info)
 
-    return response
+        return response
 
+    def log_parser(self, raw_log):
+        """
+        Transform raw log text into human-readable logs.
 
-def log_parser(raw_log):
-    """
-    Transform raw log text into human-readable logs.
+        Parameters
+        ----------
+        raw_log : str
+            The raw log content.
 
-    Parameters
-    ----------
-    raw_log : str
-        The raw log content.
-
-    Returns
-    -------
-    dict
-        Detailed logs with level, Time Stamp and message from pod container.
-    """
-    logs = []
-    buf = StringIO(raw_log)
-    line = buf.readline()
-
-    while line:
-        line = line.replace('\n', '')
-
-        timestamp = re.search(TIME_STAMP_PATTERN, line).group()
-        line = re.sub(timestamp, '', line)
-
-        level = re.findall(LOG_LEVEL_PATTERN, line)
-        level = ' '.join([str(x) for x in level])
-        line = line.replace(level, '')
-
-        line = re.sub(r'( [-:*]{1})', '', line)
-        message = re.findall(LOG_MESSAGE_PATTERN, line)
-        message = ' '.join([str(x) for x in message])
-        message = re.sub(TIME_STAMP_PATTERN, '', message)
-
-        log = {}
-        log['timestamp'] = timestamp
-        log['level'] = level
-        log['message'] = message
-        logs.append(log)
+        Returns
+        -------
+        dict
+            Detailed logs with level, Time Stamp and message from pod container.
+        """
+        logs = []
+        buf = StringIO(raw_log)
         line = buf.readline()
 
-    return logs
+        while line:
+            line = line.replace('\n', '')
+
+            timestamp = re.search(TIME_STAMP_PATTERN, line).group()
+            line = re.sub(timestamp, '', line)
+
+            level = re.findall(LOG_LEVEL_PATTERN, line)
+            level = ' '.join([str(x) for x in level])
+            line = line.replace(level, '')
+
+            line = re.sub(r'( [-:*]{1})', '', line)
+            message = re.findall(LOG_MESSAGE_PATTERN, line)
+            message = ' '.join([str(x) for x in message])
+            message = re.sub(TIME_STAMP_PATTERN, '', message)
+
+            log = {}
+            log['timestamp'] = timestamp
+            log['level'] = level
+            log['message'] = message
+            logs.append(log)
+            line = buf.readline()
+
+        return logs

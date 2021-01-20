@@ -1,14 +1,23 @@
 # -*- coding: utf-8 -*-
-"""Experiment Figures blueprint."""
-from flask import Blueprint, jsonify
+"""Figures API Router."""
+from fastapi import APIRouter, Depends
 
-from projects.controllers.experiments.runs.figures import list_figures
+from projects.controllers import ExperimentController, FigureController, \
+    ProjectController
+from projects.controllers.experiments.runs import RunController
+from projects.database import Session, session_scope
 
-bp = Blueprint("figures", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/figures",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_figures(project_id, experiment_id, run_id, operator_id):
+@router.get("")
+async def handle_list_figures(project_id: str,
+                              experiment_id: str,
+                              run_id: str,
+                              operator_id: str,
+                              session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
@@ -18,13 +27,24 @@ def handle_list_figures(project_id, experiment_id, run_id, operator_id):
     experiment_id : str
     run_id : str
     operator_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    list
     """
-    figures = list_figures(project_id=project_id,
-                           experiment_id=experiment_id,
-                           run_id=run_id,
-                           operator_id=operator_id)
-    return jsonify(figures)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
+
+    run_controller = RunController(session)
+    run_controller.raise_if_run_does_not_exist(run_id)
+
+    figure_controller = FigureController(session)
+    figures = figure_controller.list_figures(project_id=project_id,
+                                             experiment_id=experiment_id,
+                                             run_id=run_id,
+                                             operator_id=operator_id)
+    return figures

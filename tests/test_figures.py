@@ -2,6 +2,8 @@
 from json import dumps
 from unittest import TestCase
 
+from fastapi.testclient import TestClient
+
 import matplotlib.pyplot as plt
 import numpy as np
 import platiagro
@@ -10,6 +12,8 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+
+TEST_CLIENT = TestClient(app)
 
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
@@ -41,27 +45,28 @@ class TestFigures(TestCase):
         conn = engine.connect()
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES (%s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID}', '{NAME}', '{PROJECT_ID}', '{POSITION}', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON,
+                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES ('{OPERATOR_ID}', '{EXPERIMENT_ID}', '{TASK_ID}', '{PARAMETERS_JSON}', '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (OPERATOR_ID, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
 
         t = np.arange(0.0, 2.0, 0.01)
@@ -94,19 +99,18 @@ class TestFigures(TestCase):
         conn.close()
 
     def test_list_figures(self):
-        with app.test_client() as c:
-            rv = c.get(f"/projects/1/experiments/unk/runs/unk/operators/{OPERATOR_ID}/figures")
-            result = rv.get_json()
-            expected = {"message": "The specified project does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.get(f"/projects/1/experiments/unk/runs/unk/operators/{OPERATOR_ID}/figures")
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/unk/runs/unk/operators/{OPERATOR_ID}/figures")
-            result = rv.get_json()
-            expected = {"message": "The specified experiment does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/unk/runs/unk/operators/{OPERATOR_ID}/figures")
+        result = rv.json()
+        expected = {"message": "The specified experiment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/figures")
-            result = rv.get_json()
-            self.assertIsInstance(result, list)
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/figures")
+        result = rv.json()
+        self.assertIsInstance(result, list)

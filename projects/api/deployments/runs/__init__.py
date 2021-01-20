@@ -1,8 +1,5 @@
-from .runs import bp, handle_list_runs, handle_post_runs, handle_delete_runs
+from .runs import router
 
 __all__ = [
-    "bp",
-    "handle_list_runs",
-    "handle_post_runs",
-    "handle_delete_runs",
+    "router",
 ]
