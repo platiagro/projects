@@ -28,13 +28,13 @@ class Project(Base):
 
     @hybrid_property
     def has_experiment(self):
-        return True if self.experiments else False
+        return len(self.experiments) > 0
 
     @hybrid_property
     def has_pre_deployment(self):
-        return any([True for deployment in self.deployments])
+        return len(self.deployments) > 0
 
     @hybrid_property
     def has_deployment(self):
-        deployments = list_project_seldon_deployments(self.uuid)
-        return True if deployments else False
+        seldon_deployments = list_project_seldon_deployments(self.uuid)
+        return len(seldon_deployments) > 0

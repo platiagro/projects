@@ -192,10 +192,14 @@ class OperatorController:
                 dependencies = op.dependencies.remove(operator_id)
                 if dependencies is None:
                     dependencies = []
+
+                operator = schemas.OperatorUpdate(
+                    dependencies=dependencies,
+                )
                 self.update_operator(project_id=project_id,
                                      experiment_id=experiment_id,
                                      operator_id=op.uuid,
-                                     dependencies=dependencies)
+                                     operator=operator)
 
         self.session.delete(operator)
 
@@ -286,17 +290,17 @@ class OperatorController:
                 raise BadRequest("Cyclical dependencies.")
         return False
 
-    def has_cycles_util(self, operator_id: str, visited: bool, recursion_stack: List, new_dependencies: List[str], new_dependencies_op: List[models.Operator]):
+    def has_cycles_util(self, operator_id: str, visited: Dict[bool], recursion_stack: Dict, new_dependencies: List[str], new_dependencies_op: str):
         """
         Check if a run has cycle.
 
         Parameters
         ----------
         operator_id : str
-        visited : bool
-        recursion_stack : list
+        visited : dict
+        recursion_stack : dict
         new_dependencies : list
-        new_dependencies_op : list
+        new_dependencies_op : str
 
         Returns
         -------

@@ -29,6 +29,7 @@ class OperatorUpdate(OperatorBase):
     parameters: Optional[Dict]
     position_x: Optional[int]
     position_y: Optional[int]
+    dependencies: Optional[List[str]]
 
 
 class Operator(OperatorBase):

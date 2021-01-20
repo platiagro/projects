@@ -276,10 +276,9 @@ class TaskController:
         if stored_task and stored_task.uuid != task_id:
             raise BadRequest("a task with that name already exists")
 
-        if task.tags:
-            if any(tag not in VALID_TAGS for tag in task.tags):
-                valid_str = ",".join(VALID_TAGS)
-                raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
+        if task.tags and any(tag not in VALID_TAGS for tag in task.tags):
+            valid_str = ",".join(VALID_TAGS)
+            raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
         if task.experiment_notebook:
             with tempfile.NamedTemporaryFile("w", delete=False) as f:

@@ -95,10 +95,6 @@ class TemplateController:
         else:
             raise BadRequest("experimentId or deploymentId needed to create template.")
 
-        operators = self.session.query(models.Operator) \
-            .filter_by(experiment_id=template.experiment_id) \
-            .all()
-
         stored_template = self.session.query(models.Template) \
             .filter_by(name=template.name) \
             .first()
