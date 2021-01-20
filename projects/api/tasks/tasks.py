@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """Tasks API Router."""
-from typing import Optional
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 import projects.schemas.task
 from projects.controllers import TaskController
 from projects.database import Session, session_scope
+from projects.utils import format_query_params
 
 router = APIRouter(
     prefix="/tasks",
@@ -14,18 +13,14 @@ router = APIRouter(
 
 
 @router.get("", response_model=projects.schemas.task.TaskList)
-async def handle_list_tasks(page: Optional[int] = None,
-                            page_size: Optional[int] = None,
-                            order: Optional[str] = None,
+async def handle_list_tasks(request: Request,
                             session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
     Parameters
     ----------
-    page : int
-    page_size : int
-    order : str
+    request : fastapi.Request
     session : sqlalchemy.orm.session.Session
 
     Returns
@@ -33,9 +28,18 @@ async def handle_list_tasks(page: Optional[int] = None,
     projects.schemas.task.TaskList
     """
     task_controller = TaskController(session)
+    filters = format_query_params(str(request.query_params))
+    order_by = filters.pop("order", None)
+    page = filters.pop("page", None)
+    if page:
+        page = int(page)
+    page_size = filters.pop("page_size", None)
+    if page_size:
+        page_size = int(page_size)
     tasks = task_controller.list_tasks(page=page,
                                        page_size=page_size,
-                                       order_by=order)
+                                       order_by=order_by,
+                                       **filters)
     return tasks
 
 

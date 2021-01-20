@@ -39,7 +39,11 @@ class ProjectController:
         if not exists:
             raise NOT_FOUND
 
-    def list_projects(self, page: Optional[int] = 1, page_size: Optional[int] = 10, order_by: Optional[str] = None):
+    def list_projects(self,
+                      page: Optional[int] = 1,
+                      page_size: Optional[int] = 10,
+                      order_by: Optional[str] = None,
+                      **filters):
         """
         Lists projects. Supports pagination, and sorting.
 
@@ -51,6 +55,7 @@ class ProjectController:
             The page size. Default value is 10.
         order_by : str
             Order by instruction. Format is "column [asc|desc]".
+        **filters : dict
 
         Returns
         -------
@@ -64,10 +69,9 @@ class ProjectController:
         query = self.session.query(models.Project)
         query_total = self.session.query(func.count(models.Project.uuid))
 
-        # FIXME Apply filters to the query
-        # for column, value in filters.items():
-        #     query = query.filter(getattr(models.Project, column).ilike(f"%{value}%"))
-        #     query_total = query_total.filter(getattr(models.Project, column).ilike(f"%{value}%"))
+        for column, value in filters.items():
+            query = query.filter(getattr(models.Project, column).ilike(f"%{value}%"))
+            query_total = query_total.filter(getattr(models.Project, column).ilike(f"%{value}%"))
 
         total = query_total.scalar()
 
@@ -77,7 +81,7 @@ class ProjectController:
 
         # Sorts records
         try:
-            (column, sort) = order_by.split()
+            (column, sort) = order_by.replace('+', ' ').strip().split()
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Project.__table__.columns.keys()
         except (AssertionError, ValueError):
