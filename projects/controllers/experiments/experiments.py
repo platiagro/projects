@@ -217,25 +217,16 @@ class ExperimentController:
             .filter(models.Operator.experiment_id == experiment_id) \
             .delete()
 
-        # remove deployment (if exists) operators
-        deployment = self.session.query(models.Deployment) \
-            .filter(models.Deployment.experiment_id == experiment_id) \
-            .first()
-        if deployment:
-            self.session.query(models.Operator) \
-                .filter(models.Operator.deployment_id == deployment.uuid) \
-                .delete()
-
-        # FIXME não deve remover. deve dar update set experiment_id=null
-        # remove deployments
+        # update deployments experiment id to None
         self.session.query(models.Deployment) \
             .filter(models.Deployment.experiment_id == experiment_id) \
-            .delete()
+            .update({"experiment_id": None})
 
         self.session.delete(experiment)
         self.session.flush()
 
         self.fix_positions(project_id=project_id)
+        self.session.commit()
 
         return schemas.Message(message="Experiment deleted")
 

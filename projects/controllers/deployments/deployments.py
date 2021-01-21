@@ -97,13 +97,16 @@ class DeploymentController:
             When any experiment does not exist.
         """
         # ^ is xor operator. it's equivalent to (a and not b) or (not a and b)
-        if bool(deployment.experiments) ^ bool(deployment.template_id):
+        if not bool(deployment.experiments) ^ bool(deployment.template_id):
             raise BadRequest("either experiments or templateId is required")
 
         if deployment.template_id:
-            return self.create_deployment_from_template(template_id=deployment.template_id, project_id=project_id)
+            return self.create_deployment_from_template(
+                template_id=deployment.template_id,
+                project_id=project_id
+            )
 
-        experiments_dict = {e["uuid"]: e for e in self.experiment_controller.list_experiments(project_id=project_id)}
+        experiments_dict = {e.uuid: e for e in self.session.query(models.Experiment).filter_by(project_id=project_id)}
 
         for experiment_id in deployment.experiments:
             if experiment_id not in experiments_dict:
@@ -113,20 +116,20 @@ class DeploymentController:
 
         for experiment_id in deployment.experiments:
             experiment = experiments_dict[experiment_id]
-
-            # FIXME dá erro se já foi criado deployment a partir deste experimento
             deployment = models.Deployment(uuid=uuid_alpha(),
                                            experiment_id=experiment_id,
-                                           name=experiment["name"],
+                                           name=experiment.name,
                                            project_id=project_id)
             self.session.add(deployment)
             self.session.flush()
 
             deployments.append(deployment)
 
-            self.operator_controller.copy_operators(project_id=project_id,
-                                                    experiment_id=experiment_id,
-                                                    deployment_id=deployment.uuid)
+            self.copy_operators(
+                project_id=project_id,
+                experiment_id=experiment_id,
+                deployment_id=deployment.uuid
+            )
 
             self.fix_positions(project_id=project_id,
                                deployment_id=deployment.uuid,
@@ -139,7 +142,6 @@ class DeploymentController:
 
         self.session.commit()
         self.session.refresh(deployment)
-
         return schemas.Deployment.from_model(deployment)
 
     def get_deployment(self, project_id: str, deployment_id: str):
@@ -320,16 +322,23 @@ class DeploymentController:
                 # Get the new id's of the dependencies
                 dependencies = [operators_mapper[dependencie_uuid] for dependencie_uuid in operator.dependencies]
 
-            operator_ = self.operator_controller.create_operator(deployment_id=deployment_id,
-                                                                 project_id=project_id,
-                                                                 task_id=operator.task_id,
-                                                                 parameters=operator.parameters,
-                                                                 dependencies=dependencies,
-                                                                 position_x=operator.position_x,
-                                                                 position_y=operator.position_y)
+            operator_create = schemas.OperatorCreate(
+                deployment_id=deployment_id,
+                project_id=project_id,
+                task_id=operator.task_id,
+                parameters=operator.parameters,
+                dependencies=dependencies,
+                position_x=operator.position_x,
+                position_y=operator.position_y
+            )
+            operator_ = self.operator_controller.create_operator(
+                operator=operator_create,
+                project_id=project_id,
+                deployment_id=deployment_id
+            )
 
             # Keys is the old uuid and values the new one
-            operators_mapper.update({operator.uuid: operator_["uuid"]})
+            operators_mapper.update({operator.uuid: operator_.uuid})
 
     def create_deployment_from_template(self, template_id: str, project_id: str):
         """
