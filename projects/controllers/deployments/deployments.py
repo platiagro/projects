@@ -341,8 +341,6 @@ class DeploymentController:
         project_id : str
         """
         template = self.template_controller.get_template(template_id)
-
-        # FIXME dá erro se já foi criado deployment a partir deste template
         deployment = models.Deployment(uuid=uuid_alpha(),
                                        name=template.name,
                                        project_id=project_id)
