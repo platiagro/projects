@@ -2,15 +2,22 @@
 """Kubeflow Pipelines interface."""
 from collections import defaultdict
 from json import dumps, loads
+from os import getenv
 
 from kfp import compiler, dsl
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
+from projects import __version__
 from projects.kfp import CPU_LIMIT, CPU_REQUEST, KF_PIPELINES_NAMESPACE, \
     MEMORY_LIMIT, MEMORY_REQUEST, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
+
+TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
+    "TASK_DEFAULT_DEPLOYMENT_IMAGE",
+    f'platiagro/platiagro-deployment-image:{__version__}',
+)
 
 
 def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, deployment_name):
@@ -228,6 +235,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         tasks.update({operator.uuid: operator.task.name})
         component_specs.append(
             COMPONENT_SPEC.substitute({
+                "image": TASK_DEFAULT_DEPLOYMENT_IMAGE,
                 "operatorId": operator.uuid,
                 "experimentId": experiment_id,
                 "deploymentId": deployment_id,

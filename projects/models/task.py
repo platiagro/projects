@@ -9,7 +9,7 @@ from sqlalchemy.sql import expression
 from projects import __version__
 from projects.database import Base
 
-DEFAULT_IMAGE = os.getenv("DEFAULT_IMAGE", f'platiagro/platiagro-experiment-image:{__version__}')
+DEFAULT_IMAGE = os.getenv("TASK_DEFAULT_EXPERIMENT_IMAGE", f'platiagro/platiagro-experiment-image:{__version__}')
 
 
 class Task(Base):
