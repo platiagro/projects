@@ -9,7 +9,7 @@ from projects.controllers import DeploymentController, MonitoringController, \
 from projects.database import session_scope
 
 router = APIRouter(
-    prefix="/projects/{project_id}/experiments/{experiment_id}/operators",
+    prefix="/projects/{project_id}/deployments/{deployment_id}/monitorings",
 )
 
 
