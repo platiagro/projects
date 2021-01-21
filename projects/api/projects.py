@@ -4,10 +4,11 @@ import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, Request
+from sqlalchemy.orm import Session
 
 import projects.schemas.project
 from projects.controllers import ProjectController
-from projects.database import Session, session_scope
+from projects.database import session_scope
 from projects.utils import format_query_params
 
 router = APIRouter(

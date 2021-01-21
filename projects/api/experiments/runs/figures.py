@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Figures API Router."""
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from projects.controllers import ExperimentController, FigureController, \
     ProjectController
 from projects.controllers.experiments.runs import RunController
-from projects.database import Session, session_scope
+from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/figures",

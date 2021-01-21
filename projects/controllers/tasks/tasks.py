@@ -217,7 +217,7 @@ class TaskController:
             image=task.image,
             commands=task.commands,
             arguments=task.arguments,
-            parameters=task.parameters,
+            parameters=task.parameters if task.parameters else [],
             experiment_notebook_path=experiment_notebook_path,
             deployment_notebook_path=deployment_notebook_path,
             is_default=task.is_default,

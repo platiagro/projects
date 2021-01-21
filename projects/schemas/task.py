@@ -27,6 +27,7 @@ class TaskCreate(TaskBase):
     parameters: Optional[List]
     experiment_notebook: Optional[Dict]
     deployment_notebook: Optional[Dict]
+    is_default: Optional[bool]
 
 
 class TaskUpdate(TaskBase):
