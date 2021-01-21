@@ -26,7 +26,7 @@ class ParameterController:
         NotFound
             When task_id does not exist.
         """
-        task = self.session.query(models.Task).query.get(task_id)
+        task = self.session.query(models.Task).get(task_id)
         if task is None:
             raise NotFound("The specified task does not exist")
 
