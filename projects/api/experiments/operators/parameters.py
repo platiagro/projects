@@ -1,30 +1,52 @@
 # -*- coding: utf-8 -*-
 """Operators blueprint."""
-from flask import Blueprint, jsonify, request
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from projects.controllers.operators.parameters import update_parameter
-from projects.utils import to_snake_case
+import projects.schemas.operator
+from projects.controllers import ExperimentController, OperatorController, \
+    OperatorParameterController, ProjectController
+from projects.database import session_scope
 
-bp = Blueprint("operator_parameters", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}/parameters",
+)
 
 
-@bp.route("<name>", methods=["PATCH"])
-def handle_patch_parameter(project_id, experiment_id, operator_id, name):
+@router.patch("/{name}", response_model=projects.schemas.operator.Operator)
+async def handle_patch_parameter(project_id: str,
+                                 experiment_id: str,
+                                 operator_id: str,
+                                 name: str,
+                                 parameter: projects.schemas.operator.ParameterUpdate,
+                                 session: Session = Depends(session_scope)):
     """
-    Handles PATCH requests to /<name>.
+    Handles PATCH requests to /{name}.
 
     Parameters
     ----------
+    project_id : str
+    experiment_id : str
+    operator_id : str
     name : str
-        Parameter name.
+    parameter : projects.schemas.Operator.ParameterUpdate
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    projects.schemas.operator.Operator
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    parameter = update_parameter(
-        project_id=project_id,
-        experiment_id=experiment_id,
-        operator_id=operator_id,
-        name=name,
-        **kwargs
-    )
-    return jsonify(parameter)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
+
+    operator_controller = OperatorController(session)
+    operator_controller.raise_if_operator_does_not_exist(operator_id)
+
+    parameter_controller = OperatorParameterController(session)
+    operator = parameter_controller.update_parameter(name=name,
+                                                     operator_id=operator_id,
+                                                     parameter=parameter)
+    return operator

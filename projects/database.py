@@ -2,7 +2,7 @@
 import os
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 DB_HOST = os.getenv("MYSQL_DB_HOST", "mysql.platiagro")
@@ -11,13 +11,11 @@ DB_USER = os.getenv("MYSQL_DB_USER", "root")
 DB_PASS = os.getenv("MYSQL_DB_PASSWORD", "")
 DB_URL = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
 engine = create_engine(DB_URL,
-                       pool_size=20,
-                       pool_recycle=300)
-Session = scoped_session(sessionmaker(autocommit=False,
-                                      autoflush=False,
-                                      bind=engine))
+                       pool_size=32,
+                       pool_recycle=300,
+                       max_overflow=64)
+Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-Base.query = Session.query_property()
 
 
 def init_db():
@@ -44,4 +42,4 @@ def session_scope():
     try:
         yield session
     finally:
-        scoped_session(session).remove()
+        session.close()

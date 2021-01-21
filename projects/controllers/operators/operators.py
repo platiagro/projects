@@ -199,15 +199,16 @@ class OperatorController:
                 if dependencies is None:
                     dependencies = []
 
-                operator = schemas.OperatorUpdate(
+                op_update = schemas.OperatorUpdate(
                     dependencies=dependencies,
                 )
                 self.update_operator(project_id=project_id,
                                      experiment_id=experiment_id,
                                      operator_id=op.uuid,
-                                     operator=operator)
+                                     operator=op_update)
 
         self.session.delete(operator)
+        self.session.commit()
 
         return schemas.Message(message="Operator deleted")
 

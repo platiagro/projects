@@ -1,10 +1,5 @@
-from .operators import bp, handle_list_operators, handle_post_operator, \
-    handle_patch_operator, handle_delete_operator
+from .operators import router
 
 __all__ = [
-    "bp",
-    "handle_list_operators",
-    "handle_post_operator",
-    "handle_patch_operator",
-    "handle_delete_operator",
+    "router"
 ]

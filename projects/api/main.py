@@ -15,6 +15,7 @@ from projects.api.deployments.runs import logs as deployment_logs
 from projects.api.experiments import operators, runs as experiment_runs
 from projects.api.experiments.runs import datasets, figures, \
     logs as experiment_logs, metrics
+from projects.api.experiments.operators import parameters as operator_parameters
 from projects.api.tasks import parameters
 from projects.database import engine, init_db
 from projects.exceptions import BadRequest, NotFound, InternalServerError
@@ -30,6 +31,7 @@ app.include_router(datasets.router)
 app.include_router(figures.router)
 app.include_router(experiment_logs.router)
 app.include_router(metrics.router)
+app.include_router(operator_parameters.router)
 app.include_router(deployments.router)
 app.include_router(deployment_runs.router)
 app.include_router(deployment_logs.router)

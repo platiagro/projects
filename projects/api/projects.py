@@ -82,7 +82,6 @@ async def handle_get_project(project_id: str,
     -------
     projects.schemas.project.Project
     """
-    logging.error(project_id)
     project_controller = ProjectController(session)
     project = project_controller.get_project(project_id=project_id)
     return project
