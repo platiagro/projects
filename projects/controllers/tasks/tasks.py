@@ -136,7 +136,7 @@ class TaskController:
         if task.copy_from and has_notebook:
             raise BadRequest("Either provide notebooks or a task to copy from")
 
-        if len(task.tags) == 0:
+        if not task.tags or len(task.tags) == 0:
             task.tags = ["DEFAULT"]
 
         if any(tag not in VALID_TAGS for tag in task.tags):
