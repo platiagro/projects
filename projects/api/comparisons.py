@@ -1,50 +1,71 @@
 # -*- coding: utf-8 -*-
-"""Comparison blueprint."""
-from flask import Blueprint, jsonify, request
+"""Comparisons API Router."""
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from projects.controllers.comparisons import list_comparisons, create_comparison, \
-    update_comparison, delete_comparison
-from projects.utils import to_snake_case
+import projects.schemas.comparison
+from projects.controllers import ComparisonController, ProjectController
+from projects.database import session_scope
 
-bp = Blueprint("comparisons", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/comparisons",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_comparisons(project_id):
+@router.get("", response_model=projects.schemas.comparison.ComparisonList)
+async def handle_list_comparisons(project_id: str,
+                                  session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
     Parameters
     ----------
     project_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.comparison.ComparisonList
     """
-    comparisons = list_comparisons(project_id=project_id)
-    return jsonify(comparisons)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    comparison_controller = ComparisonController(session)
+    comparisons = comparison_controller.list_comparisons(project_id=project_id)
+    return comparisons
 
 
-@bp.route("", methods=["POST"])
-def handle_post_comparisons(project_id):
+@router.post("", response_model=projects.schemas.comparison.Comparison)
+async def handle_post_comparisons(project_id: str,
+                                  comparison: projects.schemas.comparison.ComparisonCreate,
+                                  session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
 
     Parameters
     ----------
     project_id : str
+    comparison : projects.schemas.comparison.ComparisonCreate
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.comparison.Comparison
     """
-    comparison = create_comparison(project_id=project_id)
-    return jsonify(comparison)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    comparison_controller = ComparisonController(session)
+    comparison = comparison_controller.create_comparison(comparison=comparison,
+                                                         project_id=project_id)
+    return comparison
 
 
-@bp.route("<comparison_id>", methods=["PATCH"])
-def handle_patch_comparisons(project_id, comparison_id):
+@router.patch("/{comparison_id}", response_model=projects.schemas.comparison.Comparison)
+async def handle_patch_comparisons(project_id: str,
+                                   comparison_id: str,
+                                   comparison: projects.schemas.comparison.ComparisonUpdate,
+                                   session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<comparison_id>.
 
@@ -52,21 +73,29 @@ def handle_patch_comparisons(project_id, comparison_id):
     ----------
     project_id : str
     comparison_id : str
+    comparison : projects.schemas.comparison.ComparisonUpdate
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.comparison.Comparison
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    comparison = update_comparison(comparison_id=comparison_id,
-                                   project_id=project_id,
-                                   **kwargs)
-    return jsonify(comparison)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    comparison_controller = ComparisonController(session)
+    comparison = comparison_controller.update_comparison(
+        comparison_id=comparison_id,
+        project_id=project_id,
+        comparison=comparison,
+    )
+    return comparison
 
 
-@bp.route("<comparison_id>", methods=["DELETE"])
-def handle_delete_comparisons(project_id, comparison_id):
+@router.delete("/{comparison_id}")
+async def handle_delete_comparisons(project_id: str,
+                                    comparison_id: str,
+                                    session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<comparison_id>.
 
@@ -74,11 +103,18 @@ def handle_delete_comparisons(project_id, comparison_id):
     ----------
     project_id : str
     comparison_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.message.Message
     """
-    comparison = delete_comparison(comparison_id=comparison_id,
-                                   project_id=project_id)
-    return jsonify(comparison)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    comparison_controller = ComparisonController(session)
+    comparison = comparison_controller.delete_comparison(
+        comparison_id=comparison_id,
+        project_id=project_id,
+    )
+    return comparison

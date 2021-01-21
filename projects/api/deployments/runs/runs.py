@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
-"""Deployment Runs blueprint."""
-from flask import Blueprint, jsonify
+"""Runs API Router."""
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from projects.controllers.deployments.runs import create_run, get_run, \
-    list_runs, terminate_run
+from projects.controllers import DeploymentController, ProjectController
+from projects.controllers.deployments.runs import RunController
+from projects.database import session_scope
 
-bp = Blueprint("deployment_runs", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/deployments/{deployment_id}/runs",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_runs(project_id, deployment_id):
+@router.get("")
+async def handle_list_runs(project_id: str,
+                           deployment_id: str,
+                           session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
@@ -17,18 +23,28 @@ def handle_list_runs(project_id, deployment_id):
     ----------
     project_id : str
     deployment_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     str
     """
-    runs = list_runs(project_id=project_id,
-                     deployment_id=deployment_id)
-    return jsonify(runs)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    deployment_controller = DeploymentController(session)
+    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
+
+    run_controller = RunController(session)
+    runs = run_controller.list_runs(project_id=project_id,
+                                    deployment_id=deployment_id)
+    return runs
 
 
-@bp.route("", methods=["POST"])
-def handle_post_runs(project_id, deployment_id):
+@router.post("")
+async def handle_post_runs(project_id: str,
+                           deployment_id: str,
+                           session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
 
@@ -36,18 +52,29 @@ def handle_post_runs(project_id, deployment_id):
     ----------
     project_id : str
     deployment_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     str
     """
-    run = create_run(project_id=project_id,
-                     deployment_id=deployment_id)
-    return jsonify(run)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    deployment_controller = DeploymentController(session)
+    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
+
+    run_controller = RunController(session)
+    run = run_controller.create_run(project_id=project_id,
+                                    deployment_id=deployment_id)
+    return run
 
 
-@bp.route("<run_id>", methods=["GET"])
-def handle_get_run(project_id, deployment_id, run_id):
+@router.get("/{run_id}")
+async def handle_get_run(session,
+                         project_id: str,
+                         deployment_id: str,
+                         run_id: str):
     """
     Handles GET requests to /<run_id>.
 
@@ -56,19 +83,30 @@ def handle_get_run(project_id, deployment_id, run_id):
     project_id : str
     deployment_id : str
     run_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     str
     """
-    run = get_run(project_id=project_id,
-                  deployment_id=deployment_id,
-                  run_id=run_id)
-    return jsonify(run)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    deployment_controller = DeploymentController(session)
+    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
+
+    run_controller = RunController(session)
+    run = run_controller.get_run(project_id=project_id,
+                                 deployment_id=deployment_id,
+                                 run_id=run_id)
+    return run
 
 
-@bp.route("<run_id>", methods=["DELETE"])
-def handle_delete_runs(project_id, deployment_id, run_id):
+@router.delete("/{run_id}")
+async def handle_delete_runs(session,
+                             project_id: str,
+                             deployment_id: str,
+                             run_id: str):
     """
     Handles DELETE requests to /<run_id>.
 
@@ -77,12 +115,20 @@ def handle_delete_runs(project_id, deployment_id, run_id):
     project_id : str
     deployment_id : str
     run_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     str
     """
-    run = terminate_run(project_id=project_id,
-                        deployment_id=deployment_id,
-                        run_id=run_id)
-    return jsonify(run)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    deployment_controller = DeploymentController(session)
+    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
+
+    run_controller = RunController(session)
+    run = run_controller.terminate_run(project_id=project_id,
+                                       deployment_id=deployment_id,
+                                       run_id=run_id)
+    return run

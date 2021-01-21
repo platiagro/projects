@@ -1,24 +1,23 @@
 # -*- coding: utf-8 -*-
-from os import getenv
+import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-DB_HOST = getenv("MYSQL_DB_HOST", "mysql.kubeflow")
-DB_NAME = getenv("MYSQL_DB_NAME", "platiagro")
-DB_USER = getenv("MYSQL_DB_USER", "root")
-DB_PASS = getenv("MYSQL_DB_PASSWORD", "")
+DB_HOST = os.getenv("MYSQL_DB_HOST", "mysql.platiagro")
+DB_NAME = os.getenv("MYSQL_DB_NAME", "platiagro")
+DB_USER = os.getenv("MYSQL_DB_USER", "root")
+DB_PASS = os.getenv("MYSQL_DB_PASSWORD", "")
 DB_URL = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
 engine = create_engine(DB_URL,
-                       convert_unicode=True,
                        pool_size=20,
                        pool_recycle=300)
-db_session = scoped_session(sessionmaker(autocommit=False,
-                                         autoflush=False,
-                                         bind=engine))
+Session = scoped_session(sessionmaker(autocommit=False,
+                                      autoflush=False,
+                                      bind=engine))
 Base = declarative_base()
-Base.query = db_session.query_property()
+Base.query = Session.query_property()
 
 
 def init_db():
@@ -35,3 +34,14 @@ def init_db():
     conn.close()
 
     Base.metadata.create_all(bind=engine)
+
+
+def session_scope():
+    """
+    Provide a transactional scope around a series of operations.
+    """
+    session = Session()
+    try:
+        yield session
+    finally:
+        scoped_session(session).remove()

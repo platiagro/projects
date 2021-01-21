@@ -1,40 +1,34 @@
 # -*- coding: utf-8 -*-
 """Experiments Metrics controller."""
 import platiagro
-from werkzeug.exceptions import NotFound
 
-from projects.controllers.utils import raise_if_project_does_not_exist, \
-    raise_if_experiment_does_not_exist
+from projects.exceptions import NotFound
 
 
-def list_metrics(project_id, experiment_id, run_id, operator_id):
-    """
-    Lists all metrics from object storage.
+class MetricController:
+    def __init__(self, session):
+        self.session = session
 
-    Parameters
-    ----------
-    project_id : str
-    experiment_id : str
-    run_id : str
-        The run_id. If `run_id=latest`, then returns metrics from the latest run_id.
-    operator_id : str
+    def list_metrics(self, project_id: str, experiment_id: str, run_id: str, operator_id: str):
+        """
+        Lists all metrics from object storage.
 
-    Returns
-    -------
-    list
-        A list of metrics.
+        Parameters
+        ----------
+        project_id : str
+        experiment_id : str
+        run_id : str
+            The run_id. If `run_id=latest`, then returns metrics from the latest run_id.
+        operator_id : str
 
-    Raises
-    ------
-    NotFound
-        When any of project_id, experiment_id, run_id, or operator_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_experiment_does_not_exist(experiment_id)
-
-    try:
-        return platiagro.list_metrics(experiment_id=experiment_id,
-                                      operator_id=operator_id,
-                                      run_id=run_id)
-    except FileNotFoundError as e:
-        raise NotFound(str(e))
+        Returns
+        -------
+        list
+            A list of metrics.
+        """
+        try:
+            return platiagro.list_metrics(experiment_id=experiment_id,
+                                          operator_id=operator_id,
+                                          run_id=run_id)
+        except FileNotFoundError as e:
+            raise NotFound(str(e))

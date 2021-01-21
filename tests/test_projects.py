@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
+from fastapi.testclient import TestClient
+
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
+
+TEST_CLIENT = TestClient(app)
 
 PROJECT_ID = str(uuid_alpha())
 NAME = "foo"
@@ -29,40 +33,40 @@ class TestProjects(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, description) "
-            f"VALUES ('{PROJECT_ID}', '{NAME}', '{CREATED_AT}', '{UPDATED_AT}', '{DESCRIPTION}')"
+            f"INSERT INTO projects (uuid, name, description, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (PROJECT_ID, NAME, DESCRIPTION, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, description) "
-            f"VALUES ('{PROJECT_ID_2}', '{NAME_2}', '{CREATED_AT}', '{UPDATED_AT}', '{DESCRIPTION}')"
+            f"INSERT INTO projects (uuid, name, description, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (PROJECT_ID_2, NAME_2, DESCRIPTION, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, description) "
-            f"VALUES ('{PROJECT_ID_3}', '{NAME_3}', '{CREATED_AT}', '{UPDATED_AT}', '{DESCRIPTION}')"
+            f"INSERT INTO projects (uuid, name, description, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID}', '{EXPERIMENT_NAME}', '{PROJECT_ID}', 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
-        )
-        conn.execute(text)
+        conn.execute(text, (PROJECT_ID_3, NAME_3, DESCRIPTION, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES ('{EXPERIMENT_ID_2}', '{EXPERIMENT_NAME}', '{PROJECT_ID_3}', 0, 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (EXPERIMENT_ID, EXPERIMENT_NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
+
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (EXPERIMENT_ID_2, EXPERIMENT_NAME, PROJECT_ID_3, 0, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
-            f"VALUES ('{DEPLOYMENT_ID}', '{NAME}', '{PROJECT_ID_3}', '{EXPERIMENT_ID_2}', '0', 1, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID_3, EXPERIMENT_ID_2, '0', 1, CREATED_AT, UPDATED_AT,))
         conn.close()
 
     def tearDown(self):
@@ -87,240 +91,240 @@ class TestProjects(TestCase):
         conn.close()
 
     def test_list_projects(self):
-        with app.test_client() as c:
-            rv = c.get("/projects")
-            result = rv.get_json()
-            self.assertIsInstance(result['projects'], list)
+        rv = TEST_CLIENT.get("/projects")
+        result = rv.json()
+        self.assertIsInstance(result['projects'], list)
+        self.assertEqual(rv.status_code, 200)
 
-            rv = c.get("/projects?order=uuid asc")
-            result = rv.get_json()
-            self.assertIsInstance(result["projects"], list)
-            self.assertIsInstance(result["total"], int)
+        rv = TEST_CLIENT.get("/projects?order=uuid asc")
+        result = rv.json()
+        self.assertIsInstance(result["projects"], list)
+        self.assertIsInstance(result["total"], int)
+        self.assertEqual(rv.status_code, 200)
 
-            rv = c.get("/projects?page=1")
-            result = rv.get_json()
-            self.assertIsInstance(result["projects"], list)
-            self.assertIsInstance(result["total"], int)
+        rv = TEST_CLIENT.get("/projects?page=1")
+        result = rv.json()
+        self.assertIsInstance(result["projects"], list)
+        self.assertIsInstance(result["total"], int)
+        self.assertEqual(rv.status_code, 200)
 
-            rv = c.get(f"/projects?name={NAME}&page=1&order=uuid asc")
-            result = rv.get_json()
-            self.assertIsInstance(result["projects"], list)
-            self.assertIsInstance(result["total"], int)
+        rv = TEST_CLIENT.get(f"/projects?name={NAME}&page=1&order=uuid asc")
+        result = rv.json()
+        self.assertIsInstance(result["projects"], list)
+        self.assertIsInstance(result["total"], int)
+        self.assertEqual(rv.status_code, 200)
 
-            rv = c.get(f"/projects?name={NAME}&page=1&page_size=10&order=name desc")
-            result = rv.get_json()
-            self.assertIsInstance(result["projects"], list)
-            self.assertIsInstance(result["total"], int)
+        rv = TEST_CLIENT.get(f"/projects?name={NAME}&page=1&page_size=10&order=name desc")
+        result = rv.json()
+        self.assertIsInstance(result["projects"], list)
+        self.assertIsInstance(result["total"], int)
+        self.assertEqual(rv.status_code, 200)
 
-            rv = c.get("/projects?order=name desc")
-            result = rv.get_json()
-            self.assertIsInstance(result["projects"], list)
-            self.assertIsInstance(result["total"], int)
+        rv = TEST_CLIENT.get("/projects?order=name desc")
+        result = rv.json()
+        self.assertIsInstance(result["projects"], list)
+        self.assertIsInstance(result["total"], int)
+        self.assertEqual(rv.status_code, 200)
 
-            rv = c.get("/projects?order=name unk")
-            result = rv.get_json()
-            expected = {"message": "Invalid order argument"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
+        rv = TEST_CLIENT.get("/projects?order=name unk")
+        result = rv.json()
+        expected = {"message": "Invalid order argument"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
 
-            rv = c.get("/projects?order=name")
-            result = rv.get_json()
-            expected = {"message": "Invalid order argument"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
+        rv = TEST_CLIENT.get("/projects?order=name")
+        result = rv.json()
+        expected = {"message": "Invalid order argument"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
 
     def test_create_project(self):
-        with app.test_client() as c:
-            rv = c.post("/projects", json={})
-            result = rv.get_json()
-            expected = {"message": "name is required"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
+        rv = TEST_CLIENT.post("/projects", json={})
+        result = rv.json()
+        expected = {"message": "name is required"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
 
-            rv = c.post("/projects", json={
-                "name": NAME
-            })
-            result = rv.get_json()
-            expected = {"message": "a project with that name already exists"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
+        rv = TEST_CLIENT.post("/projects", json={
+            "name": NAME
+        })
+        result = rv.json()
+        expected = {"message": "a project with that name already exists"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
 
-            project_name = str(uuid_alpha())
+        project_name = str(uuid_alpha())
 
-            rv = c.post("/projects", json={
-                "name": project_name,
-                "description": "description"
-            })
-            result = rv.get_json()
-            result_experiments = result.pop("experiments")
-            expected = {
-                "name": project_name,
-                "description": "description",
-                "hasDeployment": False,
-                "hasExperiment": True,
-                "hasPreDeployment": False,
-            }
-            # uuid, created_at, updated_at are machine-generated
-            # we assert they exist, but we don't assert their values
-            machine_generated = ["uuid", "createdAt", "updatedAt"]
-            for attr in machine_generated:
-                self.assertIn(attr, result)
-                del result[attr]
-            self.assertDictEqual(expected, result)
+        rv = TEST_CLIENT.post("/projects", json={
+            "name": project_name,
+            "description": "description"
+        })
+        result = rv.json()
+        result_experiments = result.pop("experiments")
+        expected = {
+            "name": project_name,
+            "description": "description",
+            "hasDeployment": False,
+            "hasExperiment": True,
+            "hasPreDeployment": False,
+        }
+        # uuid, created_at, updated_at are machine-generated
+        # we assert they exist, but we don't assert their values
+        machine_generated = ["uuid", "createdAt", "updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
 
-            expected = {
-                "name": EXPERIMENT_NAME,
-                "position": 0,
-                "isActive": True,
-                "operators": [],
-            }
-            self.assertEqual(len(result_experiments), 1)
-            machine_generated = ["uuid", "projectId", "createdAt", "updatedAt", "deployments"]
-            for attr in machine_generated:
-                self.assertIn(attr, result_experiments[0])
-                del result_experiments[0][attr]
-            self.assertDictEqual(expected, result_experiments[0])
+        expected = {
+            "name": EXPERIMENT_NAME,
+            "position": 0,
+            "isActive": True,
+            "operators": [],
+        }
+        self.assertEqual(len(result_experiments), 1)
+        machine_generated = ["uuid", "projectId", "createdAt", "updatedAt", "deployments"]
+        for attr in machine_generated:
+            self.assertIn(attr, result_experiments[0])
+            del result_experiments[0][attr]
+        self.assertDictEqual(expected, result_experiments[0])
 
     def test_get_project(self):
-        with app.test_client() as c:
-            rv = c.get("/projects/foo")
-            result = rv.get_json()
-            expected = {"message": "The specified project does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.get("/projects/foo")
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/projects/{PROJECT_ID}")
-            result = rv.get_json()
-            result_experiments = result.pop("experiments")
-            expected = {
-                "uuid": PROJECT_ID,
-                "name": NAME,
-                "createdAt": CREATED_AT_ISO,
-                "updatedAt": UPDATED_AT_ISO,
-                "description": DESCRIPTION,
-                "hasDeployment": False,
-                "hasExperiment": True,
-                "hasPreDeployment": False,
-            }
-            self.assertDictEqual(expected, result)
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}")
+        result = rv.json()
+        result_experiments = result.pop("experiments")
+        expected = {
+            "uuid": PROJECT_ID,
+            "name": NAME,
+            "createdAt": CREATED_AT_ISO,
+            "updatedAt": UPDATED_AT_ISO,
+            "description": DESCRIPTION,
+            "hasDeployment": False,
+            "hasExperiment": True,
+            "hasPreDeployment": False,
+        }
+        self.assertDictEqual(expected, result)
 
-            expected = {
-                "uuid": EXPERIMENT_ID,
-                "name": EXPERIMENT_NAME,
-                "projectId": PROJECT_ID,
-                "position": 0,
-                "isActive": True,
-                "operators": [],
-                "deployments": [],
-            }
-            self.assertEqual(len(result_experiments), 1)
-            machine_generated = ["createdAt", "updatedAt"]
-            for attr in machine_generated:
-                self.assertIn(attr, result_experiments[0])
-                del result_experiments[0][attr]
-            self.assertDictEqual(expected, result_experiments[0])
+        expected = {
+            "uuid": EXPERIMENT_ID,
+            "name": EXPERIMENT_NAME,
+            "projectId": PROJECT_ID,
+            "position": 0,
+            "isActive": True,
+            "operators": [],
+            "deployments": [],
+        }
+        self.assertEqual(len(result_experiments), 1)
+        machine_generated = ["createdAt", "updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result_experiments[0])
+            del result_experiments[0][attr]
+        self.assertDictEqual(expected, result_experiments[0])
 
-            rv = c.get(f"/projects/{PROJECT_ID_3}")
-            result = rv.get_json()
-            result_experiments = result.pop("experiments")
-            expected = {
-                "uuid": PROJECT_ID_3,
-                "name": NAME_3,
-                "createdAt": CREATED_AT_ISO,
-                "updatedAt": UPDATED_AT_ISO,
-                "description": DESCRIPTION,
-                "hasDeployment": False,
-                "hasExperiment": True,
-                "hasPreDeployment": True,
-            }
-            self.assertDictEqual(expected, result)
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID_3}")
+        result = rv.json()
+        result_experiments = result.pop("experiments")
+        expected = {
+            "uuid": PROJECT_ID_3,
+            "name": NAME_3,
+            "createdAt": CREATED_AT_ISO,
+            "updatedAt": UPDATED_AT_ISO,
+            "description": DESCRIPTION,
+            "hasDeployment": False,
+            "hasExperiment": True,
+            "hasPreDeployment": True,
+        }
+        self.assertDictEqual(expected, result)
 
     def test_update_project(self):
-        with app.test_client() as c:
-            rv = c.patch("/projects/foo", json={})
-            result = rv.get_json()
-            expected = {"message": "The specified project does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.patch("/projects/foo", json={})
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}", json={
-                "name": NAME_2,
-            })
-            result = rv.get_json()
-            expected = {"message": "a project with that name already exists"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}", json={
+            "name": NAME_2,
+        })
+        result = rv.json()
+        expected = {"message": "a project with that name already exists"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}", json={
-                "unk": "bar",
-            })
-            self.assertEqual(rv.status_code, 400)
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}", json={
+            "unk": "bar",
+        })
+        self.assertEqual(rv.status_code, 400)
 
-            # update project using the same name
-            rv = c.patch(f"/projects/{PROJECT_ID}", json={
-                "name": NAME,
-            })
-            self.assertEqual(rv.status_code, 200)
+        # update project using the same name
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}", json={
+            "name": NAME,
+        })
+        self.assertEqual(rv.status_code, 200)
 
-            rv = c.patch(f"/projects/{PROJECT_ID}", json={
-                "name": "bar",
-            })
-            result = rv.get_json()
-            result_experiments = result.pop("experiments")
-            expected = {
-                "uuid": PROJECT_ID,
-                "name": "bar",
-                "createdAt": CREATED_AT_ISO,
-                "description": DESCRIPTION,
-                "hasPreDeployment": False,
-                "hasDeployment": False,
-                "hasExperiment": True,
-            }
-            machine_generated = ["updatedAt"]
-            for attr in machine_generated:
-                self.assertIn(attr, result)
-                del result[attr]
-            self.assertDictEqual(expected, result)
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}", json={
+            "name": "bar",
+        })
+        result = rv.json()
+        result_experiments = result.pop("experiments")
+        expected = {
+            "uuid": PROJECT_ID,
+            "name": "bar",
+            "createdAt": CREATED_AT_ISO,
+            "description": DESCRIPTION,
+            "hasPreDeployment": False,
+            "hasDeployment": False,
+            "hasExperiment": True,
+        }
+        machine_generated = ["updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
 
-            expected = {
-                "uuid": EXPERIMENT_ID,
-                "name": EXPERIMENT_NAME,
-                "projectId": PROJECT_ID,
-                "position": 0,
-                "isActive": True,
-                "operators": [],
-                "deployments": [],
-            }
-            self.assertEqual(len(result_experiments), 1)
-            machine_generated = ["createdAt", "updatedAt"]
-            for attr in machine_generated:
-                self.assertIn(attr, result_experiments[0])
-                del result_experiments[0][attr]
-            self.assertDictEqual(expected, result_experiments[0])
+        expected = {
+            "uuid": EXPERIMENT_ID,
+            "name": EXPERIMENT_NAME,
+            "projectId": PROJECT_ID,
+            "position": 0,
+            "isActive": True,
+            "operators": [],
+            "deployments": [],
+        }
+        self.assertEqual(len(result_experiments), 1)
+        machine_generated = ["createdAt", "updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result_experiments[0])
+            del result_experiments[0][attr]
+        self.assertDictEqual(expected, result_experiments[0])
 
     def test_delete_project(self):
-        with app.test_client() as c:
-            rv = c.delete("/projects/unk")
-            result = rv.get_json()
-            expected = {"message": "The specified project does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.delete("/projects/unk")
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-            rv = c.delete(f"/projects/{PROJECT_ID}")
-            result = rv.get_json()
-            expected = {"message": "Project deleted"}
-            self.assertDictEqual(expected, result)
+        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}")
+        result = rv.json()
+        expected = {"message": "Project deleted"}
+        self.assertDictEqual(expected, result)
 
     def test_delete_projects(self):
-        with app.test_client() as c:
-            rv = c.post("/projects/deleteprojects", json=[{"uuid": "1234"}])
-            result = rv.get_json()
-            expected = {"message": "The specified project does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[{"uuid": "1234"}])
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-            rv = c.post("/projects/deleteprojects", json=[{"uuid": f"{PROJECT_ID_2}"}])
-            result = rv.get_json()
-            expected = {"message": "Successfully removed projects"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[{"uuid": f"{PROJECT_ID_2}"}])
+        result = rv.json()
+        expected = {"message": "Successfully removed projects"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)

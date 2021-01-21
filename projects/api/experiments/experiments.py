@@ -1,52 +1,70 @@
 # -*- coding: utf-8 -*-
-"""Experiments blueprint."""
-from flask import Blueprint, jsonify, request
+"""Experiments API Router."""
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from projects.controllers.experiments import list_experiments, create_experiment, \
-    get_experiment, update_experiment, delete_experiment
-from projects.utils import to_snake_case
+import projects.schemas.experiment
+from projects.controllers import ExperimentController, ProjectController
+from projects.database import session_scope
 
-bp = Blueprint("experiments", __name__)
+router = APIRouter(
+    prefix="/projects/{project_id}/experiments",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_experiments(project_id):
+@router.get("", response_model=projects.schemas.experiment.ExperimentList)
+async def handle_list_experiments(project_id: str,
+                                  session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
 
     Parameters
     ----------
     project_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.experiment.ExperimentList
     """
-    experiments = list_experiments(project_id=project_id)
-    return jsonify(experiments)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiments = experiment_controller.list_experiments(project_id=project_id)
+    return experiments
 
 
-@bp.route("", methods=["POST"])
-def handle_post_experiments(project_id):
+@router.post("", response_model=projects.schemas.experiment.Experiment)
+async def handle_post_experiments(project_id: str,
+                                  experiment: projects.schemas.experiment.ExperimentCreate,
+                                  session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
 
     Parameters
     ----------
     project_id : str
+    experiment : projects.schemas.experiment.ExperimentCreate
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.experiment.Experiment
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    experiment = create_experiment(project_id=project_id, **kwargs)
-    return jsonify(experiment)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment = experiment_controller.create_experiment(project_id=project_id,
+                                                         experiment=experiment)
+    return experiment
 
 
-@bp.route("<experiment_id>", methods=["GET"])
-def handle_get_experiment(project_id, experiment_id):
+@router.get("/{experiment_id}", response_model=projects.schemas.experiment.Experiment)
+async def handle_get_experiment(project_id: str,
+                                experiment_id: str,
+                                session: Session = Depends(session_scope)):
     """
     Handles GET requests to /<experiment_id>.
 
@@ -54,18 +72,26 @@ def handle_get_experiment(project_id, experiment_id):
     ----------
     project_id : str
     experiment_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.experiment.Experiment
     """
-    experiment = get_experiment(experiment_id=experiment_id,
-                                project_id=project_id)
-    return jsonify(experiment)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment = experiment_controller.get_experiment(experiment_id=experiment_id,
+                                                      project_id=project_id)
+    return experiment
 
 
-@bp.route("<experiment_id>", methods=["PATCH"])
-def handle_patch_experiment(project_id, experiment_id):
+@router.patch("/{experiment_id}", response_model=projects.schemas.experiment.Experiment)
+async def handle_patch_experiment(project_id: str,
+                                  experiment_id: str,
+                                  experiment: projects.schemas.experiment.ExperimentUpdate,
+                                  session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<experiment_id>.
 
@@ -73,21 +99,27 @@ def handle_patch_experiment(project_id, experiment_id):
     ----------
     project_id : str
     experiment_id : str
+    experiment : projects.schemas.experiment.ExperimentUpdate
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.experiment.Experiment
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    experiment = update_experiment(experiment_id=experiment_id,
-                                   project_id=project_id,
-                                   **kwargs)
-    return jsonify(experiment)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment = experiment_controller.update_experiment(experiment_id=experiment_id,
+                                                         project_id=project_id,
+                                                         experiment=experiment)
+    return experiment
 
 
-@bp.route("<experiment_id>", methods=["DELETE"])
-def handle_delete_experiment(project_id, experiment_id):
+@router.delete("/{experiment_id}")
+async def handle_delete_experiment(project_id: str,
+                                   experiment_id: str,
+                                   session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<experiment_id>.
 
@@ -95,11 +127,16 @@ def handle_delete_experiment(project_id, experiment_id):
     ----------
     project_id : str
     experiment_id : str
+    session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    str
+    projects.schemas.message.Message
     """
-    experiment = delete_experiment(experiment_id=experiment_id,
-                                   project_id=project_id)
-    return jsonify(experiment)
+    project_controller = ProjectController(session)
+    project_controller.raise_if_project_does_not_exist(project_id)
+
+    experiment_controller = ExperimentController(session)
+    experiment = experiment_controller.delete_experiment(experiment_id=experiment_id,
+                                                         project_id=project_id)
+    return experiment

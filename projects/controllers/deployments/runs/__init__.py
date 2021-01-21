@@ -1,8 +1,5 @@
-from .runs import list_runs, create_run, get_run, terminate_run
+from .runs import RunController
 
 __all__ = [
-    "list_runs",
-    "create_run",
-    "get_run",
-    "terminate_run",
+    "RunController",
 ]

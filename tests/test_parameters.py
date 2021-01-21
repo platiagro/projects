@@ -3,12 +3,16 @@ from io import BytesIO
 from json import dumps
 from unittest import TestCase
 
+from fastapi.testclient import TestClient
+
 from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+
+TEST_CLIENT = TestClient(app)
 
 TASK_ID = str(uuid_alpha())
 NAME = "foo"
@@ -32,10 +36,11 @@ class TestParameters(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON,
+                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
         conn.close()
 
         try:
@@ -62,13 +67,12 @@ class TestParameters(TestCase):
             MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 
     def test_list_parameters(self):
-        with app.test_client() as c:
-            rv = c.get("/tasks/unk/parameters")
-            result = rv.get_json()
-            expected = {"message": "The specified task does not exist"}
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.get("/tasks/unk/parameters")
+        result = rv.json()
+        expected = {"message": "The specified task does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-            rv = c.get(f"/tasks/{TASK_ID}/parameters")
-            result = rv.get_json()
-            self.assertIsInstance(result, list)
+        rv = TEST_CLIENT.get(f"/tasks/{TASK_ID}/parameters")
+        result = rv.json()
+        self.assertIsInstance(result, list)

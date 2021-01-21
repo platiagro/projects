@@ -1,68 +1,112 @@
 # -*- coding: utf-8 -*-
-"""Templates blueprint."""
-from flask import Blueprint, jsonify, request
+"""Templates API Router."""
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from projects.controllers.templates import list_templates, create_template, \
-    get_template, update_template, delete_template
-from projects.utils import to_snake_case
+import projects.schemas.template
+from projects.controllers import TemplateController
+from projects.database import session_scope
 
-bp = Blueprint("templates", __name__)
+router = APIRouter(
+    prefix="/templates",
+)
 
 
-@bp.route("", methods=["GET"])
-def handle_list_templates():
+@router.get("", response_model=projects.schemas.template.TemplateList)
+async def handle_list_templates(session: Session = Depends(session_scope)):
     """
     Handles GET requests to /.
+
+    Parameters
+    ----------
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    projects.schemas.template.TemplateList
     """
-    return jsonify(list_templates())
+    template_controller = TemplateController(session)
+    templates = template_controller.list_templates()
+    return templates
 
 
-@bp.route("", methods=["POST"])
-def handle_post_templates():
+@router.post("", response_model=projects.schemas.template.Template)
+async def handle_post_templates(template: projects.schemas.template.TemplateCreate,
+                                session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
+
+    Parameters
+    ----------
+    session : sqlalchemy.orm.session.Session
+    template : projects.schemas.template.TemplateCreate
+
+    Returns
+    -------
+    projects.schemas.template.Template
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    template = create_template(**kwargs)
-    return jsonify(template)
+    template_controller = TemplateController(session)
+    template = template_controller.create_template(template=template)
+    return template
 
 
-@bp.route("<template_id>", methods=["GET"])
-def handle_get_template(template_id):
+@router.get("/{template_id}", response_model=projects.schemas.template.Template)
+async def handle_get_template(template_id: str,
+                              session: Session = Depends(session_scope)):
     """
     Handles GET requests to /<template_id>.
 
     Parameters
     ----------
     template_id : str
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    projects.schemas.template.Template
     """
-    return jsonify(get_template(template_id=template_id))
+    template_controller = TemplateController(session)
+    template = template_controller.get_template(template_id=template_id)
+    return template
 
 
-@bp.route("<template_id>", methods=["PATCH"])
-def handle_patch_template(template_id):
+@router.patch("/{template_id}", response_model=projects.schemas.template.Template)
+async def handle_patch_template(template_id: str,
+                                template: projects.schemas.template.TemplateUpdate,
+                                session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<template_id>.
 
     Parameters
     ----------
     template_id : str
+    template : projects.schemas.template.TemplateUpdate
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    projects.schemas.template.Template
     """
-    kwargs = request.get_json(force=True)
-    kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    template = update_template(template_id=template_id, **kwargs)
-    return jsonify(template)
+    template_controller = TemplateController(session)
+    template = template_controller.update_template(template_id=template_id, template=template)
+    return template
 
 
-@bp.route("<template_id>", methods=["DELETE"])
-def handle_delete_template(template_id):
+@router.delete("/{template_id}")
+async def handle_delete_template(template_id: str,
+                                 session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<template_id>.
 
     Parameters
     ----------
     template_id : str
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    projects.schemas.message.Message
     """
-    template = delete_template(template_id=template_id)
-    return jsonify(template)
+    template_controller = TemplateController(session)
+    template = template_controller.delete_template(template_id=template_id)
+    return template

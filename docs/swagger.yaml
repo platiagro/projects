@@ -750,7 +750,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -782,7 +781,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -815,7 +813,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -848,7 +845,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
         - name: operatorId
           in: path
           required: true
@@ -897,7 +893,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
         - name: operatorId
           in: path
           required: true
@@ -936,7 +931,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
         - name: operatorId
           in: path
           required: true
@@ -975,7 +969,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
         - name: operatorId
           in: path
           required: true
@@ -1285,7 +1278,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Run"
@@ -1317,7 +1309,6 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -2129,6 +2120,18 @@ components:
       items:
         oneOf:
           - $ref: "#/components/schemas/Template"
+    TemplateExperiment:
+      type: object
+      properties:
+        experimentId:
+          type: string
+          format: uuid
+    TemplateDeployment:
+      type: object
+      properties:
+        deploymentId:
+          type: string
+          format: uuid
   requestBodies:
     ComparisonPatch:
       content:
@@ -2416,6 +2419,9 @@ components:
                 type: string
               position:
                 type: integer
+              templateId:
+                type: string
+                format: uuid
     PredictionPost:
       content:
         multipart/form-data:
@@ -2481,13 +2487,19 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-              experimentId:
-                type: string
-                format: uuid
+            oneOf:
+              - $ref: "#/components/schemas/TemplateExperiment"
+              - $ref: "#/components/schemas/TemplateDeployment"
+          examples:
+            experiment:
+              summary: From a experimentId
+              value:
+                experimentId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            deployment:
+              summary: From a deploymentId
+              value:
+                deploymentId:
+                  "3fa85f64-5717-4562-b3fc-2c963f66afa6"
     TemplatePatch:
       content:
         application/json:

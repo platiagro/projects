@@ -1,225 +1,225 @@
 # -*- coding: utf-8 -*-
 """Deployments Runs controller."""
 from kubernetes import client
-from werkzeug.exceptions import BadRequest, NotFound
+from kubernetes.client.rest import ApiException
 
-from projects.controllers.utils import raise_if_project_does_not_exist, \
-    raise_if_deployment_does_not_exist
-from projects.models import Deployment
-
+from projects import models, schemas
+from projects.exceptions import BadRequest, NotFound
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp import runs as kfp_runs
 from projects.kfp.pipeline import undeploy_pipeline
 from projects.kfp.deployments import get_deployment_runs
-
 from projects.kubernetes.kube_config import load_kube_config
 
 
 NOT_FOUND = NotFound("The specified deployment does not exist")
 
 
-def list_runs(project_id, deployment_id):
-    """
-    Lists all runs under a deployment.
+class RunController:
+    def __init__(self, session):
+        self.session = session
 
-    Parameters
-    ----------
-    project_id : str
-    deployment_id : str
+    def raise_if_run_does_not_exist(self, run_id: str, experiment_id: str):
+        """
+        Raises an exception if the specified run does not exist.
 
-    Returns
-    -------
-    list
-        A list of all runs from a deployment.
+        Parameters
+        ----------
+        run_id : str
+        experiment_id : str
 
-    Raises
-    ------
-    NotFound
-        When either project_id or deployment_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
+        Raises
+        ------
+        NotFound
+        """
+        try:
+            kfp_runs.get_run(experiment_id=experiment_id,
+                             run_id=run_id)
+        except (ApiException, ValueError):
+            raise NOT_FOUND
 
-    runs = get_deployment_runs(deployment_id)
+    def list_runs(self, project_id: str, deployment_id: str):
+        """
+        Lists all runs under a deployment.
 
-    return [runs]
+        Parameters
+        ----------
+        project_id : str
+        deployment_id : str
 
+        Returns
+        -------
+        projects.schemas.run.RunList
 
-def create_run(project_id, deployment_id):
-    """
-    Starts a new run in Kubeflow Pipelines.
+        Raises
+        ------
+        NotFound
+            When either project_id or deployment_id does not exist.
+        """
+        runs = get_deployment_runs(deployment_id)
 
-    Parameters
-    ----------
-    project_id : str
-    deployment_id : str
+        return schemas.RunList.from_model(runs, len(runs))
 
-    Returns
-    -------
-    dict
-        The run attributes.
+    def create_run(self, project_id: str, deployment_id: str):
+        """
+        Starts a new run in Kubeflow Pipelines.
 
-    Raises
-    ------
-    NotFound
-        When any of project_id, or deployment_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
+        Parameters
+        ----------
+        project_id : str
+        deployment_id : str
 
-    deployment = Deployment.query.get(deployment_id)
+        Returns
+        -------
+        projects.schemas.run.Run
 
-    if deployment is None:
-        raise NOT_FOUND
+        Raises
+        ------
+        NotFound
+            When any of project_id, or deployment_id does not exist.
+        """
+        deployment = self.session.query(models.Deployment).get(self.session, deployment_id)
 
-    # Removes operators that don't have a deployment_notebook (eg. Upload de Dados).
-    # Then, fix dependencies in their children.
-    operators = remove_non_deployable_operators(deployment.operators)
+        if deployment is None:
+            raise NOT_FOUND
 
-    try:
-        run = kfp_runs.start_run(operators=operators,
-                                 project_id=deployment.project_id,
-                                 experiment_id=deployment.experiment_id,
-                                 deployment_id=deployment_id,
-                                 deployment_name=deployment.name)
-    except ValueError as e:
-        raise BadRequest(str(e))
+        # Removes operators that don't have a deployment_notebook (eg. Upload de Dados).
+        # Then, fix dependencies in their children.
+        operators = self.remove_non_deployable_operators(deployment.operators)
 
-    run["deploymentId"] = deployment_id
-    return run
+        try:
+            run = kfp_runs.start_run(operators=operators,
+                                     project_id=deployment.project_id,
+                                     experiment_id=deployment.experiment_id,
+                                     deployment_id=deployment_id,
+                                     deployment_name=deployment.name)
+        except ValueError as e:
+            raise BadRequest(str(e))
 
+        run["deploymentId"] = deployment_id
+        return run
 
-def get_run(project_id, deployment_id, run_id):
-    """
-    Details a run in Kubeflow Pipelines.
+    def get_run(self, project_id: str, deployment_id: str, run_id: str):
+        """
+        Details a run in Kubeflow Pipelines.
 
-    Parameters
-    ----------
-    project_id : str
-    deployment_id : str
-    run_id : str
+        Parameters
+        ----------
+        project_id : str
+        deployment_id : str
+        run_id : str
 
-    Returns
-    -------
-    dict
-        The run attributes.
+        Returns
+        -------
+        projects.schemas.run.Run
 
-    Raises
-    ------
-    NotFound
-        When any of project_id, deployment_id, or run_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
+        Raises
+        ------
+        NotFound
+            When any of project_id, deployment_id, or run_id does not exist.
+        """
+        run = get_deployment_runs(deployment_id)
 
-    run = get_deployment_runs(deployment_id)
+        return run
 
-    return run
+    def terminate_run(self, project_id, deployment_id, run_id):
+        """
+        Terminates a run in Kubeflow Pipelines.
 
+        Parameters
+        ----------
+        project_id : str
+        deployment_id : str
+        run_id : str
 
-def terminate_run(project_id, deployment_id, run_id):
-    """
-    Terminates a run in Kubeflow Pipelines.
+        Returns
+        -------
+        projects.schemas.message.Message
 
-    Parameters
-    ----------
-    project_id : str
-    deployment_id : str
-    run_id : str
+        Raises
+        ------
+        NotFound
+            When any of project_id, deployment_id, or run_id does not exist.
+        """
+        load_kube_config()
+        api = client.CustomObjectsApi()
+        custom_objects = api.list_namespaced_custom_object(
+            "machinelearning.seldon.io",
+            "v1alpha2",
+            KF_PIPELINES_NAMESPACE,
+            "seldondeployments"
+        )
+        deployments_objects = custom_objects["items"]
 
-    Returns
-    -------
-    dict
-        The termination result.
+        if deployments_objects:
+            for deployment in deployments_objects:
+                if deployment["metadata"]["name"] == deployment_id:
+                    undeploy_pipeline(deployment)
 
-    Raises
-    ------
-    NotFound
-        When any of project_id, deployment_id, or run_id does not exist.
-    """
-    raise_if_project_does_not_exist(project_id)
-    raise_if_deployment_does_not_exist(deployment_id)
+        deployment_run = get_deployment_runs(deployment_id)
 
-    load_kube_config()
-    api = client.CustomObjectsApi()
-    custom_objects = api.list_namespaced_custom_object(
-        "machinelearning.seldon.io",
-        "v1alpha2",
-        KF_PIPELINES_NAMESPACE,
-        "seldondeployments"
-    )
-    deployments_objects = custom_objects["items"]
+        if not deployment_run:
+            raise NotFound("Deployment run does not exist.")
 
-    if deployments_objects:
-        for deployment in deployments_objects:
-            if deployment["metadata"]["name"] == deployment_id:
-                undeploy_pipeline(deployment)
+        kfp_client().runs.delete_run(deployment_run["runId"])
 
-    deployment_run = get_deployment_runs(deployment_id)
+        return schemas.Message(message="Deployment deleted")
 
-    if not deployment_run:
-        raise NotFound("Deployment run does not exist.")
+    def remove_non_deployable_operators(self, operators):
+        """
+        Removes operators that are not part of the deployment pipeline.
 
-    kfp_client().runs.delete_run(deployment_run["runId"])
+        Parameters
+        ----------
+        operators : list
+            Original pipeline operators.
 
-    return {"message": "Deployment deleted."}
+        Returns
+        -------
+        list
+            A list of all deployable operators.
 
+        Notes
+        -----
+        If the non-deployable operator is dependent on another operator, it will be
+        removed from that operator's dependency list.
+        """
+        deployable_operators = [o for o in operators if o.task.deployment_notebook_path is not None]
+        non_deployable_operators = self.get_non_deployable_operators(operators, deployable_operators)
 
-def remove_non_deployable_operators(operators):
-    """
-    Removes operators that are not part of the deployment pipeline.
+        for operator in deployable_operators:
+            dependencies = set(operator.dependencies)
+            operator.dependencies = list(dependencies - set(non_deployable_operators))
 
-    Parameters
-    ----------
-    operators : list
-        Original pipeline operators.
+        return deployable_operators
 
-    Returns
-    -------
-    list
-        A list of all deployable operators.
+    def get_non_deployable_operators(self, operators, deployable_operators):
+        """
+        Get all non-deployable operators from a deployment run.
 
-    Notes
-    -----
-    If the non-deployable operator is dependent on another operator, it will be
-    removed from that operator's dependency list.
-    """
-    deployable_operators = [o for o in operators if o.task.deployment_notebook_path is not None]
-    non_deployable_operators = get_non_deployable_operators(operators, deployable_operators)
+        Parameters
+        ----------
+        operators : list
+        deployable_operators : list
 
-    for operator in deployable_operators:
-        dependencies = set(operator.dependencies)
-        operator.dependencies = list(dependencies - set(non_deployable_operators))
+        Returns
+        -------
+        list
+            A list of non deployable operators.
+        """
+        non_deployable_operators = []
+        for operator in operators:
+            if operator.task.deployment_notebook_path is None:
+                # checks if the non-deployable operator has dependency
+                if operator.dependencies:
+                    dependency = operator.dependencies
 
-    return deployable_operators
+                    # looks for who has the non-deployable operator as dependency
+                    # and assign the dependency of the non-deployable operator to this operator
+                    for op in deployable_operators:
+                        if operator.uuid in op.dependencies:
+                            op.dependencies = dependency
 
+                non_deployable_operators.append(operator.uuid)
 
-def get_non_deployable_operators(operators, deployable_operators):
-    """
-    Get all non-deployable operators from a deployment run.
-
-    Parameters
-    ----------
-    operators : list
-    deployable_operators : list
-
-    Returns
-    -------
-    list
-        A list of non deployable operators.
-    """
-    non_deployable_operators = []
-    for operator in operators:
-        if operator.task.deployment_notebook_path is None:
-            # checks if the non-deployable operator has dependency
-            if operator.dependencies:
-                dependency = operator.dependencies
-
-                # looks for who has the non-deployable operator as dependency
-                # and assign the dependency of the non-deployable operator to this operator
-                for op in deployable_operators:
-                    if operator.uuid in op.dependencies:
-                        op.dependencies = dependency
-
-            non_deployable_operators.append(operator.uuid)
-
-    return non_deployable_operators
+        return non_deployable_operators
