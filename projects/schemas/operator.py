@@ -36,7 +36,8 @@ class Operator(OperatorBase):
     task_id: str
     dependencies: List[str]
     parameters: Dict
-    experiment_id: str
+    deployment_id: Optional[str]
+    experiment_id: Optional[str]
     position_x: int
     position_y: int
     created_at: datetime
@@ -50,6 +51,7 @@ class Operator(OperatorBase):
             task_id=model.task_id,
             dependencies=model.dependencies,
             parameters=model.parameters,
+            deployment_id=model.deployment_id,
             experiment_id=model.experiment_id,
             position_x=model.position_x,
             position_y=model.position_y,
