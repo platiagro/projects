@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Operator schema."""
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -29,6 +29,10 @@ class OperatorUpdate(OperatorBase):
     position_x: Optional[int]
     position_y: Optional[int]
     dependencies: Optional[List[str]]
+
+
+class ParameterUpdate(BaseModel):
+    value: Union[int, str, List[Union[int, str]]]
 
 
 class Operator(OperatorBase):
