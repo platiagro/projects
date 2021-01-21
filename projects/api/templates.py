@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Templates API Router."""
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 import projects.schemas.template
 from projects.controllers import TemplateController
-from projects.database import Session, session_scope
+from projects.database import session_scope
 
 router = APIRouter(
     prefix="/templates",

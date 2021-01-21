@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Parameters API Router."""
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from projects.controllers import ParameterController, TaskController
-from projects.database import Session, session_scope
+from projects.database import session_scope
 
 router = APIRouter(
     prefix="/tasks/{task_id}/parameters",

@@ -3,11 +3,12 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header
+from sqlalchemy.orm import Session
 
 from projects.controllers import DatasetController, ExperimentController, \
     OperatorController, ProjectController
 from projects.controllers.experiments.runs import RunController
-from projects.database import Session, session_scope
+from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets",

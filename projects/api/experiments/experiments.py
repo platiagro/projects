@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Experiments API Router."""
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 import projects.schemas.experiment
 from projects.controllers import ExperimentController, ProjectController
-from projects.database import Session, session_scope
+from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments",

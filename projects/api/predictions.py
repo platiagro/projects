@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Predictions API Router."""
 from fastapi import APIRouter, Depends, File, UploadFile
+from sqlalchemy.orm import Session
 
 from projects.controllers import DeploymentController, PredictionController, \
     ProjectController
-from projects.database import Session, session_scope
+from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/predictions",

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Deployments API Router."""
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 import projects.schemas.deployment
 from projects.controllers import DeploymentController, OperatorController, \
     ProjectController
-from projects.database import Session, session_scope
+from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments",
