@@ -60,7 +60,7 @@ COMPONENT_SPEC = Template("""
     "spec": {
         "containers": [
             {
-                "image": "platiagro/platiagro-deployment-image:0.2.0",
+                "image": "$image",
                 "name": "$operatorId",
                 "securityContext": {
                     "allowPrivilegeEscalation": false,

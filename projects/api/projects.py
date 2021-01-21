@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Projects API Router."""
-import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, Request
