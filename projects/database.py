@@ -42,4 +42,4 @@ def session_scope():
     try:
         yield session
     finally:
-        scoped_session(session).remove()
+        session.close()
