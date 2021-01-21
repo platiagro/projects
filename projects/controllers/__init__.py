@@ -7,6 +7,7 @@ from projects.controllers.experiments.runs.logs import LogController
 from projects.controllers.experiments.runs.metrics import MetricController
 from projects.controllers.monitorings import MonitoringController
 from projects.controllers.operators import OperatorController
+from projects.controllers.operators.parameters import OperatorParameterController
 from projects.controllers.tasks.parameters import ParameterController
 from projects.controllers.projects import ProjectController
 from projects.controllers.predictions import PredictionController
@@ -23,6 +24,7 @@ __all__ = [
     'MetricController',
     'MonitoringController',
     'OperatorController',
+    'OperatorParameterController',
     'ParameterController',
     'ProjectController',
     'PredictionController',
