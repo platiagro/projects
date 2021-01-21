@@ -32,7 +32,7 @@ class Deployment(DeploymentBase):
     name: str
     position: int
     is_active: bool
-    experiment_id: str
+    experiment_id: Optional[str]
     project_id: str
     created_at: datetime
     updated_at: datetime
