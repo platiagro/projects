@@ -253,6 +253,8 @@ class DeploymentController:
 
         self.fix_positions(project_id=project_id)
 
+        self.session.commit()
+
         # Temporary: also delete run deployment (while web-ui isn't ready)
         self.run_controller = self.run_controller.terminate_run(
             project_id=project_id,
