@@ -30,7 +30,7 @@ class PredictionController:
         """
         url = get_seldon_deployment_url(deployment_id)
         request = parse_file_buffer_to_seldon_request(file)
-        response = requests.post(url, json=request)
+        response = requests.post(url, json=request, verify=False)
 
         try:
             return json.loads(response._content)
