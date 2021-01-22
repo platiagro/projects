@@ -36,7 +36,8 @@ async def handle_list_logs(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
-    deployment = deployment_controller.get_deployment(deployment_id)
+    deployment = deployment_controller.get_deployment(project_id=project_id,
+                                                      deployment_id=deployment_id)
 
     run_controller = RunController(session)
     run_controller.raise_if_run_does_not_exist(run_id=run_id,
