@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from projects.schemas.operator import Operator
 from projects.utils import to_camel_case
 
 
@@ -34,6 +35,7 @@ class Deployment(DeploymentBase):
     is_active: bool
     experiment_id: Optional[str]
     project_id: str
+    operators: List[Operator]
     created_at: datetime
     updated_at: datetime
     status: Optional[str]
@@ -49,6 +51,7 @@ class Deployment(DeploymentBase):
             is_active=model.is_active,
             experiment_id=model.experiment_id,
             project_id=model.project_id,
+            operators=model.operators,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
