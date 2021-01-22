@@ -144,5 +144,5 @@ async def handle_post_deleteprojects(projects: List[str],
     projects.schemas.message.Message
     """
     project_controller = ProjectController(session)
-    results = project_controller.delete_multiple_projects(projects=projects)
+    results = project_controller.delete_multiple_projects(project_ids=projects)
     return results
