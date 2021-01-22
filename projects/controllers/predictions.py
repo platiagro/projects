@@ -28,9 +28,9 @@ class PredictionController:
         -------
         dict
         """
-        url = get_seldon_deployment_url(deployment_id)
+        url = get_seldon_deployment_url(deployment_id, external_url=False)
         request = parse_file_buffer_to_seldon_request(file)
-        response = requests.post(url, json=request, verify=False)
+        response = requests.post(url, json=request)
 
         try:
             return json.loads(response._content)

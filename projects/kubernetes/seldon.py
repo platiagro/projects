@@ -11,7 +11,7 @@ from projects.kubernetes.istio import get_cluster_ip, get_protocol
 from projects.kubernetes.kube_config import load_kube_config
 
 
-def get_seldon_deployment_url(deployment_id, ip=None, protocol=None):
+def get_seldon_deployment_url(deployment_id, ip=None, protocol=None, external_url=True):
     """
     Get seldon deployment url.
 
@@ -22,6 +22,8 @@ def get_seldon_deployment_url(deployment_id, ip=None, protocol=None):
         The cluster ip. Default value is None.
     protocol : str
         Either http or https. Default value is None.
+    external_url : bool
+        Whether to return the external url (Loadbalancer) or internal url.
 
     Returns
     -------
@@ -32,13 +34,16 @@ def get_seldon_deployment_url(deployment_id, ip=None, protocol=None):
     -----
     If the `ip` and `protocol` parameters are not given, it is recovered by Kubernetes resources.
     """
-    if not ip:
-        ip = get_cluster_ip()
+    if external_url:
+        if not ip:
+            ip = get_cluster_ip()
 
-    if not protocol:
-        protocol = get_protocol()
+        if not protocol:
+            protocol = get_protocol()
 
-    return f'{protocol}://{ip}/seldon/{KF_PIPELINES_NAMESPACE}/{deployment_id}/api/v1.0/predictions'
+        return f'{protocol}://{ip}/seldon/{KF_PIPELINES_NAMESPACE}/{deployment_id}/api/v1.0/predictions'
+    else:
+        return f"http://{deployment_id}-model.{KF_PIPELINES_NAMESPACE}:8000/api/v1.0/predictions"
 
 
 def list_deployment_pods(deployment_id):
