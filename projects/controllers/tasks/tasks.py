@@ -390,7 +390,7 @@ class TaskController:
                                        mount_path=f"/home/jovyan/tasks/{task.name}")
 
         # Copies files in the notebook server
-        source_path = f"/home/jovyan/tasks/{stored_task.name}/*"
+        source_path = f"/home/jovyan/tasks/{stored_task.name}/."
         destination_path = f"/home/jovyan/tasks/{task.name}/"
         copy_files_in_pod(source_path, destination_path)
 
