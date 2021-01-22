@@ -186,9 +186,8 @@ def create_container_op(operator, experiment_id, notebook_path=None, dataset=Non
         task_parameter = get_task_parameter(operator.task.parameters, name)
         if task_parameter:
             parameter_multiple = task_parameter.get('multiple', False)
-            if parameter_multiple:
-                if value is None or not value:
-                    value = []
+            if parameter_multiple and (value is None or not value):
+                value = []
         if value is not None:
             # fix for: cannot unmarshal number into
             # Go struct field EnvVar.value of type string
