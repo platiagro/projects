@@ -39,5 +39,5 @@ async def handle_post_prediction(project_id: str,
     prediction_controller = PredictionController(session)
     prediction = prediction_controller.create_prediction(project_id=project_id,
                                                          deployment_id=deployment_id,
-                                                         file=file)
+                                                         file=file.file)
     return prediction
