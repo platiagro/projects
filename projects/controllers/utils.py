@@ -24,26 +24,6 @@ def uuid_alpha():
     return uuid_
 
 
-def list_objects(list_object):
-    """
-    Extracting uuids from informed json.
-
-    Parameters
-    ----------
-    list_object : list
-        String containing the project's uuid.
-
-    Returns
-    -------
-    list
-        All uuids.
-    """
-    all_projects_ids = []
-    for i in list_object:
-        all_projects_ids.append(i["uuid"])
-    return all_projects_ids
-
-
 def objects_uuid(list_object):
     """
     Recovering uuids from information projects.

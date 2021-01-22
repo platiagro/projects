@@ -8,7 +8,7 @@ from sqlalchemy import asc, desc, func
 
 from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
-from projects.controllers.utils import list_objects, objects_uuid, uuid_alpha
+from projects.controllers.utils import objects_uuid, uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.object_storage import remove_objects
 
@@ -231,6 +231,7 @@ class ProjectController:
         self.session.query(models.Experiment).filter(models.Experiment.project_id == project_id).delete()
 
         self.session.delete(project)
+        self.session.commit()
 
         prefix = join("experiments", project_id)
         remove_objects(prefix=prefix)
@@ -256,12 +257,11 @@ class ProjectController:
             When any project_id does not exist.
         """
         total_elements = len(project_ids)
-        all_projects_ids = list_objects(project_ids)
         if total_elements < 1:
             raise BadRequest("inform at least one project")
 
         projects = self.session.query(models.Project) \
-            .filter(models.Project.uuid.in_(all_projects_ids)) \
+            .filter(models.Project.uuid.in_(project_ids)) \
             .all()
         experiments = self.session.query(models.Experiment) \
             .filter(models.Experiment.project_id.in_(objects_uuid(projects))) \
@@ -269,7 +269,9 @@ class ProjectController:
         operators = self.session.query(models.Operator) \
             .filter(models.Operator.experiment_id.in_(objects_uuid(experiments))) \
             .all()
-        self.pre_delete(projects, total_elements, operators, experiments, all_projects_ids)
+        self.pre_delete(projects, total_elements, operators, experiments, project_ids)
+        self.session.commit()
+
         for experiment in experiments:
             prefix = join("experiments", experiment.uuid)
             try:

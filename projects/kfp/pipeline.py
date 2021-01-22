@@ -189,8 +189,6 @@ def create_container_op(operator, experiment_id, notebook_path=None, dataset=Non
             if parameter_multiple:
                 if value is None or not value:
                     value = []
-                else:
-                    value = value.split(',')
         if value is not None:
             # fix for: cannot unmarshal number into
             # Go struct field EnvVar.value of type string
