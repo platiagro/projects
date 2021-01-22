@@ -356,7 +356,7 @@ class TaskController:
         )
 
         self.session.delete(task)
-
+        self.session.commit()
         return schemas.Message(message="Task deleted")
 
     def copy_task(self, task: schemas.TaskCreate):
