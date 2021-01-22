@@ -69,14 +69,14 @@ class Task(TaskBase):
 
 
 class TaskList(BaseModel):
-    containerState: bool
+    container_state: bool
     tasks: List[Task]
     total: int
 
     @classmethod
-    def from_model(cls, containerState, models, total):
+    def from_model(cls, container_state, models, total):
         return TaskList(
-            containerState=containerState,
+            container_state=container_state,
             tasks=[Task.from_model(model) for model in models],
             total=total,
         )

@@ -110,8 +110,8 @@ class TaskController:
             query = query.limit(page_size).offset((page - 1) * page_size)
 
         tasks = query.all()
-        containerState = get_notebook_state()
-        return schemas.TaskList.from_model(containerState, tasks, total)
+        container_state = get_notebook_state()
+        return schemas.TaskList.from_model(container_state, tasks, total)
 
     def create_task(self, task: schemas.TaskCreate):
         """
