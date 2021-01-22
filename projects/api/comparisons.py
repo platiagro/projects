@@ -37,7 +37,6 @@ async def handle_list_comparisons(project_id: str,
 
 @router.post("", response_model=projects.schemas.comparison.Comparison)
 async def handle_post_comparisons(project_id: str,
-                                  comparison: projects.schemas.comparison.ComparisonCreate,
                                   session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
@@ -45,7 +44,6 @@ async def handle_post_comparisons(project_id: str,
     Parameters
     ----------
     project_id : str
-    comparison : projects.schemas.comparison.ComparisonCreate
     session : sqlalchemy.orm.session.Session
 
     Returns
@@ -56,8 +54,7 @@ async def handle_post_comparisons(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     comparison_controller = ComparisonController(session)
-    comparison = comparison_controller.create_comparison(comparison=comparison,
-                                                         project_id=project_id)
+    comparison = comparison_controller.create_comparison(project_id=project_id)
     return comparison
 
 

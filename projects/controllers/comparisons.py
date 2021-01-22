@@ -58,24 +58,18 @@ class ComparisonController:
 
         return schemas.ComparisonList.from_model(comparisons, len(comparisons))
 
-    def create_comparison(self, comparison: schemas.ComparisonCreate, project_id: str):
+    def create_comparison(self, project_id: str):
         """
         Creates a new comparison in our database.
 
         Parameters
         ----------
-        comparison: projects.schemas.comparison.ComparisonCreate
         project_id : str
 
         Returns
         -------
         projects.schemas.comparison.Comparison
         """
-        if comparison.experiment_id:
-            stored_experiment = self.session.query(models.Experiment).get(comparison.experiment_id)
-            if stored_experiment is None:
-                raise BadRequest("The specified experiment does not exist")
-
         comparison = models.Comparison(uuid=uuid_alpha(), project_id=project_id)
         self.session.add(comparison)
         self.session.commit()

@@ -16,14 +16,6 @@ class ComparisonBase(BaseModel):
         orm_mode = True
 
 
-class ComparisonCreate(ComparisonBase):
-    experiment_id: Optional[str]
-    operator_id: Optional[str]
-    run_id: Optional[str]
-    active_tab: Optional[str]
-    layout: Optional[Dict[str, int]]
-
-
 class ComparisonUpdate(ComparisonBase):
     experiment_id: Optional[str]
     operator_id: Optional[str]
