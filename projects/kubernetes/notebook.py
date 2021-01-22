@@ -336,7 +336,7 @@ def copy_files_in_pod(source_path, destination_path):
     api_instance = client.CoreV1Api()
 
     # The following command zip the contents of path
-    exec_command = ["cp", "-R", source_path, destination_path]
+    exec_command = ["cp", "-a", source_path, destination_path]
 
     container_stream = stream(
         api_instance.connect_get_namespaced_pod_exec,
