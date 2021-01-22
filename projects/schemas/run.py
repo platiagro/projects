@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """Run schema."""
 from datetime import datetime
-from typing import List
+from typing import Dict, List
 
 from pydantic import BaseModel
 
-from projects.schemas.operator import Operator
 from projects.utils import to_camel_case
 
 
