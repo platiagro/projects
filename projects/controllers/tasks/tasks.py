@@ -303,9 +303,7 @@ class TaskController:
             os.remove(filepath)
 
         # checks whether task.name has changed
-        stored_task = self.session.query(models.Task.uuid) \
-            .filter_by(uuid=task_id) \
-            .first()
+        stored_task = self.session.query(models.Task).get(task_id)
         if stored_task.name != task.name:
             # update the volume for the task in the notebook server
             update_persistent_volume_claim(
