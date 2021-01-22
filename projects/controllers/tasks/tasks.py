@@ -305,15 +305,16 @@ class TaskController:
             os.remove(filepath)
 
         # checks whether task.name has changed
-        stored_task = self.session.query(models.Task).get(task_id)
-        if stored_task.name != task.name:
-            # update the volume for the task in the notebook server
-            update_thread = Thread(
-                target=update_persistent_volume_claim,
-                name="Update pvc",
-                args=[f"vol-task-{task_id}", f"/home/jovyan/tasks/{task.name}"]
-            )
-            update_thread.start()
+        if task.name:
+            stored_task = self.session.query(models.Task).get(task_id)
+            if stored_task.name != task.name:
+                # update the volume for the task in the notebook server
+                update_thread = Thread(
+                    target=update_persistent_volume_claim,
+                    name="Update pvc",
+                    args=[f"vol-task-{task_id}", f"/home/jovyan/tasks/{task.name}"]
+                )
+                update_thread.start()
 
         update_data = task.dict(exclude_unset=True)
         del task.experiment_notebook
