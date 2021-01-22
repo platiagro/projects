@@ -78,7 +78,7 @@ class RunController:
         NotFound
             When any of project_id, or deployment_id does not exist.
         """
-        deployment = self.session.query(models.Deployment).get(self.session, deployment_id)
+        deployment = self.session.query(models.Deployment).get(deployment_id)
 
         if deployment is None:
             raise NOT_FOUND

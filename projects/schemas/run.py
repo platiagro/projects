@@ -19,7 +19,7 @@ class RunBase(BaseModel):
 
 class Run(RunBase):
     uuid: str
-    operators: List[Operator]
+    operators: Dict
     created_at: datetime
 
     @classmethod
