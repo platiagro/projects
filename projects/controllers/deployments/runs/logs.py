@@ -10,8 +10,8 @@ from projects.kubernetes.utils import get_pod_log
 
 EXCLUDE_CONTAINERS = ['istio-proxy', 'seldon-container-engine']
 TIME_STAMP_PATTERN = r'\d{4}-\d{2}-\d{2}(:?\s|T)\d{2}:\d{2}:\d{2}(:?.|,)\d+Z?\s?'
-LOG_MESSAGE_PATTERN = r'[a-zA-Z0-9\"\'.\-@_!#$%^&*()<>?\/|}{~:]{1,}'
-LOG_LEVEL_PATTERN = r'(?<![\\w\\d])INFO(?![\\w\\d])|(?<![\\w\\d])WARN(?![\\w\\d])|(?<![\\w\\d])ERROR(?![\\w\\d])'
+LOG_MESSAGE_PATTERN = r'[a-zA-Z0-9\"\'.\-@_,!#$%^&*()\[\]<>?\/|}{~:]{1,}'
+LOG_LEVEL_PATTERN = r'(?<![\\w\\d])INFO(?![\\w\\d])|(?<![\\w\\d])WARNING(?![\\w\\d])|(?<![\\w\\d])WARN(?![\\w\\d])|(?<![\\w\\d])ERROR(?![\\w\\d])'
 
 
 class LogController:
@@ -98,7 +98,7 @@ class LogController:
             line = re.sub(r'( [-:*]{1})', '', line)
             message = re.findall(LOG_MESSAGE_PATTERN, line)
             message = ' '.join([str(x) for x in message])
-            message = re.sub(TIME_STAMP_PATTERN, '', message)
+            message = re.sub(TIME_STAMP_PATTERN, '', message).strip()
 
             log = {}
             log['timestamp'] = timestamp
