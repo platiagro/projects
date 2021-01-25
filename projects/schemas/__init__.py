@@ -1,5 +1,4 @@
-from .comparison import Comparison, ComparisonCreate, ComparisonList, \
-    ComparisonUpdate
+from .comparison import Comparison, ComparisonList, ComparisonUpdate
 from .deployment import Deployment, DeploymentCreate, DeploymentList, \
     DeploymentUpdate
 from .experiment import Experiment, ExperimentCreate, ExperimentList, \

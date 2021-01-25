@@ -6,6 +6,7 @@ import pkgutil
 import re
 import tempfile
 from datetime import datetime
+from threading import Thread
 from typing import Optional
 
 from sqlalchemy import func
@@ -17,6 +18,7 @@ from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, copy_files_in_pod, \
     create_persistent_volume_claim, remove_persistent_volume_claim, \
     update_persistent_volume_claim, set_notebook_metadata
+from projects.kubernetes.notebook import get_notebook_state
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
@@ -108,8 +110,8 @@ class TaskController:
             query = query.limit(page_size).offset((page - 1) * page_size)
 
         tasks = query.all()
-
-        return schemas.TaskList.from_model(tasks, total)
+        container_state = get_notebook_state()
+        return schemas.TaskList.from_model(container_state, tasks, total)
 
     def create_task(self, task: schemas.TaskCreate):
         """
@@ -303,17 +305,20 @@ class TaskController:
             os.remove(filepath)
 
         # checks whether task.name has changed
-        stored_task = self.session.query(models.Task).get(task_id)
-        if stored_task.name != task.name:
-            # update the volume for the task in the notebook server
-            update_persistent_volume_claim(
-                name=f"vol-task-{task_id}",
-                mount_path=f"/home/jovyan/tasks/{task.name}",
-            )
+        if task.name:
+            stored_task = self.session.query(models.Task).get(task_id)
+            if stored_task.name != task.name:
+                # update the volume for the task in the notebook server
+                update_thread = Thread(
+                    target=update_persistent_volume_claim,
+                    name="Update pvc",
+                    args=[f"vol-task-{task_id}", f"/home/jovyan/tasks/{task.name}"]
+                )
+                update_thread.start()
 
         update_data = task.dict(exclude_unset=True)
-        del task["experiment_notebook"]
-        del task["deployment_notebook"]
+        del task.experiment_notebook
+        del task.deployment_notebook
         update_data.update({"updated_at": datetime.utcnow()})
 
         self.session.query(models.Task).filter_by(uuid=task_id).update(update_data)
@@ -352,7 +357,7 @@ class TaskController:
         )
 
         self.session.delete(task)
-
+        self.session.commit()
         return schemas.Message(message="Task deleted")
 
     def copy_task(self, task: schemas.TaskCreate):
