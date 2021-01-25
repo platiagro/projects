@@ -21,7 +21,7 @@ class ComparisonUpdate(ComparisonBase):
     operator_id: Optional[str]
     run_id: Optional[str]
     active_tab: Optional[str]
-    layout: Optional[Dict[str, int]]
+    layout: Optional[Dict]
 
 
 class Comparison(ComparisonBase):
@@ -33,7 +33,7 @@ class Comparison(ComparisonBase):
     operator_id: Optional[str]
     run_id: Optional[str]
     active_tab: str
-    layout: Optional[Dict[str, int]]
+    layout: Optional[Dict]
 
     @classmethod
     def from_model(cls, model):

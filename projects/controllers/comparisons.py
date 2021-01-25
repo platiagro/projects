@@ -139,5 +139,6 @@ class ComparisonController:
             raise NOT_FOUND
 
         self.session.delete(comparison)
+        self.session.commit()
 
         return schemas.Message(message="Comparison deleted")
