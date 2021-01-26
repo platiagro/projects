@@ -16,6 +16,7 @@ OPERATOR_ID_2 = str(uuid_alpha())
 OPERATOR_ID_3 = str(uuid_alpha())
 OPERATOR_ID_4 = str(uuid_alpha())
 OPERATOR_ID_5 = str(uuid_alpha())
+OPERATOR_ID_6 = str(uuid_alpha())
 DEPENDENCY_ID = str(uuid_alpha())
 DEPENDENCY_ID_2 = str(uuid_alpha())
 NAME = "foo"
@@ -39,6 +40,8 @@ ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
+PARAMETERS_2 = {"foo": "bar"}
+PARAMETERS_JSON_2 = dumps(PARAMETERS_2)
 EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
@@ -129,6 +132,14 @@ class TestOperators(TestCase):
         )
         conn.execute(text, (OPERATOR_ID_5, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+
+        text = (
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (OPERATOR_ID_6, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON_2,
+                            POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+
         conn.close()
 
     def tearDown(self):
@@ -514,3 +525,36 @@ class TestOperators(TestCase):
         result = rv.json()
         expected = {"message": "Operator deleted"}
         self.assertDictEqual(expected, result)
+
+    def test_patch_parameter(self):
+        rv = TEST_CLIENT.patch(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/foo")
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID_6}/parameters/foo")
+        result = rv.json()
+        expected = {"message": "The specified experiment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/unk/parameters/foo")
+        result = rv.json()
+        expected = {"message": "The specified operator does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/unk")
+        result = rv.json()
+        expected = {"message": "The specified parameter does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/foo",
+                               json={"value": "foo"}
+                               )
+        result = rv.json()
+        expected = {"parameters": {"foo": "foo"}}
+        self.assertDictEqual(expected, result["parameters"])
+        self.assertEqual(rv.status_code, 200)
