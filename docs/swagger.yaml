@@ -2528,6 +2528,8 @@ components:
                   - type: string
                   - type: integer
                   - type: array
+                  - type: number
+                  - type: boolean
     RunPost:
       content:
         application/json:
