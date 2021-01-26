@@ -142,10 +142,12 @@ def get_run(run_id, experiment_id):
             operator_id = node["displayName"]
             operators[operator_id]["status"] = get_status(node)
 
-    # sets parameters for each operator
+    # sets taskId and parameters for each operator
     for template in workflow_manifest["spec"]["templates"]:
+        operator_id = template["name"]
+        if "inputs" in template and "parameters" in template["inputs"]:
+            operators[operator_id]["taskId"] = get_task_id(template)
         if "container" in template and "env" in template["container"]:
-            operator_id = template["name"]
             operators[operator_id]["parameters"] = get_parameters(template)
 
     return {
@@ -247,6 +249,27 @@ def retry_run(run_id, experiment_id):
         raise BadRequest("Not a failed run")
 
     return {"message": "Run re-initiated successfully"}
+
+
+def get_task_id(template):
+    """
+    Get task id from template input parameters.
+
+    Parameters
+    ----------
+    template : dict
+
+    Returns
+    -------
+    str
+        Task id.
+    """
+    prefix = "vol-task-"
+    suffix = "-name"
+    for var in template["inputs"]["parameters"]:
+        name = var["name"]
+        if name.startswith(prefix):
+            return name[len(prefix):len(name)-len(suffix)]
 
 
 def get_parameters(template):
