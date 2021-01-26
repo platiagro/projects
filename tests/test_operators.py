@@ -545,12 +545,6 @@ class TestOperators(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/unk")
-        result = rv.json()
-        expected = {"message": "The specified parameter does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
-
         rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/foo",
                                json={"value": "foo"}
                                )

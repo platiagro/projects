@@ -36,10 +36,7 @@ class OperatorParameterController:
         value = parameter.dict().get("value")
 
         # update parameter value
-        if name in parameters:
-            parameters[name] = value
-        else:
-            raise NotFound("The specified parameter does not exist")
+        parameters[name] = value
 
         update_data = {"parameters": parameters}
 
