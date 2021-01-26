@@ -146,7 +146,7 @@ def get_run(run_id, experiment_id):
     for template in workflow_manifest["spec"]["templates"]:
         operator_id = template["name"]
         if "inputs" in template and "parameters" in template["inputs"]:
-            operators[operator_id]["taskId"] = get_taskId(template)
+            operators[operator_id]["taskId"] = get_task_id(template)
         if "container" in template and "env" in template["container"]:
             operators[operator_id]["parameters"] = get_parameters(template)
 
@@ -251,7 +251,7 @@ def retry_run(run_id, experiment_id):
     return {"message": "Run re-initiated successfully"}
 
 
-def get_taskId(template):
+def get_task_id(template):
     """
     Get task id from template input parameters.
 
