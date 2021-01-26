@@ -32,7 +32,7 @@ class OperatorUpdate(OperatorBase):
 
 
 class ParameterUpdate(BaseModel):
-    value: Union[int, str, bool, float, List]
+    value: Union[int, str, bool, float, List, None]
 
 
 class Operator(OperatorBase):
