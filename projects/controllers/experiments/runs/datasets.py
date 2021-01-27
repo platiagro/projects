@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Experiments Datasets controller."""
+import io
 from itertools import zip_longest
 from typing import Optional
 
@@ -58,7 +59,7 @@ class DatasetController:
         content = dataset.values.tolist()
         paged_data = self.data_pagination(page, page_size, content)
 
-        if accept and "application/csv" in accept:
+        if accept and "text/csv" in accept:
             if page_size == -1:
                 content = dataset.to_csv(index=False)
             else:
@@ -66,13 +67,14 @@ class DatasetController:
                 content = df.to_csv(index=False)
 
             return StreamingResponse(
-                content,
-                filename=name,
+                io.StringIO(content),
                 media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename={name}"}
             )
         else:
             if page_size == -1:
-                return {"columns": dataset.columns.tolist(), "data": dataset.to_dict(orient="split"), "total": len(dataset)}
+                data = dataset.to_dict(orient="split")
+                return {"columns": data["columns"], "data": data["data"], "total": len(data["data"])}
             else:
                 return {"columns": dataset.columns.tolist(), "data": paged_data, "total": len(dataset)}
 
