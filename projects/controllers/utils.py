@@ -94,13 +94,20 @@ def parse_file_buffer_to_seldon_request(file):
 
         # infer file delimiter
         dialect = csv.Sniffer().sniff(file_buffer_str, delimiters=";,")
+        # accept double quotes in data
+        dialect.doublequote = True
+
+        # split and remove blank lines
+        lines = [line for line in file_buffer_str.split('\n') if line]
 
         # build seldon request
-        lines = file_buffer_str.split('\n')
-        # split values and remove blank lines
-        lines_splitted = [line.split(dialect.delimiter) for line in lines if line]
-        columns = lines_splitted[0]
-        data = lines_splitted[1:]
+        data = []
+        wrapper = csv.reader(lines, dialect=dialect, skipinitialspace=True, quoting=csv.QUOTE_ALL)
+        for i, line in enumerate(wrapper):
+            if i == 0:
+                columns = line
+            else:
+                data.append(line)
 
         return {
             "data": {
