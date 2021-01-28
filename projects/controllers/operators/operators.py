@@ -18,14 +18,13 @@ class OperatorController:
         self.session = session
         self.task_controller = TaskController(session)
 
-    def raise_if_operator_does_not_exist(self, operator_id: str, experiment_id: Optional[str] = None):
+    def raise_if_operator_does_not_exist(self, operator_id: str):
         """
         Raises an exception if the specified operator does not exist.
 
         Parameters
         ----------
         operator_id : str
-        experiment_id : str
 
         Raises
         ------
@@ -36,31 +35,24 @@ class OperatorController:
 
         if operator.scalar() is None:
             raise NOT_FOUND
-        else:
-            # verify if operator is from the provided experiment
-            if experiment_id and operator.one().experiment_id != experiment_id:
-                raise NotFound("The specified operator is from another experiment")
 
-    def list_operators(self, project_id: str, experiment_id: str):
+    def list_operators(self, project_id: str, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
         """
         Lists all operators under an experiment.
 
         Parameters
         ----------
         project_id : str
-        experiment_id : str
+        experiment_id : str or None
+        deployment_id : str or None
 
         Returns
         -------
         projects.schemas.ListOperator
-
-        Raises
-        ------
-        NotFound
-            When either project_id or experiment_id does not exist.
         """
         operators = self.session.query(models.Operator) \
             .filter_by(experiment_id=experiment_id) \
+            .filter_by(deployment_id=deployment_id) \
             .all()
 
         return schemas.OperatorList.from_model(operators, len(operators))
@@ -77,7 +69,8 @@ class OperatorController:
         ----------
         operator: projects.schemas.operator.OperatorCreate
         project_id : str
-        experiment_id : str
+        experiment_id : str or None
+        deployment_id : str or None
 
         Returns
         -------
@@ -102,6 +95,7 @@ class OperatorController:
         if experiment_id:
             self.raise_if_dependencies_are_invalid(project_id=project_id,
                                                    experiment_id=experiment_id,
+                                                   deployment_id=deployment_id,
                                                    dependencies=operator.dependencies)
 
         if experiment_id and deployment_id:
@@ -126,7 +120,12 @@ class OperatorController:
 
         return schemas.Operator.from_model(operator)
 
-    def update_operator(self, operator: schemas.OperatorUpdate, project_id: str, experiment_id: str, operator_id: str):
+    def update_operator(self,
+                        operator: schemas.OperatorUpdate,
+                        project_id: str,
+                        operator_id: str,
+                        experiment_id: Optional[str] = None,
+                        deployment_id: Optional[str] = None,):
         """
         Updates an operator in our database and adjusts the position of others.
 
@@ -134,7 +133,8 @@ class OperatorController:
         ----------
         operator: projects.schemas.operator.OperatorUpdate
         project_id  :str
-        experiment_id : str
+        experiment_id : str or None
+        deployment_id : str or None
         operator_id : str
 
         Returns
@@ -151,7 +151,11 @@ class OperatorController:
         self.raise_if_operator_does_not_exist(operator_id)
 
         if operator.dependencies is not None:
-            self.raise_if_dependencies_are_invalid(project_id, experiment_id, operator.dependencies, operator_id=operator_id)
+            self.raise_if_dependencies_are_invalid(project_id=project_id,
+                                                   experiment_id=experiment_id,
+                                                   deployment_id=deployment_id,
+                                                   dependencies=operator.dependencies,
+                                                   operator_id=operator_id)
 
         update_data = operator.dict(exclude_unset=True)
         update_data.update({"updated_at": datetime.utcnow()})
@@ -163,14 +167,19 @@ class OperatorController:
 
         return schemas.Operator.from_model(operator)
 
-    def delete_operator(self, project_id: str, experiment_id: str, operator_id: str):
+    def delete_operator(self,
+                        project_id: str,
+                        operator_id: str,
+                        experiment_id: Optional[str] = None,
+                        deployment_id: Optional[str] = None):
         """
         Delete an operator in our database.
 
         Parameters
         ----------
         project_id : str
-        experiment_id : str
+        experiment_id : str or None
+        deployment_id : str or None
         operator_id : str
 
         Returns
@@ -191,6 +200,7 @@ class OperatorController:
         # in dependencies and remove this operator from dependencies
         operators = self.session.query(models.Operator) \
             .filter_by(experiment_id=experiment_id) \
+            .filter_by(deployment_id=deployment_id) \
             .filter(models.Operator.uuid != operator_id) \
             .all()
         for op in operators:
@@ -204,6 +214,7 @@ class OperatorController:
                 )
                 self.update_operator(project_id=project_id,
                                      experiment_id=experiment_id,
+                                     deployment_id=deployment_id,
                                      operator_id=op.uuid,
                                      operator=op_update)
 
@@ -232,7 +243,12 @@ class OperatorController:
             if value is not None and not isinstance(value, (str, int, float, bool, list, dict)):
                 raise BadRequest(PARAMETERS_EXCEPTION_MSG)
 
-    def raise_if_dependencies_are_invalid(self, project_id: str, experiment_id: str, dependencies: List, operator_id: Optional[str] = None):
+    def raise_if_dependencies_are_invalid(self,
+                                          project_id: str,
+                                          dependencies: List,
+                                          experiment_id: Optional[str] = None,
+                                          deployment_id: Optional[str] = None,
+                                          operator_id: Optional[str] = None):
         """
         Raises an exception if the specified dependencies are not valid.
         The invalid dependencies are duplicate elements on the dependencies,
@@ -242,9 +258,10 @@ class OperatorController:
         Parameters
         ----------
         project_id : str
-        experiment_id : str
         dependencies : list
-        operator_id : str
+        experiment_id : str or None
+        deployment_id : str or None
+        operator_id : str or None
 
         Raises
         ------
@@ -261,24 +278,36 @@ class OperatorController:
 
         for d in dependencies:
             try:
-                self.raise_if_operator_does_not_exist(d, experiment_id)
+                self.raise_if_operator_does_not_exist(d)
                 if d == operator_id:
                     raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
             except NotFound:
                 raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
 
-        self.raise_if_has_cycles(project_id, experiment_id, operator_id, dependencies)
+        self.raise_if_has_cycles(
+            project_id=project_id,
+            experiment_id=experiment_id,
+            deployment_id=deployment_id,
+            operator_id=operator_id,
+            dependencies=dependencies,
+        )
 
-    def raise_if_has_cycles(self, project_id: str, experiment_id: str, operator_id: str, dependencies: List[str]):
+    def raise_if_has_cycles(self,
+                            project_id: str,
+                            operator_id: str,
+                            dependencies: List[str],
+                            experiment_id: Optional[str] = None,
+                            deployment_id: Optional[str] = None):
         """
         Raises an exception if the dependencies of operators from experiment are cyclical.
 
         Parameters
         ----------
         project_id : str
-        experiment_id : str
         operator_id : str
-        dependencies : list
+        dependencies : list or None
+        experiment_id : str or None
+        deployment_id : str or None
 
         Raises
         ------
@@ -287,6 +316,7 @@ class OperatorController:
         """
         operators = self.session.query(models.Operator) \
             .filter_by(experiment_id=experiment_id) \
+            .filter_by(deployment_id=deployment_id) \
             .all()
 
         visited = dict.fromkeys([op.uuid for op in operators], False)

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Parameter controller."""
 from projects import models, schemas
-from projects.exceptions import NotFound
 
 
 class OperatorParameterController:
@@ -21,13 +20,6 @@ class OperatorParameterController:
         Returns
         -------
         projects.schemas.operator.ParameterUpdate
-
-        Raises
-        ------
-        NotFound
-            When any of project_id, experiment_id, operator_id or name does not exist.
-        BadRequest
-            When the `**kwargs` (parameter attributes) are invalid
         """
         # get parameters from given operator_id
         operator = self.session.query(models.Operator).get(operator_id)

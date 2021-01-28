@@ -160,7 +160,7 @@ class DeploymentController:
         Raises
         ------
         NotFound
-            When either project_id or deployment_id does not exist.
+            When deployment_id does not exist.
         """
         deployment = self.session.query(models.Deployment).get(deployment_id)
         if deployment is None:
@@ -194,7 +194,7 @@ class DeploymentController:
         Raises
         ------
         NotFound
-            When either project_id or deployment_id does not exist.
+            When deployment_id does not exist.
         BadRequest
             When name is already the name of another deployment.
         """
@@ -235,7 +235,7 @@ class DeploymentController:
         Raises
         ------
         NotFound
-            When either project_id or deployment_id does not exist.
+            When deployment_id does not exist.
 
         Returns
         -------
@@ -310,37 +310,41 @@ class DeploymentController:
         experiment_id : str
         deployment_id : str
         """
-        operators = self.session.query(models.Operator) \
-            .filter_by(experiment_id=experiment_id) \
-            .order_by(models.Operator.dependencies.asc()) \
-            .all()
+        stored_experiment = self.session.query(models.Experiment).get(experiment_id)
 
-        operators_mapper = {}
+        # Creates a dict to map source operator_id to its copy operator_id.
+        # This map will be used to build the dependencies using new operator_ids
+        copies_map = {}
 
-        for operator in operators:
-            dependencies = []
-
-            if operator.dependencies:
-                # Get the new id's of the dependencies
-                dependencies = [operators_mapper[dependencie_uuid] for dependencie_uuid in operator.dependencies]
-
-            operator_create = schemas.OperatorCreate(
+        for stored_operator in stored_experiment.operators:
+            operator = schemas.OperatorCreate(
+                task_id=stored_operator.task_id,
                 deployment_id=deployment_id,
-                project_id=project_id,
-                task_id=operator.task_id,
-                parameters=operator.parameters,
-                dependencies=dependencies,
-                position_x=operator.position_x,
-                position_y=operator.position_y
+                parameters=stored_operator.parameters,
+                position_x=stored_operator.position_x,
+                position_y=stored_operator.position_y,
             )
-            operator_ = self.operator_controller.create_operator(
-                operator=operator_create,
+
+            operator = self.operator_controller.create_operator(
+                operator=operator,
                 project_id=project_id,
                 deployment_id=deployment_id
             )
 
-            # Keys is the old uuid and values the new one
-            operators_mapper.update({operator.uuid: operator_.uuid})
+            copies_map[stored_operator.uuid] = {
+                "copy_uuid": operator.uuid,
+                "dependencies": stored_operator.dependencies,
+            }
+
+        # sets dependencies on new operators
+        for _, value in copies_map.items():
+            operator = schemas.OperatorUpdate(
+                dependencies=[copies_map[d]["copy_uuid"] for d in value["dependencies"]],
+            )
+            self.operator_controller.update_operator(project_id=project_id,
+                                                     deployment_id=deployment_id,
+                                                     operator_id=value["copy_uuid"],
+                                                     operator=operator)
 
     def create_deployment_from_template(self, template_id: str, project_id: str):
         """

@@ -50,11 +50,6 @@ class RunController:
         Returns
         -------
         projects.schemas.run.RunList
-
-        Raises
-        ------
-        NotFound
-            When either project_id or deployment_id does not exist.
         """
         runs = get_deployment_runs(deployment_id)
 

@@ -49,7 +49,7 @@ class RunController:
         Raises
         ------
         NotFound
-            When either project_id or experiment_id does not exist.
+            When experiment_id does not exist.
         """
         runs = kfp_runs.list_runs(experiment_id=experiment_id)
         return schemas.RunList.from_model(runs, len(runs))
@@ -71,7 +71,7 @@ class RunController:
         Raises
         ------
         NotFound
-            When either project_id or experiment_id does not exist.
+            When experiment_id does not exist.
         """
         experiment = self.session.query(models.Experiment).get(experiment_id)
 
