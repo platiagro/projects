@@ -102,7 +102,7 @@ def parse_file_buffer_to_seldon_request(file):
 
         # build seldon request
         data = []
-        wrapper = csv.reader(lines, dialect=dialect, skipinitialspace=True, quoting=csv.QUOTE_ALL)
+        wrapper = csv.reader(lines, dialect=dialect, skipinitialspace=True)
         for i, line in enumerate(wrapper):
             if i == 0:
                 columns = line
