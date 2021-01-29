@@ -200,7 +200,7 @@ class ExperimentController:
         Raises
         ------
         NotFound
-            When either project_id or experiment_id does not exist.
+            When experiment_id does not exist.
         """
         experiment = self.session.query(models.Experiment).get(experiment_id)
 
@@ -278,11 +278,13 @@ class ExperimentController:
 
         # sets dependencies on new operators
         for _, value in copies_map.items():
-            dependencies = [copies_map[d]["copy_uuid"] for d in value["dependencies"]]
+            operator = schemas.OperatorUpdate(
+                dependencies=[copies_map[d]["copy_uuid"] for d in value["dependencies"]],
+            )
             self.operator_controller.update_operator(project_id=project_id,
                                                      experiment_id=experiment.uuid,
                                                      operator_id=value["copy_uuid"],
-                                                     dependencies=dependencies)
+                                                     operator=operator)
 
         return experiment
 

@@ -46,7 +46,7 @@ async def handle_get_dataset(project_id: str,
     experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
 
     operator_controller = OperatorController(session)
-    operator_controller.raise_if_operator_does_not_exist(operator_id, experiment_id)
+    operator_controller.raise_if_operator_does_not_exist(operator_id)
 
     run_controller = RunController(session)
     run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
