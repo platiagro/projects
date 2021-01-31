@@ -17,7 +17,7 @@ from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, copy_files_in_pod, \
     create_persistent_volume_claim, remove_persistent_volume_claim, \
-    update_persistent_volume_claim, set_notebook_metadata
+    update_persistent_volume_claim, set_notebook_metadata, handle_task_creation
 from projects.kubernetes.notebook import get_notebook_state
 
 PREFIX = "tasks"
@@ -166,49 +166,16 @@ class TaskController:
         if task.deployment_notebook is None:
             task.deployment_notebook = DEPLOYMENT_NOTEBOOK
 
-        # mounts a volume for the task in the notebook server
-        create_persistent_volume_claim(name=f"vol-task-{task_id}",
-                                       mount_path=f"/home/jovyan/tasks/{task.name}")
-
         # relative path to the mount_path
         experiment_notebook_path = "Experiment.ipynb"
         deployment_notebook_path = "Deployment.ipynb"
 
-        # copies experiment notebook file to pod
-        with tempfile.NamedTemporaryFile("w", delete=False) as f:
-            json.dump(task.experiment_notebook, f)
-
-        filepath = f.name
-        destination_path = f"{task.name}/{experiment_notebook_path}"
-        copy_file_to_pod(filepath, destination_path)
-        os.remove(filepath)
-
-        # The new task must have its own task_id, experiment_id and operator_id.
-        # Notice these values are ignored when a notebook is run in a pipeline.
-        # They are only used by JupyterLab interface.
-        experiment_id = uuid_alpha()
-        operator_id = uuid_alpha()
-        set_notebook_metadata(
-            notebook_path=destination_path,
-            task_id=task_id,
-            experiment_id=experiment_id,
-            operator_id=operator_id,
+        creation_thread = Thread(
+            target=handle_task_creation,
+            name="Create task",
+            args=[task, task_id, experiment_notebook_path, deployment_notebook_path]
         )
-
-        # copies deployment notebook file to pod
-        with tempfile.NamedTemporaryFile("w", delete=False) as f:
-            json.dump(task.deployment_notebook, f)
-
-        filepath = f.name
-        destination_path = f"{task.name}/{deployment_notebook_path}"
-        copy_file_to_pod(filepath, destination_path)
-        os.remove(filepath)
-        set_notebook_metadata(
-            notebook_path=destination_path,
-            task_id=task_id,
-            experiment_id=experiment_id,
-            operator_id=operator_id,
-        )
+        creation_thread.start()
 
         # saves task info to the database
         task = models.Task(
