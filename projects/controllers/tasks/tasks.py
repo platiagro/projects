@@ -15,9 +15,8 @@ from sqlalchemy import asc, desc
 from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
-from projects.kubernetes.notebook import copy_file_to_pod, copy_files_in_pod, \
-    create_persistent_volume_claim, remove_persistent_volume_claim, \
-    update_persistent_volume_claim, set_notebook_metadata, handle_task_creation
+from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation, \
+    remove_persistent_volume_claim, update_persistent_volume_claim
 from projects.kubernetes.notebook import get_notebook_state
 
 PREFIX = "tasks"
@@ -154,8 +153,20 @@ class TaskController:
 
         # creates a task with specified name,
         # but copies notebooks from a source task
+        stored_task_name = None
         if task.copy_from:
-            return self.copy_task(task)
+            stored_task = self.session.query(models.Task).get(task.copy_from)
+            task.image = stored_task.image
+            task.commands = stored_task.commands
+            task.arguments = stored_task.arguments
+            task.parameters = stored_task.parameters
+            stored_task_name = stored_task.name
+            experiment_notebook_path = stored_task.experiment_notebook_path
+            deployment_notebook_path = stored_task.deployment_notebook_path
+        else:
+            # relative path to the mount_path
+            experiment_notebook_path = "Experiment.ipynb"
+            deployment_notebook_path = "Deployment.ipynb"
 
         task_id = str(uuid_alpha())
 
@@ -166,14 +177,16 @@ class TaskController:
         if task.deployment_notebook is None:
             task.deployment_notebook = DEPLOYMENT_NOTEBOOK
 
-        # relative path to the mount_path
-        experiment_notebook_path = "Experiment.ipynb"
-        deployment_notebook_path = "Deployment.ipynb"
-
         creation_thread = Thread(
             target=handle_task_creation,
             name="Create task",
-            args=[task, task_id, experiment_notebook_path, deployment_notebook_path]
+            args=[
+                task,
+                task_id,
+                experiment_notebook_path,
+                deployment_notebook_path,
+                stored_task_name,
+            ]
         )
         creation_thread.start()
 
@@ -326,91 +339,6 @@ class TaskController:
         self.session.delete(task)
         self.session.commit()
         return schemas.Message(message="Task deleted")
-
-    def copy_task(self, task: schemas.TaskCreate):
-        """
-        Makes a copy of a task in our database.
-
-        Parameters
-        ----------
-        task: projects.schemas.task.TaskCreate
-
-        Returns
-        -------
-        projects.schemas.task.Task
-
-        Raises
-        ------
-        BadRequest
-            When copy_from does not exist.
-        """
-        stored_task = self.session.query(models.Task).get(task.copy_from)
-
-        if stored_task is None:
-            raise BadRequest("source task does not exist")
-
-        task_id = uuid_alpha()
-        image = stored_task.image
-        commands = stored_task.commands
-        arguments = stored_task.arguments
-        parameters = stored_task.parameters
-        experiment_notebook_path = stored_task.experiment_notebook_path
-        deployment_notebook_path = stored_task.deployment_notebook_path
-
-        # mounts a volume for the task in the notebook server
-        create_persistent_volume_claim(name=f"vol-task-{task_id}",
-                                       mount_path=f"/home/jovyan/tasks/{task.name}")
-
-        # Copies files in the notebook server
-        source_path = f"/home/jovyan/tasks/{stored_task.name}/."
-        destination_path = f"/home/jovyan/tasks/{task.name}/"
-        copy_files_in_pod(source_path, destination_path)
-
-        experiment_id = uuid_alpha()
-        operator_id = uuid_alpha()
-
-        if experiment_notebook_path:
-            # Even though we are creating copies, the new task must have
-            # its own task_id, experiment_id and operator_id.
-            # We don't want to mix models and metrics of different tasks.
-            # Notice these values are ignored when a notebook is run in a pipeline.
-            # They are only used by JupyterLab interface.
-            notebook_path = f"{destination_path}/{experiment_notebook_path}"
-            set_notebook_metadata(
-                notebook_path=notebook_path,
-                task_id=task_id,
-                experiment_id=experiment_id,
-                operator_id=operator_id,
-            )
-
-        if deployment_notebook_path:
-            notebook_path = f"{destination_path}/{deployment_notebook_path}"
-            set_notebook_metadata(
-                notebook_path=notebook_path,
-                task_id=task_id,
-                experiment_id=experiment_id,
-                operator_id=operator_id,
-            )
-
-        # saves task info to the database
-        task = models.Task(
-            uuid=task_id,
-            name=task.name,
-            description=task.description,
-            tags=task.tags,
-            image=image,
-            commands=commands,
-            arguments=arguments,
-            parameters=parameters,
-            deployment_notebook_path=deployment_notebook_path,
-            experiment_notebook_path=experiment_notebook_path,
-            is_default=False,
-        )
-        self.session.add(task)
-        self.session.commit()
-        self.session.refresh(task)
-
-        return schemas.Task.from_model(task)
 
     def raise_if_invalid_docker_image(self, image):
         """

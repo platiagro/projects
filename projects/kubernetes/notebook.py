@@ -18,6 +18,7 @@ from projects.controllers.utils import uuid_alpha
 from projects.exceptions import InternalServerError
 from projects.kubernetes.kube_config import load_kube_config
 
+JUPYTER_WORKSPACE = "/home/jovyan/tasks"
 NOTEBOOK_GROUP = "kubeflow.org"
 NOTEBOOK_NAME = "server"
 NOTEBOOK_NAMESPACE = "anonymous"
@@ -129,7 +130,11 @@ def create_persistent_volume_claim(name, mount_path):
         raise InternalServerError(f"Error while trying to patch notebook server: {message}")
 
 
-def handle_task_creation(task, task_id, experiment_notebook_path, deployment_notebook_path):
+def handle_task_creation(task,
+                         task_id,
+                         experiment_notebook_path=None,
+                         deployment_notebook_path=None,
+                         copy_name=None):
     """
     Creates Kubernetes resources and set metadata for notebook obejects.
 
@@ -139,24 +144,37 @@ def handle_task_creation(task, task_id, experiment_notebook_path, deployment_not
     task_id : str
     experiment_notebook_path : str
     deployment_notebook_path : str
+    copy_name : str
+        Name of the template to be copied from. Default to None.
     """
     # mounts a volume for the task in the notebook server
     create_persistent_volume_claim(name=f"vol-task-{task_id}",
-                                   mount_path=f"/home/jovyan/tasks/{task.name}")
+                                   mount_path=f"{JUPYTER_WORKSPACE}/{task.name}")
 
-    # copies experiment notebook file to pod
-    with NamedTemporaryFile("w", delete=False) as f:
-        json.dump(task.experiment_notebook, f)
+    if copy_name:
+        source_path = f"{JUPYTER_WORKSPACE}/{copy_name}/."
+        destination_path = f"{JUPYTER_WORKSPACE}/{task.name}/"
+        experiment_path = f"{task.name}/{experiment_notebook_path}"
+        deployment_path = f"{task.name}/{deployment_notebook_path}"
+        copy_files_in_pod(source_path, destination_path)
+    else:
+        # copies experiment notebook file to pod
+        with NamedTemporaryFile("w", delete=False) as f:
+            json.dump(task.experiment_notebook, f)
 
-    # creates a new event loop,
-    # to execute metadata functions concurrently
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+        filepath = f.name
+        experiment_path = f"{task.name}/{experiment_notebook_path}"
+        copy_file_to_pod(filepath, experiment_path)
+        os.remove(filepath)
 
-    filepath = f.name
-    destination_path = f"{task.name}/{experiment_notebook_path}"
-    copy_file_to_pod(filepath, destination_path)
-    os.remove(filepath)
+        # copies deployment notebook file to pod
+        with NamedTemporaryFile("w", delete=False) as f:
+            json.dump(task.deployment_notebook, f)
+
+        filepath = f.name
+        deployment_path = f"{task.name}/{deployment_notebook_path}"
+        copy_file_to_pod(filepath, deployment_path)
+        os.remove(filepath)
 
     # The new task must have its own task_id, experiment_id and operator_id.
     # Notice these values are ignored when a notebook is run in a pipeline.
@@ -164,27 +182,23 @@ def handle_task_creation(task, task_id, experiment_notebook_path, deployment_not
     experiment_id = uuid_alpha()
     operator_id = uuid_alpha()
 
+    # creates a new event loop,
+    # to execute metadata functions concurrently
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     loop.run_until_complete(
         set_notebook_metadata(
-            notebook_path=destination_path,
+            notebook_path=experiment_path,
             task_id=task_id,
             experiment_id=experiment_id,
             operator_id=operator_id,
         )
     )
 
-    # copies deployment notebook file to pod
-    with NamedTemporaryFile("w", delete=False) as f:
-        json.dump(task.deployment_notebook, f)
-
-    filepath = f.name
-    destination_path = f"{task.name}/{deployment_notebook_path}"
-    copy_file_to_pod(filepath, destination_path)
-    os.remove(filepath)
-
     loop.run_until_complete(
         set_notebook_metadata(
-            notebook_path=destination_path,
+            notebook_path=deployment_path,
             task_id=task_id,
             experiment_id=experiment_id,
             operator_id=operator_id,
@@ -441,6 +455,9 @@ async def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_
     experiment_id : str
     operator_id : str
     """
+    if notebook_path is None:
+        return
+
     warnings.warn(f"Setting metadata in {notebook_path}...")
     load_kube_config()
     api_instance = client.CoreV1Api()
@@ -448,13 +465,13 @@ async def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_
     # The following command sets task_id in the metadata of a notebook
     python_script = (
         f"import json; "
-        f"f = open('/home/jovyan/tasks/{notebook_path}'); "
+        f"f = open('{JUPYTER_WORKSPACE}/{notebook_path}'); "
         f"n = json.load(f); "
         f"n['metadata']['task_id'] = '{task_id}'; "
         f"n['metadata']['experiment_id'] = '{experiment_id}'; "
         f"n['metadata']['operator_id'] = '{operator_id}'; "
         f"f.close(); "
-        f"f = open('/home/jovyan/tasks/{notebook_path}', 'w'); "
+        f"f = open('{JUPYTER_WORKSPACE}/{notebook_path}', 'w'); "
         f"json.dump(n, f); "
         f"f.close()"
     )
