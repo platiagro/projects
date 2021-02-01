@@ -2,6 +2,7 @@
 """Shared functions."""
 import base64
 import csv
+import pandas
 import random
 import re
 import uuid
@@ -72,7 +73,7 @@ def parse_file_buffer_to_seldon_request(file):
     Parameters
     ----------
     file : dict
-        File buffer.
+        Spooled temporary file.
 
     Returns
     -------
@@ -85,27 +86,13 @@ def parse_file_buffer_to_seldon_request(file):
         When `file` has no header.
     """
     try:
-        # read file content and parse to string
-        file_buffer = file.read()
-        file_buffer_str = file_buffer.decode("utf-8")
-
-        if not csv.Sniffer().has_header(file_buffer_str):
-            raise BadRequest("file needs a header.")
-
-        # infer file delimiter
-        dialect = csv.Sniffer().sniff(file_buffer_str, delimiters=";,")
-
-        # build seldon request
-        lines = file_buffer_str.split('\n')
-        # split values and remove blank lines
-        lines_splitted = [line.split(dialect.delimiter) for line in lines if line]
-        columns = lines_splitted[0]
-        data = lines_splitted[1:]
+        df = pandas.read_csv(file._file, sep=None, engine='python')
+        df = df.to_dict('split')
 
         return {
             "data": {
-                "names": columns,
-                "ndarray": data,
+                "names": df['columns'],
+                "ndarray": df['data'],
             }
         }
 
