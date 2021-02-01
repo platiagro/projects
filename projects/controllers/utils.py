@@ -86,7 +86,7 @@ def parse_file_buffer_to_seldon_request(file):
         When `file` has no header.
     """
     try:
-        df = pandas.read_csv(file._file)
+        df = pandas.read_csv(file._file, sep=None, engine='python')
         df = df.to_dict('split')
 
         return {
