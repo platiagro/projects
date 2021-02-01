@@ -129,10 +129,7 @@ def create_persistent_volume_claim(name, mount_path):
         raise InternalServerError(f"Error while trying to patch notebook server: {message}")
 
 
-def handle_task_creation(task,
-                         task_id,
-                         experiment_notebook_path,
-                         deployment_notebook_path):
+def handle_task_creation(task, task_id, experiment_notebook_path, deployment_notebook_path):
     """
     Creates Kubernetes resources and set metadata for notebook obejects.
 
@@ -146,10 +143,6 @@ def handle_task_creation(task,
     # mounts a volume for the task in the notebook server
     create_persistent_volume_claim(name=f"vol-task-{task_id}",
                                    mount_path=f"/home/jovyan/tasks/{task.name}")
-
-    # relative path to the mount_path
-    experiment_notebook_path = "Experiment.ipynb"
-    deployment_notebook_path = "Deployment.ipynb"
 
     # copies experiment notebook file to pod
     with NamedTemporaryFile("w", delete=False) as f:
@@ -170,12 +163,15 @@ def handle_task_creation(task,
     # They are only used by JupyterLab interface.
     experiment_id = uuid_alpha()
     operator_id = uuid_alpha()
-    loop.create_task(set_notebook_metadata(
-        notebook_path=destination_path,
-        task_id=task_id,
-        experiment_id=experiment_id,
-        operator_id=operator_id,
-    ))
+
+    loop.run_until_complete(
+        set_notebook_metadata(
+            notebook_path=destination_path,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            operator_id=operator_id,
+        )
+    )
 
     # copies deployment notebook file to pod
     with NamedTemporaryFile("w", delete=False) as f:
@@ -185,12 +181,15 @@ def handle_task_creation(task,
     destination_path = f"{task.name}/{deployment_notebook_path}"
     copy_file_to_pod(filepath, destination_path)
     os.remove(filepath)
-    loop.create_task(set_notebook_metadata(
-        notebook_path=destination_path,
-        task_id=task_id,
-        experiment_id=experiment_id,
-        operator_id=operator_id,
-    ))
+
+    loop.run_until_complete(
+        set_notebook_metadata(
+            notebook_path=destination_path,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            operator_id=operator_id,
+        )
+    )
 
 
 def update_persistent_volume_claim(name, mount_path):
