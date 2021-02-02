@@ -7,8 +7,6 @@ import random
 import re
 import uuid
 
-from projects.exceptions import BadRequest
-
 
 def uuid_alpha():
     """

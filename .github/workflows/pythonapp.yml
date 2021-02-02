@@ -165,7 +165,7 @@ jobs:
         echo ::set-output name=BRANCH::${{ github.ref }}
         echo ::set-output name=COMMIT::${{ github.sha }}
 
-    - name: Build and push image
+    - name: Build and push image api
       if: ${{ always() }}
       uses: docker/build-push-action@v1
       with:
@@ -175,3 +175,16 @@ jobs:
         repository: platiagro/projects
         tags: ${{ steps.vars.outputs.TAG }}
         build_args: COMMIT=${{ steps.vars.outputs.COMMIT }},BRANCH=${{ steps.vars.outputs.BRANCH }}
+        dockerfile: Dockerfile
+
+    - name: Build and push image persistence-agent
+      if: ${{ always() }}
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        registry: registry.hub.docker.com
+        repository: platiagro/persistence-agent
+        tags: ${{ steps.vars.outputs.TAG }}
+        build_args: COMMIT=${{ steps.vars.outputs.COMMIT }},BRANCH=${{ steps.vars.outputs.BRANCH }}
+        dockerfile: Dockerfile.persistenceagent
