@@ -131,10 +131,17 @@ def get_run(run_id, experiment_id):
 
     operators = {}
 
+    workflow_status = workflow_manifest["status"].get("phase")
+
+    if workflow_status in {"Succeeded", "Failed"}:
+        default_node_status = "Unset"
+    else:
+        default_node_status = "Pending"
+
     # initializes all operators with status=Pending and parameters={}
     template = next(t for t in workflow_manifest["spec"]["templates"] if "dag" in t)
     tasks = (tsk for tsk in template["dag"]["tasks"] if not tsk["name"].startswith("vol-"))
-    operators = dict((t["name"], {"status": "Pending", "parameters": {}}) for t in tasks)
+    operators = dict((t["name"], {"status": default_node_status, "parameters": {}}) for t in tasks)
 
     # set status for each operator
     for node in workflow_manifest["status"].get("nodes", {}).values():
@@ -343,9 +350,13 @@ def get_container_status(experiment_id, operator_id):
     try:
         kfp_run = kfp_client().get_run(run_id=run_id)
         found_operator = False
-        status = "Pending"
         workflow_manifest = json.loads(kfp_run.pipeline_runtime.workflow_manifest)
         workflow_status = workflow_manifest["status"].get("phase")
+
+        if workflow_status in {"Succeeded", "Failed"}:
+            status = "Unset"
+        else:
+            status = "Pending"
 
         for node in workflow_manifest["status"].get("nodes", {}).values():
             if node["displayName"] == operator_id:
