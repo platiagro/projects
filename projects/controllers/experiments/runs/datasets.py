@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Experiments Datasets controller."""
-import io
-from itertools import zip_longest
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 from fastapi.responses import StreamingResponse
 from platiagro import load_dataset, stat_dataset
@@ -50,65 +49,30 @@ class DatasetController:
             run_id = get_latest_run_id(experiment_id)
 
         name = self.get_dataset_name(operator_id, experiment_id)
-        metadata = stat_dataset(name=name, operator_id=operator_id)
-
-        if "run_id" not in metadata:
-            raise NotFound("The specified run does not contain dataset")
-
-        dataset = load_dataset(name=name, run_id=run_id, operator_id=operator_id)
-        content = dataset.values.tolist()
-        paged_data = self.data_pagination(page, page_size, content)
-
-        if accept and "text/csv" in accept:
-            if page_size == -1:
-                content = dataset.to_csv(index=False)
-            else:
-                df = pd.DataFrame(columns=dataset.columns, data=paged_data)
-                content = df.to_csv(index=False)
-
-            return StreamingResponse(
-                io.StringIO(content),
-                media_type="text/csv",
-                headers={"Content-Disposition": f"attachment; filename={name}"}
-            )
-        else:
-            if page_size == -1:
-                data = dataset.to_dict(orient="split")
-                return {"columns": data["columns"], "data": data["data"], "total": len(data["data"])}
-            else:
-                return {"columns": dataset.columns.tolist(), "data": paged_data, "total": len(dataset)}
-
-    def data_pagination(self, page, page_size, content):
-        """
-        Page records of a dataset.
-
-        Parameters
-        ----------
-        page : int
-        page_size : int
-        content : pandas.DataFrame
-
-        Returns
-        -------
-        list
-            A list of dataset records
-
-        Raises
-        ------
-        NotFound
-            When a page does not exist.
-        """
-        # Splits records into `page_size` size
-        split_into_pages = list(list(zip_longest(*(iter(content),) * abs(page_size))))
 
         try:
-            # if the last page is not filled (has the length of page_size), `zip_longest`
-            # fills with None values. Remove these values before returning
-            paged_data = list(filter(None, split_into_pages[page-1]))
-        except IndexError:
-            raise NotFound("The specified page does not exist")
+            metadata = stat_dataset(name=name, operator_id=operator_id, run_id=run_id)
+        except FileNotFoundError:
+            raise NotFound("The specified run does not contain dataset")
 
-        return paged_data
+        dataset = load_dataset(
+            name=name,
+            run_id=run_id,
+            operator_id=operator_id,
+            page=page,
+            page_size=page_size,
+        )
+        if isinstance(dataset, pd.DataFrame):
+            # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
+            dataset.replace(np.nan, "NaN", inplace=True, regex=True)
+            data = dataset.to_dict(orient="split")
+            total = metadata.get("total", len(dataset.index))
+            return {"columns": data["columns"], "data": data["data"], "total": total}
+
+        return StreamingResponse(
+            dataset,
+            media_type="application/octet-stream",
+        )
 
     def get_dataset_name(self, operator_id, experiment_id):
         """
