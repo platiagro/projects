@@ -10,7 +10,8 @@ from kubernetes.client.models import V1PersistentVolumeClaim
 
 from projects import __version__
 from projects.kfp import CPU_LIMIT, CPU_REQUEST, KF_PIPELINES_NAMESPACE, \
-    MEMORY_LIMIT, MEMORY_REQUEST, kfp_client
+    MEMORY_LIMIT, MEMORY_REQUEST, SELDON_REST_TIMEOUT, SELDON_GRPC_TIMEOUT, \
+    kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
 
@@ -237,6 +238,8 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "experimentId": experiment_id,
                 "deploymentId": deployment_id,
                 "taskId": operator.task.uuid,
+                "memoryRequest": MEMORY_REQUEST,
+                "memoryLimit": MEMORY_LIMIT,
             })
         )
 
@@ -275,8 +278,8 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         "graph": graph,
         "projectId": project_id,
         "tasks": tasks,
-        "memoryRequest": MEMORY_REQUEST,
-        "memoryLimit": MEMORY_LIMIT,
+        "restTimeout": SELDON_REST_TIMEOUT,
+        "grpcTimeout": SELDON_GRPC_TIMEOUT,
     })
 
     sdep_resource = loads(seldon_deployment)

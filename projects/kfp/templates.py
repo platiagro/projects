@@ -17,20 +17,11 @@ SELDON_DEPLOYMENT = Template("""{
         "annotations": {
             "deployment_version": "v1",
             "prometheus.io/scrape": "false",
-            "seldon.io/rest-read-timeout": "60000",
-            "seldon.io/rest-connection-timeout": "60000",
-            "seldon.io/grpc-read-timeout": "60000",
-            "seldon.io/engine-separate-pod": "true"
+            "seldon.io/rest-timeout": "$restTimeout",
+            "seldon.io/grpc-timeout": "$grpcTimeout",
+            "seldon.io/executor": "true"
         },
         "name": "$deploymentId",
-        "resources": {
-            "requests": {
-                "memory": "$memoryRequest"
-            },
-            "limits": {
-                "memory": "$memoryLimit"
-            }
-        },
         "predictors": [
             {
                 "componentSpecs": [$componentSpecs
@@ -84,7 +75,15 @@ COMPONENT_SPEC = Template("""
                         "name": "workspace",
                         "mountPath": "/app"
                     }
-                ]
+                ],
+                "resources": {
+                    "requests": {
+                        "memory": "$memoryRequest"
+                    },
+                    "limits": {
+                        "memory": "$memoryLimit"
+                    }
+                }
             }
         ],
         "volumes": [
