@@ -2,9 +2,9 @@
 """Deployments Logs controller."""
 import re
 
-from ast import literal_eval
 from io import StringIO
 
+from projects import models
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_pod_log
 
@@ -36,6 +36,10 @@ class LogController:
         deployment_pods = list_deployment_pods(deployment_id)
         response = []
 
+        tasks = self.session.query(models.Task) \
+            .all()
+        tasks = dict((t.uuid, t.name) for t in tasks)
+
         for pod in deployment_pods:
             for container in pod.spec.containers:
                 if container.name not in EXCLUDE_CONTAINERS:
@@ -46,13 +50,12 @@ class LogController:
                         response.append(operator_info)
                         continue
 
-                    # retrieves the name of the task linked to the operator
-                    # in the pod "metadata.annotations.tasks"
-                    tasks = pod.metadata.annotations.get("tasks")
-                    tasks = literal_eval(tasks)
+                    # retrieves the tasks linked to the operator
+                    # using "metadata.annotations"
+                    task_id = pod.metadata.annotations.get(container.name)
 
                     operator_info = {}
-                    operator_info["containerName"] = tasks[container.name]
+                    operator_info["containerName"] = tasks.get(task_id, task_id)
                     operator_info["logs"] = self.log_parser(pod_log)
                     operator_info.update({"status": "Completed"})
                     response.append(operator_info)

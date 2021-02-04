@@ -18,7 +18,6 @@ SELDON_DEPLOYMENT = Template("""{
             "deployment_version": "v1",
             "prometheus.io/scrape": "false",
             "seldon.io/rest-timeout": "$restTimeout",
-            "seldon.io/grpc-timeout": "$grpcTimeout",
             "seldon.io/executor": "true"
         },
         "name": "$deploymentId",
@@ -26,9 +25,7 @@ SELDON_DEPLOYMENT = Template("""{
             {
                 "componentSpecs": [$componentSpecs
                 ],
-                "annotations": {
-                    "tasks": "$tasks"
-                },
+                "annotations": $tasks,
                 "graph": $graph,
                 "labels": {
                     "version": "v1"
