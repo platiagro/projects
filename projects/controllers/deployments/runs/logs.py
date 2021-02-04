@@ -8,9 +8,9 @@ from io import StringIO
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_pod_log
 
-EXCLUDE_CONTAINERS = ['istio-proxy', 'seldon-container-engine']
+EXCLUDE_CONTAINERS = ['istio-proxy']
 TIME_STAMP_PATTERN = r'\d{4}-\d{2}-\d{2}(:?\s|T)\d{2}:\d{2}:\d{2}(:?.|,)\d+Z?\s?'
-LOG_MESSAGE_PATTERN = r'[a-zA-Z0-9\"\'.\-@_,!#$%^&*()\[\]<>?\/|}{~:]{1,}'
+LOG_MESSAGE_PATTERN = r'[a-zA-Z0-9\u00C0-\u00D6\u00D8-\u00f6\u00f8-\u00ff\"\'.\-@_,!#$%^&*()\[\]<>?\/|}{~:]{1,}'
 LOG_LEVEL_PATTERN = r'(?<![\\w\\d])INFO(?![\\w\\d])|(?<![\\w\\d])WARNING(?![\\w\\d])|(?<![\\w\\d])WARN(?![\\w\\d])|(?<![\\w\\d])ERROR(?![\\w\\d])'
 
 
@@ -30,20 +30,11 @@ class LogController:
 
         Returns
         -------
-        dict
+        list
             A list of all logs from a run.
-
-        Raises
-        ------
-        NotFound
-            When any of project_id or deployment_id does not exist.
         """
         deployment_pods = list_deployment_pods(deployment_id)
         response = []
-        status = {'status': 'Starting'}
-
-        if not deployment_pods:
-            return status
 
         for pod in deployment_pods:
             for container in pod.spec.containers:
@@ -51,8 +42,9 @@ class LogController:
                     pod_log = get_pod_log(pod, container)
 
                     if not pod_log:
-                        status.update({'status': 'Creating'})
-                        return status
+                        operator_info = {"status": "Creating"}
+                        response.append(operator_info)
+                        continue
 
                     # retrieves the name of the task linked to the operator
                     # in the pod "metadata.annotations.tasks"
@@ -60,9 +52,9 @@ class LogController:
                     tasks = literal_eval(tasks)
 
                     operator_info = {}
-                    operator_info['containerName'] = tasks[container.name]
-                    operator_info['logs'] = self.log_parser(pod_log)
-                    operator_info.update({'status': 'Completed'})
+                    operator_info["containerName"] = tasks[container.name]
+                    operator_info["logs"] = self.log_parser(pod_log)
+                    operator_info.update({"status": "Completed"})
                     response.append(operator_info)
 
         return response
