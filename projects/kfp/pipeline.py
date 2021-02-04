@@ -275,6 +275,8 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         "graph": graph,
         "projectId": project_id,
         "tasks": tasks,
+        "memoryRequest": MEMORY_REQUEST,
+        "memoryLimit": MEMORY_LIMIT,
     })
 
     sdep_resource = loads(seldon_deployment)

@@ -25,7 +25,10 @@ SELDON_DEPLOYMENT = Template("""{
         "name": "$deploymentId",
         "resources": {
             "requests": {
-                "memory": "2G"
+                "memory": "$memoryRequest"
+            },
+            "limits": {
+                "memory": "$memoryLimit"
             }
         },
         "predictors": [
