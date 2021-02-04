@@ -32,6 +32,11 @@ class OperatorParameterController:
 
         update_data = {"parameters": parameters}
 
+        setted_keys = set(key for key, value in parameters.items() if value != "")
+        all_keys = set(p["name"] for p in operator.task.parameters) - {"dataset", "target"}
+        status = "Setted up" if all_keys <= setted_keys else "Unset"
+        update_data.update({"status": status})
+
         self.session.query(models.Operator).filter_by(uuid=operator_id).update(update_data)
         self.session.commit()
 

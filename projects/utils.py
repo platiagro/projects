@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Utility functions."""
-import ast
 import re
 from itertools import chain
 
@@ -56,68 +55,6 @@ def remove_ansi_escapes(traceback):
     readable_text = [compiler.sub("", line).split("\n") for line in traceback]
 
     return list(chain.from_iterable(readable_text))
-
-
-def convert_json_values(value):
-    """
-    Convert boolean and null JSON values to Python format.
-
-    Parameters
-    ----------
-    value : str
-
-    Returns
-    -------
-    str or None
-    """
-    if value == "null":
-        value = None
-    elif value == "true":
-        value = True
-    elif value == "false":
-        value = False
-    else:
-        try:
-            # try to convert string to correct type
-            value = ast.literal_eval(value)
-        except Exception:
-            pass
-
-    return value
-
-
-def get_parameters_with_values(parameters):
-    """
-    Get parameters with values from operator.
-
-    Parameters
-    ----------
-    parameters : list
-
-    Returns
-    -------
-    list
-        Operator parameters with values.
-    """
-    return [key for key, value in parameters.items() if value != '']
-
-
-def remove_parameter(parameters, target):
-    """
-    Remove a specific parameter from a list of parameters.
-
-    Parameters
-    ----------
-    parameters : list
-    target : str
-        The target to be removed.
-
-    Returns
-    -------
-    list
-        The new list.
-    """
-    return [parameter for parameter in parameters if parameter["name"] != target]
 
 
 def format_query_params(query_params):

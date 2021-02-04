@@ -148,7 +148,10 @@ class OperatorController:
         BadRequest
             When the operator attributes are invalid.
         """
-        self.raise_if_operator_does_not_exist(operator_id)
+        stored_operator = self.session.query(models.Operator).get(operator_id)
+
+        if stored_operator is None:
+            raise NOT_FOUND
 
         if operator.dependencies is not None:
             self.raise_if_dependencies_are_invalid(project_id=project_id,
@@ -158,6 +161,14 @@ class OperatorController:
                                                    operator_id=operator_id)
 
         update_data = operator.dict(exclude_unset=True)
+
+        # when parameters are updated, also updates status
+        if operator.parameters is not None:
+            setted_keys = set(key for key, value in operator.parameters.items() if value != "")
+            all_keys = set(p["name"] for p in stored_operator.task.parameters) - {"dataset", "target"}
+            status = "Setted up" if all_keys <= setted_keys else "Unset"
+            update_data.update({"status": status})
+
         update_data.update({"updated_at": datetime.utcnow()})
 
         self.session.query(models.Operator).filter_by(uuid=operator_id).update(update_data)
