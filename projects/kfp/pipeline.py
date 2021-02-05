@@ -13,6 +13,7 @@ from projects.kfp import CPU_LIMIT, CPU_REQUEST, KF_PIPELINES_NAMESPACE, \
     MEMORY_LIMIT, MEMORY_REQUEST, SELDON_REST_TIMEOUT, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
+from projects.object_storage import MINIO_ACCESS_KEY, MINIO_SECRET_KEY
 
 TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
     "TASK_DEFAULT_DEPLOYMENT_IMAGE",
@@ -167,6 +168,18 @@ def create_container_op(operator, experiment_id, notebook_path=None, dataset=Non
             k8s_client.V1EnvVar(
                 name="NOTEBOOK_PATH",
                 value=notebook_path,
+            ),
+        ) \
+        .add_env_variable(
+            k8s_client.V1EnvVar(
+                name="MINIO_ACCESS_KEY",
+                value=MINIO_ACCESS_KEY,
+            ),
+        ) \
+        .add_env_variable(
+            k8s_client.V1EnvVar(
+                name="MINIO_SECRET_KEY",
+                value=MINIO_SECRET_KEY,
             ),
         )
 
