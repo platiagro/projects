@@ -226,7 +226,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     kfp.dsl.ResourceOp
     """
     component_specs = []
-    tasks = {}
+    tasks = {"sidecar.istio.io/inject": "false"}
 
     for operator in operators:
         tasks.update({operator.uuid: operator.task_id})
