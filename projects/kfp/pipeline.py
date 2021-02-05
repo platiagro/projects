@@ -10,9 +10,10 @@ from kubernetes.client.models import V1PersistentVolumeClaim
 
 from projects import __version__
 from projects.kfp import CPU_LIMIT, CPU_REQUEST, KF_PIPELINES_NAMESPACE, \
-    MEMORY_LIMIT, MEMORY_REQUEST, kfp_client
+    MEMORY_LIMIT, MEMORY_REQUEST, SELDON_REST_TIMEOUT, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
+from projects.object_storage import MINIO_ACCESS_KEY, MINIO_SECRET_KEY
 
 TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
     "TASK_DEFAULT_DEPLOYMENT_IMAGE",
@@ -168,6 +169,18 @@ def create_container_op(operator, experiment_id, notebook_path=None, dataset=Non
                 name="NOTEBOOK_PATH",
                 value=notebook_path,
             ),
+        ) \
+        .add_env_variable(
+            k8s_client.V1EnvVar(
+                name="MINIO_ACCESS_KEY",
+                value=MINIO_ACCESS_KEY,
+            ),
+        ) \
+        .add_env_variable(
+            k8s_client.V1EnvVar(
+                name="MINIO_SECRET_KEY",
+                value=MINIO_SECRET_KEY,
+            ),
         )
 
     if dataset is not None:
@@ -226,10 +239,10 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     kfp.dsl.ResourceOp
     """
     component_specs = []
-    tasks = {}
+    tasks = {"sidecar.istio.io/inject": "false"}
 
     for operator in operators:
-        tasks.update({operator.uuid: operator.task.name})
+        tasks.update({operator.uuid: operator.task_id})
         component_specs.append(
             COMPONENT_SPEC.substitute({
                 "image": TASK_DEFAULT_DEPLOYMENT_IMAGE,
@@ -237,6 +250,8 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "experimentId": experiment_id,
                 "deploymentId": deployment_id,
                 "taskId": operator.task.uuid,
+                "memoryRequest": MEMORY_REQUEST,
+                "memoryLimit": MEMORY_LIMIT,
             })
         )
 
@@ -274,7 +289,8 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         "componentSpecs": ",".join(component_specs),
         "graph": graph,
         "projectId": project_id,
-        "tasks": tasks,
+        "tasks": dumps(tasks),
+        "restTimeout": SELDON_REST_TIMEOUT,
     })
 
     sdep_resource = loads(seldon_deployment)

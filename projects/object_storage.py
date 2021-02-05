@@ -7,11 +7,15 @@ from minio.error import BucketAlreadyOwnedByYou
 
 BUCKET_NAME = "anonymous"
 
+MINIO_ENDPOINT = getenv("MINIO_ENDPOINT", "minio-service.kubeflow:9000")
+MINIO_ACCESS_KEY = getenv("MINIO_ACCESS_KEY", "minio")
+MINIO_SECRET_KEY = getenv("MINIO_SECRET_KEY", "minio123")
+MINIO_REGION_NAME = getenv("MINIO_REGION_NAME", "us-east-1")
 MINIO_CLIENT = Minio(
-    endpoint=getenv("MINIO_ENDPOINT", "minio-service.kubeflow:9000"),
-    access_key=getenv("MINIO_ACCESS_KEY", "minio"),
-    secret_key=getenv("MINIO_SECRET_KEY", "minio123"),
-    region=getenv("MINIO_REGION_NAME", "us-east-1"),
+    endpoint=MINIO_ENDPOINT,
+    access_key=MINIO_ACCESS_KEY,
+    secret_key=MINIO_SECRET_KEY,
+    region=MINIO_REGION_NAME,
     secure=False,
 )
 

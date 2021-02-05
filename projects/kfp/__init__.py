@@ -1,5 +1,6 @@
 from .kfp import kfp_client, KF_PIPELINES_NAMESPACE, \
-    MEMORY_REQUEST, MEMORY_LIMIT, CPU_REQUEST, CPU_LIMIT
+    MEMORY_REQUEST, MEMORY_LIMIT, CPU_REQUEST, CPU_LIMIT, \
+    SELDON_REST_TIMEOUT
 
 __all__ = [
     "kfp_client",
@@ -8,4 +9,5 @@ __all__ = [
     "MEMORY_LIMIT",
     "CPU_REQUEST",
     "CPU_LIMIT",
+    "SELDON_REST_TIMEOUT",
 ]
