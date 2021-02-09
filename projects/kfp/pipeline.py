@@ -9,8 +9,9 @@ from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
 from projects import __version__
-from projects.kfp import CPU_LIMIT, CPU_REQUEST, KF_PIPELINES_NAMESPACE, \
-    MEMORY_LIMIT, MEMORY_REQUEST, SELDON_REST_TIMEOUT, kfp_client
+from projects.kfp import CPU_LIMIT, CPU_REQUEST, DEPLOYMENT_INIT_TIMEOUT, \
+    KF_PIPELINES_NAMESPACE, MEMORY_LIMIT, MEMORY_REQUEST, SELDON_REST_TIMEOUT, \
+    kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
 from projects.object_storage import MINIO_ACCESS_KEY, MINIO_SECRET_KEY
@@ -302,7 +303,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         name="deployment",
         k8s_resource=sdep_resource,
         success_condition="status.state == Available",
-    ).set_timeout(300)
+    ).set_timeout(int(DEPLOYMENT_INIT_TIMEOUT))
 
     return resource_op
 
