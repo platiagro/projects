@@ -83,6 +83,12 @@ class RunController:
                                  operators=experiment.operators)
         run["experimentId"] = experiment_id
 
+        update_data = {"status": "Pending"}
+        self.session.query(models.Operator) \
+            .filter_by(experiment_id=experiment_id) \
+            .update(update_data)
+        self.session.commit()
+
         return schemas.Run.from_model(run)
 
     def get_run(self, project_id: str, experiment_id: str, run_id: str):
