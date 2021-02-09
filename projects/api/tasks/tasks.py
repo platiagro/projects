@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tasks API Router."""
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
 
 import projects.schemas.task
@@ -46,6 +46,7 @@ async def handle_list_tasks(request: Request,
 
 @router.post("", response_model=projects.schemas.task.Task)
 async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
+                            background_tasks: BackgroundTasks,
                             session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
@@ -53,13 +54,14 @@ async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
     Parameters
     ----------
     task : projects.schemas.task.TaskCreate
+    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     projects.schemas.task.Task
     """
-    task_controller = TaskController(session)
+    task_controller = TaskController(session, background_tasks)
     task = task_controller.create_task(task=task)
     return task
 
@@ -87,6 +89,7 @@ async def handle_get_task(task_id: str,
 @router.patch("/{task_id}", response_model=projects.schemas.task.Task)
 async def handle_patch_task(task_id: str,
                             task: projects.schemas.task.TaskUpdate,
+                            background_tasks: BackgroundTasks,
                             session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<task_id>.
@@ -95,13 +98,14 @@ async def handle_patch_task(task_id: str,
     ----------
     task_id : str
     task : projects.schemas.task.TaskUpdate
+    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     projects.schemas.task.Task
     """
-    task_controller = TaskController(session)
+    task_controller = TaskController(session, background_tasks)
     task = task_controller.update_task(task_id=task_id, task=task)
     return task
 
