@@ -91,6 +91,12 @@ class RunController:
         except ValueError as e:
             raise BadRequest(str(e))
 
+        update_data = {"status": "Pending"}
+        self.session.query(models.Operator) \
+            .filter_by(deployment_id=deployment_id) \
+            .update(update_data)
+        self.session.commit()
+
         run["deploymentId"] = deployment_id
         return run
 
