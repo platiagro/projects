@@ -112,6 +112,7 @@ async def handle_patch_task(task_id: str,
 
 @router.delete("/{task_id}")
 async def handle_delete_task(task_id: str,
+                             background_tasks: BackgroundTasks,
                              session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<task_id>.
@@ -119,12 +120,13 @@ async def handle_delete_task(task_id: str,
     Parameters
     ----------
     task_id : str
+    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     projects.schemas.message.Message
     """
-    task_controller = TaskController(session)
+    task_controller = TaskController(session, background_tasks)
     result = task_controller.delete_task(task_id=task_id)
     return result

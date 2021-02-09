@@ -326,7 +326,8 @@ class TaskController:
             raise NOT_FOUND
 
         # remove the volume for the task in the notebook server
-        remove_persistent_volume_claim(
+        self.background_tasks.add_task(
+            remove_persistent_volume_claim,
             name=f"vol-task-{task_id}",
             mount_path=f"/home/jovyan/tasks/{task.name}",
         )
