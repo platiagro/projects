@@ -6,7 +6,6 @@ import pkgutil
 import re
 import tempfile
 from datetime import datetime
-from threading import Thread
 from typing import Optional
 
 from sqlalchemy import func
@@ -29,8 +28,9 @@ NOT_FOUND = NotFound("The specified task does not exist")
 
 
 class TaskController:
-    def __init__(self, session):
+    def __init__(self, session, background_tasks=None):
         self.session = session
+        self.background_tasks = background_tasks
 
     def raise_if_task_does_not_exist(self, task_id: str):
         """
@@ -177,18 +177,14 @@ class TaskController:
         if task.deployment_notebook is None:
             task.deployment_notebook = DEPLOYMENT_NOTEBOOK
 
-        creation_thread = Thread(
-            target=handle_task_creation,
-            name="Create task",
-            args=[
-                task,
-                task_id,
-                experiment_notebook_path,
-                deployment_notebook_path,
-                stored_task_name,
-            ]
+        self.background_tasks.add_task(
+            handle_task_creation,
+            task=task,
+            task_id=task_id,
+            experiment_notebook_path=experiment_notebook_path,
+            deployment_notebook_path=deployment_notebook_path,
+            copy_name=stored_task_name,
         )
-        creation_thread.start()
 
         # saves task info to the database
         task = models.Task(
@@ -289,12 +285,11 @@ class TaskController:
             stored_task = self.session.query(models.Task).get(task_id)
             if stored_task.name != task.name:
                 # update the volume for the task in the notebook server
-                update_thread = Thread(
-                    target=update_persistent_volume_claim,
-                    name="Update pvc",
-                    args=[f"vol-task-{task_id}", f"/home/jovyan/tasks/{task.name}"]
+                self.background_tasks.add_task(
+                    update_persistent_volume_claim,
+                    name=f"vol-task-{task_id}",
+                    mount_path=f"/home/jovyan/tasks/{task.name}"
                 )
-                update_thread.start()
 
         update_data = task.dict(exclude_unset=True)
         del task.experiment_notebook
@@ -331,7 +326,8 @@ class TaskController:
             raise NOT_FOUND
 
         # remove the volume for the task in the notebook server
-        remove_persistent_volume_claim(
+        self.background_tasks.add_task(
+            remove_persistent_volume_claim,
             name=f"vol-task-{task_id}",
             mount_path=f"/home/jovyan/tasks/{task.name}",
         )
