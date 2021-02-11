@@ -36,7 +36,7 @@ SELDON_DEPLOYMENT = Template("""{
                     "env": [
                         {
                             "name": "SELDON_LOG_LEVEL",
-                            "value": "DEBUG"
+                            "value": "INFO"
                         }
                     ]
                 }
