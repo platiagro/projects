@@ -38,7 +38,7 @@ async def handle_post_responses(project_id: str,
     deployment_controller = DeploymentController(session)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
-    response_controller = ResponseController()
+    response_controller = ResponseController(session)
     response_controller.create_response(project_id=project_id,
                                         deployment_id=deployment_id,
                                         body=body)

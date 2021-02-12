@@ -1,6 +1,7 @@
 from projects.controllers.comparisons import ComparisonController
 from projects.controllers.experiments.runs.datasets import DatasetController
 from projects.controllers.deployments.deployments import DeploymentController
+from projects.controllers.deployments.responses import ResponseController
 from projects.controllers.experiments.experiments import ExperimentController
 from projects.controllers.experiments.runs.figures import FigureController
 from projects.controllers.experiments.runs.logs import LogController
@@ -28,6 +29,7 @@ __all__ = [
     'ParameterController',
     'ProjectController',
     'PredictionController',
+    'ResponseController',
     'TaskController',
     'TemplateController',
 ]

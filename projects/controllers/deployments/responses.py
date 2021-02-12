@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Logger controller."""
+"""Deployment Response controller."""
 import os
 import uuid
 
 import pandas as pd
 import requests
+
+from projects import models
+from projects.controllers.utils import uuid_alpha
 
 BROKER_URL = os.getenv("BROKER_URL", "http://default-broker.anonymous.svc.cluster.local")
 
@@ -28,22 +31,45 @@ class ResponseController:
             if "names" in body["data"]:
                 names = body["data"]["names"]
                 ndarray.columns = names
-            body = ndarray.to_json(orient="records", lines=True)
+            body = ndarray.to_dict(orient="records")
 
-        filename = f"{deployment_id}.txt"
+        if isinstance(body, dict):
+            body = [body]
 
-        with open(filename, "a") as f:
-            f.write(f"{body}\n")
+        responses = []
+
+        for record in body:
+            responses.append(
+                models.Response(
+                    uuid=uuid_alpha(),
+                    deployment_id=deployment_id,
+                    body=record,
+                )
+            )
+
+        self.session.bulk_save_objects(responses)
+        self.session.commit()
+
+        responses = self.session.query(models.Response) \
+            .filter_by(deployment_id=deployment_id) \
+            .order_by(models.Response.created_at.asc()) \
+            .all()
+
+        d = []
+
+        if len(responses) > 0:
+            for response in responses:
+                d.append(response.body)
+
+        data = pd.DataFrame(d)
 
         # sends latest data to broker
-        data = pd.read_json(filename, lines=True)
-        latest_data = data.values.tolist()
-
         response = requests.post(
             BROKER_URL,
             json={
                 "data": {
-                    "ndarray": latest_data,
+                    "ndarray": data.values.tolist(),
+                    "names": data.columns.tolist(),
                 },
             },
             headers={

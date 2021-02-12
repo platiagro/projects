@@ -22,7 +22,7 @@ TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
 )
 SELDON_LOGGER_ENDPOINT = getenv(
     "SELDON_LOGGER_ENDPOINT",
-    f"http://projects.platiagro",
+    "http://projects.platiagro:8080",
 )
 
 def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, deployment_name):
