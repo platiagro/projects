@@ -283,12 +283,17 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         })
 
     graph = build_graph(operator_id=first, children=graph[first])
+    graph = loads(graph)
+    graph["logger"] = {
+        "mode": "response",
+        "url": "http://logger.anonymous"
+    }
 
     seldon_deployment = SELDON_DEPLOYMENT.substitute({
         "namespace": KF_PIPELINES_NAMESPACE,
         "deploymentId": deployment_id,
         "componentSpecs": ",".join(component_specs),
-        "graph": graph,
+        "graph": dumps(graph),
         "projectId": project_id,
         "tasks": dumps(tasks),
         "restTimeout": SELDON_REST_TIMEOUT,
