@@ -18,9 +18,12 @@ from projects.object_storage import MINIO_ACCESS_KEY, MINIO_SECRET_KEY
 
 TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
     "TASK_DEFAULT_DEPLOYMENT_IMAGE",
-    f'platiagro/platiagro-deployment-image:{__version__}',
+    f"platiagro/platiagro-deployment-image:{__version__}",
 )
-
+SELDON_LOGGER_ENDPOINT = getenv(
+    "SELDON_LOGGER_ENDPOINT",
+    f"http://projects.platiagro",
+)
 
 def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, deployment_name):
     """
@@ -286,7 +289,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     graph = loads(graph)
     graph["logger"] = {
         "mode": "response",
-        "url": "http://logger.anonymous"
+        "url": f"{SELDON_LOGGER_ENDPOINT}/projects/{project_id}/deployments/{deployment_id}/responses",
     }
 
     seldon_deployment = SELDON_DEPLOYMENT.substitute({
