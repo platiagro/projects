@@ -4,7 +4,6 @@ import re
 
 from io import StringIO
 
-from projects import models
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_container_logs
 
