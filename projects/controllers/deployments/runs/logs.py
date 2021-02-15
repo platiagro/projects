@@ -7,7 +7,7 @@ from io import StringIO
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_container_logs
 
-EXCLUDE_CONTAINERS = ['istio-proxy']
+EXCLUDE_CONTAINERS = ["istio-proxy", "seldon-container-engine"]
 TIME_STAMP_PATTERN = r'\d{4}-\d{2}-\d{2}(:?\s|T)\d{2}:\d{2}:\d{2}(:?.|,)\d+Z?\s?'
 LOG_MESSAGE_PATTERN = r'[a-zA-Z0-9\u00C0-\u00D6\u00D8-\u00f6\u00f8-\u00ff\"\'.\-@_,!#$%^&*()\[\]<>?\/|}{~:]{1,}'
 LOG_LEVEL_PATTERN = r'(?<![\\w\\d])INFO(?![\\w\\d])|(?<![\\w\\d])WARNING(?![\\w\\d])|(?<![\\w\\d])WARN(?![\\w\\d])|(?<![\\w\\d])ERROR(?![\\w\\d])'
@@ -39,8 +39,8 @@ class LogController:
             for container in pod.spec.containers:
                 if container.name not in EXCLUDE_CONTAINERS:
                     logs = get_container_logs(pod, container)
-
                     status = "Completed" if logs is not None else "Creating"
+
                     task_name = next((e.value for e in container.env if e.name == "TASK_NAME"), pod.metadata.name)
 
                     operator_info = {
