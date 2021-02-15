@@ -46,13 +46,13 @@ class LogController:
                     operator_info = {
                         "status": status,
                         "containerName": task_name,
-                        "logs": logs,
+                        "logs": self.parse_logs(logs),
                     }
                     response.append(operator_info)
 
         return response
 
-    def log_parser(self, raw_log):
+    def parse_logs(self, raw_log):
         """
         Transform raw log text into human-readable logs.
 
