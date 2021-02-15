@@ -8,9 +8,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from projects import __version__
 from projects.api import comparisons, deployments, experiments, monitorings, \
     predictions, projects, tasks, templates
-from projects.api.deployments import runs as deployment_runs
+from projects.api.deployments import runs as deployment_runs, responses
 from projects.api.deployments.runs import logs as deployment_logs
 from projects.api.experiments import operators, runs as experiment_runs
 from projects.api.experiments.runs import datasets, figures, \
@@ -21,7 +22,11 @@ from projects.database import engine, init_db
 from projects.exceptions import BadRequest, NotFound, InternalServerError
 
 
-app = FastAPI()
+app = FastAPI(
+    title="PlatIAgro Projects",
+    description="These are the docs for PlatIAgro Projects API. The endpoints below are usually accessed by the PlatIAgro Web-UI",
+    version=__version__,
+)
 app.include_router(projects.router)
 app.include_router(comparisons.router)
 app.include_router(experiments.router)
@@ -40,6 +45,7 @@ app.include_router(predictions.router)
 app.include_router(tasks.router)
 app.include_router(parameters.router)
 app.include_router(templates.router)
+app.include_router(responses.router)
 
 
 @app.get("/", response_class=PlainTextResponse)
