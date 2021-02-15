@@ -84,7 +84,11 @@ def start_run(operators, project_id, experiment_id, deployment_id=None, deployme
                      deployment_id=deployment_id,
                      deployment_name=deployment_name)
 
-    kfp_experiment = kfp_client().create_experiment(name=experiment_id)
+    if deployment_id is not None:
+        kfp_experiment = kfp_client().create_experiment(name=deployment_id)
+    else:
+        kfp_experiment = kfp_client().create_experiment(name=experiment_id)
+
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
 
     job_name = f"{name}-{tag}"
