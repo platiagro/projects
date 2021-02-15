@@ -243,10 +243,8 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     kfp.dsl.ResourceOp
     """
     component_specs = []
-    tasks = {"sidecar.istio.io/inject": "false"}
 
     for operator in operators:
-        tasks.update({operator.uuid: operator.task_id})
         component_specs.append(
             COMPONENT_SPEC.substitute({
                 "image": TASK_DEFAULT_DEPLOYMENT_IMAGE,
@@ -256,6 +254,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "taskId": operator.task.uuid,
                 "memoryRequest": MEMORY_REQUEST,
                 "memoryLimit": MEMORY_LIMIT,
+                "taskName": operator.task.name,
             })
         )
 
@@ -298,7 +297,6 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         "componentSpecs": ",".join(component_specs),
         "graph": dumps(graph),
         "projectId": project_id,
-        "tasks": dumps(tasks),
         "restTimeout": SELDON_REST_TIMEOUT,
     })
 

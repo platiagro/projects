@@ -37,14 +37,14 @@ def search_for_pod_info(details, operator_id):
     return info
 
 
-def get_pod_log(pod, container):
+def get_container_logs(pod, container):
     """
-    Read log of the specified Pod.
+    Returns latest logs of the specified container.
 
     Parameters
     ----------
-    pod : kubernetes.client.models.v1_pod.V1Pod
-    container : kubernetes.client.models.v1_container.V1Container
+    pod : str
+    container : str
 
     Returns
     -------
@@ -60,22 +60,22 @@ def get_pod_log(pod, container):
     core_api = client.CoreV1Api()
 
     try:
-        pod_log = core_api.read_namespaced_pod_log(
-                        name=pod.metadata.name,
-                        namespace=KF_PIPELINES_NAMESPACE,
-                        container=container.name,
-                        pretty='true',
-                        tail_lines=512,
-                        timestamps=True
-                    )
+        logs = core_api.read_namespaced_pod_log(
+            name=pod.metadata.name,
+            namespace=KF_PIPELINES_NAMESPACE,
+            container=container.name,
+            pretty="true",
+            tail_lines=512,
+            timestamps=True,
+        )
 
-        return pod_log
+        return logs
     except ApiException as e:
         body = literal_eval(e.body)
-        message = body['message']
+        message = body["message"]
 
-        if 'ContainerCreating' in message:
-            return []
+        if "ContainerCreating" in message:
+            return None
         raise InternalServerError(f"Error while trying to retrive container's log: {message}")
 
 

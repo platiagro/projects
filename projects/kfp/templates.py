@@ -25,7 +25,9 @@ SELDON_DEPLOYMENT = Template("""{
             {
                 "componentSpecs": [$componentSpecs
                 ],
-                "annotations": $tasks,
+                "annotations": {
+                    "sidecar.istio.io/inject": "false"
+                },
                 "graph": $graph,
                 "labels": {
                     "version": "v1"
@@ -65,6 +67,10 @@ COMPONENT_SPEC = Template("""
                     {
                         "name": "OPERATOR_ID",
                         "value": "$operatorId"
+                    },
+                    {
+                        "name": "TASK_NAME",
+                        "value": "$taskName"
                     }
                 ],
                 "volumeMounts": [
