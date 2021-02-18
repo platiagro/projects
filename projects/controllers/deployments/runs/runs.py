@@ -19,21 +19,21 @@ class RunController:
     def __init__(self, session):
         self.session = session
 
-    def raise_if_run_does_not_exist(self, run_id: str, experiment_id: str):
+    def raise_if_run_does_not_exist(self, run_id: str, deployment_id: str):
         """
         Raises an exception if the specified run does not exist.
 
         Parameters
         ----------
         run_id : str
-        experiment_id : str
+        deployment_id : str
 
         Raises
         ------
         NotFound
         """
         try:
-            kfp_runs.get_run(experiment_id=experiment_id,
+            kfp_runs.get_run(experiment_id=deployment_id,
                              run_id=run_id)
         except (ApiException, ValueError):
             raise NOT_FOUND
@@ -51,8 +51,7 @@ class RunController:
         -------
         projects.schemas.run.RunList
         """
-        runs = get_deployment_runs(deployment_id)
-
+        runs = kfp_runs.list_runs(experiment_id=deployment_id)
         return schemas.RunList.from_model(runs, len(runs))
 
     def create_run(self, project_id: str, deployment_id: str):

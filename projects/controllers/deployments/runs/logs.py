@@ -4,11 +4,10 @@ import re
 
 from io import StringIO
 
-from projects import models
 from projects.kubernetes.seldon import list_deployment_pods
-from projects.kubernetes.utils import get_pod_log
+from projects.kubernetes.utils import get_container_logs
 
-EXCLUDE_CONTAINERS = ['istio-proxy']
+EXCLUDE_CONTAINERS = ["istio-proxy", "seldon-container-engine"]
 TIME_STAMP_PATTERN = r'\d{4}-\d{2}-\d{2}(:?\s|T)\d{2}:\d{2}:\d{2}(:?.|,)\d+Z?\s?'
 LOG_MESSAGE_PATTERN = r'[a-zA-Z0-9\u00C0-\u00D6\u00D8-\u00f6\u00f8-\u00ff\"\'.\-@_,!#$%^&*()\[\]<>?\/|}{~:]{1,}'
 LOG_LEVEL_PATTERN = r'(?<![\\w\\d])INFO(?![\\w\\d])|(?<![\\w\\d])WARNING(?![\\w\\d])|(?<![\\w\\d])WARN(?![\\w\\d])|(?<![\\w\\d])ERROR(?![\\w\\d])'
@@ -36,33 +35,24 @@ class LogController:
         deployment_pods = list_deployment_pods(deployment_id)
         response = []
 
-        tasks = self.session.query(models.Task) \
-            .all()
-        tasks = dict((t.uuid, t.name) for t in tasks)
-
         for pod in deployment_pods:
             for container in pod.spec.containers:
                 if container.name not in EXCLUDE_CONTAINERS:
-                    pod_log = get_pod_log(pod, container)
+                    logs = get_container_logs(pod, container)
+                    status = "Completed" if logs is not None else "Creating"
 
-                    if not pod_log:
-                        operator_info = {"status": "Creating"}
-                        response.append(operator_info)
-                        continue
+                    task_name = next((e.value for e in container.env if e.name == "TASK_NAME"), pod.metadata.name)
 
-                    # retrieves the tasks linked to the operator
-                    # using "metadata.annotations"
-                    task_id = pod.metadata.annotations.get(container.name)
-
-                    operator_info = {}
-                    operator_info["containerName"] = tasks.get(task_id, task_id)
-                    operator_info["logs"] = self.log_parser(pod_log)
-                    operator_info.update({"status": "Completed"})
+                    operator_info = {
+                        "status": status,
+                        "containerName": task_name,
+                        "logs": self.parse_logs(logs),
+                    }
                     response.append(operator_info)
 
         return response
 
-    def log_parser(self, raw_log):
+    def parse_logs(self, raw_log):
         """
         Transform raw log text into human-readable logs.
 

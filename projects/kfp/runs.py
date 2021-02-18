@@ -34,20 +34,17 @@ def list_runs(experiment_id):
 
     # Now, lists runs
     kfp_runs = kfp_client().list_runs(
-        page_size="100",
+        page_size="10",
         sort_by="created_at desc",
         experiment_id=kfp_experiment.id,
     )
 
     runs = []
     for kfp_run in kfp_runs.runs:
-        workflow_manifest = json.loads(kfp_run.pipeline_spec.workflow_manifest)
-        if workflow_manifest["metadata"]["generateName"] == f"experiment-{experiment_id}-":
-            run_id = kfp_run.id
-            run = get_run(experiment_id=experiment_id,
-                          run_id=run_id)
-
-            runs.append(run)
+        run_id = kfp_run.id
+        run = get_run(experiment_id=experiment_id,
+                      run_id=run_id)
+        runs.append(run)
 
     return runs
 
@@ -87,7 +84,11 @@ def start_run(operators, project_id, experiment_id, deployment_id=None, deployme
                      deployment_id=deployment_id,
                      deployment_name=deployment_name)
 
-    kfp_experiment = kfp_client().create_experiment(name=experiment_id)
+    if deployment_id is not None:
+        kfp_experiment = kfp_client().create_experiment(name=deployment_id)
+    else:
+        kfp_experiment = kfp_client().create_experiment(name=experiment_id)
+
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
 
     job_name = f"{name}-{tag}"
@@ -183,7 +184,7 @@ def get_latest_run_id(experiment_id):
 
     # lists runs for trainings and deployments of an experiment
     kfp_runs = kfp_client().list_runs(
-        page_size="100",
+        page_size="1",
         sort_by="created_at desc",
         experiment_id=kfp_experiment.id,
     )
@@ -191,10 +192,8 @@ def get_latest_run_id(experiment_id):
     # find the latest training run
     latest_run_id = None
     for kfp_run in kfp_runs.runs:
-        workflow_manifest = json.loads(kfp_run.pipeline_spec.workflow_manifest)
-        if workflow_manifest["metadata"]["generateName"] == f"experiment-{experiment_id}-":
-            latest_run_id = kfp_run.id
-            break
+        latest_run_id = kfp_run.id
+        break
 
     return latest_run_id
 
