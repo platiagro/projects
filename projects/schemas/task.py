@@ -27,6 +27,10 @@ class TaskCreate(TaskBase):
     parameters: Optional[List]
     experiment_notebook: Optional[Dict]
     deployment_notebook: Optional[Dict]
+    cpu_limit: Optional[str]
+    cpu_request: Optional[str]
+    memory_limit: Optional[str]
+    memory_request: Optional[str]
     is_default: Optional[bool]
 
 
@@ -40,6 +44,10 @@ class TaskUpdate(TaskBase):
     parameters: Optional[List]
     experiment_notebook: Optional[Dict]
     deployment_notebook: Optional[Dict]
+    cpu_limit: Optional[str]
+    cpu_request: Optional[str]
+    memory_limit: Optional[str]
+    memory_request: Optional[str]
 
 
 class Task(TaskBase):
