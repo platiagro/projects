@@ -1591,6 +1591,18 @@ components:
           type: array
           items:
             type: string
+        arguments:
+          type: array
+          items:
+            type: string
+        cpuLimit:
+          type: string
+        cpuRequest:
+          type: string
+        memoryLimit:
+          type: string
+        memoryRequest:
+          type: string
         tags:
           type: array
           items:
@@ -1649,6 +1661,14 @@ components:
             type: string
         image:
           type: string
+        cpuLimit:
+          type: string
+        cpuRequest:
+          type: string
+        memoryLimit:
+          type: string
+        memoryRequest:
+          type: string
     TaskCopyFrom:
       type: object
       properties:
@@ -1678,6 +1698,14 @@ components:
           type: object
         experimentNotebook:
           type: object
+        cpuLimit:
+          type: string
+        cpuRequest:
+          type: string
+        memoryLimit:
+          type: string
+        memoryRequest:
+          type: string
     Parameter:
       type: object
       properties:
@@ -2242,6 +2270,10 @@ components:
                 name: string
                 description: string
                 tags: ["DEFAULT"]
+                cpuLimit: "1000m"
+                cpuRequest: "1000m"
+                memoryLimit: "10G"
+                memoryRequest: "10G"
             docker:
               summary: Custom docker image
               value:
@@ -2251,6 +2283,10 @@ components:
                 commands: ["cmd"]
                 arguments: ["arg"]
                 image: your-custom-docker-image:tag
+                cpuLimit: "1000m"
+                cpuRequest: "1000m"
+                memoryLimit: "10G"
+                memoryRequest: "10G"
             copyFrom:
               summary: Copy another task
               value:
@@ -2264,6 +2300,10 @@ components:
                 name: string
                 description: string
                 tags: ["DEFAULT"]
+                cpuLimit: "1000m"
+                cpuRequest: "1000m"
+                memoryLimit: "10G"
+                memoryRequest: "10G"
                 deploymentNotebook:
                   {
                     "cells":
@@ -2346,6 +2386,10 @@ components:
             commands: ["cmd"]
             arguments: ["arg"]
             image: your-custom-docker-image:tag
+            cpuLimit: "1000m"
+            cpuRequest: "1000m"
+            memoryLimit: "10G"
+            memoryRequest: "10G"
             deploymentNotebook:
               {
                 "cells":
