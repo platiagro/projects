@@ -261,6 +261,14 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     component_specs = []
 
     for operator in operators:
+        memory_limit = operator.task.memory_limit
+        if memory_limit is None:
+            memory_limit = TASK_DEFAULT_MEMORY_LIMIT
+
+        memory_request = operator.task.memory_request
+        if memory_request is None:
+            memory_request = TASK_DEFAULT_MEMORY_REQUEST
+
         component_specs.append(
             COMPONENT_SPEC.substitute({
                 "image": TASK_DEFAULT_DEPLOYMENT_IMAGE,
@@ -268,8 +276,8 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "experimentId": experiment_id,
                 "deploymentId": deployment_id,
                 "taskId": operator.task.uuid,
-                "memoryRequest": TASK_DEFAULT_MEMORY_REQUEST,
-                "memoryLimit": TASK_DEFAULT_MEMORY_LIMIT,
+                "memoryLimit": memory_limit,
+                "memoryRequest": memory_request,
                 "taskName": operator.task.name,
             })
         )
