@@ -246,6 +246,9 @@ class DeploymentController:
         if deployment is None:
             raise NOT_FOUND
 
+        # remove responses
+        self.session.query(models.Response).filter(models.Response.deployment_id == deployment_id).delete()
+
         # remove operators
         self.session.query(models.Operator).filter(models.Operator.deployment_id == deployment_id).delete()
 
