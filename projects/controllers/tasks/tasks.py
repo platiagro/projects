@@ -163,6 +163,10 @@ class TaskController:
             stored_task_name = stored_task.name
             experiment_notebook_path = stored_task.experiment_notebook_path
             deployment_notebook_path = stored_task.deployment_notebook_path
+            task.cpu_limit = stored_task.cpu_limit
+            task.cpu_request = stored_task.cpu_request
+            task.memory_limit = stored_task.memory_limit
+            task.memory_request = stored_task.memory_request
         else:
             # relative path to the mount_path
             experiment_notebook_path = "Experiment.ipynb"
@@ -198,6 +202,10 @@ class TaskController:
             parameters=task.parameters if task.parameters else [],
             experiment_notebook_path=experiment_notebook_path,
             deployment_notebook_path=deployment_notebook_path,
+            cpu_limit=task.cpu_limit,
+            cpu_request=task.cpu_request,
+            memory_limit=task.memory_limit,
+            memory_request=task.memory_request,
             is_default=task.is_default,
         )
         self.session.add(task)

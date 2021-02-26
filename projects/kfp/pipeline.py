@@ -9,9 +9,8 @@ from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
 from projects import __version__
-from projects.kfp import CPU_LIMIT, CPU_REQUEST, DEPLOYMENT_INIT_TIMEOUT, \
-    KF_PIPELINES_NAMESPACE, MEMORY_LIMIT, MEMORY_REQUEST, SELDON_REST_TIMEOUT, \
-    kfp_client
+from projects.kfp import DEPLOYMENT_INIT_TIMEOUT, KF_PIPELINES_NAMESPACE, \
+    SELDON_REST_TIMEOUT, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
 from projects.object_storage import MINIO_ACCESS_KEY, MINIO_SECRET_KEY
@@ -20,10 +19,16 @@ TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
     "TASK_DEFAULT_DEPLOYMENT_IMAGE",
     f"platiagro/platiagro-deployment-image:{__version__}",
 )
+TASK_DEFAULT_CPU_LIMIT = getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
+TASK_DEFAULT_CPU_REQUEST = getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
+TASK_DEFAULT_MEMORY_LIMIT = getenv("TASK_DEFAULT_MEMORY_LIMIT", "10G")
+TASK_DEFAULT_MEMORY_REQUEST = getenv("TASK_DEFAULT_MEMORY_REQUEST", "2G")
+
 SELDON_LOGGER_ENDPOINT = getenv(
     "SELDON_LOGGER_ENDPOINT",
     "http://projects.platiagro:8080",
 )
+
 
 def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, deployment_name):
     """
@@ -57,7 +62,11 @@ def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, 
             container_op = create_container_op(operator=operator,
                                                experiment_id=experiment_id,
                                                notebook_path=notebook_path,
-                                               dataset=dataset)
+                                               dataset=dataset,
+                                               cpu_limit=operator.task.cpu_limit,
+                                               cpu_request=operator.task.cpu_request,
+                                               memory_limit=operator.task.memory_limit,
+                                               memory_request=operator.task.memory_request)
             containers[operator.uuid] = (operator, container_op)
 
         if deployment_id is not None:
@@ -125,21 +134,28 @@ def create_volume_op(name):
     return volume_op
 
 
-def create_container_op(operator, experiment_id, notebook_path=None, dataset=None):
+def create_container_op(operator, experiment_id, **kwargs):
     """
     Create kfp.dsl.ContainerOp container from an operator list.
 
     Parameters
     ----------
-    operator : dict
+    operator : projets.models.operator.Operator
     experiment_id : str
-    notebook_path : str or None
-    dataset : str or None
+    **kwargs
+        Arbitrary keyword arguments.
 
     Returns
     -------
     kfp.dsl.ContainerOp
     """
+    notebook_path = kwargs.get("notebook_path")
+    dataset = kwargs.get("dataset")
+    cpu_limit = kwargs.get("cpu_limit", TASK_DEFAULT_CPU_LIMIT)
+    cpu_request = kwargs.get("cpu_request", TASK_DEFAULT_CPU_REQUEST)
+    memory_limit = kwargs.get("memory_limit", TASK_DEFAULT_MEMORY_LIMIT)
+    memory_request = kwargs.get("memory_request", TASK_DEFAULT_MEMORY_REQUEST)
+
     container_op = dsl.ContainerOp(
         name=operator.uuid,
         image=operator.task.image,
@@ -218,10 +234,10 @@ def create_container_op(operator, experiment_id, notebook_path=None, dataset=Non
             )
 
     container_op.container \
-        .set_memory_request(MEMORY_REQUEST) \
-        .set_memory_limit(MEMORY_LIMIT) \
-        .set_cpu_request(CPU_REQUEST) \
-        .set_cpu_limit(CPU_LIMIT)
+        .set_memory_request(memory_request) \
+        .set_memory_limit(memory_limit) \
+        .set_cpu_request(cpu_request) \
+        .set_cpu_limit(cpu_limit)
 
     return container_op
 
@@ -245,6 +261,14 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     component_specs = []
 
     for operator in operators:
+        memory_limit = operator.task.memory_limit
+        if memory_limit is None:
+            memory_limit = TASK_DEFAULT_MEMORY_LIMIT
+
+        memory_request = operator.task.memory_request
+        if memory_request is None:
+            memory_request = TASK_DEFAULT_MEMORY_REQUEST
+
         component_specs.append(
             COMPONENT_SPEC.substitute({
                 "image": TASK_DEFAULT_DEPLOYMENT_IMAGE,
@@ -252,8 +276,8 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "experimentId": experiment_id,
                 "deploymentId": deployment_id,
                 "taskId": operator.task.uuid,
-                "memoryRequest": MEMORY_REQUEST,
-                "memoryLimit": MEMORY_LIMIT,
+                "memoryLimit": memory_limit,
+                "memoryRequest": memory_request,
                 "taskName": operator.task.name,
             })
         )
