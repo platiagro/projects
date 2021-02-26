@@ -151,10 +151,22 @@ def create_container_op(operator, experiment_id, **kwargs):
     """
     notebook_path = kwargs.get("notebook_path")
     dataset = kwargs.get("dataset")
-    cpu_limit = kwargs.get("cpu_limit", TASK_DEFAULT_CPU_LIMIT)
-    cpu_request = kwargs.get("cpu_request", TASK_DEFAULT_CPU_REQUEST)
-    memory_limit = kwargs.get("memory_limit", TASK_DEFAULT_MEMORY_LIMIT)
-    memory_request = kwargs.get("memory_request", TASK_DEFAULT_MEMORY_REQUEST)
+    cpu_limit = kwargs.get("cpu_limit")
+    cpu_request = kwargs.get("cpu_request")
+    memory_limit = kwargs.get("memory_limit")
+    memory_request = kwargs.get("memory_request")
+
+    if cpu_limit is None:
+        cpu_limit = TASK_DEFAULT_CPU_LIMIT
+
+    if cpu_request is None:
+        cpu_request = TASK_DEFAULT_CPU_REQUEST
+
+    if memory_limit is None:
+        memory_limit = TASK_DEFAULT_MEMORY_LIMIT
+
+    if memory_request is None:
+        memory_request = TASK_DEFAULT_MEMORY_REQUEST
 
     container_op = dsl.ContainerOp(
         name=operator.uuid,
