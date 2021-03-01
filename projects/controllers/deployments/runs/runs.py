@@ -12,7 +12,7 @@ from projects.kfp.deployments import get_deployment_runs
 from projects.kubernetes.kube_config import load_kube_config
 
 
-NOT_FOUND = NotFound("The specified deployment does not exist")
+NOT_FOUND = NotFound("The specified run does not exist")
 
 
 class RunController:
@@ -75,7 +75,7 @@ class RunController:
         deployment = self.session.query(models.Deployment).get(deployment_id)
 
         if deployment is None:
-            raise NOT_FOUND
+            raise NotFound("The specified deployment does not exist")
 
         # Removes operators that don't have a deployment_notebook (eg. Upload de Dados).
         # Then, fix dependencies in their children.

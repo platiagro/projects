@@ -76,7 +76,7 @@ class RunController:
         experiment = self.session.query(models.Experiment).get(experiment_id)
 
         if experiment is None:
-            raise NOT_FOUND
+            raise NotFound("The specified experiment does not exist")
 
         run = kfp_runs.start_run(project_id=project_id,
                                  experiment_id=experiment_id,
