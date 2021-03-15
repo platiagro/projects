@@ -254,9 +254,12 @@ class ProjectController:
             .filter(models.Experiment.project_id.in_(project_ids)) \
             .all()
 
-        deleted_projects = models.Project.__table__.delete() \
-            .where(models.Project.uuid.in_(project_ids))
-        self.session.execute(deleted_projects)
+        projects = self.session.query(models.Project) \
+            .filter(models.Project.uuid.in_(project_ids)) \
+            .all()
+
+        for project in projects:
+            self.session.delete(project)
 
         self.session.commit()
 
