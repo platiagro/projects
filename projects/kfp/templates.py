@@ -109,4 +109,78 @@ GRAPH = Template("""{
     "children": [
         $children
     ]
+} """)
+
+DEPLOYMENT_BROKER = Template("""{
+    "apiVersion": "eventing.knative.dev/v1beta1",
+    "kind": "Broker",
+    "metadata": {
+        "name": "$broker",
+        "namespace": "$namespace",
+    }
 }""")
+
+MONITORING_SERVICE = Template("""{
+    "apiVersion": "serving.knative.dev/v1alpha1",
+    "kind": "Service",
+    "metadata": {
+        "name": "$name",
+        "namespace": "$namespace"
+    },
+    "spec": {
+        "template": {
+            "metadata": {
+                "annotations": {
+                    "autoscaling.knative.dev/minScale": "1"
+                }
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "image": "platiagro/platiagro-monitoring-image:0.2.0",
+                        "ports": [
+                            {
+                                "containerPort": 5000
+                            }
+                        ],
+                        "volumeMounts": [
+                            {
+                                "name": "configmap-$taskId",
+                                "mountPath": "/task"
+                            }
+                        ]  
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "configmap",
+                        "configmap": {
+                            "name": "configmap-$taskId"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+} """)
+
+
+MONITORING_TRIGGER = Template("""{
+    "apiVersion": "eventing.knative.dev/v1alpha1",
+    "kind": "Trigger",
+    "metadata": {
+        "name": "$name",
+        "namespace": "$namespace"
+    },
+    "spec": {
+        "broker": "$broker",
+        "subscriber": {
+            "ref": {
+                "apiVersion": "serving.knative.dev/v1alpha1",
+                "kind": "Service",
+                "name": "$service"
+            },
+            "uri": "/api/v1.0/predictions"
+        }
+    }
+} """)

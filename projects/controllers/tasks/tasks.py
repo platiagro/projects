@@ -15,12 +15,12 @@ from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation, \
-    remove_persistent_volume_claim, update_persistent_volume_claim
+    handle_task_update, remove_persistent_volume_claim
 from projects.kubernetes.notebook import get_notebook_state
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
-              "PREDICTOR", "COMPUTER_VISION", "NLP"]
+              "PREDICTOR", "COMPUTER_VISION", "NLP", "MONITORING"]
 DEPLOYMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Experiment.ipynb"))
 
@@ -294,9 +294,9 @@ class TaskController:
             if stored_task.name != task.name:
                 # update the volume for the task in the notebook server
                 self.background_tasks.add_task(
-                    update_persistent_volume_claim,
-                    name=f"vol-task-{task_id}",
-                    mount_path=f"/home/jovyan/tasks/{task.name}"
+                    handle_task_update,
+                    task=task,
+                    task_id=task_id
                 )
 
         update_data = task.dict(exclude_unset=True)
