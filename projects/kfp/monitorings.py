@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """Utility functions to handle monitorings."""
+import warnings
+
 from kfp import compiler, dsl
 from kubernetes import client
+from kubernetes.client.rest import ApiException
 
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp.templates import DEPLOYMENT_BROKER, MONITORING_SERVICE, \
@@ -35,6 +38,8 @@ def create_monitoring_task_config_map(task_id, experiment_notebook_content):
         namespace=KF_PIPELINES_NAMESPACE,
         body=body,
     )
+    
+    warnings.warn(f"ConfigMap of task {task_id} created!")
 
 
 def delete_monitoring_task_config_map(task_id):
@@ -49,11 +54,16 @@ def delete_monitoring_task_config_map(task_id):
 
     load_kube_config()
     v1 = client.CoreV1Api()
+    try:
+        v1.delete_namespaced_config_map(
+            name=config_map_name,
+            namespace=KF_PIPELINES_NAMESPACE
+        )
 
-    v1.delete_namespaced_config_map(
-        name=config_map_name,
-        namepsace=KF_PIPELINES_NAMESPACE
-    )
+        warnings.warn(f"ConfigMap of task {task_id} deleted!")
+    except ApiException as e:
+        warnings.warn(f"ConfigMap of task {task_id} not found, creating a new one.")
+
 
 def create_deployment_broker(deployment_id):
     """

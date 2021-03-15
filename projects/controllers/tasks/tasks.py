@@ -15,8 +15,8 @@ from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation, \
-    handle_task_update, remove_persistent_volume_claim
-from projects.kubernetes.notebook import get_notebook_state
+    update_task_config_map, update_persistent_volume_claim, remove_persistent_volume_claim, \
+    get_notebook_state
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
@@ -288,15 +288,26 @@ class TaskController:
             copy_file_to_pod(filepath, destination_path)
             os.remove(filepath)
 
-        # checks whether task.name has changed
-        if task.name:
+        # checks whether task.name or task.parameters has changed
+        if task.name or task.parameters:
             stored_task = self.session.query(models.Task).get(task_id)
+            
             if stored_task.name != task.name:
                 # update the volume for the task in the notebook server
                 self.background_tasks.add_task(
-                    handle_task_update,
+                    update_persistent_volume_claim,
+                    name=f"vol-task-{task_id}",
+                    mount_path=f"/home/jovyan/tasks/{task.name}"
+                )
+
+            # update ConfigMap for monitoring tasks
+            if (("MONITORING" in task.tags if task.tags else False) or
+                    "MONITORING" in stored_task.tags):
+                self.background_tasks.add_task(
+                    update_task_config_map,
                     task=task,
-                    task_id=task_id
+                    task_id=task_id,
+                    experiment_notebook_path=stored_task.experiment_notebook_path,
                 )
 
         update_data = task.dict(exclude_unset=True)

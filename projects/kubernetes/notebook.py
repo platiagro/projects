@@ -16,7 +16,8 @@ from kubernetes.stream import stream
 
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import InternalServerError
-from projects.kfp.monitorings import create_monitoring_task_config_map
+from projects.kfp.monitorings import create_monitoring_task_config_map, \
+    delete_monitoring_task_config_map
 from projects.kubernetes.kube_config import load_kube_config
 
 JUPYTER_WORKSPACE = "/home/jovyan/tasks"
@@ -353,25 +354,22 @@ def handle_task_creation(task,
     )
 
 
-def handle_task_update(task,
-                       task_id):
+def update_task_config_map(task,
+                           task_id,
+                           experiment_notebook_path):
     """
-    Update Kubernetes resources for task notebooks.
+    Update ConfigMap for task notebooks.
 
     Parameters
     ----------
     task : projects.schemas.task.TaskCreate
     task_id : str
+    experiment_notebook_path : str
     """
-    # update volume of task in the notebook server
-    update_persistent_volume_claim(name=f"vol-task-{task_id}",
-                                   mount_path=f"{JUPYTER_WORKSPACE}/{task.name}")
-
     # update ConfigMap of monitoring task
-    if MONITORING_TAG in task.tags:
-        delete_monitoring_task_config_map(task_id)
-        experiment_notebook_content = get_file_from_pod(experiment_notebook_path)
-        create_monitoring_task_config_map(task_id, experiment_notebook_content)
+    delete_monitoring_task_config_map(task_id)
+    experiment_notebook_content = get_file_from_pod(experiment_notebook_path)
+    create_monitoring_task_config_map(task_id, experiment_notebook_content)
 
 
 def get_file_from_pod(filepath):
@@ -468,7 +466,7 @@ def copy_file_to_pod(filepath, destination_path):
             if container_stream.peek_stderr():
                 warnings.warn("STDERR: %s" % container_stream.read_stderr())
             if data:
-                container_stream.write_stdin(str(data))
+                container_stream.write_stdin(data)
                 data = tar_buffer.read(1000000)
             else:
                 break
