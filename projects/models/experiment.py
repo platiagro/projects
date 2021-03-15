@@ -23,7 +23,8 @@ class Experiment(Base):
     operators = relationship("Operator",
                              backref="experiment",
                              primaryjoin=uuid == Operator.experiment_id,
-                             lazy="joined")
+                             lazy="joined",
+                             cascade="all, delete-orphan")
     deployments = relationship("Deployment",
                                backref="experiment",
                                primaryjoin=uuid == Deployment.experiment_id,

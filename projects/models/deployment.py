@@ -19,7 +19,8 @@ class Deployment(Base):
     name = Column(Text, nullable=False)
     operators = relationship("Operator",
                              primaryjoin=uuid == Operator.deployment_id,
-                             lazy="joined")
+                             lazy="joined",
+                             cascade="all, delete-orphan")
     position = Column(Integer, nullable=False, default=-1)
     project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False, index=True)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
