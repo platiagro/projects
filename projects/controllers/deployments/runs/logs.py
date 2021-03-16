@@ -39,13 +39,12 @@ class LogController:
         list
             A list of all logs from a run.
         """
-        # Try to retrieve any pods associated to a seldondeployment
+        # Tries to retrieve any pods associated to a seldondeployment
         pods = list_deployment_pods(deployment_id=deployment_id)
 
         if len(pods) == 0:
-            # When there aren't any seldondeployments, retrives workflow pod.
-            # This is useful for debugging in case of a failure during the
-            # workflow execution.
+            # When there aren't any seldondeployments, retrieves the workflow pods.
+            # This is useful for debugging failures during the workflow execution.
             if run_id == "latest":
                 run_id = get_latest_run_id(deployment_id)
 
