@@ -39,7 +39,7 @@ def list_workflows(run_id):
 
 def list_workflow_pods(run_id: str):
     """
-    Lists pods from a workflow.
+    Lists pods from a workflow. Returns only pods that ran a platiagro task.
 
     Parameters
     ----------
@@ -63,5 +63,9 @@ def list_workflow_pods(run_id: str):
         namespace=KF_PIPELINES_NAMESPACE,
         label_selector=f"workflows.argoproj.io/workflow={workflow_name}",
     ).items
+
+    # Filters by pods that have an annotation "name=...".
+    # Only pods that ran a platiagro tasks have this annotation.
+    pod_list = [pod for pod in pod_list if "name" in pod.metadata.annotations]
 
     return pod_list
