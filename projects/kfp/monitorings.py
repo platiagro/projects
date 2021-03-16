@@ -62,7 +62,7 @@ def delete_monitoring_task_config_map(task_id):
         )
 
         warnings.warn(f"ConfigMap of task {task_id} deleted!")
-    except ApiException as e:
+    except ApiException:
         warnings.warn(f"ConfigMap of task {task_id} not found, creating a new one.")
 
 
