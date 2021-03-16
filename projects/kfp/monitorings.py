@@ -106,13 +106,19 @@ def create_deployment_broker(deployment_id):
     return broker_name
     
 
-def deploy_monitoring(deployment_id, task_id, broker_name):
+def deploy_monitoring(deployment_id,
+                      experiment_id,
+                      run_id,
+                      task_id,
+                      broker_name):
     """
     Deploy a service and trigger for monitoring.
 
     Parameters
     ----------
     deployment_id : str
+    experiment_id : str
+    run_id : str
     task_id : str
     broker_name : str
 
@@ -127,7 +133,10 @@ def deploy_monitoring(deployment_id, task_id, broker_name):
         service = MONITORING_SERVICE.substitute({
             "name": service_name,
             "namespace": KF_PIPELINES_NAMESPACE,
-            "taskId": task_id
+            "taskId": task_id,
+            "experimentId": experiment_id,
+            "deploymentId": deployment_id,
+            "runId": run_id
         })
         service_resource = loads(service)
         monitoring_service = dsl.ResourceOp(

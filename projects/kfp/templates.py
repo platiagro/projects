@@ -143,12 +143,26 @@ MONITORING_SERVICE = Template("""{
                                 "containerPort": 5000
                             }
                         ],
+                        "env": [
+                            {
+                                "name": "EXPERIMENT_ID",
+                                "value": "$experimentId"
+                            },
+                            {
+                                "name": "DEPLOYMENT_ID",
+                                "value": "$deploymentId"
+                            },
+                            {
+                                "name": "RUN_ID",
+                                "value": "$runId"
+                            }
+                        ],
                         "volumeMounts": [
                             {
                                 "name": "configmap",
                                 "mountPath": "/task"
                             }
-                        ]  
+                        ]
                     }
                 ],
                 "volumes": [
