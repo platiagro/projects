@@ -81,5 +81,6 @@ class MonitoringController:
             raise NOT_FOUND
 
         self.session.delete(monitoring)
+        self.session.commit()
 
         return schemas.Message(message="Monitoring deleted")

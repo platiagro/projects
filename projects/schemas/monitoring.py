@@ -29,7 +29,6 @@ class Monitoring(MonitoringBase):
     deployment_id: str
     task_id: str
     created_at: datetime
-    updated_at: datetime
 
     @classmethod
     def from_model(cls, model):
@@ -38,7 +37,6 @@ class Monitoring(MonitoringBase):
             deployment_id=model.deployment_id,
             task_id=model.task_id,
             created_at=model.created_at,
-            updated_at=model.updated_at,
         )
 
 

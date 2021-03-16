@@ -34,7 +34,7 @@ async def handle_list_monitorings(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
-    deployment_controller.raise_if_deployment_does_not_exist(project_id)
+    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     monitoring_controller = MonitoringController(session)
     monitorings = monitoring_controller.list_monitorings(project_id=project_id,
@@ -65,7 +65,7 @@ async def handle_post_monitorings(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
-    deployment_controller.raise_if_deployment_does_not_exist(project_id)
+    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     monitoring_controller = MonitoringController(session)
     monitoring = monitoring_controller.create_monitoring(project_id=project_id,
@@ -97,7 +97,7 @@ async def handle_delete_monitorings(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
-    deployment_controller.raise_if_deployment_does_not_exist(project_id)
+    deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     monitoring_controller = MonitoringController(session)
     response = monitoring_controller.delete_monitoring(uuid=monitoring_id,
