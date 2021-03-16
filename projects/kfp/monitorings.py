@@ -79,18 +79,16 @@ def create_deployment_broker(deployment_id):
     str
         Broker name.
     """
-    broker_name = f"broker-{deployment_id}"
-    
     # Using nonlocal to acess variable on the parent scope
-    @dsl.pipeline(name=broker_name)
+    @dsl.pipeline(name=deployment_id)
     def broker():
         broker = DEPLOYMENT_BROKER.substitute({
-            "broker": broker_name,
+            "broker": deployment_id,
             "namespace": KF_PIPELINES_NAMESPACE,
         })
         broker_resource = loads(broker)
         dsl.ResourceOp(
-            name=broker_name,
+            name=deployment_id,
             k8s_resource=broker_resource,
             success_condition="status.conditions.3.status == True"
 
@@ -102,15 +100,13 @@ def create_deployment_broker(deployment_id):
         run_name="monitoring",
         namespace=KF_PIPELINES_NAMESPACE
     )
-
-    return broker_name
     
 
 def deploy_monitoring(deployment_id,
                       experiment_id,
                       run_id,
                       task_id,
-                      broker_name):
+                      monitoring_id):
     """
     Deploy a service and trigger for monitoring.
 
@@ -120,7 +116,7 @@ def deploy_monitoring(deployment_id,
     experiment_id : str
     run_id : str
     task_id : str
-    broker_name : str
+    monitoring_id : str
 
     Returns
     -------
@@ -129,14 +125,14 @@ def deploy_monitoring(deployment_id,
     """
     @dsl.pipeline(name="Monitoring")
     def monitoring():
-        service_name = f"service-{task_id}"
+        service_name = f"service-{monitoring_id}"
         service = MONITORING_SERVICE.substitute({
             "name": service_name,
             "namespace": KF_PIPELINES_NAMESPACE,
-            "taskId": task_id,
             "experimentId": experiment_id,
             "deploymentId": deployment_id,
-            "runId": run_id
+            "runId": run_id,
+            "configMap": f"configmap-{task_id}"
         })
         service_resource = loads(service)
         monitoring_service = dsl.ResourceOp(
@@ -145,10 +141,11 @@ def deploy_monitoring(deployment_id,
             success_condition="status.conditions.1.status == True"
         )
 
+        trigger_name = f"trigger-{monitoring_id}"
         trigger = MONITORING_TRIGGER.substitute({
-            "name": "monitoring_trigger",
+            "name": trigger_name,
             "namespace": KF_PIPELINES_NAMESPACE,
-            "broker": broker_name,
+            "broker": deployment_id,
             "service": service_name,
         })
         trigger_resource = loads(trigger)

@@ -98,13 +98,13 @@ class RunController:
             raise BadRequest(str(e))
 
         if monitorings:
-            broker_name = create_deployment_broker(deployment_id)
+            create_deployment_broker(deployment_id)
             for monitoring in monitorings:
                 deploy_monitoring(deployment_id=deployment_id,
                                   experiment_id=deployment.experiment_id,
                                   run_id=run["uuid"],
                                   task_id=monitoring.task_id,
-                                  broker_name=broker_name)
+                                  monitoring_id=monitoring.uuid)
 
         update_data = {"status": "Pending"}
         self.session.query(models.Operator) \

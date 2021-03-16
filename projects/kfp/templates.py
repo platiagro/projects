@@ -169,7 +169,7 @@ MONITORING_SERVICE = Template("""{
                     {
                         "name": "configmap",
                         "configmap": {
-                            "name": "configmap-$taskId"
+                            "name": "$configMap"
                         }
                     }
                 ]
