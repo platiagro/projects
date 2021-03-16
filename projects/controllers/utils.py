@@ -23,26 +23,6 @@ def uuid_alpha():
     return uuid_
 
 
-def objects_uuid(list_object):
-    """
-    Recovering uuids from information projects.
-
-    Parameters
-    ----------
-    list_object : lits
-        List of project ids.
-
-    Returns
-    -------
-    list
-        All uuids.
-    """
-    uuids = []
-    for i in list_object:
-        uuids.append(i.uuid)
-    return uuids
-
-
 def text_to_list(order):
     """
     Turn text into list.

@@ -8,7 +8,7 @@ from sqlalchemy import asc, desc, func
 
 from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
-from projects.controllers.utils import objects_uuid, uuid_alpha
+from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.object_storage import remove_objects
 
@@ -220,16 +220,6 @@ class ProjectController:
         if project is None:
             raise NOT_FOUND
 
-        deployments = self.session.query(models.Deployment).filter(models.Deployment.project_id == project_id).all()
-        for deployment in deployments:
-            self.session.query(models.Operator).filter(models.Operator.deployment_id == deployment.uuid).delete()
-        self.session.query(models.Deployment).filter(models.Deployment.project_id == project_id).delete()
-
-        experiments = self.session.query(models.Experiment).filter(models.Experiment.project_id == project_id).all()
-        for experiment in experiments:
-            self.session.query(models.Operator).filter(models.Operator.experiment_id == experiment.uuid).delete()
-        self.session.query(models.Experiment).filter(models.Experiment.project_id == project_id).delete()
-
         self.session.delete(project)
         self.session.commit()
 
@@ -260,16 +250,17 @@ class ProjectController:
         if total_elements < 1:
             raise BadRequest("inform at least one project")
 
+        experiments = self.session.query(models.Experiment) \
+            .filter(models.Experiment.project_id.in_(project_ids)) \
+            .all()
+
         projects = self.session.query(models.Project) \
             .filter(models.Project.uuid.in_(project_ids)) \
             .all()
-        experiments = self.session.query(models.Experiment) \
-            .filter(models.Experiment.project_id.in_(objects_uuid(projects))) \
-            .all()
-        operators = self.session.query(models.Operator) \
-            .filter(models.Operator.experiment_id.in_(objects_uuid(experiments))) \
-            .all()
-        self.pre_delete(projects, total_elements, operators, experiments, project_ids)
+
+        for project in projects:
+            self.session.delete(project)
+
         self.session.commit()
 
         for experiment in experiments:
@@ -280,32 +271,3 @@ class ProjectController:
                 pass
 
         return schemas.Message(message="Successfully removed projects")
-
-    def pre_delete(self, projects, total_elements, operators, experiments, all_projects_ids):
-        """
-        SQL form for deleting multiple projects.
-
-        Parameters
-        ----------
-        projects : list
-        total_elements : int
-        operators : list
-        experiments : list
-        all_projects_ids: str
-
-        Raises
-        ------
-        NotFound
-            When any project_id does not exist.
-        """
-        if len(projects) != total_elements:
-            raise NOT_FOUND
-        if len(operators):
-            # remove operators
-            operators = models.Operator.__table__.delete().where(models.Operator.experiment_id.in_(objects_uuid(experiments)))
-            self.session.execute(operators)
-        if len(experiments):
-            deleted_experiments = models.Experiment.__table__.delete().where(models.Experiment.uuid.in_(objects_uuid(experiments)))
-            self.session.execute(deleted_experiments)
-        deleted_projects = models.Project.__table__.delete().where(models.Project.uuid.in_(all_projects_ids))
-        self.session.execute(deleted_projects)

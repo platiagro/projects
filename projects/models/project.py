@@ -21,10 +21,12 @@ class Project(Base):
     description = Column(Text)
     experiments = relationship("Experiment",
                                primaryjoin=uuid == Experiment.project_id,
-                               lazy="joined")
+                               lazy="joined",
+                               cascade="all, delete-orphan")
     deployments = relationship("Deployment",
                                primaryjoin=uuid == Deployment.project_id,
-                               lazy="joined")
+                               lazy="joined",
+                               cascade="all, delete-orphan")
 
     @hybrid_property
     def has_experiment(self):
