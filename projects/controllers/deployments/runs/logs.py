@@ -5,7 +5,6 @@ from typing import List
 
 from io import StringIO
 
-from projects.exceptions import NotFound
 from projects.kfp.runs import get_latest_run_id
 from projects.kubernetes.argo import list_workflow_pods
 from projects.kubernetes.seldon import list_deployment_pods
@@ -16,8 +15,6 @@ EXCLUDE_CONTAINERS = ["istio-proxy", "wait", "seldon-container-engine"]
 TIME_STAMP_PATTERN = r'\d{4}-\d{2}-\d{2}(:?\s|T)\d{2}:\d{2}:\d{2}(:?.|,)\d+Z?\s?'
 LOG_MESSAGE_PATTERN = r'[a-zA-Z0-9\u00C0-\u00D6\u00D8-\u00f6\u00f8-\u00ff\"\'.\-@_,!#$%^&*()\[\]<>?\/|}{~:]{1,}'
 LOG_LEVEL_PATTERN = r'(?<![\\w\\d])INFO(?![\\w\\d])|(?<![\\w\\d])WARNING(?![\\w\\d])|(?<![\\w\\d])WARN(?![\\w\\d])|(?<![\\w\\d])ERROR(?![\\w\\d])'
-
-NOT_FOUND = NotFound("The specified run does not exist")
 
 
 class LogController:
