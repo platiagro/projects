@@ -72,8 +72,8 @@ class LogController:
         for pod in pods:
             for container in pod.spec.containers:
                 if container.name not in EXCLUDE_CONTAINERS:
-                    logs = get_container_logs(pod, container)
-                    status = "Completed" if logs is not None else "Creating"
+                    logs_text = get_container_logs(pod, container)
+                    status = "Completed" if logs_text is not None else "Creating"
 
                     if container.env is None:
                         task_name = pod.metadata.name
@@ -83,7 +83,7 @@ class LogController:
                     operator_info = {
                         "status": status,
                         "containerName": task_name,
-                        "logs": self.parse_logs(logs),
+                        "logs": self.parse_logs(logs_text),
                     }
                     logs.append(operator_info)
 
