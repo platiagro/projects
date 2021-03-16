@@ -116,7 +116,7 @@ DEPLOYMENT_BROKER = Template("""{
     "kind": "Broker",
     "metadata": {
         "name": "$broker",
-        "namespace": "$namespace",
+        "namespace": "$namespace"
     }
 }""")
 
@@ -145,7 +145,7 @@ MONITORING_SERVICE = Template("""{
                         ],
                         "volumeMounts": [
                             {
-                                "name": "configmap-$taskId",
+                                "name": "configmap",
                                 "mountPath": "/task"
                             }
                         ]  

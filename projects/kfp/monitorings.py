@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utility functions to handle monitorings."""
 import warnings
+from json import loads
 
 from kfp import compiler, dsl
 from kubernetes import client
@@ -88,14 +89,15 @@ def create_deployment_broker(deployment_id):
             "namespace": KF_PIPELINES_NAMESPACE,
         })
         broker_resource = loads(broker)
-        resource_op = dsl.ResourceOp(
+        dsl.ResourceOp(
             name=broker_name,
             k8s_resource=broker_resource,
-            success_condition="status.state == Available",
+            success_condition="status.conditions.3.status == True"
+
         )
 
     kfp_client().create_run_from_pipeline_func(
-        monitoring,
+        broker,
         {},
         run_name="monitoring",
         namespace=KF_PIPELINES_NAMESPACE
@@ -131,7 +133,7 @@ def deploy_monitoring(deployment_id, task_id, broker_name):
         monitoring_service = dsl.ResourceOp(
             name=service_name,
             k8s_resource=service_resource,
-            success_conditio="status.state == Available",
+            success_condition="status.conditions.1.status == True"
         )
 
         trigger = MONITORING_TRIGGER.substitute({
@@ -141,10 +143,10 @@ def deploy_monitoring(deployment_id, task_id, broker_name):
             "service": service_name,
         })
         trigger_resource = loads(trigger)
-        monitoring_trigger = dsl.ResourceOp(
+        dsl.ResourceOp(
             name="monitoring_trigger",
             k8s_resource=trigger_resource,
-            success_conditio="status.state == Available",
+            success_condition="status.conditions.2.status == True"
         ).after(monitoring_service)
 
     kfp_client().create_run_from_pipeline_func(

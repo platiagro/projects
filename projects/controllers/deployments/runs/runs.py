@@ -4,11 +4,13 @@ from kubernetes import client
 from kubernetes.client.rest import ApiException
 
 from projects import models, schemas
+from projects.controllers.monitorings import MonitoringController
 from projects.exceptions import BadRequest, NotFound
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp import runs as kfp_runs
-from projects.kfp.pipeline import undeploy_pipeline
 from projects.kfp.deployments import get_deployment_runs
+from projects.kfp.monitorings import create_deployment_broker, deploy_monitoring
+from projects.kfp.pipeline import undeploy_pipeline
 from projects.kubernetes.kube_config import load_kube_config
 
 
@@ -18,6 +20,7 @@ NOT_FOUND = NotFound("The specified run does not exist")
 class RunController:
     def __init__(self, session):
         self.session = session
+        self.monitoring_controller = MonitoringController(session)
 
     def raise_if_run_does_not_exist(self, run_id: str, deployment_id: str):
         """
@@ -80,6 +83,14 @@ class RunController:
         # Removes operators that don't have a deployment_notebook (eg. Upload de Dados).
         # Then, fix dependencies in their children.
         operators = self.remove_non_deployable_operators(deployment.operators)
+
+        monitorings = self.monitoring_controller.list_monitorings(project_id=project_id,
+                                                                  deployment_id=deployment_id).monitorings
+
+        if monitorings:
+            broker_name = create_deployment_broker(deployment_id)
+            for monitoring in monitorings:
+                deploy_monitoring(deployment_id, monitoring.task_id, broker_name)
 
         try:
             run = kfp_runs.start_run(operators=operators,
