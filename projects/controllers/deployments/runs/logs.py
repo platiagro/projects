@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Deployments Logs controller."""
 import re
+from typing import List
 
 from io import StringIO
 
@@ -38,18 +39,38 @@ class LogController:
         list
             A list of all logs from a run.
         """
-        deployment_pods = list_deployment_pods(deployment_id)
+        # Try to retrieve any pods associated to a seldondeployment
+        pods = list_deployment_pods(deployment_id=deployment_id)
 
-        if len(deployment_pods) == 0:
-            # Show workflow logs when there aren't any seldondeployments
-            # This is useful in case of a failure during the workflow execution
+        if len(pods) == 0:
+            # When there aren't any seldondeployments, retrives workflow pod.
+            # This is useful for debugging in case of a failure during the
+            # workflow execution.
             if run_id == "latest":
                 run_id = get_latest_run_id(deployment_id)
 
-            deployment_pods = list_workflow_pods(run_id=run_id)
+            pods = list_workflow_pods(run_id=run_id)
 
-        response = []
-        for pod in deployment_pods:
+        logs = self.pods_to_logs(pods)
+
+        return logs
+
+    def pods_to_logs(self, pods: List):
+        """
+        Transform raw log text into human-readable logs.
+
+        Parameters
+        ----------
+        pods : list
+            A list of pod details.
+
+        Returns
+        -------
+        list
+            Detailed logs with level, Time Stamp and message from pod container.
+        """
+        logs = []
+        for pod in pods:
             for container in pod.spec.containers:
                 if container.name not in EXCLUDE_CONTAINERS:
                     logs = get_container_logs(pod, container)
@@ -65,9 +86,9 @@ class LogController:
                         "containerName": task_name,
                         "logs": self.parse_logs(logs),
                     }
-                    response.append(operator_info)
+                    logs.append(operator_info)
 
-        return response
+        return logs
 
     def parse_logs(self, raw_log):
         """
@@ -88,24 +109,24 @@ class LogController:
         line = buf.readline()
 
         while line:
-            line = line.replace('\n', '')
+            line = line.replace("\n", "")
 
             timestamp = re.search(TIME_STAMP_PATTERN, line).group()
-            line = re.sub(timestamp, '', line)
+            line = re.sub(timestamp, "", line)
 
             level = re.findall(LOG_LEVEL_PATTERN, line)
-            level = ' '.join([str(x) for x in level])
-            line = line.replace(level, '')
+            level = " ".join([str(x) for x in level])
+            line = line.replace(level, "")
 
-            line = re.sub(r'( [-:*]{1})', '', line)
+            line = re.sub(r"( [-:*]{1})", "", line)
             message = re.findall(LOG_MESSAGE_PATTERN, line)
-            message = ' '.join([str(x) for x in message])
-            message = re.sub(TIME_STAMP_PATTERN, '', message).strip()
+            message = " ".join([str(x) for x in message])
+            message = re.sub(TIME_STAMP_PATTERN, "", message).strip()
 
             log = {}
-            log['timestamp'] = timestamp
-            log['level'] = level
-            log['message'] = message
+            log["timestamp"] = timestamp
+            log["level"] = level
+            log["message"] = message
             logs.append(log)
             line = buf.readline()
 
