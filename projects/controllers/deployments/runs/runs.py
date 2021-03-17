@@ -9,7 +9,7 @@ from projects.exceptions import BadRequest, NotFound
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp import runs as kfp_runs
 from projects.kfp.deployments import get_deployment_runs
-from projects.kfp.monitorings import create_deployment_broker, deploy_monitoring
+from projects.kfp.monitorings import deploy_monitoring
 from projects.kfp.pipeline import undeploy_pipeline
 from projects.kubernetes.kube_config import load_kube_config
 
@@ -84,10 +84,6 @@ class RunController:
         # Then, fix dependencies in their children.
         operators = self.remove_non_deployable_operators(deployment.operators)
 
-        monitorings = self.monitoring_controller.list_monitorings(project_id=project_id,
-                                                                  deployment_id=deployment_id).monitorings
-
-
         try:
             run = kfp_runs.start_run(operators=operators,
                                      project_id=deployment.project_id,
@@ -97,8 +93,10 @@ class RunController:
         except ValueError as e:
             raise BadRequest(str(e))
 
+        # Deploy monitoring tasks
+        monitorings = self.monitoring_controller.list_monitorings(project_id=project_id,
+                                                                  deployment_id=deployment_id).monitorings
         if monitorings:
-            create_deployment_broker(deployment_id)
             for monitoring in monitorings:
                 deploy_monitoring(deployment_id=deployment_id,
                                   experiment_id=deployment.experiment_id,
