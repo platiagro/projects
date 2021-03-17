@@ -111,14 +111,6 @@ GRAPH = Template("""{
     ]
 } """)
 
-DEPLOYMENT_BROKER = Template("""{
-    "apiVersion": "eventing.knative.dev/v1beta1",
-    "kind": "Broker",
-    "metadata": {
-        "name": "$broker",
-        "namespace": "$namespace"
-    }
-}""")
 
 MONITORING_SERVICE = Template("""{
     "apiVersion": "serving.knative.dev/v1alpha1",
@@ -187,7 +179,12 @@ MONITORING_TRIGGER = Template("""{
         "namespace": "$namespace"
     },
     "spec": {
-        "broker": "$broker",
+        "broker": default,
+        "filter": {
+            "attributes": {
+                "type": "deployment.$deploymentId"
+            }
+        },
         "subscriber": {
             "ref": {
                 "apiVersion": "serving.knative.dev/v1alpha1",

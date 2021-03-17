@@ -8,8 +8,7 @@ from kubernetes import client
 from kubernetes.client.rest import ApiException
 
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
-from projects.kfp.templates import DEPLOYMENT_BROKER, MONITORING_SERVICE, \
-    MONITORING_TRIGGER
+from projects.kfp.templates import MONITORING_SERVICE, MONITORING_TRIGGER
 from projects.kubernetes.kube_config import load_kube_config
 
 def create_monitoring_task_config_map(task_id, experiment_notebook_content):
@@ -66,42 +65,6 @@ def delete_monitoring_task_config_map(task_id):
         warnings.warn(f"ConfigMap of task {task_id} not found, creating a new one.")
 
 
-def create_deployment_broker(deployment_id):
-    """
-    Create a broker for given deployment_id.
-
-    Parameters
-    ----------
-    deployment_id : str
-
-    Returns
-    -------
-    str
-        Broker name.
-    """
-    # Using nonlocal to acess variable on the parent scope
-    @dsl.pipeline(name=deployment_id)
-    def broker():
-        broker = DEPLOYMENT_BROKER.substitute({
-            "broker": deployment_id,
-            "namespace": KF_PIPELINES_NAMESPACE,
-        })
-        broker_resource = loads(broker)
-        dsl.ResourceOp(
-            name=deployment_id,
-            k8s_resource=broker_resource,
-            success_condition="status.conditions.3.status == True"
-
-        )
-
-    kfp_client().create_run_from_pipeline_func(
-        broker,
-        {},
-        run_name="monitoring",
-        namespace=KF_PIPELINES_NAMESPACE
-    )
-    
-
 def deploy_monitoring(deployment_id,
                       experiment_id,
                       run_id,
@@ -145,7 +108,7 @@ def deploy_monitoring(deployment_id,
         trigger = MONITORING_TRIGGER.substitute({
             "name": trigger_name,
             "namespace": KF_PIPELINES_NAMESPACE,
-            "broker": deployment_id,
+            "deploymentId": deployment_id,
             "service": service_name,
         })
         trigger_resource = loads(trigger)
