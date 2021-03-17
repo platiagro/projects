@@ -198,6 +198,12 @@ def create_container_op(operator, experiment_id, **kwargs):
         ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
+                name="TASK_NAME",
+                value=operator.task.name,
+            ),
+        ) \
+        .add_env_variable(
+            k8s_client.V1EnvVar(
                 name="NOTEBOOK_PATH",
                 value=notebook_path,
             ),
