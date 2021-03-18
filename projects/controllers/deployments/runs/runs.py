@@ -18,8 +18,9 @@ NOT_FOUND = NotFound("The specified run does not exist")
 
 
 class RunController:
-    def __init__(self, session):
+    def __init__(self, session, background_tasks=None):
         self.session = session
+        self.background_tasks = background_tasks
         self.monitoring_controller = MonitoringController(session)
 
     def raise_if_run_does_not_exist(self, run_id: str, deployment_id: str):
@@ -98,11 +99,14 @@ class RunController:
                                                                   deployment_id=deployment_id).monitorings
         if monitorings:
             for monitoring in monitorings:
-                deploy_monitoring(deployment_id=deployment_id,
-                                  experiment_id=deployment.experiment_id,
-                                  run_id=run["uuid"],
-                                  task_id=monitoring.task_id,
-                                  monitoring_id=monitoring.uuid)
+                self.background_tasks.add_task(
+                    deploy_monitoring,
+                    deployment_id=deployment_id,
+                    experiment_id=deployment.experiment_id,
+                    run_id=run["uuid"],
+                    task_id=monitoring.task_id,
+                    monitoring_id=monitoring.uuid
+                )
 
         update_data = {"status": "Pending"}
         self.session.query(models.Operator) \
