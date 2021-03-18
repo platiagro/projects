@@ -75,7 +75,7 @@ class ResponseController:
             headers={
                 "Ce-Id": str(uuid.uuid4()),
                 "Ce-Specversion": "1.0",
-                "Ce-Type": "logger.anonymous.request",
+                "Ce-Type": f"deployment.{deployment_id}",
                 "Ce-Source": "logger.anonymous",
             },
         )

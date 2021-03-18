@@ -109,4 +109,89 @@ GRAPH = Template("""{
     "children": [
         $children
     ]
-}""")
+} """)
+
+
+MONITORING_SERVICE = Template("""{
+    "apiVersion": "serving.knative.dev/v1alpha1",
+    "kind": "Service",
+    "metadata": {
+        "name": "$name",
+        "namespace": "$namespace"
+    },
+    "spec": {
+        "template": {
+            "metadata": {
+                "annotations": {
+                    "autoscaling.knative.dev/minScale": "1"
+                }
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "image": "platiagro/platiagro-monitoring-image:0.2.0",
+                        "ports": [
+                            {
+                                "containerPort": 5000
+                            }
+                        ],
+                        "env": [
+                            {
+                                "name": "EXPERIMENT_ID",
+                                "value": "$experimentId"
+                            },
+                            {
+                                "name": "DEPLOYMENT_ID",
+                                "value": "$deploymentId"
+                            },
+                            {
+                                "name": "RUN_ID",
+                                "value": "$runId"
+                            }
+                        ],
+                        "volumeMounts": [
+                            {
+                                "name": "configmap",
+                                "mountPath": "/task"
+                            }
+                        ]
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "configmap",
+                        "configmap": {
+                            "name": "$configMap"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+} """)
+
+
+MONITORING_TRIGGER = Template("""{
+    "apiVersion": "eventing.knative.dev/v1alpha1",
+    "kind": "Trigger",
+    "metadata": {
+        "name": "$name",
+        "namespace": "$namespace"
+    },
+    "spec": {
+        "broker": "default",
+        "filter": {
+            "attributes": {
+                "type": "deployment.$deploymentId"
+            }
+        },
+        "subscriber": {
+            "ref": {
+                "apiVersion": "serving.knative.dev/v1alpha1",
+                "kind": "Service",
+                "name": "$service"
+            },
+            "uri": "/api/v1.0/predictions"
+        }
+    }
+} """)

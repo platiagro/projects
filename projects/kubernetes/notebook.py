@@ -16,14 +16,17 @@ from kubernetes.stream import stream
 
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import InternalServerError
+from projects.kfp.monitorings import create_monitoring_task_config_map, \
+    delete_monitoring_task_config_map
 from projects.kubernetes.kube_config import load_kube_config
 
 JUPYTER_WORKSPACE = "/home/jovyan/tasks"
+MONITORING_TAG = "MONITORING"
 NOTEBOOK_GROUP = "kubeflow.org"
 NOTEBOOK_NAME = "server"
 NOTEBOOK_NAMESPACE = "anonymous"
 NOTEBOOK_POD_NAME = "server-0"
-NOTEBOOK_CONAINER_NAME = "server"
+NOTEBOOK_CONTAINER_NAME = "server"
 NOTEBOOK_WAITING_MSG = "Waiting for notebook server to be ready..."
 
 
@@ -128,82 +131,6 @@ def create_persistent_volume_claim(name, mount_path):
         body = literal_eval(e.body)
         message = body["message"]
         raise InternalServerError(f"Error while trying to patch notebook server: {message}")
-
-
-def handle_task_creation(task,
-                         task_id,
-                         experiment_notebook_path=None,
-                         deployment_notebook_path=None,
-                         copy_name=None):
-    """
-    Creates Kubernetes resources and set metadata for notebook obejects.
-
-    Parameters
-    ----------
-    task : projects.schemas.task.TaskCreate
-    task_id : str
-    experiment_notebook_path : str
-    deployment_notebook_path : str
-    copy_name : str
-        Name of the template to be copied from. Default to None.
-    """
-    # mounts a volume for the task in the notebook server
-    create_persistent_volume_claim(name=f"vol-task-{task_id}",
-                                   mount_path=f"{JUPYTER_WORKSPACE}/{task.name}")
-
-    if copy_name:
-        source_path = f"{JUPYTER_WORKSPACE}/{copy_name}/."
-        destination_path = f"{JUPYTER_WORKSPACE}/{task.name}/"
-        experiment_path = f"{task.name}/{experiment_notebook_path}"
-        deployment_path = f"{task.name}/{deployment_notebook_path}"
-        copy_files_in_pod(source_path, destination_path)
-    else:
-        # copies experiment notebook file to pod
-        with NamedTemporaryFile("w", delete=False) as f:
-            json.dump(task.experiment_notebook, f)
-
-        filepath = f.name
-        experiment_path = f"{task.name}/{experiment_notebook_path}"
-        copy_file_to_pod(filepath, experiment_path)
-        os.remove(filepath)
-
-        # copies deployment notebook file to pod
-        with NamedTemporaryFile("w", delete=False) as f:
-            json.dump(task.deployment_notebook, f)
-
-        filepath = f.name
-        deployment_path = f"{task.name}/{deployment_notebook_path}"
-        copy_file_to_pod(filepath, deployment_path)
-        os.remove(filepath)
-
-    # The new task must have its own task_id, experiment_id and operator_id.
-    # Notice these values are ignored when a notebook is run in a pipeline.
-    # They are only used by JupyterLab interface.
-    experiment_id = uuid_alpha()
-    operator_id = uuid_alpha()
-
-    # creates a new event loop,
-    # to execute metadata functions concurrently
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    loop.run_until_complete(
-        set_notebook_metadata(
-            notebook_path=experiment_path,
-            task_id=task_id,
-            experiment_id=experiment_id,
-            operator_id=operator_id,
-        )
-    )
-
-    loop.run_until_complete(
-        set_notebook_metadata(
-            notebook_path=deployment_path,
-            task_id=task_id,
-            experiment_id=experiment_id,
-            operator_id=operator_id,
-        )
-    )
 
 
 def update_persistent_volume_claim(name, mount_path):
@@ -346,6 +273,149 @@ def remove_persistent_volume_claim(name, mount_path):
         raise InternalServerError(f"Error while trying to patch notebook server: {message}")
 
 
+def handle_task_creation(task,
+                         task_id,
+                         experiment_notebook_path=None,
+                         deployment_notebook_path=None,
+                         copy_name=None):
+    """
+    Creates Kubernetes resources and set metadata for notebook objects.
+
+    Parameters
+    ----------
+    task : projects.schemas.task.TaskCreate
+    task_id : str
+    experiment_notebook_path : str
+    deployment_notebook_path : str
+    copy_name : str
+        Name of the template to be copied from. Default to None.
+    """
+    # mounts a volume for the task in the notebook server
+    create_persistent_volume_claim(name=f"vol-task-{task_id}",
+                                   mount_path=f"{JUPYTER_WORKSPACE}/{task.name}")
+
+    if copy_name:
+        source_path = f"{JUPYTER_WORKSPACE}/{copy_name}/."
+        destination_path = f"{JUPYTER_WORKSPACE}/{task.name}/"
+        experiment_path = f"{task.name}/{experiment_notebook_path}"
+        deployment_path = f"{task.name}/{deployment_notebook_path}"
+        copy_files_in_pod(source_path, destination_path)
+    else:
+        # copies experiment notebook file to pod
+        with NamedTemporaryFile("w", delete=False) as f:
+            json.dump(task.experiment_notebook, f)
+
+        filepath = f.name
+        experiment_path = f"{task.name}/{experiment_notebook_path}"
+        copy_file_to_pod(filepath, experiment_path)
+        os.remove(filepath)
+
+        # copies deployment notebook file to pod
+        with NamedTemporaryFile("w", delete=False) as f:
+            json.dump(task.deployment_notebook, f)
+
+        filepath = f.name
+        deployment_path = f"{task.name}/{deployment_notebook_path}"
+        copy_file_to_pod(filepath, deployment_path)
+        os.remove(filepath)
+
+    # create ConfigMap for monitoring tasks
+    if MONITORING_TAG in task.tags:
+        experiment_notebook_content = get_file_from_pod(experiment_notebook_path)
+        create_monitoring_task_config_map(task_id, experiment_notebook_content)
+
+    # The new task must have its own task_id, experiment_id and operator_id.
+    # Notice these values are ignored when a notebook is run in a pipeline.
+    # They are only used by JupyterLab interface.
+    experiment_id = uuid_alpha()
+    operator_id = uuid_alpha()
+
+    # creates a new event loop,
+    # to execute metadata functions concurrently
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    loop.run_until_complete(
+        set_notebook_metadata(
+            notebook_path=experiment_path,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            operator_id=operator_id,
+        )
+    )
+
+    loop.run_until_complete(
+        set_notebook_metadata(
+            notebook_path=deployment_path,
+            task_id=task_id,
+            experiment_id=experiment_id,
+            operator_id=operator_id,
+        )
+    )
+
+
+def update_task_config_map(task,
+                           task_id,
+                           experiment_notebook_path):
+    """
+    Update ConfigMap for task notebooks.
+
+    Parameters
+    ----------
+    task : projects.schemas.task.TaskCreate
+    task_id : str
+    experiment_notebook_path : str
+    """
+    # update ConfigMap of monitoring task
+    delete_monitoring_task_config_map(task_id)
+    experiment_notebook_content = get_file_from_pod(experiment_notebook_path)
+    create_monitoring_task_config_map(task_id, experiment_notebook_content)
+
+
+def get_file_from_pod(filepath):
+    """
+    Get the content of a file from a pod in notebook server.
+
+    Parameters
+    ----------
+    filepath : str
+
+    Returns
+    -------
+    str
+        File content.
+    """
+    warnings.warn(f"Fetching {filepath} from pod...")
+    load_kube_config()
+    api_instance = client.CoreV1Api()
+
+    exec_command = ["cat", filepath]
+
+    container_stream = stream(
+        api_instance.connect_get_namespaced_pod_exec,
+        name=NOTEBOOK_POD_NAME,
+        namespace=NOTEBOOK_NAMESPACE,
+        command=exec_command,
+        container=NOTEBOOK_CONTAINER_NAME,
+        stderr=True,
+        stdin=False,
+        stdout=True,
+        tty=False,
+        _preload_content=False,
+    )
+
+    file_content = ""
+
+    while container_stream.is_open():
+        container_stream.update(timeout=10)
+        if container_stream.peek_stdout():
+            file_content = container_stream.read_stdout()
+            warnings.warn(f"File content fetched.")
+    container_stream.close()
+
+    return file_content
+
+
 def copy_file_to_pod(filepath, destination_path):
     """
     Copies a local file to a pod in notebook server.
@@ -369,7 +439,7 @@ def copy_file_to_pod(filepath, destination_path):
         name=NOTEBOOK_POD_NAME,
         namespace=NOTEBOOK_NAMESPACE,
         command=exec_command,
-        container=NOTEBOOK_CONAINER_NAME,
+        container=NOTEBOOK_CONTAINER_NAME,
         stderr=True,
         stdin=True,
         stdout=True,
@@ -426,7 +496,7 @@ def copy_files_in_pod(source_path, destination_path):
         name=NOTEBOOK_POD_NAME,
         namespace=NOTEBOOK_NAMESPACE,
         command=exec_command,
-        container=NOTEBOOK_CONAINER_NAME,
+        container=NOTEBOOK_CONTAINER_NAME,
         stderr=True,
         stdin=False,
         stdout=True,
@@ -487,7 +557,7 @@ async def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_
         name=NOTEBOOK_POD_NAME,
         namespace=NOTEBOOK_NAMESPACE,
         command=exec_command,
-        container=NOTEBOOK_CONAINER_NAME,
+        container=NOTEBOOK_CONTAINER_NAME,
         stderr=True,
         stdin=False,
         stdout=True,
