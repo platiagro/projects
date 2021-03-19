@@ -2,10 +2,12 @@
 """Shared functions."""
 import base64
 import csv
-import pandas
 import random
 import re
 import uuid
+
+import filetype
+import pandas
 
 
 def uuid_alpha():
@@ -76,9 +78,19 @@ def parse_file_buffer_to_seldon_request(file):
 
     except UnicodeDecodeError:
         file.seek(0)
-        bin_data = base64.b64encode(file.read()).decode("utf-8")
+        content = file.read()
+        bin_data = base64.b64encode(content).decode("utf-8")
+
+        kind = filetype.guess(content)
+        content_type = "application/octet-stream"
+        if kind is not None:
+            content_type = kind.mime
+
         return {
-            "binData": bin_data
+            "binData": bin_data,
+            "meta": {
+                "content-type": content_type,
+            },
         }
 
     except csv.Error:
