@@ -263,6 +263,7 @@ class TestOperators(TestCase):
             "positionX": 3.4,
             "positionY": 5.9,
             "status": "Setted up",
+            "status_message": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -293,6 +294,7 @@ class TestOperators(TestCase):
             "positionX": None,
             "positionY": None,
             "status": "Unset",
+            "status_message": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -316,6 +318,7 @@ class TestOperators(TestCase):
             "positionY": None,
             "parameters": {},
             "status": "Setted up",
+            "status_message": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -339,6 +342,7 @@ class TestOperators(TestCase):
             "positionX": None,
             "positionY": None,
             "status": "Unset",
+            "status_message": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -363,6 +367,7 @@ class TestOperators(TestCase):
             "positionX": None,
             "positionY": None,
             "status": "Setted up",
+            "status_message": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -442,6 +447,7 @@ class TestOperators(TestCase):
             "positionY": POSITION_Y,
             "createdAt": CREATED_AT_ISO,
             "status": "Setted up",
+            "status_message": None,
             "deploymentId": None
         }
         machine_generated = ["updatedAt"]
@@ -466,6 +472,7 @@ class TestOperators(TestCase):
             "positionY": 200.0,
             "createdAt": CREATED_AT_ISO,
             "status": "Unset",
+            "status_message": None,
             "deploymentId": None
         }
         machine_generated = ["updatedAt"]
@@ -488,6 +495,7 @@ class TestOperators(TestCase):
             "positionY": 200.0,
             "createdAt": CREATED_AT_ISO,
             "status": "Unset",
+            "status_message": None,
             "deploymentId": None
         }
         machine_generated = ["updatedAt"]

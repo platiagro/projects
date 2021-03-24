@@ -1774,17 +1774,7 @@ components:
           type: string
           format: uuid
         operators:
-          type: array
-          items:
-            allOf:
-              - $ref: "#/components/schemas/Operator"
-              - type: object
-                properties:
-                  status:
-                    type: string
-                    enum: [Unset, Setted up, Pending, Running, Failed, Successful]
-                    example: Setted up
-                    nullable: true
+          $ref: "#/components/schemas/Operators"
         createdAt:
           type: string
           format: date-time
@@ -2049,6 +2039,8 @@ components:
                 type: string
                 enum: [Unset, Setted up, Pending, Running, Failed, Successful]
                 example: Setted up
+              status_message:
+                type: string
     ExperimentLog:
       type: object
       properties:

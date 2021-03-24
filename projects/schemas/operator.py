@@ -47,6 +47,8 @@ class Operator(OperatorBase):
     created_at: datetime
     updated_at: datetime
     status: str
+    status_message: str
+
 
     @classmethod
     def from_model(cls, model):
@@ -62,6 +64,7 @@ class Operator(OperatorBase):
             created_at=model.created_at,
             updated_at=model.updated_at,
             status=model.status,
+            status_message=status_message,
         )
 
 
