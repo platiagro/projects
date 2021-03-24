@@ -17,7 +17,7 @@ class Operator(Base):
     dependencies = Column(JSON, nullable=True, default=[])
     parameters = Column(JSON, nullable=False, default={})
     status = Column(String(255), nullable=False, default="Unset")
-    status_message = Column(String(255), nullable=True, default="")
+    status_message = Column(String(255), nullable=True)
     position_x = Column("position_x", Float, nullable=True)
     position_y = Column("position_y", Float, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
