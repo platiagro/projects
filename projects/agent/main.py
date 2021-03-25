@@ -125,12 +125,17 @@ def update_status(workflow_manifest):
         # if workflow was interrupted, then status = "Terminated"
         if "message" in node and str(node["message"]) == "terminated":
             status = "Terminated"
+            status_message = None
         else:
             status = str(node["phase"])
 
+            status_message = node.get("message", None)
+            if status_message is not None:
+                status_message = str(status_message)
+
         session.query(models.Operator) \
             .filter_by(uuid=operator_id) \
-            .update({"status": status})
+            .update({"status": status, "status_message": status_message})
 
     session.commit()
 
