@@ -83,7 +83,7 @@ class RunController:
                                  operators=experiment.operators)
         run["experimentId"] = experiment_id
 
-        update_data = {"status": "Pending"}
+        update_data = {"status": "Pending", "status_message": None}
         self.session.query(models.Operator) \
             .filter_by(experiment_id=experiment_id) \
             .update(update_data)
