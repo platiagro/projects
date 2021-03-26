@@ -63,7 +63,7 @@ class Operator(OperatorBase):
             created_at=model.created_at,
             updated_at=model.updated_at,
             status=model.status,
-            status_message=status_message,
+            status_message=model.status_message,
         )
 
 
