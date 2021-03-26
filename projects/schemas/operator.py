@@ -47,8 +47,7 @@ class Operator(OperatorBase):
     created_at: datetime
     updated_at: datetime
     status: str
-    status_message: str
-
+    status_message: Optional[str]
 
     @classmethod
     def from_model(cls, model):
