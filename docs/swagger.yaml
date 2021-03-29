@@ -1982,6 +1982,15 @@ components:
         taskId:
           type: string
           format: uuid
+        task:
+          type: object
+          properties:
+            name:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
         uuid:
           type: string
           format: uuid
