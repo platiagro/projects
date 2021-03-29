@@ -5,8 +5,7 @@ import sys
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 
 from projects import __version__
 from projects.api import comparisons, deployments, experiments, monitorings, \
@@ -49,7 +48,7 @@ app.include_router(responses.router)
 
 
 @app.get("/", response_class=PlainTextResponse)
-def ping():
+async def ping():
     """
     Handles GET requests to /.
     """
@@ -100,13 +99,27 @@ if __name__ == "__main__":
 
     # Enable CORS if required
     if args.enable_cors:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+        @app.options("/{rest_of_path:path}")
+        async def preflight_handler(request: Request, rest_of_path: str) -> Response:
+            """
+            Handles CORS preflight requests.
+            """
+            response = Response()
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+            return response
+
+        @app.middleware("http")
+        async def add_cors_header(request: Request, call_next):
+            """
+            Sets CORS headers.
+            """
+            response = await call_next(request)
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+            return response
 
     # Initializes DB if required
     if args.init_db:
