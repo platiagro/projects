@@ -24,19 +24,30 @@ class MonitoringUpdate(MonitoringBase):
     pass
 
 
+class MonitoringTask(BaseModel):
+    name: str
+    tags: List[str]
+
+
 class Monitoring(MonitoringBase):
     uuid: str
     deployment_id: str
     task_id: str
     created_at: datetime
+    task: MonitoringTask
 
     @classmethod
     def from_model(cls, model):
+        task = MonitoringTask(
+            name=model.task.name,
+            tags=model.task.tags,
+        )
         return Monitoring(
             uuid=model.uuid,
             deployment_id=model.deployment_id,
             task_id=model.task_id,
             created_at=model.created_at,
+            task=task,
         )
 
 
