@@ -1575,8 +1575,7 @@ components:
     Comparisons:
       type: array
       items:
-        oneOf:
-          - $ref: "#/components/schemas/Comparison"
+        $ref: "#/components/schemas/Comparison"
     Task:
       type: object
       properties:
@@ -1611,8 +1610,7 @@ components:
         parameters:
           type: array
           items:
-            oneOf:
-              - $ref: "#/components/schemas/Parameter"
+            $ref: "#/components/schemas/Parameter"
         createdAt:
           type: string
           format: date-time
@@ -1625,8 +1623,7 @@ components:
         tasks:
           type: array
           items:
-            oneOf:
-              - $ref: "#/components/schemas/Task"
+            $ref: "#/components/schemas/Task"
         total:
           type: integer
     TaskEmpty:
@@ -1719,8 +1716,7 @@ components:
     Parameters:
       type: array
       items:
-        oneOf:
-          - $ref: "#/components/schemas/Parameter"
+        $ref: "#/components/schemas/Parameter"
     Project:
       type: object
       properties:
@@ -1734,8 +1730,7 @@ components:
         experiments:
           type: array
           items:
-            oneOf:
-              - $ref: "#/components/schemas/Experiment"
+            $ref: "#/components/schemas/Experiment"
         createdAt:
           type: string
           format: date-time
@@ -1754,8 +1749,7 @@ components:
         projects:
           type: array
           items:
-            oneOf:
-              - $ref: "#/components/schemas/Project"
+            $ref: "#/components/schemas/Project"
         total:
           type: integer
     Experiment:
@@ -1784,8 +1778,7 @@ components:
     Experiments:
       type: array
       items:
-        oneOf:
-          - $ref: "#/components/schemas/Experiment"
+        $ref: "#/components/schemas/Experiment"
     Deployment:
       type: object
       properties:
@@ -1802,8 +1795,7 @@ components:
         operators:
           type: array
           items:
-            oneOf:
-              - $ref: "#/components/schemas/Operator"
+            $ref: "#/components/schemas/Operator"
         position:
           type: integer
         status:
@@ -1816,12 +1808,11 @@ components:
       items:
         $ref: "#/components/schemas/Deployment"
     Prediction:
-      additionalProperties: false
       oneOf:
-        - $ref: "#/components/schemas/PredictionCsvFile"
-        - $ref: "#/components/schemas/PredictionBinData"
-        - $ref: "#/components/schemas/PredictionStrData"
-    PredictionCsvFile:
+        - $ref: "#/components/schemas/Data"
+        - $ref: "#/components/schemas/BinData"
+        - $ref: "#/components/schemas/StrData"
+    Data:
       type: object
       properties:
         status:
@@ -1830,67 +1821,35 @@ components:
           $ref: '#/components/schemas/SeldonMeta'
         data:
           $ref: '#/components/schemas/SeldonDefaultData'
-    PredictionBinData:
-      type: string
-      format: byte
-      pattern: '^.{1,2097152}'
-      maxLength: 2097152
-    PredictionStrData:
-      type: string
-      pattern: '^.{1,2097152}'
-      maxLength: 2097152
+    BinData:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SeldonStatus'
+        meta:
+          $ref: '#/components/schemas/SeldonMeta'
+        binData:
+          type: string
+          format: byte
+    StrData:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SeldonStatus'
+        meta:
+          $ref: '#/components/schemas/SeldonMeta'
+        strData:
+          type: string
     SeldonMeta:
       type: object
       additionalProperties: false
       properties:
-        puid:
-          type: string
-          pattern: '^.{1,2097152}'
-          maxLength: 2097152
         tags:
           type: object
           additionalProperties:
             description: 'Can be anything: string, number, array, object, etc.'
           example:
-            mytag: myvalue
-        routing:
-          type: object
-          additionalProperties:
-            type: integer
-            format: int32
-          example:
-            router1: 1
-        requestPath:
-          type: object
-          additionalProperties:
-            type: string
-            pattern: '^.{1,2097152}'
-            maxLength: 2097152
-          example:
-            classifier: 'seldonio/mock_classifier:1.0'
-        metrics:
-          type: array
-          maxItems: 2097152
-          items:
-            type: object
-            additionalProperties: false
-            properties:
-              type:
-                type: string
-                pattern: '^.{1,2097152}'
-                maxLength: 2097152
-                enum:
-                  - COUNTER
-                  - GAUGE
-                  - TIMER
-                default: COUNTER
-              key:
-                type: string
-                pattern: '^.{1,2097152}'
-                maxLength: 2097152
-              value:
-                type: number
-                format: float
+            content-type: "image/jpg"
     SeldonDefaultData:
       type: object
       additionalProperties: false
@@ -2004,8 +1963,15 @@ components:
         taskId:
           type: string
           format: uuid
-        taskName:
-          type: string
+        task:
+          type: object
+          properties:
+            name:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
         dependencies:
           type: array
           items:
@@ -2016,6 +1982,9 @@ components:
           additionalProperties:
             type: string
         experimentId:
+          type: string
+          format: uuid
+        deploymentId:
           type: string
           format: uuid
         positionX:
@@ -2030,19 +1999,16 @@ components:
         updatedAt:
           type: string
           format: date-time
+        status:
+          type: string
+          enum: [Unset, Setted up, Pending, Running, Failed, Successful]
+          example: Setted up
+        statusMessage:
+          type: string
     Operators:
       type: array
       items:
-        allOf:
-          - $ref: "#/components/schemas/Operator"
-          - type: object
-            properties:
-              status:
-                type: string
-                enum: [Unset, Setted up, Pending, Running, Failed, Successful]
-                example: Setted up
-              status_message:
-                type: string
+        $ref: "#/components/schemas/Operator"
     ExperimentLog:
       type: object
       properties:
@@ -2071,73 +2037,68 @@ components:
     DeploymentLog:
       type: array
       items:
-        oneOf:
-        - type: object
-          properties:
-            containerName:
-              type: string
-              example: Regressor Random Forest
-            logs:
-              type: array
-              items:
-                allOf:
-                - type: object
-                  properties:
-                    level:
-                      type: string
-                      enum: [DEBUG, INFO, WARNING, ERROR]
-                      example: INFO
-                    message:
-                      type: string
-                      example: seldon_core.microservice:load_annotations:114 Found annotation deployment_version
-                    timestamp:
-                      type: string
-                      format: date-time
-            status:
-              type: string
-              enum: [Creating, Completed]
-              example: Completed
+        type: object
+        properties:
+          containerName:
+            type: string
+            example: Regressor Random Forest
+          logs:
+            type: array
+            items:
+              type: object
+              properties:
+                level:
+                  type: string
+                  enum: [DEBUG, INFO, WARNING, ERROR]
+                  example: INFO
+                message:
+                  type: string
+                  example: seldon_core.microservice:load_annotations:114 Found annotation deployment_version
+                timestamp:
+                  type: string
+                  format: date-time
+          status:
+            type: string
+            enum: [Creating, Completed]
+            example: Completed
     Datasets:
       type: array
       items:
-        oneOf:
-          - type: object
-            properties:
-              columns:
-                type: array
-                items:
-                  oneOf:
-                    - type: string
-                      example: "SepalLengthCm"
-                    - type: string
-                      example: "Species"
-              data:
-                type: array
-                items:
-                  oneOf:
-                    - type: array
-                      items:
-                        oneOf:
-                          - type: number
-                            example: 5.1
-                          - type: string
-                            example: "Iris-setosa"
-              total:
-                type: number
-                example: 2
+        type: object
+        properties:
+          columns:
+            type: array
+            items:
+              oneOf:
+                - type: string
+                  example: "SepalLengthCm"
+                - type: string
+                  example: "Species"
+          data:
+            type: array
+            items:
+              oneOf:
+                - type: array
+                  items:
+                    oneOf:
+                      - type: number
+                        example: 5.1
+                      - type: string
+                        example: "Iris-setosa"
+          total:
+            type: number
+            example: 2
     Figures:
       type: array
       items:
-        oneOf:
-          - type: string
-            example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAC6CAIAAAB3B9X3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAG6SURBVHhe7dIxAQAADMOg+TfdicgLGrhBIBCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhDB9ho69eEGiUHfAAAAAElFTkSuQmCC"
+        type: string
+        example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAC6CAIAAAB3B9X3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAG6SURBVHhe7dIxAQAADMOg+TfdicgLGrhBIBCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhDB9ho69eEGiUHfAAAAAElFTkSuQmCC"
     Metrics:
       type: array
       items:
-        oneOf:
-          - type: object
-            example:
-              metric_name: metric_value
+        type: object
+        example:
+          metric_name: metric_value
     Run:
       type: object
       properties:
@@ -2158,8 +2119,15 @@ components:
               taskId:
                 type: string
                 format: uuid
-              taskName:
-                type: string
+              task:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  tags:
+                    type: array
+                    items:
+                      type: string
               parameters:
                 type: object
                 example:
@@ -2168,8 +2136,7 @@ components:
     Runs:
       type: array
       items:
-        oneOf:
-          - $ref: "#/components/schemas/Run"
+        $ref: "#/components/schemas/Run"
     Template:
       type: object
       properties:
@@ -2209,8 +2176,7 @@ components:
     Templates:
       type: array
       items:
-        oneOf:
-          - $ref: "#/components/schemas/Template"
+        $ref: "#/components/schemas/Template"
     TemplateExperiment:
       type: object
       properties:
@@ -2706,6 +2672,24 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Prediction"
+          examples:
+            data:
+              summary: Tabular data
+              value:
+                data:
+                  ndarray: [[1.0, 2.0, 3.0, 3.0]]
+                meta: {}
+            strData:
+              summary: String data
+              value:
+                strData: "The blue fox jumps over the lazy dog"
+                meta: {}
+            binData:
+              summary: Binary data
+              value:
+                binData: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                meta:
+                  tags: {"content-type": "image/jpg"}
     Operator:
       description: ""
       content:
