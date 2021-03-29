@@ -35,7 +35,7 @@ class ParameterUpdate(BaseModel):
     value: Union[int, str, bool, float, List, None]
 
 
-class Task(BaseModel):
+class OperatorTask(BaseModel):
     name: str
     tags: List[str]
 
@@ -43,7 +43,7 @@ class Task(BaseModel):
 class Operator(OperatorBase):
     uuid: str
     task_id: str
-    task: Task
+    task: OperatorTask
     dependencies: List[str]
     parameters: Dict
     deployment_id: Optional[str]
@@ -57,7 +57,7 @@ class Operator(OperatorBase):
 
     @classmethod
     def from_model(cls, model):
-        task = Task(
+        task = OperatorTask(
             name=model.task.name,
             tags=model.task.tags,
         )
