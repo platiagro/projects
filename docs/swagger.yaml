@@ -2004,6 +2004,8 @@ components:
         taskId:
           type: string
           format: uuid
+        taskName:
+          type: string
         dependencies:
           type: array
           items:
@@ -2156,6 +2158,8 @@ components:
               taskId:
                 type: string
                 format: uuid
+              taskName:
+                type: string
               parameters:
                 type: object
                 example:
