@@ -10,7 +10,7 @@ from projects.models.task import Task
 
 
 class Monitoring(Base):
-    __tablename__ = "monitoring"
+    __tablename__ = "monitorings"
     uuid = Column(String(255), primary_key=True)
     deployment_id = Column(String(255), ForeignKey("deployments.uuid"), nullable=True, index=True)
     task_id = Column(String(255), ForeignKey("tasks.uuid"), nullable=False, index=True)

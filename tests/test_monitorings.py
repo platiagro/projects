@@ -68,7 +68,7 @@ class TestMonitorings(TestCase):
         conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO monitoring (uuid, deployment_id, task_id, created_at) "
+            f"INSERT INTO monitorings (uuid, deployment_id, task_id, created_at) "
             f"VALUES (%s, %s, %s, %s)"
         )
         conn.execute(text, (MONITORING_ID, DEPLOYMENT_ID, TASK_ID, CREATED_AT))
@@ -78,7 +78,7 @@ class TestMonitorings(TestCase):
     def tearDown(self):
         conn = engine.connect()
 
-        text = f"DELETE FROM monitoring WHERE deployment_id = '{DEPLOYMENT_ID}'"
+        text = f"DELETE FROM monitorings WHERE deployment_id = '{DEPLOYMENT_ID}'"
         conn.execute(text)
 
         text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
