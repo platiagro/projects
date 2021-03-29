@@ -46,7 +46,7 @@ class TemplateController:
         # sort the list in place, using natural sort
         templates.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
 
-        return schemas.TemplateList.from_model(templates, len(templates))
+        return schemas.TemplateList.from_orm(templates, len(templates))
 
     def create_template(self, template: schemas.TemplateCreate):
         """
@@ -125,7 +125,7 @@ class TemplateController:
         self.session.commit()
         self.session.refresh(template)
 
-        return schemas.Template.from_model(template)
+        return schemas.Template.from_orm(template)
 
     def get_template(self, template_id: str):
         """
@@ -149,7 +149,7 @@ class TemplateController:
         if template is None:
             raise NOT_FOUND
 
-        return schemas.Template.from_model(template)
+        return schemas.Template.from_orm(template)
 
     def update_template(self, template: schemas.TemplateUpdate, template_id: str):
         """
@@ -185,7 +185,7 @@ class TemplateController:
 
         template = self.session.query(models.Template).get(template_id)
 
-        return schemas.Template.from_model(template)
+        return schemas.Template.from_orm(template)
 
     def delete_template(self, template_id: str):
         """

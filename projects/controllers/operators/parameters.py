@@ -42,4 +42,4 @@ class OperatorParameterController:
 
         operator = self.session.query(models.Operator).get(operator_id)
 
-        return schemas.Operator.from_model(operator)
+        return schemas.Operator.from_orm(operator)

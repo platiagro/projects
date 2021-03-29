@@ -43,7 +43,7 @@ class Deployment(DeploymentBase):
     deployed_at: Optional[str]
 
     @classmethod
-    def from_model(cls, model):
+    def from_orm(cls, model):
         return Deployment(
             uuid=model.uuid,
             name=model.name,
@@ -62,8 +62,8 @@ class DeploymentList(BaseModel):
     total: int
 
     @classmethod
-    def from_model(cls, models, total):
+    def from_orm(cls, models, total):
         return DeploymentList(
-            deployments=[Deployment.from_model(model) for model in models],
+            deployments=[Deployment.from_orm(model) for model in models],
             total=total,
         )

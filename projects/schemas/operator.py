@@ -56,7 +56,7 @@ class Operator(OperatorBase):
     status_message: Optional[str]
 
     @classmethod
-    def from_model(cls, model):
+    def from_orm(cls, model):
         task = OperatorTask(
             name=model.task.name,
             tags=model.task.tags,
@@ -83,8 +83,8 @@ class OperatorList(BaseModel):
     total: int
 
     @classmethod
-    def from_model(cls, models, total):
+    def from_orm(cls, models, total):
         return OperatorList(
-            operators=[Operator.from_model(model) for model in models],
+            operators=[Operator.from_orm(model) for model in models],
             total=total,
         )

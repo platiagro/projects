@@ -36,7 +36,7 @@ class Comparison(ComparisonBase):
     layout: Optional[Dict]
 
     @classmethod
-    def from_model(cls, model):
+    def from_orm(cls, model):
         return Comparison(
             uuid=model.uuid,
             created_at=model.created_at,
@@ -55,8 +55,8 @@ class ComparisonList(BaseModel):
     total: int
 
     @classmethod
-    def from_model(cls, models, total):
+    def from_orm(cls, models, total):
         return ComparisonList(
-            comparisons=[Comparison.from_model(model) for model in models],
+            comparisons=[Comparison.from_orm(model) for model in models],
             total=total,
         )

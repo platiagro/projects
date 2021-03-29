@@ -96,7 +96,7 @@ class ProjectController:
         query = query.limit(page_size).offset((page - 1) * page_size)
         projects = query.all()
 
-        return schemas.ProjectList.from_model(projects, total)
+        return schemas.ProjectList.from_orm(projects, total)
 
     def create_project(self, project: schemas.ProjectCreate):
         """
@@ -134,7 +134,7 @@ class ProjectController:
         self.session.commit()
         self.session.refresh(project)
 
-        return schemas.Project.from_model(project)
+        return schemas.Project.from_orm(project)
 
     def get_project(self, project_id: str):
         """
@@ -158,7 +158,7 @@ class ProjectController:
         if project is None:
             raise NOT_FOUND
 
-        return schemas.Project.from_model(project)
+        return schemas.Project.from_orm(project)
 
     def update_project(self, project: schemas.ProjectUpdate, project_id: str):
         """
@@ -196,7 +196,7 @@ class ProjectController:
 
         project = self.session.query(models.Project).get(project_id)
 
-        return schemas.Project.from_model(project)
+        return schemas.Project.from_orm(project)
 
     def delete_project(self, project_id):
         """

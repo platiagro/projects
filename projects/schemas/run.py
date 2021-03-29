@@ -22,7 +22,7 @@ class Run(RunBase):
     created_at: datetime
 
     @classmethod
-    def from_model(cls, model):
+    def from_orm(cls, model):
         return Run(
             uuid=model["uuid"],
             operators=model["operators"],
@@ -35,8 +35,8 @@ class RunList(BaseModel):
     total: int
 
     @classmethod
-    def from_model(cls, models, total):
+    def from_orm(cls, models, total):
         return RunList(
-            runs=[Run.from_model(model) for model in models],
+            runs=[Run.from_orm(model) for model in models],
             total=total,
         )

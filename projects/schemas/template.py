@@ -33,7 +33,7 @@ class Template(TemplateBase):
     updated_at: datetime
 
     @classmethod
-    def from_model(cls, model):
+    def from_orm(cls, model):
         return Template(
             uuid=model.uuid,
             name=model.name,
@@ -48,8 +48,8 @@ class TemplateList(BaseModel):
     total: int
 
     @classmethod
-    def from_model(cls, models, total):
+    def from_orm(cls, models, total):
         return TemplateList(
-            templates=[Template.from_model(model) for model in models],
+            templates=[Template.from_orm(model) for model in models],
             total=total,
         )

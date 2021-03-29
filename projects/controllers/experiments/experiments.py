@@ -59,7 +59,7 @@ class ExperimentController:
             .order_by(models.Experiment.position.asc()) \
             .all()
 
-        return schemas.ExperimentList.from_model(experiments, len(experiments))
+        return schemas.ExperimentList.from_orm(experiments, len(experiments))
 
     def create_experiment(self, experiment: schemas.ExperimentCreate, project_id: str):
         """
@@ -107,7 +107,7 @@ class ExperimentController:
         self.session.commit()
         self.session.refresh(experiment)
 
-        return schemas.Experiment.from_model(experiment)
+        return schemas.Experiment.from_orm(experiment)
 
     def get_experiment(self, project_id: str, experiment_id: str):
         """
@@ -132,7 +132,7 @@ class ExperimentController:
         if experiment is None:
             raise NOT_FOUND
 
-        return schemas.Experiment.from_model(experiment)
+        return schemas.Experiment.from_orm(experiment)
 
     def update_experiment(self, experiment: schemas.ExperimentUpdate, project_id: str, experiment_id: str):
         """
@@ -182,7 +182,7 @@ class ExperimentController:
 
         experiment = self.session.query(models.Experiment).get(experiment_id)
 
-        return schemas.Experiment.from_model(experiment)
+        return schemas.Experiment.from_orm(experiment)
 
     def delete_experiment(self, project_id, experiment_id):
         """

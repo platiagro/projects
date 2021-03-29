@@ -56,7 +56,7 @@ class ComparisonController:
             .order_by(models.Comparison.created_at.asc()) \
             .all()
 
-        return schemas.ComparisonList.from_model(comparisons, len(comparisons))
+        return schemas.ComparisonList.from_orm(comparisons, len(comparisons))
 
     def create_comparison(self, project_id: str):
         """
@@ -75,7 +75,7 @@ class ComparisonController:
         self.session.commit()
         self.session.refresh(comparison)
 
-        return schemas.Comparison.from_model(comparison)
+        return schemas.Comparison.from_orm(comparison)
 
     def update_comparison(self, comparison: schemas.ComparisonUpdate, project_id: str, comparison_id: str):
         """
@@ -113,7 +113,7 @@ class ComparisonController:
 
         comparison = self.session.query(models.Comparison).get(comparison_id)
 
-        return schemas.Comparison.from_model(comparison)
+        return schemas.Comparison.from_orm(comparison)
 
     def delete_comparison(self, project_id: str, comparison_id: str):
         """

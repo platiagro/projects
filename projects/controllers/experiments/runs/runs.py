@@ -52,7 +52,7 @@ class RunController:
             When experiment_id does not exist.
         """
         runs = kfp_runs.list_runs(experiment_id=experiment_id)
-        return schemas.RunList.from_model(runs, len(runs))
+        return schemas.RunList.from_orm(runs, len(runs))
 
     def create_run(self, project_id: str, experiment_id: str):
         """
@@ -89,7 +89,7 @@ class RunController:
             .update(update_data)
         self.session.commit()
 
-        return schemas.Run.from_model(run)
+        return schemas.Run.from_orm(run)
 
     def get_run(self, project_id: str, experiment_id: str, run_id: str):
         """
@@ -117,7 +117,7 @@ class RunController:
         except (ApiException, ValueError):
             raise NOT_FOUND
 
-        return schemas.Run.from_model(run)
+        return schemas.Run.from_orm(run)
 
     def terminate_run(self, project_id: str, experiment_id: str, run_id: str):
         """

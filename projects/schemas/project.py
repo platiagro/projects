@@ -41,7 +41,7 @@ class Project(ProjectBase):
     updated_at: datetime
 
     @classmethod
-    def from_model(cls, model):
+    def from_orm(cls, model):
         return Project(
             uuid=model.uuid,
             name=model.name,
@@ -61,8 +61,8 @@ class ProjectList(BaseModel):
     total: int
 
     @classmethod
-    def from_model(cls, models, total):
+    def from_orm(cls, models, total):
         return ProjectList(
-            projects=[Project.from_model(model) for model in models],
+            projects=[Project.from_orm(model) for model in models],
             total=total,
         )

@@ -32,7 +32,7 @@ class MonitoringController:
             .order_by(models.Monitoring.created_at.asc()) \
             .all()
 
-        return schemas.MonitoringList.from_model(monitorings, len(monitorings))
+        return schemas.MonitoringList.from_orm(monitorings, len(monitorings))
 
     def create_monitoring(self, monitoring: schemas.MonitoringCreate, project_id: str, deployment_id: str):
         """
@@ -59,7 +59,7 @@ class MonitoringController:
         self.session.commit()
         self.session.refresh(monitoring)
 
-        return schemas.Monitoring.from_model(monitoring)
+        return schemas.Monitoring.from_orm(monitoring)
 
     def delete_monitoring(self, uuid, project_id, deployment_id):
         """

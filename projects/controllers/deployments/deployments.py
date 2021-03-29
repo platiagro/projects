@@ -59,7 +59,7 @@ class DeploymentController:
             .order_by(models.Deployment.position.asc()) \
             .all()
 
-        deployments = schemas.DeploymentList.from_model(deployments, len(deployments))
+        deployments = schemas.DeploymentList.from_orm(deployments, len(deployments))
 
         deployment_runs = {}
         for deployment_run in list_deployments_runs():
@@ -142,7 +142,7 @@ class DeploymentController:
 
         self.session.commit()
         self.session.refresh(deployment)
-        return schemas.Deployment.from_model(deployment)
+        return schemas.Deployment.from_orm(deployment)
 
     def get_deployment(self, project_id: str, deployment_id: str):
         """
@@ -166,7 +166,7 @@ class DeploymentController:
         if deployment is None:
             raise NOT_FOUND
 
-        deployment = schemas.Deployment.from_model(deployment)
+        deployment = schemas.Deployment.from_orm(deployment)
 
         deployment_runs = get_deployment_runs(deployment_id)
 
@@ -221,7 +221,7 @@ class DeploymentController:
 
         deployment = self.session.query(models.Deployment).get(deployment_id)
 
-        return schemas.Deployment.from_model(deployment)
+        return schemas.Deployment.from_orm(deployment)
 
     def delete_deployment(self, project_id: str, deployment_id: str):
         """
@@ -393,4 +393,4 @@ class DeploymentController:
         self.session.commit()
         self.session.refresh(deployment)
 
-        return schemas.Deployment.from_model(deployment)
+        return schemas.Deployment.from_orm(deployment)

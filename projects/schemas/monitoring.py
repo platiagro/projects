@@ -37,7 +37,7 @@ class Monitoring(MonitoringBase):
     task: MonitoringTask
 
     @classmethod
-    def from_model(cls, model):
+    def from_orm(cls, model):
         task = MonitoringTask(
             name=model.task.name,
             tags=model.task.tags,
@@ -56,8 +56,8 @@ class MonitoringList(BaseModel):
     total: int
 
     @classmethod
-    def from_model(cls, models, total):
+    def from_orm(cls, models, total):
         return MonitoringList(
-            monitorings=[Monitoring.from_model(model) for model in models],
+            monitorings=[Monitoring.from_orm(model) for model in models],
             total=total,
         )

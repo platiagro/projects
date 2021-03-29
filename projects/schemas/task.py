@@ -62,7 +62,7 @@ class Task(TaskBase):
     updated_at: datetime
 
     @classmethod
-    def from_model(cls, model):
+    def from_orm(cls, model):
         return Task(
             uuid=model.uuid,
             name=model.name,
@@ -82,9 +82,9 @@ class TaskList(BaseModel):
     total: int
 
     @classmethod
-    def from_model(cls, container_state, models, total):
+    def from_orm(cls, container_state, models, total):
         return TaskList(
             containerState=container_state,
-            tasks=[Task.from_model(model) for model in models],
+            tasks=[Task.from_orm(model) for model in models],
             total=total,
         )

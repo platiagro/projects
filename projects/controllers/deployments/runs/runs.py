@@ -56,7 +56,7 @@ class RunController:
         projects.schemas.run.RunList
         """
         runs = kfp_runs.list_runs(experiment_id=deployment_id)
-        return schemas.RunList.from_model(runs, len(runs))
+        return schemas.RunList.from_orm(runs, len(runs))
 
     def create_run(self, project_id: str, deployment_id: str):
         """

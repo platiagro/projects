@@ -110,7 +110,7 @@ class TaskController:
 
         tasks = query.all()
         container_state = get_notebook_state()
-        return schemas.TaskList.from_model(container_state, tasks, total)
+        return schemas.TaskList.from_orm(container_state, tasks, total)
 
     def create_task(self, task: schemas.TaskCreate):
         """
@@ -212,7 +212,7 @@ class TaskController:
         self.session.commit()
         self.session.refresh(task)
 
-        return schemas.Task.from_model(task)
+        return schemas.Task.from_orm(task)
 
     def get_task(self, task_id):
         """
@@ -236,7 +236,7 @@ class TaskController:
         if task is None:
             raise NOT_FOUND
 
-        return schemas.Task.from_model(task)
+        return schemas.Task.from_orm(task)
 
     def update_task(self, task: schemas.TaskUpdate, task_id: str):
         """
@@ -307,7 +307,7 @@ class TaskController:
                     task=task,
                     task_id=task_id,
                     experiment_notebook_path=stored_task.experiment_notebook_path,
-                ) 
+                )
 
         update_data = task.dict(exclude_unset=True)
         del task.experiment_notebook
@@ -319,7 +319,7 @@ class TaskController:
 
         task = self.session.query(models.Task).get(task_id)
 
-        return schemas.Task.from_model(task)
+        return schemas.Task.from_orm(task)
 
     def delete_task(self, task_id: str):
         """

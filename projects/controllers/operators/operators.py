@@ -55,7 +55,7 @@ class OperatorController:
             .filter_by(deployment_id=deployment_id) \
             .all()
 
-        return schemas.OperatorList.from_model(operators, len(operators))
+        return schemas.OperatorList.from_orm(operators, len(operators))
 
     def create_operator(self,
                         operator: schemas.OperatorCreate,
@@ -118,7 +118,7 @@ class OperatorController:
         self.session.commit()
         self.session.refresh(operator)
 
-        return schemas.Operator.from_model(operator)
+        return schemas.Operator.from_orm(operator)
 
     def update_operator(self,
                         operator: schemas.OperatorUpdate,
@@ -176,7 +176,7 @@ class OperatorController:
 
         operator = self.session.query(models.Operator).get(operator_id)
 
-        return schemas.Operator.from_model(operator)
+        return schemas.Operator.from_orm(operator)
 
     def delete_operator(self,
                         project_id: str,
