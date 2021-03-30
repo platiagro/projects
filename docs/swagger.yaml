@@ -23,6 +23,10 @@ tags:
     description: >
       Experiments allow data-scientists to draw acyclic workflows using tasks.
       These workflows may describe the steps of data-preparation, data-modeling.
+  - name: "Experiment Operators"
+    description: >
+      An Operator is a single unit in an experiment flow.
+      When a data-scientist runs an experiment, the operator runs a Jupyter Notebook of its task.
   - name: "Experiment Runs"
     description: >
       Runs are the executions of an experiment.
@@ -31,6 +35,10 @@ tags:
     description: >
       Deployments allow drawing sequential workflows for real-time inference.
       These workflows are accessible by HTTP via REST endpoints.
+  - name: "Deployment Operators"
+    description: >
+      An Operator is a single unit in a deployment flow.
+      When someone tests a deployment, the operator is a service that runs the Model.py of its task.
   - name: "Deployment Runs"
     description: >
       Runs are the executions of a deployment.
@@ -45,10 +53,6 @@ tags:
   - name: "Comparisons"
     description: >
       Comparisons organize results from different experiments for evaluation/comparision.
-  - name: "Operators"
-    description: >
-      An Operator is a single unit in an experiment or deployment flow.
-      When a data-scientist runs an experiment, the operator runs a Jupyter Notebook of its task.
   - name: "Templates"
     description: >
       Templates are reusable workflows that a data-scientist may use to draw an experiment quickly.
@@ -550,7 +554,7 @@ paths:
     get:
       summary: "List all operators, unsorted."
       tags:
-        - "Operators"
+        - "Experiment Operators"
       parameters:
         - name: projectId
           in: path
@@ -576,7 +580,7 @@ paths:
     post:
       summary: "Create a new operator."
       tags:
-        - "Operators"
+        - "Experiment Operators"
       parameters:
         - name: projectId
           in: path
@@ -607,7 +611,7 @@ paths:
     patch:
       summary: "Update an operator by ID."
       tags:
-        - "Operators"
+        - "Experiment Operators"
       parameters:
         - name: projectId
           in: path
@@ -643,7 +647,7 @@ paths:
     delete:
       summary: "Delete an operator by ID."
       tags:
-        - "Operators"
+        - "Experiment Operators"
       parameters:
         - name: projectId
           in: path
@@ -676,7 +680,7 @@ paths:
     patch:
       summary: "Update a parameter value."
       tags:
-        - "Operators"
+        - "Experiment Operators"
       parameters:
         - in: path
           name: projectId
@@ -1138,6 +1142,70 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/Message"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/operators:
+    get:
+      summary: "List all operators, unsorted."
+      tags:
+        - "Deployment Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Operators"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/operators/{operatorId}:
+    patch:
+      summary: "Update an operator by ID."
+      tags:
+        - "Deployment Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/OperatorPatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/Operator"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
