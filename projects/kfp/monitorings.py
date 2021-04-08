@@ -8,8 +8,10 @@ from kubernetes import client
 from kubernetes.client.rest import ApiException
 
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
+from projects.kfp.pipeline import undeploy_pipeline
 from projects.kfp.templates import MONITORING_SERVICE, MONITORING_TRIGGER
 from projects.kubernetes.kube_config import load_kube_config
+
 
 def create_monitoring_task_config_map(task_id, experiment_notebook_content):
     """
@@ -33,12 +35,12 @@ def create_monitoring_task_config_map(task_id, experiment_notebook_content):
             "Experiment.ipynb": experiment_notebook_content
         }
     }
-    
+
     v1.create_namespaced_config_map(
         namespace=KF_PIPELINES_NAMESPACE,
         body=body,
     )
-    
+
     warnings.warn(f"ConfigMap of task {task_id} created!")
 
 
@@ -124,3 +126,48 @@ def deploy_monitoring(deployment_id,
         run_name="monitoring",
         namespace=KF_PIPELINES_NAMESPACE
     )
+
+
+def undeploy_monitoring(monitoring_id):
+    """
+    Undeploy the service and trigger of a given monitoring_id.
+
+    Parameters
+    ----------
+    monitoring_id : str
+    """
+
+    load_kube_config()
+    api = client.CustomObjectsApi()
+
+    # Undeploy service
+    services_custom_objects = api.list_namespaced_custom_object(
+        "serving.knative.dev"
+        "v1alpha1",
+        KF_PIPELINES_NAMESPACE,
+        "services"
+    )
+
+    services_objects = services_custom_objects["items"]
+
+    service_name = f"service-{monitoring_id}"
+    if services_objects:
+        for service in services_objects:
+            if service["metadata"]["name"] == service_name:
+                undeploy_pipeline(service)
+
+    # Undeploy trigger
+    triggers_custom_objects = api.list_namespaced_custom_object(
+        "eventing.knative.dev"
+        "v1alpha1",
+        KF_PIPELINES_NAMESPACE,
+        "triggers"
+    )
+
+    triggers_objects = triggers_custom_objects["items"]
+
+    trigger_name = f"trigger-{monitoring_id}"
+    if triggers_objects:
+        for trigger in triggers_objects:
+            if trigger["metadata"]["name"] == trigger_name:
+                undeploy_pipeline(trigger)

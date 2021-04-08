@@ -6,11 +6,13 @@ from datetime import datetime
 from projects import models, schemas
 from projects.controllers.deployments.runs import RunController
 from projects.controllers.experiments import ExperimentController
+from projects.controllers.monitorings import MonitoringController
 from projects.controllers.operators import OperatorController
 from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.kfp.deployments import get_deployment_runs, list_deployments_runs
+from projects.kfp.monitorings import undeploy_monitoring
 
 NOT_FOUND = NotFound("The specified deployment does not exist")
 
@@ -19,6 +21,7 @@ class DeploymentController:
     def __init__(self, session):
         self.session = session
         self.experiment_controller = ExperimentController(session)
+        self.monitoring_controller = MonitoringController(session)
         self.operator_controller = OperatorController(session)
         self.run_controller = RunController(session)
         self.template_controller = TemplateController(session)
@@ -257,6 +260,17 @@ class DeploymentController:
         self.fix_positions(project_id=project_id)
 
         self.session.commit()
+
+        # Undeploy monitorings
+        monitorings = self.monitoring_controller.list_monitorings(project_id=project_id,
+                                                                  deployment_id=deployment_id)
+
+        if monitorings:
+            for monitoring in monitorings:
+                self.background_tasks.add_task(
+                    undeploy_monitoring,
+                    monitoring_id=monitoring.uuid
+                )
 
         # Temporary: also delete run deployment (while web-ui isn't ready)
         self.run_controller = self.run_controller.terminate_run(
