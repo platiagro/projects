@@ -142,7 +142,7 @@ def undeploy_monitoring(monitoring_id):
 
     # Undeploy service
     services_custom_objects = api.list_namespaced_custom_object(
-        "serving.knative.dev"
+        "serving.knative.dev",
         "v1alpha1",
         KF_PIPELINES_NAMESPACE,
         "services"
@@ -158,7 +158,7 @@ def undeploy_monitoring(monitoring_id):
 
     # Undeploy trigger
     triggers_custom_objects = api.list_namespaced_custom_object(
-        "eventing.knative.dev"
+        "eventing.knative.dev",
         "v1alpha1",
         KF_PIPELINES_NAMESPACE,
         "triggers"
