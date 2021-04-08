@@ -294,11 +294,12 @@ def handle_task_creation(task,
     create_persistent_volume_claim(name=f"vol-task-{task_id}",
                                    mount_path=f"{JUPYTER_WORKSPACE}/{task.name}")
 
+    experiment_path = f"{task.name}/{experiment_notebook_path}"
+    deployment_path = f"{task.name}/{deployment_notebook_path}"
+
     if copy_name:
         source_path = f"{JUPYTER_WORKSPACE}/{copy_name}/."
         destination_path = f"{JUPYTER_WORKSPACE}/{task.name}/"
-        experiment_path = f"{task.name}/{experiment_notebook_path}"
-        deployment_path = f"{task.name}/{deployment_notebook_path}"
         copy_files_in_pod(source_path, destination_path)
     else:
         # copies experiment notebook file to pod
@@ -306,7 +307,6 @@ def handle_task_creation(task,
             json.dump(task.experiment_notebook, f)
 
         filepath = f.name
-        experiment_path = f"{task.name}/{experiment_notebook_path}"
         copy_file_to_pod(filepath, experiment_path)
         os.remove(filepath)
 
@@ -315,13 +315,12 @@ def handle_task_creation(task,
             json.dump(task.deployment_notebook, f)
 
         filepath = f.name
-        deployment_path = f"{task.name}/{deployment_notebook_path}"
         copy_file_to_pod(filepath, deployment_path)
         os.remove(filepath)
 
     # create ConfigMap for monitoring tasks
     if MONITORING_TAG in task.tags:
-        experiment_notebook_content = get_file_from_pod(experiment_notebook_path)
+        experiment_notebook_content = get_file_from_pod(experiment_path)
         create_monitoring_task_config_map(task_id, experiment_notebook_content)
 
     # The new task must have its own task_id, experiment_id and operator_id.
@@ -368,7 +367,8 @@ def update_task_config_map(task,
     """
     # update ConfigMap of monitoring task
     delete_monitoring_task_config_map(task_id)
-    experiment_notebook_content = get_file_from_pod(experiment_notebook_path)
+    experiment_path = f"{task.name}/{experiment_notebook_path}"
+    experiment_notebook_content = get_file_from_pod(experiment_path)
     create_monitoring_task_config_map(task_id, experiment_notebook_content)
 
 
@@ -385,11 +385,13 @@ def get_file_from_pod(filepath):
     str
         File content.
     """
-    warnings.warn(f"Fetching {filepath} from pod...")
+    notebook_path = f"{JUPYTER_WORKSPACE}/{filepath}"
+
+    warnings.warn(f"Fetching {notebook_path} from pod...")
     load_kube_config()
     api_instance = client.CoreV1Api()
 
-    exec_command = ["cat", filepath]
+    exec_command = ["cat", notebook_path]
 
     container_stream = stream(
         api_instance.connect_get_namespaced_pod_exec,
