@@ -141,33 +141,25 @@ def undeploy_monitoring(monitoring_id):
     api = client.CustomObjectsApi()
 
     # Undeploy service
-    services_custom_objects = api.list_namespaced_custom_object(
-        "serving.knative.dev",
-        "v1alpha1",
-        KF_PIPELINES_NAMESPACE,
-        "services"
+    service_name = f"service-{monitoring_id}"
+    service_custom_object = api.get_namespaced_custom_object(
+        group="serving.knative.dev",
+        version="v1alpha1",
+        namespace=KF_PIPELINES_NAMESPACE,
+        plural="services",
+        name=service_name
     )
 
-    services_objects = services_custom_objects["items"]
-
-    service_name = f"service-{monitoring_id}"
-    if services_objects:
-        for service in services_objects:
-            if service["metadata"]["name"] == service_name:
-                undeploy_pipeline(service)
+    undeploy_pipeline(service_custom_object)
 
     # Undeploy trigger
-    triggers_custom_objects = api.list_namespaced_custom_object(
-        "eventing.knative.dev",
-        "v1alpha1",
-        KF_PIPELINES_NAMESPACE,
-        "triggers"
+    trigger_name = f"trigger-{monitoring_id}"
+    trigger_custom_object = api.get_namespaced_custom_object(
+        group="eventing.knative.dev",
+        version="v1alpha1",
+        namespace=KF_PIPELINES_NAMESPACE,
+        plural="triggers",
+        name=trigger_name
     )
 
-    triggers_objects = triggers_custom_objects["items"]
-
-    trigger_name = f"trigger-{monitoring_id}"
-    if triggers_objects:
-        for trigger in triggers_objects:
-            if trigger["metadata"]["name"] == trigger_name:
-                undeploy_pipeline(trigger)
+    undeploy_pipeline(trigger_custom_object)

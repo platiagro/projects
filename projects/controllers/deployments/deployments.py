@@ -259,7 +259,6 @@ class DeploymentController:
         # Undeploy monitorings
         if monitorings:
             for monitoring in monitorings:
-                print(monitoring)
                 self.background_tasks.add_task(
                     undeploy_monitoring,
                     monitoring_id=monitoring.uuid
