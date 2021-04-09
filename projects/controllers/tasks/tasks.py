@@ -303,11 +303,11 @@ class TaskController:
         if ((task.parameters and "MONITORING" in stored_task.tags) or
                 ("MONITORING" in task.tags if task.tags else False)):
             self.background_tasks.add_task(
-                    update_task_config_map,
-                    task=task,
-                    task_id=task_id,
-                    experiment_notebook_path=stored_task.experiment_notebook_path,
-                )
+                update_task_config_map,
+                task_name=stored_task.name,
+                task_id=task_id,
+                experiment_notebook_path=stored_task.experiment_notebook_path,
+            )
 
         update_data = task.dict(exclude_unset=True)
         del task.experiment_notebook
