@@ -353,7 +353,7 @@ def handle_task_creation(task,
     )
 
 
-def update_task_config_map(task,
+def update_task_config_map(task_name,
                            task_id,
                            experiment_notebook_path):
     """
@@ -361,13 +361,13 @@ def update_task_config_map(task,
 
     Parameters
     ----------
-    task : projects.schemas.task.TaskCreate
+    task_name : projects.schemas.task.TaskCreate
     task_id : str
     experiment_notebook_path : str
     """
     # update ConfigMap of monitoring task
     delete_monitoring_task_config_map(task_id)
-    experiment_path = f"{task.name}/{experiment_notebook_path}"
+    experiment_path = f"{task_name}/{experiment_notebook_path}"
     experiment_notebook_content = get_file_from_pod(experiment_path)
     create_monitoring_task_config_map(task_id, experiment_notebook_content)
 
