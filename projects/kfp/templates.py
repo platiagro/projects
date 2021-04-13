@@ -71,6 +71,10 @@ COMPONENT_SPEC = Template("""
                     {
                         "name": "TASK_NAME",
                         "value": "$taskName"
+                    },
+                    {
+                        "name": "NVIDIA_VISIBLE_DEVICES",
+                        "value": "all"
                     }
                 ],
                 "volumeMounts": [
