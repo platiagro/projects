@@ -6,8 +6,9 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, Foreign
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
 
-from projects.models.operator import Operator
+from projects.models.comparison import Comparison
 from projects.models.deployment import Deployment
+from projects.models.operator import Operator
 from projects.database import Base
 
 
@@ -29,3 +30,7 @@ class Experiment(Base):
                                backref="experiment",
                                primaryjoin=uuid == Deployment.experiment_id,
                                lazy="joined")
+    comparisons = relationship("Comparison",
+                               primaryjoin=uuid == Comparison.experiment_id,
+                               lazy="joined",
+                               cascade="all, delete-orphan")

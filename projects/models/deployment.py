@@ -8,6 +8,7 @@ from sqlalchemy.sql import expression
 
 from projects.database import Base
 from projects.models.operator import Operator
+from projects.models.response import Response
 
 
 class Deployment(Base):
@@ -19,6 +20,10 @@ class Deployment(Base):
     name = Column(Text, nullable=False)
     operators = relationship("Operator",
                              primaryjoin=uuid == Operator.deployment_id,
+                             lazy="joined",
+                             cascade="all, delete-orphan")
+    responses = relationship("Response",
+                             primaryjoin=uuid == Response.deployment_id,
                              lazy="joined",
                              cascade="all, delete-orphan")
     position = Column(Integer, nullable=False, default=-1)
