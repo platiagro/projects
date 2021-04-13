@@ -23,6 +23,7 @@ TASK_DEFAULT_CPU_LIMIT = getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
 TASK_DEFAULT_CPU_REQUEST = getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
 TASK_DEFAULT_MEMORY_LIMIT = getenv("TASK_DEFAULT_MEMORY_LIMIT", "10G")
 TASK_DEFAULT_MEMORY_REQUEST = getenv("TASK_DEFAULT_MEMORY_REQUEST", "2G")
+TASK_NVIDIA_VISIBLE_DEVICES = getenv("TASK_NVIDIA_VISIBLE_DEVICES", "none")
 
 SELDON_LOGGER_ENDPOINT = getenv(
     "SELDON_LOGGER_ENDPOINT",
@@ -297,6 +298,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "memoryLimit": memory_limit,
                 "memoryRequest": memory_request,
                 "taskName": operator.task.name,
+                "nvidiaVisibleDevices": TASK_NVIDIA_VISIBLE_DEVICES,
             })
         )
 
