@@ -24,7 +24,6 @@ class Deployment(Base):
                              cascade="all, delete-orphan")
     responses = relationship("Response",
                              primaryjoin=uuid == Response.deployment_id,
-                             lazy="joined",
                              cascade="all, delete-orphan")
     position = Column(Integer, nullable=False, default=-1)
     project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False, index=True)

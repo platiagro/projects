@@ -32,5 +32,4 @@ class Experiment(Base):
                                lazy="joined")
     comparisons = relationship("Comparison",
                                primaryjoin=uuid == Comparison.experiment_id,
-                               lazy="joined",
                                cascade="all, delete-orphan")
