@@ -11,17 +11,19 @@ from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.kfp.deployments import get_deployment_runs, list_deployments_runs
+from projects.kfp.monitorings import undeploy_monitoring
 
 NOT_FOUND = NotFound("The specified deployment does not exist")
 
 
 class DeploymentController:
-    def __init__(self, session):
+    def __init__(self, session, background_tasks=None):
         self.session = session
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
         self.run_controller = RunController(session)
         self.template_controller = TemplateController(session)
+        self.background_tasks = background_tasks
 
     def raise_if_deployment_does_not_exist(self, deployment_id: str):
         """
@@ -251,6 +253,19 @@ class DeploymentController:
 
         # remove operators
         self.session.query(models.Operator).filter(models.Operator.deployment_id == deployment_id).delete()
+
+        # remove monitorings
+        monitorings = self.session.query(models.Monitoring).filter(models.Monitoring.deployment_id == deployment_id)
+        # Undeploy monitorings
+        if monitorings:
+            for monitoring in monitorings:
+                self.background_tasks.add_task(
+                    undeploy_monitoring,
+                    monitoring_id=monitoring.uuid
+                )
+
+        # delete monitorings on database
+        monitorings.delete()
 
         self.session.delete(deployment)
 

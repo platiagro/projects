@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Deployments API Router."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 
 import projects.schemas.deployment
@@ -117,6 +117,7 @@ async def handle_patch_deployment(project_id: str,
 @router.delete("/{deployment_id}")
 async def handle_delete_deployment(project_id: str,
                                    deployment_id: str,
+                                   background_tasks: BackgroundTasks,
                                    session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<deployment_id>.
@@ -134,7 +135,7 @@ async def handle_delete_deployment(project_id: str,
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session)
+    deployment_controller = DeploymentController(session, background_tasks)
     deployment = deployment_controller.delete_deployment(deployment_id=deployment_id,
                                                          project_id=project_id)
     return deployment
