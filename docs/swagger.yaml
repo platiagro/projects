@@ -1799,6 +1799,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Experiment"
+        deployments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deployment"
         createdAt:
           type: string
           format: date-time
