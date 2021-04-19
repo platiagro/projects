@@ -24,6 +24,20 @@ jobs:
         - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
+      minio:
+        image: minio/minio:RELEASE.2018-02-09T22-40-05Z
+        env:
+          MINIO_ACCESS_KEY: minio
+          MINIO_SECRET_KEY: minio123
+        ports:
+        - 9000:9000
+        options: --entrypoint="/usr/bin/docker-entrypoint.sh server /data"
+
+      jupyter:
+        image: jupyter/base-notebook
+        ports:
+        - 8888:8888
+
     steps:
     - uses: actions/checkout@v2
 
@@ -99,49 +113,28 @@ jobs:
             ex: `PATCH /resources/{resourceId}`
           - Em dúvidas? Mantenha uma consistência com as URLs já existem.
 
-    # - name: Run MinIO
-    #   run: |
-    #     docker run \
-    #       --name minio \
-    #       -d \
-    #       -p 9000:9000 \
-    #       -e MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY} \
-    #       -e MINIO_SECRET_KEY=${MINIO_SECRET_KEY} \
-    #       minio/minio:RELEASE.2018-02-09T22-40-05Z server /data
-    #   env:
-    #     MINIO_ACCESS_KEY: minio
-    #     MINIO_SECRET_KEY: minio123
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install .
 
-    # - name: Run Jupyter Notebook
-    #   run: |
-    #     docker run \
-    #       --name jupyter \
-    #       -d \
-    #       -p 8888:8888 \
-    #       jupyter/base-notebook
-
-    # - name: Install dependencies
-    #   run: |
-    #     python -m pip install --upgrade pip
-    #     pip install -r requirements.txt
-    #     pip install .
-
-    # - name: Test with pytest
-    #   run: |
-    #     pip install pytest pytest-cov
-    #     platiagro-init-db
-    #     coverage erase
-    #     coverage run --branch --source=projects -m pytest
-    #     coverage xml -i
-    #   env:
-    #     MINIO_ENDPOINT: localhost:9000
-    #     MINIO_ACCESS_KEY: minio
-    #     MINIO_SECRET_KEY: minio123
-    #     MYSQL_DB_HOST: localhost
-    #     MYSQL_DB_NAME: platiagro
-    #     MYSQL_DB_USER: root
-    #     JUPYTER_ENDPOINT: http://localhost:8888
-    #     KF_PIPELINES_ENDPOINT: http://localhost:5000
+    - name: Test with pytest
+      run: |
+        pip install pytest pytest-cov
+        platiagro-init-db
+        coverage erase
+        coverage run --branch --source=projects -m pytest tests/test_templates.py
+        coverage xml -i
+      env:
+        MINIO_ENDPOINT: localhost:9000
+        MINIO_ACCESS_KEY: minio
+        MINIO_SECRET_KEY: minio123
+        MYSQL_DB_HOST: localhost
+        MYSQL_DB_NAME: platiagro
+        MYSQL_DB_USER: root
+        JUPYTER_ENDPOINT: http://localhost:8888
+        KF_PIPELINES_ENDPOINT: http://localhost:5000
 
     - name: SonarCloud Scan
       if: ${{ always() }}
