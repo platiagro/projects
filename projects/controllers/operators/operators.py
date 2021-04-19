@@ -107,6 +107,7 @@ class OperatorController:
         self.raise_if_parameters_are_invalid(operator.parameters)
 
         operator = models.Operator(uuid=uuid_alpha(),
+                                   name=operator.name,
                                    experiment_id=experiment_id,
                                    deployment_id=deployment_id,
                                    task_id=operator.task_id,
