@@ -68,8 +68,6 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
-DEPENDENCIES_OP_ID = [OPERATOR_ID]
-DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
 
 class TestTemplates(TestCase):
@@ -120,7 +118,7 @@ class TestTemplates(TestCase):
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
-                            POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
+                            POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
@@ -132,6 +130,10 @@ class TestTemplates(TestCase):
     def tearDown(self):
         conn = engine.connect()
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
+        conn.execute(text)
+
+        conn = engine.connect()
+        text = f"DELETE FROM templates WHERE name IN ('foo bar', 'foo bar foo', 'foo bar foo bar')"
         conn.execute(text)
 
         text = f"DELETE FROM operators WHERE deployment_id = '{DEPLOYMENT_ID}'"
@@ -159,7 +161,7 @@ class TestTemplates(TestCase):
     def test_list_templates(self):
         rv = TEST_CLIENT.get("/templates")
         result = rv.json()
-        self.assertIsInstance(result["tasks"], list)
+        self.assertIsInstance(result["templates"], list)
         self.assertIsInstance(result["total"], int)
         self.assertEqual(rv.status_code, 200)
 
@@ -186,12 +188,12 @@ class TestTemplates(TestCase):
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post("/templates", json={
-            "name": "newfoo",
+            "name": "foo bar",
             "experimentId": EXPERIMENT_ID,
         })
         result = rv.json()
         expected = {
-            "name": "newfoo",
+            "name": "foo bar",
             "tasks": [
                 {
                     "dependencies": [],
@@ -211,7 +213,7 @@ class TestTemplates(TestCase):
         self.assertDictEqual(expected, result)
 
         rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo",
+            "name": "foo bar foo",
             "deploymentId": "UNK",
         })
         result = rv.json()
@@ -220,37 +222,12 @@ class TestTemplates(TestCase):
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post("/templates", json={
-            "name": "newfoo2",
-            "experimentId": EXPERIMENT_ID,
-        })
-        result = rv.json()
-        expected = {
-            "name": "newfoo2",
-            "tasks": [
-                {
-                    "dependencies": [],
-                    "position_x": POSITION_X,
-                    "position_y": POSITION_Y,
-                    "task_id": TASK_ID,
-                    "uuid": OPERATOR_ID
-                }
-            ],
-        }
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-
-        rv = TEST_CLIENT.post("/templates", json={
-            "name": "newfoo3",
+            "name": "foo bar foo bar",
             "deploymentId": DEPLOYMENT_ID,
         })
         result = rv.json()
         expected = {
-            "name": "newfoo3",
+            "name": "foo bar foo bar",
             "tasks": [
                 {
                     "dependencies": [],
@@ -269,7 +246,6 @@ class TestTemplates(TestCase):
             self.assertIn(attr, result)
             del result[attr]
         self.assertDictEqual(expected, result)
-
 
     def test_get_template(self):
         rv = TEST_CLIENT.get("/templates/foo")
@@ -295,12 +271,6 @@ class TestTemplates(TestCase):
         expected = {"message": "The specified template does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
-
-        rv = TEST_CLIENT.patch(f"/templates/{TEMPLATE_ID}", json={
-            "unk": "bar",
-        })
-        result = rv.json()
-        self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.patch(f"/templates/{TEMPLATE_ID}", json={
             "name": "bar",

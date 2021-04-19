@@ -29,8 +29,8 @@ TASK_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1}
 POSITION = 0
 POSITION_2 = 1
-POSITION_X = 0.3
-POSITION_Y = 0.5
+POSITION_X = 0
+POSITION_Y = 0
 PARAMETERS = {}
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 COMMANDS = ["CMD"]
@@ -187,13 +187,21 @@ class TestOperators(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_create_operator(self):
-        rv = TEST_CLIENT.post(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators", json={})
+        rv = TEST_CLIENT.post(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators", json={
+            "taskId": TASK_ID,
+            "positionX": 0,
+            "positionY": 0,
+        })
         result = rv.json()
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/unk/operators", json={})
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/unk/operators", json={
+            "taskId": TASK_ID,
+            "positionX": 0,
+            "positionY": 0,
+        })
         result = rv.json()
         expected = {"message": "The specified experiment does not exist"}
         self.assertDictEqual(expected, result)
@@ -201,12 +209,12 @@ class TestOperators(TestCase):
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={})
         result = rv.json()
-        expected = {"message": "taskId is required"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 422)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
             "taskId": "unk",
+            "positionX": 0,
+            "positionY": 0,
         })
         result = rv.json()
         expected = {"message": "The specified task does not exist"}
@@ -215,55 +223,45 @@ class TestOperators(TestCase):
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
             "taskId": TASK_ID,
-            "parameters": [{"name": "coef", "value": 0.1}],
-        })
-        result = rv.json()
-        expected = {"message": "The specified parameters are not valid"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_ID,
             "dependencies": "unk"  # only lists are accepted
         })
         result = rv.json()
-        expected = {"message": "The specified dependencies are not valid."}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 422)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
             "taskId": TASK_ID,
             "dependencies": ["unk"]
         })
         result = rv.json()
-        expected = {"message": "The specified dependencies are not valid."}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 422)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
             "taskId": TASK_ID,
             "dependencies": [OPERATOR_ID, OPERATOR_ID]
         })
         result = rv.json()
-        expected = {"message": "The specified dependencies are not valid."}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 422)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
             "taskId": TASK_ID,
-            "positionX": 3.4,
-            "positionY": 5.9,
+            "positionX": 0,
+            "positionY": 0,
         })
         result = rv.json()
         expected = {
+            "name": NAME,
             "experimentId": EXPERIMENT_ID,
             "taskId": TASK_ID,
+            "task": {
+                "name": NAME,
+                "tags": TAGS,
+            },
             "dependencies": [],
             "parameters": {},
-            "positionX": 3.4,
-            "positionY": 5.9,
-            "status": "Setted up",
-            "status_message": None,
+            "positionX": 0,
+            "positionY": 0,
+            "status": "Unset",
+            "statusMessage": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -276,6 +274,8 @@ class TestOperators(TestCase):
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
             "taskId": TASK_ID,
+            "positionX": 0,
+            "positionY": 0,
             "parameters": {"coef": None},  # None is allowed!
         })
         result = rv.json()
@@ -283,18 +283,25 @@ class TestOperators(TestCase):
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
             "taskId": TASK_ID,
+            "positionX": 0,
+            "positionY": 0,
             "parameters": {"coef": 1.0}
         })
         result = rv.json()
         expected = {
+            "name": NAME,
             "experimentId": EXPERIMENT_ID,
             "taskId": TASK_ID,
+            "task": {
+                "name": NAME,
+                "tags": TAGS,
+            },
             "dependencies": [],
             "parameters": {"coef": 1.0},
-            "positionX": None,
-            "positionY": None,
+            "positionX": 0,
+            "positionY": 0,
             "status": "Unset",
-            "status_message": None,
+            "statusMessage": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -307,18 +314,25 @@ class TestOperators(TestCase):
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
             "taskId": TASK_ID,
+            "positionX": 0,
+            "positionY": 0,
             "dependencies": []
         })
         result = rv.json()
         expected = {
+            "name": NAME,
             "experimentId": EXPERIMENT_ID,
             "taskId": TASK_ID,
+            "task": {
+                "name": NAME,
+                "tags": TAGS,
+            },
             "dependencies": [],
-            "positionX": None,
-            "positionY": None,
+            "positionX": 0,
+            "positionY": 0,
             "parameters": {},
-            "status": "Setted up",
-            "status_message": None,
+            "status": "Unset",
+            "statusMessage": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -329,20 +343,27 @@ class TestOperators(TestCase):
             del result[attr]
         self.assertDictEqual(expected, result)
 
-        # Test operator status Unset with dataset task withou params
+        # Test operator status Unset with dataset task without params
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_DATASET_ID
+            "taskId": TASK_DATASET_ID,
+            "positionX": 0,
+            "positionY": 0,
         })
         result = rv.json()
         expected = {
+            "name": NAME,
             "experimentId": EXPERIMENT_ID,
             "taskId": TASK_DATASET_ID,
+            "task": {
+                "name": NAME,
+                "tags": ["DATASETS"],
+            },
             "dependencies": [],
             "parameters": {},
-            "positionX": None,
-            "positionY": None,
+            "positionX": 0,
+            "positionY": 0,
             "status": "Unset",
-            "status_message": None,
+            "statusMessage": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -356,18 +377,25 @@ class TestOperators(TestCase):
         # Test operator status Setted up with dataset task with param
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
             "taskId": TASK_DATASET_ID,
-            "parameters": {"dataset": 'iris.csv'}
+            "positionX": 0,
+            "positionY": 0,
+            "parameters": {"dataset": "iris.csv"}
         })
         result = rv.json()
         expected = {
+            "name": NAME,
             "experimentId": EXPERIMENT_ID,
             "taskId": TASK_DATASET_ID,
+            "task": {
+                "name": NAME,
+                "tags": ["DATASETS"],
+            },
             "dependencies": [],
             "parameters": {"dataset": 'iris.csv'},
-            "positionX": None,
-            "positionY": None,
-            "status": "Setted up",
-            "status_message": None,
+            "positionX": 0,
+            "positionY": 0,
+            "status": "Unset",
+            "statusMessage": None,
             "deploymentId": None
         }
         # uuid, created_at, updated_at are machine-generated
@@ -398,20 +426,6 @@ class TestOperators(TestCase):
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-            "unk": "bar",
-        })
-        result = rv.json()
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-            "parameters": [{"name": "coef", "value": 0.1}],
-        })
-        result = rv.json()
-        expected = {"message": "The specified parameters are not valid"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
             "dependencies": [OPERATOR_ID],
         })
         result = rv.json()
@@ -420,7 +434,7 @@ class TestOperators(TestCase):
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-            "dependencies": [OPERATOR_ID_5],
+            "dependencies": [str(uuid_alpha())],
         })
         result = rv.json()
         expected = {"message": "The specified dependencies are not valid."}
@@ -439,15 +453,20 @@ class TestOperators(TestCase):
         result = rv.json()
         expected = {
             "uuid": OPERATOR_ID,
+            "name": NAME,
             "experimentId": EXPERIMENT_ID,
             "taskId": TASK_ID,
+            "task": {
+                "name": NAME,
+                "tags": TAGS,
+            },
             "dependencies": result['dependencies'],
             "parameters": PARAMETERS,
             "positionX": POSITION_X,
             "positionY": POSITION_Y,
             "createdAt": CREATED_AT_ISO,
-            "status": "Setted up",
-            "status_message": None,
+            "status": "Unset",
+            "statusMessage": None,
             "deploymentId": None
         }
         machine_generated = ["updatedAt"]
@@ -464,15 +483,20 @@ class TestOperators(TestCase):
         result = rv.json()
         expected = {
             "uuid": OPERATOR_ID,
+            "name": NAME,
             "experimentId": EXPERIMENT_ID,
             "taskId": TASK_ID,
+            "task": {
+                "name": NAME,
+                "tags": TAGS,
+            },
             "dependencies": result['dependencies'],
             "parameters": {"coef": 0.2},
-            "positionX": 100.0,
-            "positionY": 200.0,
+            "positionX": 100,
+            "positionY": 200,
             "createdAt": CREATED_AT_ISO,
-            "status": "Unset",
-            "status_message": None,
+            "status": "Setted up",
+            "statusMessage": None,
             "deploymentId": None
         }
         machine_generated = ["updatedAt"]
@@ -487,15 +511,20 @@ class TestOperators(TestCase):
         result = rv.json()
         expected = {
             "uuid": OPERATOR_ID,
+            "name": NAME,
             "experimentId": EXPERIMENT_ID,
             "taskId": TASK_ID,
+            "task": {
+                "name": NAME,
+                "tags": TAGS,
+            },
             "dependencies": [OPERATOR_ID_3],
             "parameters": {"coef": 0.2},
-            "positionX": 100.0,
-            "positionY": 200.0,
+            "positionX": 100,
+            "positionY": 200,
             "createdAt": CREATED_AT_ISO,
-            "status": "Unset",
-            "status_message": None,
+            "status": "Setted up",
+            "statusMessage": None,
             "deploymentId": None
         }
         machine_generated = ["updatedAt"]
@@ -535,28 +564,27 @@ class TestOperators(TestCase):
         self.assertDictEqual(expected, result)
 
     def test_patch_parameter(self):
-        rv = TEST_CLIENT.patch(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/foo")
+        rv = TEST_CLIENT.patch(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/foo", json={})
         result = rv.json()
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID_6}/parameters/foo")
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID_6}/parameters/foo", json={})
         result = rv.json()
         expected = {"message": "The specified experiment does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/unk/parameters/foo")
+        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/unk/parameters/foo", json={})
         result = rv.json()
         expected = {"message": "The specified operator does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/foo",
-                               json={"value": "foo"}
-                               )
+                               json={"value": "foo"})
         result = rv.json()
-        expected = {"parameters": {"foo": "foo"}}
+        expected = {"foo": "foo"}
         self.assertDictEqual(expected, result["parameters"])
         self.assertEqual(rv.status_code, 200)

@@ -235,7 +235,7 @@ class OperatorController:
 
         return schemas.Message(message="Operator deleted")
 
-    def raise_if_parameters_are_invalid(self, parameters: List[Dict]):
+    def raise_if_parameters_are_invalid(self, parameters: Dict):
         """
         Raises an exception if the specified parameters are not valid.
 
@@ -376,9 +376,9 @@ class OperatorController:
         # if any neighbour is visited and in
         # recursion_stack then graph is cyclic
         for neighbour in dependencies:
-            if ((visited[neighbour] is False and
+            if ((visited.get(neighbour) is False and
                  self.has_cycles_util(neighbour, visited, recursion_stack, new_dependencies, new_dependencies_op) is True) or
-                    recursion_stack[neighbour] is True):
+                    recursion_stack.get(neighbour) is True):
                 return True
 
         recursion_stack[operator_id] = False
