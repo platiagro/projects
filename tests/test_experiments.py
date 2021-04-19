@@ -63,8 +63,8 @@ TASKS_JSON = dumps([
         "dependencies": [OPERATOR_ID]
     },
 ])
-EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
 EXPERIMENT_NOTEBOOK_PATH_2 = {}
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
@@ -142,34 +142,34 @@ class TestExperiments(TestCase):
         conn.execute(text, (EXPERIMENT_ID_4, NAME_4, PROJECT_ID, POSITION_4, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_3, EXPERIMENT_ID_2, TASK_ID_3, PARAMETERS_JSON_2, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_3, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID_3, PARAMETERS_JSON_2, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_4, EXPERIMENT_ID_3, TASK_ID, PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_4, None, "Unset", None, EXPERIMENT_ID_3, TASK_ID, PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, dependencies, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, created_at, dependencies, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_5, EXPERIMENT_ID_4, TASK_ID_4, PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_5, None, "Unset", None, EXPERIMENT_ID_4, TASK_ID_4, PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "

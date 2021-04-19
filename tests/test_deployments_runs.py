@@ -29,8 +29,8 @@ PARAMETERS_JSON = dumps({"coef": 0.1})
 DEP_EMPTY_JSON = dumps([])
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 TAGS_JSON = dumps(["PREDICTOR"])
-DEPLOY_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
-EX_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
+DEPLOY_NOTEBOOK_PATH = "Deployment.ipynb"
+EX_NOTEBOOK_PATH = "Experiment.ipynb"
 
 
 class TestDeploymentsRuns(TestCase):
@@ -91,16 +91,16 @@ class TestDeploymentsRuns(TestCase):
         conn.execute(text, (DEPLOYMENT_ID_2, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, EXPERIMENT_ID, DEPLOYMENT_ID, TASK_ID_2, PARAMETERS_JSON, DEP_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, DEPLOYMENT_ID, TASK_ID_2, PARAMETERS_JSON, DEP_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, EXPERIMENT_ID, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, dumps([OPERATOR_ID]), CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, dumps([OPERATOR_ID]), CREATED_AT, UPDATED_AT,))
         conn.close()
 
     def tearDown(self):

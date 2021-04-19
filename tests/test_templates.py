@@ -32,16 +32,16 @@ POSITION_Y = 0.5
 TASKS = [
     {
         "dependencies": [],
-        "positionX": 0.0,
-        "positionY": 0.0,
-        "taskId": TASK_ID,
+        "position_x": 0.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID,
         "uuid": OPERATOR_ID,
     },
     {
         "dependencies": [OPERATOR_ID],
-        "positionX": 200.0,
-        "positionY": 0.0,
-        "taskId": TASK_ID_2,
+        "position_x": 200.0,
+        "position_y": 0.0,
+        "task_id": TASK_ID_2,
         "uuid": OPERATOR_ID_2,
     },
 ]
@@ -78,14 +78,14 @@ class TestTemplates(TestCase):
         conn = engine.connect()
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (TASK_ID, 'name', 'desc', 'image', None, None, dumps(
             ['TAGS']), dumps([]), 'experiment_path', 'deploy_path', 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (TASK_ID_2, 'name', 'desc', 'image', None, None, dumps(
             ['TAGS']), dumps([]), 'experiment_path', 'deploy_path', 0, CREATED_AT, UPDATED_AT,))
@@ -104,22 +104,22 @@ class TestTemplates(TestCase):
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
-            f"VALUES ()"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
                             POSITION_Y, DEPENDENCIES_EMPTY_JSON, '2000-01-02 00:00:00', UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, deployment_id, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
+        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -134,13 +134,16 @@ class TestTemplates(TestCase):
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
         conn.execute(text)
 
+        text = f"DELETE FROM operators WHERE deployment_id = '{DEPLOYMENT_ID}'"
+        conn.execute(text)
+
         text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
+        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
+        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
@@ -163,9 +166,7 @@ class TestTemplates(TestCase):
     def test_create_template(self):
         rv = TEST_CLIENT.post("/templates", json={})
         result = rv.json()
-        expected = {"message": "name is required"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 422)
 
         rv = TEST_CLIENT.post("/templates", json={
             "name": "foo",
@@ -185,26 +186,19 @@ class TestTemplates(TestCase):
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo",
+            "name": "newfoo",
             "experimentId": EXPERIMENT_ID,
         })
         result = rv.json()
         expected = {
-            "name": "foo",
+            "name": "newfoo",
             "tasks": [
                 {
                     "dependencies": [],
-                    "positionX": POSITION_X,
-                    "positionY": POSITION_Y,
-                    "taskId": TASK_ID,
+                    "position_x": POSITION_X,
+                    "position_y": POSITION_Y,
+                    "task_id": TASK_ID,
                     "uuid": OPERATOR_ID
-                },
-                {
-                    "dependencies": [OPERATOR_ID],
-                    "positionX": POSITION_X,
-                    "positionY": POSITION_Y,
-                    "taskId": TASK_ID,
-                    "uuid": OPERATOR_ID_2
                 }
             ],
         }
@@ -220,32 +214,25 @@ class TestTemplates(TestCase):
             "name": "foo",
             "deploymentId": "UNK",
         })
-        result = rv.get_json()
+        result = rv.json()
         expected = {"message": "The specified deployment does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo",
+            "name": "newfoo2",
             "experimentId": EXPERIMENT_ID,
         })
-        result = rv.get_json()
+        result = rv.json()
         expected = {
-            "name": "foo",
+            "name": "newfoo2",
             "tasks": [
                 {
                     "dependencies": [],
-                    "positionX": POSITION_X,
-                    "positionY": POSITION_Y,
-                    "taskId": TASK_ID,
+                    "position_x": POSITION_X,
+                    "position_y": POSITION_Y,
+                    "task_id": TASK_ID,
                     "uuid": OPERATOR_ID
-                },
-                {
-                    "dependencies": [OPERATOR_ID],
-                    "positionX": POSITION_X,
-                    "positionY": POSITION_Y,
-                    "taskId": TASK_ID,
-                    "uuid": OPERATOR_ID_2
                 }
             ],
         }
@@ -258,25 +245,18 @@ class TestTemplates(TestCase):
         self.assertDictEqual(expected, result)
 
         rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo",
-            "deploymentId": EXPERIMENT_ID,
+            "name": "newfoo3",
+            "deploymentId": DEPLOYMENT_ID,
         })
-        result = rv.get_json()
+        result = rv.json()
         expected = {
-            "name": "foo",
+            "name": "newfoo3",
             "tasks": [
                 {
                     "dependencies": [],
-                    "positionX": POSITION_X,
-                    "positionY": POSITION_Y,
-                    "taskId": TASK_ID,
-                    "uuid": OPERATOR_ID
-                },
-                {
-                    "dependencies": [OPERATOR_ID],
-                    "positionX": POSITION_X,
-                    "positionY": POSITION_Y,
-                    "taskId": TASK_ID,
+                    "position_x": POSITION_X,
+                    "position_y": POSITION_Y,
+                    "task_id": TASK_ID,
                     "uuid": OPERATOR_ID_2
                 }
             ],

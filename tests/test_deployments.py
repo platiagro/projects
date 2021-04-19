@@ -55,8 +55,8 @@ TASKS_JSON = dumps([
     },
 ])
 PARAMETERS_JSON = dumps(PARAMETERS)
-EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -134,17 +134,17 @@ class TestDeployments(TestCase):
                             dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
                             POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
+        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (

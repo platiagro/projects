@@ -42,8 +42,8 @@ TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
 PARAMETERS_2 = {"foo": "bar"}
 PARAMETERS_JSON_2 = dumps(PARAMETERS_2)
-EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -99,45 +99,45 @@ class TestOperators(TestCase):
                             dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
                             POSITION_Y, DEPENDENCIES_OP_ID_2_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
+        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_3, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
+        conn.execute(text, (OPERATOR_ID_3, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_4, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
+        conn.execute(text, (OPERATOR_ID_4, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_X, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_5, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
+        conn.execute(text, (OPERATOR_ID_5, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_6, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON_2,
+        conn.execute(text, (OPERATOR_ID_6, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON_2,
                             POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         conn.close()
