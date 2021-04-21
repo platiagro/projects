@@ -3,6 +3,7 @@ from .deployment import Deployment, DeploymentCreate, DeploymentList, \
     DeploymentUpdate
 from .experiment import Experiment, ExperimentCreate, ExperimentList, \
     ExperimentUpdate
+from .log import Log, LogList
 from .message import Message
 from .monitoring import Monitoring, MonitoringCreate, MonitoringList, \
     MonitoringUpdate
