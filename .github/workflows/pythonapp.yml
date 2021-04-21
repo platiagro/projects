@@ -112,6 +112,64 @@ jobs:
             ex: `PATCH /resources/{resourceId}`
           - Em dúvidas? Mantenha uma consistência com as URLs já existem.
 
+    - name: start minikube
+      id: minikube
+      uses: medyagh/setup-minikube@master
+
+    - name: Install Kustomize
+      run: |
+        curl -sL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+
+    - name: Create Persistent Volumes
+      run: |
+        cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: pv0001
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            capacity:
+              storage: 20Gi
+            hostPath:
+              path: /data/pv0001/
+        EOF
+        cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: pv0002
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            capacity:
+              storage: 20Gi
+            hostPath:
+              path: /data/pv0002/
+        EOF
+
+    - name: Install Kubeflow Pipelines
+      id: kfp
+      run: |
+        kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=admin --user=kubelet --group=system:serviceaccounts
+        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
+        # https://github.com/kubernetes-sigs/kustomize/issues/2205
+        ./kustomize build "github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources/?ref=$BRANCH" | kubectl apply -f -
+        kubectl wait crd/applications.app.k8s.io --for condition=established --timeout=60s
+        ./kustomize build "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic/?ref=$BRANCH" | kubectl apply -f -
+        kubectl -n kubeflow wait --for=condition=Ready pods --all --timeout=240s
+        kubectl -n kubeflow describe svc ml-pipeline
+        kubectl -n kubeflow patch svc ml-pipeline --patch \
+          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
+        kubectl describe nodes
+        MINIKUBE_IP=$(minikube ip)
+        echo ${MINIKUBE_IP}
+        echo ::set-output name=MINIKUBE_IP::${MINIKUBE_IP}
+        curl -sSL ${MINIKUBE_IP}:30000/apis/v1beta1/runs
+      env:
+        BRANCH: "1.2.0"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -133,7 +191,8 @@ jobs:
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://localhost:8888
-        KF_PIPELINES_ENDPOINT: http://localhost:5000
+        KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
+        KF_PIPELINES_NAMESPACE: kubeflow
 
     - name: SonarCloud Scan
       if: ${{ always() }}
