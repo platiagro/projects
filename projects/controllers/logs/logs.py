@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Logs controller."""
+import datetime
 import io
 import re
 import dateutil.parser
@@ -15,8 +16,6 @@ LOG_PATTERN = re.compile(r"(.*?)\s(INFO|WARN|WARNING|ERROR|DEBUG)?\s*(.*)")
 
 
 class LogController:
-    def __init__(self):
-        pass
 
     def list_logs(self, project_id: str, run_id: str, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
         """
@@ -81,23 +80,13 @@ class LogController:
 
                     created_at = pod.metadata.creation_timestamp
 
-                    if raw_logs:
-                        logs.extend(
-                            self.split_messages(raw_logs, task_name),
-                        )
-                    else:
-                        logs.append(
-                            Log(
-                                level="INFO",
-                                title=task_name,
-                                message="Container is creating...",
-                                created_at=created_at,
-                            ),
-                        )
+                    logs.extend(
+                        self.split_messages(raw_logs, task_name, created_at),
+                    )
 
         return logs
 
-    def split_messages(self, raw_logs: str, task_name: str):
+    def split_messages(self, raw_logs: str, task_name: str, created_at: datetime.datetime):
         """
         Splits raw log text into a list of log schemas.
 
@@ -105,12 +94,23 @@ class LogController:
         ----------
         raw_logs : str
         task_name : str
+        created_at : datetime.datetime
 
         Returns
         -------
         list
             Detailed logs with level, Time Stamp and message from pod container.
         """
+        if raw_logs is None:
+            return [
+                Log(
+                    level="INFO",
+                    title=task_name,
+                    message="Container is creating...",
+                    created_at=created_at,
+                ),
+            ]
+
         logs = []
         buffer = io.StringIO(raw_logs)
 
