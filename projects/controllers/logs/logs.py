@@ -48,6 +48,9 @@ class LogController:
         # Retrieves logs from all containers in all pods (that were not deleted)
         logs = self.pods_to_logs(pods)
 
+        # Sorts logs by creation date DESC
+        logs = sorted(logs, key=lambda l: l.created_at, reverse=True)
+
         return LogList(
             logs=logs,
             total=len(logs),
@@ -115,7 +118,6 @@ class LogController:
         buffer = io.StringIO(raw_logs)
 
         message_lines = []
-        created_at = None
         level = "INFO"
 
         line = buffer.readline()
