@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-from json import dumps, loads
+from json import dumps
 from unittest import TestCase
 
 from fastapi.testclient import TestClient
-
-import requests
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
@@ -25,6 +23,7 @@ PARAMETERS = {"coef": 0.1}
 PARAMETERS_JSON = dumps(PARAMETERS)
 TASK_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
+DEPLOYMENT_ID = str(uuid_alpha())
 DEPENDENCIES_OP_ID = []
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
@@ -54,6 +53,12 @@ class TestLogs(TestCase):
         conn.execute(text, (EXPERIMENT_ID, EXPERIMENT_NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
+
+        text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
@@ -80,6 +85,9 @@ class TestLogs(TestCase):
         text = f"DELETE FROM operators WHERE uuid = '{OPERATOR_ID}'"
         conn.execute(text)
 
+        text = f"DELETE FROM deployments WHERE uuid = '{DEPLOYMENT_ID}'"
+        conn.execute(text)
+
         text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
@@ -92,6 +100,15 @@ class TestLogs(TestCase):
 
     def test_list_logs(self):
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/logs")
+        result = rv.json()
+        expected = {
+            "total": 0,
+            "logs": []
+        }
+        self.assertEqual(rv.status_code, 200)
+        self.assertDictEqual(result, expected)
+
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
         result = rv.json()
         expected = {
             "total": 0,
