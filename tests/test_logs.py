@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# import subprocess
+import time
 from json import dumps
 from unittest import TestCase
 
@@ -8,6 +10,7 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.kfp import kfp_client
+
 
 TEST_CLIENT = TestClient(app)
 
@@ -79,6 +82,28 @@ class TestLogs(TestCase):
         conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
+
+        with open("tests/resources/mocked_experiment.yaml", "r") as file:
+            content = file.read()
+
+        content = content.replace("$experimentId", EXPERIMENT_ID)
+        with open("tests/resources/mocked.yaml", "w") as file:
+            file.write(content)
+
+        # Run a default pipeline for log generation
+        kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
+        kfp_client().run_pipeline(
+            experiment_id=kfp_experiment.id,
+            job_name=EXPERIMENT_ID,
+            pipeline_package_path="tests/resources/mocked.yaml",
+        )
+
+        # Awaits the pod to run and complete
+        time.sleep(30)
+        # subprocess.check_output(
+        #     ["kubectl", "-n", KF_PIPELINES_NAMESPACE, "wait", "--for=condition=complete", "pod", "-l", "pipelines.kubeflow.org/cache_enabled=true"],
+        #     timeout=30,
+        # )
 
     def tearDown(self):
         conn = engine.connect()
