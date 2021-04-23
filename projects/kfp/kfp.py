@@ -23,7 +23,8 @@ def kfp_client():
     """
     host = getenv("KF_PIPELINES_ENDPOINT", "ml-pipeline.kubeflow:8888")
     client = Client(host=host)
-    # user namespace is stored in a configuration file at $HOME/.config/kfp/context.json
-    makedirs(path.join(str(Path.home()), ".config", "kfp"), exist_ok=True)
-    client.set_user_namespace(namespace=KF_PIPELINES_NAMESPACE)
+    if KF_PIPELINES_NAMESPACE != "kubeflow":
+        # user namespace is stored in a configuration file at $HOME/.config/kfp/context.json
+        makedirs(path.join(str(Path.home()), ".config", "kfp"), exist_ok=True)
+        client.set_user_namespace(namespace=KF_PIPELINES_NAMESPACE)
     return client
