@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# import subprocess
 import time
 from json import dumps
 from unittest import TestCase
@@ -10,7 +9,6 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.kfp import kfp_client
-
 
 TEST_CLIENT = TestClient(app)
 
@@ -87,6 +85,7 @@ class TestLogs(TestCase):
             content = file.read()
 
         content = content.replace("$experimentId", EXPERIMENT_ID)
+        content = content.replace("$taskName", NAME)
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
 
@@ -98,12 +97,11 @@ class TestLogs(TestCase):
             pipeline_package_path="tests/resources/mocked.yaml",
         )
 
-        # Awaits the pod to run and complete
+        # Awaits 30 seconds (for the pipeline to run and complete)
+        # It's a bad solution since the pod may not have completed yet
+        # subprocess.run(['kubectl', 'wait', ...]) would be a better solution,
+        # but its not compatible with the version of argo workflows we're using
         time.sleep(30)
-        # subprocess.check_output(
-        #     ["kubectl", "-n", KF_PIPELINES_NAMESPACE, "wait", "--for=condition=complete", "pod", "-l", "pipelines.kubeflow.org/cache_enabled=true"],
-        #     timeout=30,
-        # )
 
     def tearDown(self):
         conn = engine.connect()
@@ -126,18 +124,26 @@ class TestLogs(TestCase):
     def test_list_logs(self):
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/logs")
         result = rv.json()
+        result_logs = result.get("logs")
         expected = {
-            "total": 0,
-            "logs": []
+            "level": "INFO",
+            "title": NAME,
+            "message": "hello",
         }
+        # title and created_at are machine-generated
+        # we assert they exist, but we don't assert their values
+        machine_generated = ["createdAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result_logs[0])
+            del result_logs[0][attr]
+        self.assertDictEqual(expected, result_logs[0])
         self.assertEqual(rv.status_code, 200)
-        self.assertDictEqual(result, expected)
 
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
         result = rv.json()
         expected = {
             "total": 0,
-            "logs": []
+            "logs": [],
         }
         self.assertEqual(rv.status_code, 200)
         self.assertDictEqual(result, expected)

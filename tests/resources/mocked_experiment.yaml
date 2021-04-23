@@ -3,7 +3,7 @@ kind: Workflow
 metadata:
   generateName: experiment-$experimentId-
   annotations:
-    { pipelines.kubeflow.org/pipeline_spec: '{"name": "Experiment"}' }
+    pipelines.kubeflow.org/pipeline_spec: '{"name": "Experiment"}'
 spec:
   entrypoint: experiment
   templates:
@@ -13,12 +13,22 @@ spec:
           - echo
           - hello
         env:
-          - { name: EXPERIMENT_ID, value: b281185b-6104-4c8c-8185-31eb53bef8de }
-          - { name: OPERATOR_ID, value: d4560e7e-0a22-425f-9125-19816d060e76 }
-          - { name: RUN_ID, value: "{{workflow.uid}}" }
+          - name: EXPERIMENT_ID
+            value: b281185b-6104-4c8c-8185-31eb53bef8de
+          - name: OPERATOR_ID
+            value: d4560e7e-0a22-425f-9125-19816d060e76
+          - name: RUN_ID
+            value: "{{workflow.uid}}"
+          - name: TASK_NAME
+            value: $taskName
         image: busybox
       inputs:
         parameters: []
+      metadata:
+        labels:
+          experiment: $experimentId
+        annotations:
+          name: $taskName
     - name: experiment
       dag:
         tasks:
