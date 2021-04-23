@@ -1,9 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: experiment-$experimentId-
+  generateName: experiment-b1997225-0357-48b4-85ce-b48e49c23117-
   labels:
-    experiment: $experimentId
+    experiment: b1997225-0357-48b4-85ce-b48e49c23117
   annotations:
     { pipelines.kubeflow.org/pipeline_spec: '{"name": "Experiment"}' }
 spec:
