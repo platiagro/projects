@@ -8,6 +8,7 @@ from typing import List, Optional
 
 from projects.kfp.runs import get_latest_run_id
 from projects.kubernetes.argo import list_workflow_pods
+from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_container_logs
 from projects.schemas.log import Log, LogList
 
@@ -37,13 +38,24 @@ class LogController:
         if run_id == "latest":
             run_id = get_latest_run_id(experiment_id or deployment_id)
 
-        # BUG: workflows and pods are deleted after 1 day due to a
-        # "Garbage Collector" feature of Argo workflows/Kubeflow Pipelines.
-        # The link below provide useful information on how to configure log
-        # persistence and where to set the Time-to-live (TTL) for workflows:
-        # https://github.com/kubeflow/pipelines/issues/844#issuecomment-559841627
-        # We can make use of these configurations and fix this bug later.
-        pods = list_workflow_pods(run_id=run_id)
+        pods = []
+
+        if deployment_id is not None:
+            # Tries to retrieve any pods associated to a seldondeployment
+            pods.extend(
+                list_deployment_pods(deployment_id=deployment_id),
+            )
+
+        if len(pods) == 0:
+            # BUG: workflows and pods are deleted after 1 day due to a
+            # "Garbage Collector" feature of Argo workflows/Kubeflow Pipelines.
+            # The link below provide useful information on how to configure log
+            # persistence and where to set the Time-to-live (TTL) for workflows:
+            # https://github.com/kubeflow/pipelines/issues/844#issuecomment-559841627
+            # We can make use of these configurations and fix this bug later.
+            pods.extend(
+                list_workflow_pods(run_id=run_id),
+            )
 
         # Retrieves logs from all containers in all pods (that were not deleted)
         logs = self.pods_to_logs(pods)
