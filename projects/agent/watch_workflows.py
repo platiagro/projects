@@ -1,0 +1,151 @@
+import logging
+import http
+import re
+import uuid
+
+from kubernetes import watch
+from kubernetes.client.rest import ApiException
+
+from projects import models
+from projects.agent.utils import list_resource_version
+from projects.kfp import KF_PIPELINES_NAMESPACE
+
+GROUP = "argoproj.io"
+VERSION = "v1alpha1"
+PLURAL = "workflows"
+
+
+def watch_workflows(api, session):
+    """
+    Watch workflows events and save data in database.
+
+    Parameters
+    ----------
+    api : kubernetes.client.apis.custom_objects_api.CustomObjectsApi
+    session : sqlalchemy.orm.session.Session
+    """
+    w = watch.Watch()
+
+    # When retrieving a collection of resources the response from the server
+    # will contain a resourceVersion value that can be used to initiate a watch
+    # against the server.
+    resource_version = list_resource_version(
+        group=GROUP,
+        version=VERSION,
+        namespace=KF_PIPELINES_NAMESPACE,
+        plural=PLURAL,
+    )
+
+    while True:
+
+        stream = w.stream(
+            api.list_namespaced_custom_object,
+            group=GROUP,
+            version=VERSION,
+            namespace=KF_PIPELINES_NAMESPACE,
+            plural=PLURAL,
+            resource_version=resource_version,
+        )
+
+        try:
+            for workflow_manifest in stream:
+                logging.info("Event: %s %s " % (workflow_manifest["type"],
+                             workflow_manifest["object"]["metadata"]["name"]))
+
+                update_status(workflow_manifest, session)
+        except ApiException as e:
+            # When the requested watch operations fail because the historical version
+            # of that resource is not available, clients must handle the case by
+            # recognizing the status code 410 Gone, clearing their local cache,
+            # performing a list operation, and starting the watch from the resourceVersion returned by that new list operation.
+            # See: https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes
+            if e.status == http.HTTPStatus.GONE:
+                resource_version = list_resource_version(
+                    group=GROUP,
+                    version=VERSION,
+                    namespace=KF_PIPELINES_NAMESPACE,
+                    plural=PLURAL,
+                )
+
+
+def update_status(workflow_manifest, session):
+    """
+    Parses workflow manifest and sets operators status in database.
+    If workflow is a deployment update deployment in database.
+
+    Parameters
+    ----------
+    workflow_manifest : dict
+    session : sqlalchemy.orm.session.Session
+    """
+    # First, we set the status for operators that are unlisted in object.status.nodes.
+    # Obs: the workflow manifest contains only the nodes that are ready to run (whose dependencies succeeded)
+
+    # if the workflow is pending/running, then unlisted_operators_status = "Pending"
+    # if the workflow succeeded/failed, then unlisted_operators_status = "Unset/Setted Up"
+    workflow_status = workflow_manifest["object"]["status"].get("phase")
+    if workflow_status in {"Pending", "Running"}:
+        unlisted_operators_status = "Pending"
+    else:
+        unlisted_operators_status = "Unset"
+
+    match = re.search(r"(experiment|deployment)-(.*)-\w+", workflow_manifest["object"]["metadata"]["name"])
+    if match:
+        key = match.group(1)
+        id_ = match.group(2)
+        session.query(models.Operator) \
+            .filter_by(**{f"{key}_id": id_}) \
+            .update({"status": unlisted_operators_status})
+
+        # check if this workflow is a deployment
+        if key == "deployment":
+            update_seldon_deployment(
+                deployment_id=id_,
+                status=workflow_status,
+                created_at=workflow_manifest["object"]["status"].get("startedAt"),
+                session=session
+            )
+
+    # Then, we set the status for operators that are listed in object.status.nodes
+    for node in workflow_manifest["object"]["status"].get("nodes", {}).values():
+        try:
+            operator_id = uuid.UUID(node["displayName"])
+        except ValueError:
+            continue
+
+        # if workflow was interrupted, then status = "Terminated"
+        if "message" in node and str(node["message"]) == "terminated":
+            status = "Terminated"
+            status_message = None
+        else:
+            status = str(node["phase"])
+
+            status_message = node.get("message", None)
+            if status_message is not None:
+                status_message = str(status_message)
+
+        session.query(models.Operator) \
+            .filter_by(uuid=operator_id) \
+            .update({"status": status, "status_message": status_message})
+
+    session.commit()
+
+
+def update_seldon_deployment(deployment_id, status, created_at, session):
+    """
+    Sets deployment status and deployed_at in database.
+
+    Parameters
+    ----------
+    deployment_id : str
+    status : str
+    created_at : str
+    """
+    deployed_at = str(created_at.isoformat(
+                    timespec="milliseconds")).replace("+00:00", "Z")
+
+    session.query(models.Deployment) \
+        .filter_by(uuid=deployment_id) \
+        .update({"status": status, "deployed_at": deployed_at})
+
+    session.commit()
