@@ -2,6 +2,7 @@ import logging
 import http
 import re
 import uuid
+from datetime import datetime
 
 from kubernetes import watch
 from kubernetes.client.rest import ApiException
@@ -102,7 +103,7 @@ def update_status(workflow_manifest, session):
             update_seldon_deployment(
                 deployment_id=id_,
                 status=workflow_status,
-                created_at=workflow_manifest["object"]["status"].get("startedAt"),
+                created_at_str=workflow_manifest["object"]["status"].get("startedAt"),
                 session=session
             )
 
@@ -131,7 +132,7 @@ def update_status(workflow_manifest, session):
     session.commit()
 
 
-def update_seldon_deployment(deployment_id, status, created_at, session):
+def update_seldon_deployment(deployment_id, status, created_at_str, session):
     """
     Sets deployment status and deployed_at in database.
 
@@ -139,10 +140,16 @@ def update_seldon_deployment(deployment_id, status, created_at, session):
     ----------
     deployment_id : str
     status : str
-    created_at : str
+    created_at_str : str
     """
-    deployed_at = str(created_at.isoformat(
-                    timespec="milliseconds")).replace("+00:00", "Z")
+    if created_at_str is not None:
+        created_at = datetime.strptime(created_at_str, "%Y-%m-%dT%H:%M:%SZ")
+        deployed_at = str(created_at.isoformat(timespec="milliseconds"))
+    else:
+        deployed_at = created_at_str
+
+    if status is (None or "Running"):
+        status = "Pending"
 
     session.query(models.Deployment) \
         .filter_by(uuid=deployment_id) \

@@ -75,12 +75,18 @@ def update_seldon_deployment(seldon_deployment_manifest, session):
     session : sqlalchemy.orm.session.Session
     """
     deployment_id = seldon_deployment_manifest["object"]["metadata"]["name"]
-    status = seldon_deployment_manifest["object"]["status"]["state"]
-    if status == "Available":
-        status = "Succeeded"
+    status = seldon_deployment_manifest["object"].get("status")
 
-    session.query(models.Deployment) \
-        .filter_by(uuid=deployment_id) \
-        .update({"status": status})
+    if status is not None:
+        state = status["state"]
+        
+        if state == "Available":
+            state = "Succeeded"
+        elif state == "Creating":
+            state = "Pending"
+
+        session.query(models.Deployment) \
+            .filter_by(uuid=deployment_id) \
+            .update({"status": state})
 
     session.commit()

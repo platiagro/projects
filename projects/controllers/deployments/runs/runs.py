@@ -111,7 +111,7 @@ class RunController:
 
         url = get_seldon_deployment_url(deployment_id)
         self.session.query(models.Deployment) \
-            .filter_by(deployment_id=deployment_id) \
+            .filter_by(uuid=deployment_id) \
             .update({"url": url})
         self.session.query(models.Operator) \
             .filter_by(deployment_id=deployment_id) \
