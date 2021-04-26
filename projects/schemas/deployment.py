@@ -38,7 +38,7 @@ class Deployment(DeploymentBase):
     operators: List[Operator]
     created_at: datetime
     updated_at: datetime
-    status: Optional[str]
+    status: str
     url: Optional[str]
     deployed_at: Optional[str]
 
@@ -49,11 +49,14 @@ class Deployment(DeploymentBase):
             name=model.name,
             position=model.position,
             is_active=model.is_active,
+            status=model.status,
+            url=model.url,
             experiment_id=model.experiment_id,
             project_id=model.project_id,
             operators=model.operators,
             created_at=model.created_at,
             updated_at=model.updated_at,
+            deployed_at=model.deployed_at
         )
 
 

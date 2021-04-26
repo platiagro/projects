@@ -26,5 +26,8 @@ class Deployment(Base):
                              primaryjoin=uuid == Response.deployment_id,
                              cascade="all, delete-orphan")
     position = Column(Integer, nullable=False, default=-1)
+    status = Column(String(255), nullable=False, default="Pending")
+    url = Column(String(255), nullable=True)
+    deployed_at = Column(DateTime, nullable=True)
     project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False, index=True)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
