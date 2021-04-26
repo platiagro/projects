@@ -11,6 +11,7 @@ import uuid
 from kubernetes import client, watch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+from translate import Translator
 
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.kube_config import load_kube_config
@@ -131,7 +132,7 @@ def update_status(workflow_manifest):
 
             status_message = node.get("message", None)
             if status_message is not None:
-                status_message = str(status_message)
+                status_message = Translator(to_lang="pt").translate(str(status_message))
 
         session.query(models.Operator) \
             .filter_by(uuid=operator_id) \
