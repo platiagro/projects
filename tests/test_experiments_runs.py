@@ -8,7 +8,6 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.kfp import kfp_client
-from projects.object_storage import BUCKET_NAME
 
 TEST_CLIENT = TestClient(app)
 
