@@ -2,7 +2,7 @@
 """Operator model."""
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, JSON, String, Text
+from sqlalchemy import Column, DateTime, JSON, String, ForeignKey, Float
 from sqlalchemy.orm import backref, relationship
 
 from projects.database import Base
@@ -11,7 +11,6 @@ from projects.database import Base
 class Operator(Base):
     __tablename__ = "operators"
     uuid = Column(String(255), primary_key=True)
-    name = Column(Text, nullable=True)
     deployment_id = Column(String(255), ForeignKey("deployments.uuid"), nullable=True, index=True)
     experiment_id = Column(String(255), ForeignKey("experiments.uuid"), nullable=True, index=True)
     task_id = Column(String(255), ForeignKey("tasks.uuid"), nullable=False, index=True)

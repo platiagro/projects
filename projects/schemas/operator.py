@@ -17,7 +17,6 @@ class OperatorBase(BaseModel):
 
 
 class OperatorCreate(OperatorBase):
-    name: Optional[str]
     task_id: str
     parameters: Optional[Dict]
     position_x: int
@@ -26,7 +25,6 @@ class OperatorCreate(OperatorBase):
 
 
 class OperatorUpdate(OperatorBase):
-    name: Optional[str]
     parameters: Optional[Dict]
     position_x: Optional[int]
     position_y: Optional[int]
@@ -44,7 +42,6 @@ class OperatorTask(BaseModel):
 
 class Operator(OperatorBase):
     uuid: str
-    name: str
     task_id: str
     task: OperatorTask
     dependencies: List[str]
@@ -64,10 +61,8 @@ class Operator(OperatorBase):
             name=model.task.name,
             tags=model.task.tags,
         )
-        name = task.name if model.name is None else model.name
         return Operator(
             uuid=model.uuid,
-            name=name,
             task_id=model.task_id,
             task=task,
             dependencies=model.dependencies,

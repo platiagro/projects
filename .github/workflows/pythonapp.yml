@@ -24,19 +24,6 @@ jobs:
         - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
-      minio:
-        image: bitnami/minio:latest
-        env:
-          MINIO_ACCESS_KEY: minio
-          MINIO_SECRET_KEY: minio123
-        ports:
-        - 9000:9000
-
-      jupyter:
-        image: jupyter/base-notebook
-        ports:
-        - 8888:8888
-
     steps:
     - uses: actions/checkout@v2
 

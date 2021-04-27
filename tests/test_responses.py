@@ -51,6 +51,7 @@ class TestResponses(TestCase):
 
         conn.close()
 
+
     def tearDown(self):
         self.proc.terminate()
 
@@ -63,6 +64,7 @@ class TestResponses(TestCase):
         conn.execute(text)
 
         conn.close()
+
 
     def test_parse_args(self):
         parser = parse_args([])
