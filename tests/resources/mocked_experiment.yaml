@@ -20,7 +20,8 @@ spec:
       container:
         args:
           - echo
-          - hello
+          - -e
+          - "hello\nhello"
         env:
           - name: EXPERIMENT_ID
             value: b281185b-6104-4c8c-8185-31eb53bef8de
