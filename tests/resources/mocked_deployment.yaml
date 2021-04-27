@@ -39,7 +39,6 @@ spec:
           apiVersion: machinelearning.seldon.io/v1alpha2
           kind: SeldonDeployment
           metadata:
-            deploymentId: $deploymentId
             labels:
               app: seldon
             name: $deploymentId
