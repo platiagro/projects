@@ -152,6 +152,7 @@ jobs:
 
     - name: Install Seldon Core
       run: |
+        kubectl create namespace kubeflow
         helm install seldon-core seldon-core-operator \
           --repo https://storage.googleapis.com/seldon-charts \
           --set usageMetrics.enabled=false \
