@@ -115,6 +115,8 @@ jobs:
     - name: start minikube
       id: minikube
       uses: medyagh/setup-minikube@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install Kustomize / Helm
       run: |
