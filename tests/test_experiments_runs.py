@@ -8,6 +8,7 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.kfp import kfp_client
+from projects.object_storage import BUCKET_NAME
 
 TEST_CLIENT = TestClient(app)
 
@@ -28,8 +29,8 @@ ARGUMENTS = None
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
-EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -90,10 +91,10 @@ class TestExperimentsRuns(TestCase):
                             dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
+        conn.execute(text, (OPERATOR_ID, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
                             POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
 

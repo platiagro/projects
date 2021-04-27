@@ -1810,11 +1810,11 @@ components:
           type: string
           format: date-time
         hasExperiment:
-          type: boolean
+          type: string
         hasDeployment:
-          type: boolean
+          type: string
         hasPreDeployment:
-          type: boolean
+          type: string
     Projects:
       type: object
       properties:
@@ -2041,8 +2041,6 @@ components:
         uuid:
           type: string
           format: uuid
-        name:
-          type: string
         taskId:
           type: string
           format: uuid
@@ -2593,11 +2591,8 @@ components:
           schema:
             type: object
             properties:
-              name:
-                type: string
               taskId:
                 type: string
-                format: uuid
               dependencies:
                 type: array
                 items:
@@ -2619,11 +2614,8 @@ components:
           schema:
             type: object
             properties:
-              name:
-                type: string
               taskId:
                 type: string
-                format: uuid
               dependencies:
                 type: array
                 items:
