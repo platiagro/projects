@@ -87,6 +87,7 @@ class TestLogs(TestCase):
             content = file.read()
         content = content.replace("$experimentId", EXPERIMENT_ID)
         content = content.replace("$taskName", NAME)
+        content = content.replace("$operatorId", OPERATOR_ID)
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
         kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
@@ -100,6 +101,7 @@ class TestLogs(TestCase):
             content = file.read()
         content = content.replace("$deploymentId", DEPLOYMENT_ID)
         content = content.replace("$taskName", NAME)
+        content = content.replace("$operatorId", OPERATOR_ID_2)
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
         kfp_experiment = kfp_client().create_experiment(name=DEPLOYMENT_ID)

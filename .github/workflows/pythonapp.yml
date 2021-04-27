@@ -205,6 +205,15 @@ jobs:
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
 
+    - name: DEBUG
+      if: ${{ always() }}
+      run: |
+        kubectl get pods -A
+        kubectl get workflows -A
+        kubectl -n kubeflow describe workflows
+        kubectl -n kubeflow describe pods
+        kubectl -n kubeflow logs --tail 100 -l seldon.io/model=true
+
     - name: SonarCloud Scan
       if: ${{ always() }}
       uses: sonarsource/sonarcloud-github-action@master
