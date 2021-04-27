@@ -33,8 +33,8 @@ IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
-EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 
@@ -63,10 +63,10 @@ class TestFigures(TestCase):
                             dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
 
         t = np.arange(0.0, 2.0, 0.01)
@@ -80,7 +80,7 @@ class TestFigures(TestCase):
                               figure=fig)
 
     def tearDown(self):
-        prefix = "Experiments/{EXPERIMENT_ID}"
+        prefix = f"experiments/{EXPERIMENT_ID}"
         for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
             MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
 

@@ -75,7 +75,7 @@ class TemplateController:
                 .scalar() is not None
 
             if not exists:
-                raise BadRequest("The specified experiment does not exist")
+                raise NotFound("The specified experiment does not exist")
 
             operators = self.session.query(models.Operator) \
                 .filter_by(experiment_id=template.experiment_id) \
@@ -87,7 +87,7 @@ class TemplateController:
                 .scalar() is not None
 
             if not exists:
-                raise BadRequest("The specified deployment does not exist")
+                raise NotFound("The specified deployment does not exist")
 
             operators = self.session.query(models.Operator) \
                 .filter_by(deployment_id=template.deployment_id) \

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from io import BytesIO
 from json import dumps, loads
 from unittest import TestCase
 
@@ -24,8 +25,8 @@ ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
-EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 IS_DEFAULT = False
 PARAMETERS = [{"default": True, "name": "shuffle", "type": "boolean"}]
 CREATED_AT = "2000-01-01 00:00:00"
@@ -35,6 +36,8 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 SAMPLE_NOTEBOOK = '{"cells":[{"cell_type":"code","execution_count":null,"metadata":{"tags":["parameters"]},"outputs":[],"source":["shuffle = True #@param {type: \\"boolean\\"}"]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}'
 
 TASK_ID_2 = str(uuid_alpha())
+EXPERIMENT_NOTEBOOK_PATH_2 = f"minio://{BUCKET_NAME}/tasks/{TASK_ID_2}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH_2 = f"minio://{BUCKET_NAME}/tasks/{TASK_ID_2}/Deployment.ipynb"
 
 
 class TestTasks(TestCase):
@@ -53,13 +56,29 @@ class TestTasks(TestCase):
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (TASK_ID_2, 'foo 2', DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON,
-                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+                            dumps([]), EXPERIMENT_NOTEBOOK_PATH_2, DEPLOYMENT_NOTEBOOK_PATH_2, 0, CREATED_AT, UPDATED_AT,))
         conn.close()
 
         try:
             MINIO_CLIENT.make_bucket(BUCKET_NAME)
         except BucketAlreadyOwnedByYou:
             pass
+
+        file = BytesIO(SAMPLE_NOTEBOOK.encode("utf-8"))
+        MINIO_CLIENT.put_object(
+            bucket_name=BUCKET_NAME,
+            object_name=EXPERIMENT_NOTEBOOK_PATH[len(f"minio://{BUCKET_NAME}/"):],
+            data=file,
+            length=file.getbuffer().nbytes,
+        )
+
+        file = BytesIO(b'{"cells":[{"cell_type":"code","execution_count":null,"metadata":{},"outputs":[],"source":[]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}')
+        MINIO_CLIENT.put_object(
+            bucket_name=BUCKET_NAME,
+            object_name=DEPLOYMENT_NOTEBOOK_PATH[len(f"minio://{BUCKET_NAME}/"):],
+            data=file,
+            length=file.getbuffer().nbytes,
+        )
 
         session = requests.Session()
         session.cookies.update(COOKIES)

@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
+from projects.object_storage import BUCKET_NAME
 
 TEST_CLIENT = TestClient(app)
 
@@ -21,8 +22,8 @@ DESCRIPTION = "long foo"
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 PARAMETERS_JSON = dumps({"default": True, "name": "shuffle", "type": "boolean"})
 TAGS_JSON = dumps(["PREDICTOR"])
-EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
 POSITION = 0
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"

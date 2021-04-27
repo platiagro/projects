@@ -18,8 +18,7 @@ class TemplateBase(BaseModel):
 
 class TemplateCreate(TemplateBase):
     name: str
-    experiment_id: Optional[str]
-    deployment_id: Optional[str]
+    experiment_id: str
 
 
 class TemplateUpdate(TemplateBase):

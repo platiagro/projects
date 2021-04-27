@@ -32,16 +32,16 @@ POSITION_Y = 0.5
 TASKS = [
     {
         "dependencies": [],
-        "position_x": 0.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID,
+        "positionX": 0.0,
+        "positionY": 0.0,
+        "taskId": TASK_ID,
         "uuid": OPERATOR_ID,
     },
     {
         "dependencies": [OPERATOR_ID],
-        "position_x": 200.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID_2,
+        "positionX": 200.0,
+        "positionY": 0.0,
+        "taskId": TASK_ID_2,
         "uuid": OPERATOR_ID_2,
     },
 ]
@@ -68,6 +68,8 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
+DEPENDENCIES_OP_ID = [OPERATOR_ID]
+DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
 
 class TestTemplates(TestCase):
@@ -76,14 +78,14 @@ class TestTemplates(TestCase):
         conn = engine.connect()
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (TASK_ID, 'name', 'desc', 'image', None, None, dumps(
             ['TAGS']), dumps([]), 'experiment_path', 'deploy_path', 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (TASK_ID_2, 'name', 'desc', 'image', None, None, dumps(
             ['TAGS']), dumps([]), 'experiment_path', 'deploy_path', 0, CREATED_AT, UPDATED_AT,))
@@ -102,23 +104,23 @@ class TestTemplates(TestCase):
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES ()"
         )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
+        conn.execute(text, (OPERATOR_ID, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
                             POSITION_Y, DEPENDENCIES_EMPTY_JSON, '2000-01-02 00:00:00', UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, deployment_id, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
-                            POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_2, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
+                            POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
@@ -132,20 +134,13 @@ class TestTemplates(TestCase):
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
         conn.execute(text)
 
-        conn = engine.connect()
-        text = f"DELETE FROM templates WHERE name IN ('foo bar', 'foo bar foo', 'foo bar foo bar')"
-        conn.execute(text)
-
-        text = f"DELETE FROM operators WHERE deployment_id = '{DEPLOYMENT_ID}'"
-        conn.execute(text)
-
         text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
+        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
+        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
@@ -161,14 +156,16 @@ class TestTemplates(TestCase):
     def test_list_templates(self):
         rv = TEST_CLIENT.get("/templates")
         result = rv.json()
-        self.assertIsInstance(result["templates"], list)
+        self.assertIsInstance(result["tasks"], list)
         self.assertIsInstance(result["total"], int)
         self.assertEqual(rv.status_code, 200)
 
     def test_create_template(self):
         rv = TEST_CLIENT.post("/templates", json={})
         result = rv.json()
-        self.assertEqual(rv.status_code, 422)
+        expected = {"message": "name is required"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post("/templates", json={
             "name": "foo",
@@ -188,19 +185,26 @@ class TestTemplates(TestCase):
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo bar",
+            "name": "foo",
             "experimentId": EXPERIMENT_ID,
         })
         result = rv.json()
         expected = {
-            "name": "foo bar",
+            "name": "foo",
             "tasks": [
                 {
                     "dependencies": [],
-                    "position_x": POSITION_X,
-                    "position_y": POSITION_Y,
-                    "task_id": TASK_ID,
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
                     "uuid": OPERATOR_ID
+                },
+                {
+                    "dependencies": [OPERATOR_ID],
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
+                    "uuid": OPERATOR_ID_2
                 }
             ],
         }
@@ -213,27 +217,66 @@ class TestTemplates(TestCase):
         self.assertDictEqual(expected, result)
 
         rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo bar foo",
+            "name": "foo",
             "deploymentId": "UNK",
         })
-        result = rv.json()
+        result = rv.get_json()
         expected = {"message": "The specified deployment does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo bar foo bar",
-            "deploymentId": DEPLOYMENT_ID,
+            "name": "foo",
+            "experimentId": EXPERIMENT_ID,
         })
-        result = rv.json()
+        result = rv.get_json()
         expected = {
-            "name": "foo bar foo bar",
+            "name": "foo",
             "tasks": [
                 {
                     "dependencies": [],
-                    "position_x": POSITION_X,
-                    "position_y": POSITION_Y,
-                    "task_id": TASK_ID,
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
+                    "uuid": OPERATOR_ID
+                },
+                {
+                    "dependencies": [OPERATOR_ID],
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
+                    "uuid": OPERATOR_ID_2
+                }
+            ],
+        }
+        # uuid, created_at, updated_at are machine-generated
+        # we assert they exist, but we don't assert their values
+        machine_generated = ["uuid", "createdAt", "updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
+
+        rv = TEST_CLIENT.post("/templates", json={
+            "name": "foo",
+            "deploymentId": EXPERIMENT_ID,
+        })
+        result = rv.get_json()
+        expected = {
+            "name": "foo",
+            "tasks": [
+                {
+                    "dependencies": [],
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
+                    "uuid": OPERATOR_ID
+                },
+                {
+                    "dependencies": [OPERATOR_ID],
+                    "positionX": POSITION_X,
+                    "positionY": POSITION_Y,
+                    "taskId": TASK_ID,
                     "uuid": OPERATOR_ID_2
                 }
             ],
@@ -246,6 +289,7 @@ class TestTemplates(TestCase):
             self.assertIn(attr, result)
             del result[attr]
         self.assertDictEqual(expected, result)
+
 
     def test_get_template(self):
         rv = TEST_CLIENT.get("/templates/foo")
@@ -271,6 +315,12 @@ class TestTemplates(TestCase):
         expected = {"message": "The specified template does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.patch(f"/templates/{TEMPLATE_ID}", json={
+            "unk": "bar",
+        })
+        result = rv.json()
+        self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.patch(f"/templates/{TEMPLATE_ID}", json={
             "name": "bar",
