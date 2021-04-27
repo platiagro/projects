@@ -116,9 +116,10 @@ jobs:
       id: minikube
       uses: medyagh/setup-minikube@master
 
-    - name: Install Kustomize
+    - name: Install Kustomize / Helm
       run: |
         curl -sL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
     - name: Create Persistent Volumes
       run: |
@@ -148,6 +149,13 @@ jobs:
             hostPath:
               path: /data/pv0002/
         EOF
+
+    - name: Install Seldon Core
+      run: |
+        helm install seldon-core seldon-core-operator \
+          --repo https://storage.googleapis.com/seldon-charts \
+          --set usageMetrics.enabled=false \
+          --namespace kubeflow
 
     - name: Install Kubeflow Pipelines
       id: kfp
