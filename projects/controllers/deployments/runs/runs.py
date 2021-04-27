@@ -95,7 +95,7 @@ class RunController:
         except ValueError as e:
             raise BadRequest(str(e))
 
-        # Remove the object from the operator session in order not to update the database,
+        # Remove the object from the perator session in order not to update the database,
         # Just need to remove the dependencies for the runs.
         for operator in deployment.operators:
             self.session.expunge(operator)
