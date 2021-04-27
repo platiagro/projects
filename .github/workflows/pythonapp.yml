@@ -158,7 +158,8 @@ jobs:
         helm install seldon-core seldon-core-operator \
           --repo https://storage.googleapis.com/seldon-charts \
           --set usageMetrics.enabled=false \
-          --namespace kubeflow
+          --namespace kubeflow \
+          --version v1.4.0
 
     - name: Install Kubeflow Pipelines
       id: kfp
