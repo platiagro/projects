@@ -18,3 +18,4 @@ kubernetes==10.0
 # package to infer file type and MIME type
 filetype==1.0.7
 # package to translate status message
+translate==3.5.0
