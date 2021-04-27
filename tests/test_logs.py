@@ -18,6 +18,7 @@ CREATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 DESCRIPTION = "Description"
 OPERATOR_ID = str(uuid_alpha())
+OPERATOR_ID_2 = str(uuid_alpha())
 POSITION_X = 0.3
 POSITION_Y = 0.5
 PARAMETERS = {"coef": 0.1}
@@ -81,19 +82,30 @@ class TestLogs(TestCase):
                             POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
 
+        # Creates pipelines for log generation
         with open("tests/resources/mocked_experiment.yaml", "r") as file:
             content = file.read()
-
         content = content.replace("$experimentId", EXPERIMENT_ID)
         content = content.replace("$taskName", NAME)
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
-
-        # Run a default pipeline for log generation
         kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
         kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=EXPERIMENT_ID,
+            pipeline_package_path="tests/resources/mocked.yaml",
+        )
+
+        with open("tests/resources/mocked_deployment.yaml", "r") as file:
+            content = file.read()
+        content = content.replace("$deploymentId", DEPLOYMENT_ID)
+        content = content.replace("$taskName", NAME)
+        with open("tests/resources/mocked.yaml", "w") as file:
+            file.write(content)
+        kfp_experiment = kfp_client().create_experiment(name=DEPLOYMENT_ID)
+        kfp_client().run_pipeline(
+            experiment_id=kfp_experiment.id,
+            job_name=DEPLOYMENT_ID,
             pipeline_package_path="tests/resources/mocked.yaml",
         )
 

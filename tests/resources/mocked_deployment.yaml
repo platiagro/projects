@@ -3,19 +3,15 @@ kind: Workflow
 metadata:
   generateName: deployment-$deploymentId-
   annotations:
-    {
-      pipelines.kubeflow.org/pipeline_spec: '{"name": "Deployment."}',
-    }
+    pipelines.kubeflow.org/pipeline_spec: '{"name": "Deployment"}'
 spec:
   entrypoint: deployment
   templates:
-    - name: mocked-deployment-$deploymentId
+    - name: deployment
       dag:
         tasks:
-          - {
-              name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7,
-              template: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7,
-            }
+          - name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
+            template: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
           - name: deployment
             template: deployment
             dependencies: []
@@ -35,10 +31,8 @@ spec:
           spec:
             annotations:
               deployment_version: v1
-              seldon.io/engine-separate-pod: 'true'
-              seldon.io/grpc-read-timeout: '60000'
-              seldon.io/rest-connection-timeout: '60000'
-              seldon.io/rest-read-timeout: '60000'
+              prometheus.io/scrape: "false"
+              seldon.io/executor: "true"
             name: aa23c286-1524-4ae9-ae44-6c3e63eb9861
             predictors:
             - componentSpecs:
@@ -49,8 +43,8 @@ spec:
                       value: aa23c286-1524-4ae9-ae44-6c3e63eb9861
                     - name: OPERATOR_ID
                       value: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
-                    - name: PARAMETERS
-                      value: '[]'
+                    - name: TASK_NAME
+                      value: $taskName
                     image: seldonio/mock_classifier:1.5.0-dev
                     name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
                     securityContext:
@@ -69,10 +63,7 @@ spec:
               svcOrchSpec:
                 env:
                 - name: SELDON_LOG_LEVEL
-                  value: DEBUG
-            resources:
-              requests:
-                memory: 2G
+                  value: INFO
       outputs:
         parameters:
           - name: deployment-manifest

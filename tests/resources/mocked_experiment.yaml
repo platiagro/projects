@@ -7,6 +7,14 @@ metadata:
 spec:
   entrypoint: experiment
   templates:
+    - name: experiment
+      dag:
+        tasks:
+          - name: d4560e7e-0a22-425f-9125-19816d060e76
+            template: d4560e7e-0a22-425f-9125-19816d060e76
+            dependencies: []
+            arguments:
+              parameters: []
     - name: d4560e7e-0a22-425f-9125-19816d060e76
       container:
         args:
@@ -29,14 +37,6 @@ spec:
           experiment: $experimentId
         annotations:
           name: $taskName
-    - name: experiment
-      dag:
-        tasks:
-          - name: d4560e7e-0a22-425f-9125-19816d060e76
-            template: d4560e7e-0a22-425f-9125-19816d060e76
-            dependencies: []
-            arguments:
-              parameters: []
   arguments:
     parameters: []
   serviceAccountName: pipeline-runner
