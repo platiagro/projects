@@ -94,6 +94,11 @@ class RunController:
         except ValueError as e:
             raise BadRequest(str(e))
 
+        # Remove the object from the operator session in order not to update the database,
+        # Just need to remove the dependencies for the runs.
+        for operator in deployment.operators:
+            self.session.expunge(operator)
+
         # Deploy monitoring tasks
         monitorings = self.monitoring_controller.list_monitorings(project_id=project_id,
                                                                   deployment_id=deployment_id).monitorings
