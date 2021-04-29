@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from projects.controllers import DeploymentController, ProjectController
-from projects.controllers.deployments.runs import RunController
-from projects.controllers.deployments.runs.logs import LogController
+from projects.controllers.logs import LogController
 from projects.database import session_scope
 
 router = APIRouter(
@@ -38,10 +37,7 @@ async def handle_list_logs(project_id: str,
     deployment_controller = DeploymentController(session)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
-    run_controller = RunController(session)
-    run_controller.raise_if_run_does_not_exist(run_id, deployment_id)
-
-    log_controller = LogController(session)
+    log_controller = LogController()
     logs = log_controller.list_logs(project_id=project_id,
                                     deployment_id=deployment_id,
                                     run_id=run_id)

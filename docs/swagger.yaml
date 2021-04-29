@@ -50,6 +50,9 @@ tags:
     description: >
       Results are the outputs of experiment runs.
       They are: figures, metrics, datasets and log messages.
+  - name: "Logs"
+    description: >
+      Output logs of runs.
   - name: "Comparisons"
     description: >
       Comparisons organize results from different experiments for evaluation/comparision.
@@ -990,11 +993,11 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/logs:
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/logs:
     get:
-      summary: "Get logs from Jupyter Notebook"
+      summary: "Get logs from an experiment run"
       tags:
-        - "Results"
+        - "Logs"
       parameters:
         - in: path
           name: projectId
@@ -1013,15 +1016,9 @@ paths:
           required: true
           schema:
             type: string
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       responses:
         "200":
-          $ref: "#/components/responses/ExperimentLog"
+          $ref: "#/components/responses/Logs"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -1459,7 +1456,7 @@ paths:
     get:
       summary: "Get logs from a deployment run"
       tags:
-        - "Results"
+        - "Logs"
       parameters:
         - in: path
           name: projectId
@@ -1479,7 +1476,7 @@ paths:
             type: string
       responses:
         "200":
-          $ref: "#/components/responses/DeploymentLog"
+          $ref: "#/components/responses/Logs"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -2092,58 +2089,30 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Operator"
-    ExperimentLog:
+    Logs:
       type: object
       properties:
-        exception:
-          type: string
-          example: "KeyError"
-        traceback:
+        total:
+          type: number
+          example: 2
+        logs:
           type: array
           items:
-            type: string
-            example:
-              - "---------------------------------------------------------------------------"
-              - "KeyError                                  Traceback (most recent call last)"
-              - "<ipython-input-6-3c08f8d95ae4> in <module>"
-              - "----> 1 df.dropna(subset = [target],inplace=True)"
-              - "      2 y = df[target].to_numpy()"
-              - ""
-              - "/opt/conda/lib/python3.7/site-packages/pandas/core/frame.py in dropna(self, axis, how, thresh, subset, inplace)"
-              - "   4857                 check = indices == -1"
-              - "   4858                 if check.any():"
-              - "-> 4859                     raise KeyError(list(np.compress(check, subset)))"
-              - "   4860                 agg_obj = self.take(indices, axis=agg_axis)"
-              - "   4861 "
-              - ""
-              - "KeyError: ['species']"
-    DeploymentLog:
-      type: array
-      items:
-        type: object
-        properties:
-          containerName:
-            type: string
-            example: Regressor Random Forest
-          logs:
-            type: array
-            items:
-              type: object
-              properties:
-                level:
-                  type: string
-                  enum: [DEBUG, INFO, WARNING, ERROR]
-                  example: INFO
-                message:
-                  type: string
-                  example: seldon_core.microservice:load_annotations:114 Found annotation deployment_version
-                timestamp:
-                  type: string
-                  format: date-time
-          status:
-            type: string
-            enum: [Creating, Completed]
-            example: Completed
+            type: object
+            properties:
+              level:
+                type: string
+                enum: [DEBUG, INFO, WARNING, ERROR]
+                example: INFO
+              title:
+                type: string
+                example: Regressor Random Forest
+              message:
+                type: string
+                example: seldon_core.microservice:load_annotations:114 Found annotation deployment_version
+              createdAt:
+                type: string
+                format: date-time
     Datasets:
       type: array
       items:
@@ -2791,18 +2760,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Operators"
-    ExperimentLog:
+    Logs:
       description: ""
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ExperimentLog"
-    DeploymentLog:
-      description: ""
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/DeploymentLog"
+            $ref: "#/components/schemas/Logs"
     Datasets:
       description: ""
       content:
