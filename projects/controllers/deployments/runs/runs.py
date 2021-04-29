@@ -12,6 +12,7 @@ from projects.kfp.deployments import get_deployment_runs
 from projects.kfp.monitorings import deploy_monitoring
 from projects.kfp.pipeline import undeploy_pipeline
 from projects.kubernetes.kube_config import load_kube_config
+from projects.kubernetes.seldon import get_seldon_deployment_url
 
 
 NOT_FOUND = NotFound("The specified run does not exist")
@@ -113,10 +114,13 @@ class RunController:
                     monitoring_id=monitoring.uuid
                 )
 
-        update_data = {"status": "Pending"}
+        url = get_seldon_deployment_url(deployment_id)
+        self.session.query(models.Deployment) \
+            .filter_by(uuid=deployment_id) \
+            .update({"url": url})
         self.session.query(models.Operator) \
             .filter_by(deployment_id=deployment_id) \
-            .update(update_data)
+            .update({"status": "Pending"})
         self.session.commit()
 
         run["deploymentId"] = deployment_id

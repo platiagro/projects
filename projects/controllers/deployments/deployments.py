@@ -9,7 +9,6 @@ from projects.controllers.operators import OperatorController
 from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
-from projects.kfp.deployments import get_deployment_runs, list_deployments_runs
 from projects.kfp.monitorings import undeploy_monitoring
 
 NOT_FOUND = NotFound("The specified deployment does not exist")
@@ -59,22 +58,7 @@ class DeploymentController:
             .order_by(models.Deployment.position.asc()) \
             .all()
 
-        deployments = schemas.DeploymentList.from_orm(deployments, len(deployments))
-
-        deployment_runs = {}
-        for deployment_run in list_deployments_runs():
-            deployment_id = deployment_run["deploymentId"]
-            if deployment_id not in deployment_runs:
-                deployment_runs[deployment_id] = deployment_run
-
-        for deployment in deployments.deployments:
-            if deployment.uuid in deployment_runs:
-                deployment_run = deployment_runs[deployment.uuid]
-                deployment.deployed_at = deployment_run["createdAt"]
-                deployment.status = deployment_run["status"]
-                deployment.url = deployment_run["url"]
-
-        return deployments
+        return schemas.DeploymentList.from_orm(deployments, len(deployments))
 
     def create_deployment(self, deployment: schemas.DeploymentCreate, project_id: str):
         """
@@ -148,16 +132,8 @@ class DeploymentController:
         if deployment is None:
             raise NOT_FOUND
 
-        deployment = schemas.Deployment.from_orm(deployment)
+        return schemas.Deployment.from_orm(deployment)
 
-        deployment_runs = get_deployment_runs(deployment_id)
-
-        if deployment_runs:
-            deployment.deployed_at = deployment_runs["createdAt"]
-            deployment.status = deployment_runs["status"]
-            deployment.url = deployment_runs["url"]
-
-        return deployment
 
     def update_deployment(self, deployment: schemas.DeploymentUpdate, project_id: str, deployment_id: str):
         """

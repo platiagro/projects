@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-import projects.schemas.deployment
+import projects.schemas.operator
 from projects.controllers import DeploymentController, OperatorController, \
     ProjectController
 from projects.database import session_scope

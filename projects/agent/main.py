@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
 """Persistence agent."""
 import argparse
-import http
-import logging
 import os
-import re
 import sys
-import uuid
+import threading
 
-from kubernetes import client, watch
+from kubernetes import client
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from projects.kfp import KF_PIPELINES_NAMESPACE
+from projects.agent.watchers.deployment import watch_seldon_deployments
+from projects.agent.watchers.workflow import watch_workflows
 from projects.kubernetes.kube_config import load_kube_config
-from projects import models
 
 DB_HOST = os.getenv("MYSQL_DB_HOST", "mysql.platiagro")
 DB_NAME = os.getenv("MYSQL_DB_NAME", "platiagro")
@@ -36,108 +33,12 @@ def run():
     """
     load_kube_config()
     api = client.CustomObjectsApi()
-    w = watch.Watch()
 
-    # When retrieving a collection of resources the response from the server
-    # will contain a resourceVersion value that can be used to initiate a watch
-    # against the server.
-    resource_version = list_resource_version()
+    workflows_thread = threading.Thread(target=watch_workflows, args=(api, session))
+    sdeps_thread = threading.Thread(target=watch_seldon_deployments, args=(api, session))
 
-    while True:
-
-        stream = w.stream(
-            api.list_namespaced_custom_object,
-            group="argoproj.io",
-            version="v1alpha1",
-            namespace=KF_PIPELINES_NAMESPACE,
-            plural="workflows",
-            resource_version=resource_version,
-        )
-
-        try:
-            for workflow_manifest in stream:
-                logging.info("Event: %s %s " % (workflow_manifest["type"], workflow_manifest["object"]["metadata"]["name"],))
-
-                update_status(workflow_manifest)
-        except client.exceptions.ApiException as e:
-            # When the requested watch operations fail because the historical version
-            # of that resource is not available, clients must handle the case by
-            # recognizing the status code 410 Gone, clearing their local cache,
-            # performing a list operation, and starting the watch from the resourceVersion returned by that new list operation.
-            # See: https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes
-            if e.status == http.HTTPStatus.GONE:
-                resource_version = list_resource_version()
-
-
-def list_resource_version():
-    """
-    Determines the resource version the watcher should list from.
-
-    Returns
-    -------
-    str
-    """
-    load_kube_config()
-    api = client.CustomObjectsApi()
-
-    r = api.list_namespaced_custom_object(
-        group="argoproj.io",
-        version="v1alpha1",
-        namespace=KF_PIPELINES_NAMESPACE,
-        plural="workflows",
-    )
-    return r["metadata"]["resourceVersion"]
-
-
-def update_status(workflow_manifest):
-    """
-    Parses workflow manifest and sets operators status in database.
-
-    Parameters
-    ----------
-    workflow_manifest: dict
-    """
-    # First, we set the status for operators that are unlisted in object.status.nodes.
-    # Obs: the workflow manifest contains only the nodes that are ready to run (whose dependencies succeeded)
-
-    # if the workflow is pending/running, then unlisted_operators_status = "Pending"
-    # if the workflow succeeded/failed, then unlisted_operators_status = "Unset/Setted Up"
-    if workflow_manifest["object"]["status"].get("phase") in {"Pending", "Running"}:
-        unlisted_operators_status = "Pending"
-    else:
-        unlisted_operators_status = "Unset"
-
-    match = re.search(r"(experiment|deployment)-(.*)-\w+", workflow_manifest["object"]["metadata"]["name"])
-    if match:
-        key = match.group(1)
-        id_ = match.group(2)
-        session.query(models.Operator) \
-            .filter_by(**{f"{key}_id": id_}) \
-            .update({"status": unlisted_operators_status})
-
-    # Then, we set the status for operators that are listed in object.status.nodes
-    for node in workflow_manifest["object"]["status"].get("nodes", {}).values():
-        try:
-            operator_id = uuid.UUID(node["displayName"])
-        except ValueError:
-            continue
-
-        # if workflow was interrupted, then status = "Terminated"
-        if "message" in node and str(node["message"]) == "terminated":
-            status = "Terminated"
-            status_message = None
-        else:
-            status = str(node["phase"])
-
-            status_message = node.get("message", None)
-            if status_message is not None:
-                status_message = str(status_message)
-
-        session.query(models.Operator) \
-            .filter_by(uuid=operator_id) \
-            .update({"status": status, "status_message": status_message})
-
-    session.commit()
+    workflows_thread.start()
+    sdeps_thread.start()
 
 
 def parse_args(args):
