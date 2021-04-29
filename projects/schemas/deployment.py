@@ -21,6 +21,7 @@ class DeploymentCreate(DeploymentBase):
     experiments: Optional[List[str]]
     template_id: Optional[str]
     copy_from: Optional[str]
+    name: Optional[str]
 
 
 class DeploymentUpdate(DeploymentBase):

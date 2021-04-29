@@ -14,6 +14,7 @@ OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 NAME = "foo"
 NAME_2 = "bar"
+COPY_NAME = "foobar"
 DEPLOYMENT_MOCK_NAME = "Foo Deployment"
 DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid_alpha())
@@ -243,8 +244,25 @@ class TestDeployments(TestCase):
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
             "copyFrom": DEPLOYMENT_ID,
         })
+        result = rv.json()
+        expected = {"message": "name is required to duplicate deployment"}
+        self.assertEqual(rv.status_code, 400)
+
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
+            "copyFrom": DEPLOYMENT_ID,
+            "name": NAME,
+        })
+        result = rv.json()
+        expected = {"message": "a deployment with that name already exists"}
+        self.assertEqual(rv.status_code, 400)
+
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
+            "copyFrom": DEPLOYMENT_ID,
+            "name": COPY_NAME,
+        })
         result = rv.json()["deployments"]
         self.assertIsInstance(result, list)
+        self.assertEqual(COPY_NAME, result[0]["name"])
         self.assertIn("operators", result[0])
         operator = result[0]["operators"][0]
         self.assertEqual(TASK_ID, operator["taskId"])
