@@ -75,10 +75,8 @@ class DeploymentController:
 
         Raises
         ------
-        NotFound
-            When project_id does not exist.
         BadRequest
-            When any experiment does not exist.
+            When the parameters are invalid.
         """
         # ^ is xor operator. it's equivalent to (a and not b) or (not a and b)
         # this is a xor for three input variables
@@ -93,8 +91,19 @@ class DeploymentController:
             )
 
         if deployment.copy_from:
+            if not isinstance(deployment.name, str):
+                raise BadRequest("name is required to duplicate deployment")
+
+            stored_deployment = self.session.query(models.Deployment) \
+                .filter(models.Deployment.project_id == project_id) \
+                .filter_by(name=deployment.name) \
+                .first()
+            if stored_deployment:
+                raise BadRequest("a deployment with that name already exists")
+
             deployments = self.copy_deployment(
                 deployment_id=deployment.copy_from,
+                name=deployment.name,
                 project_id=project_id
             )
 
@@ -328,14 +337,15 @@ class DeploymentController:
 
         return [deployment]
 
-    def copy_deployment(self, deployment_id: str, project_id: str):
+    def copy_deployment(self, deployment_id: str, name: str, project_id: str):
         """
         Makes a copy of a deployment in our database.
 
         Paramenters
         -----------
-        deployment_id: str
-        project_id: str
+        deployment_id : str
+        name : str
+        project_id : str
 
         Returns
         -------
@@ -354,7 +364,7 @@ class DeploymentController:
 
         deployment = models.Deployment(uuid=uuid_alpha(),
                                        experiment_id=stored_deployment.experiment_id,
-                                       name=stored_deployment.name,
+                                       name=name,
                                        project_id=project_id)
 
         self.session.add(deployment)

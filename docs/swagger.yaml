@@ -2048,6 +2048,8 @@ components:
         copyFrom:
           type: string
           format: uuid
+        name:
+          type: string
     Operator:
       type: object
       properties:
@@ -2557,6 +2559,7 @@ components:
               summary: From an existing deployment
               value:
                 copyFrom: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                name: string
     DeploymentPatch:
       content:
         application/json:
