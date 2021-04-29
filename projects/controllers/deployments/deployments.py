@@ -102,50 +102,25 @@ class DeploymentController:
         # this is a xor for three input variables
         if not ((bool(deployment.experiments) ^ bool(deployment.template_id)) or 
                 (bool(deployment.template_id) ^ bool(deployment.copy_from))):
-            raise BadRequest("either experiments or templateId is required")
+            raise BadRequest("either experiments, templateId or copyFrom is required")
 
         if deployment.template_id:
-            return self.create_deployment_from_template(
+            deployments = self.create_deployment_from_template(
                 template_id=deployment.template_id,
                 project_id=project_id
             )
 
         if deployment.copy_from:
-            return self.copy_deployment(
+            deployments = self.copy_deployment(
                 deployment_id=deployment.copy_from,
                 project_id=project_id
             )
 
-        experiments_dict = {e.uuid: e for e in self.session.query(models.Experiment).filter_by(project_id=project_id)}
-
-        for experiment_id in deployment.experiments:
-            if experiment_id not in experiments_dict:
-                raise BadRequest("some experiments do not exist")
-
-        deployments = []
-
-        for experiment_id in deployment.experiments:
-            experiment = experiments_dict[experiment_id]
-            deployment = models.Deployment(uuid=uuid_alpha(),
-                                           experiment_id=experiment_id,
-                                           name=experiment.name,
-                                           project_id=project_id)
-            self.session.add(deployment)
-            self.session.flush()
-
-            deployments.append(deployment)
-
-            stored_experiment = self.session.query(models.Experiment).get(experiment_id)
-
-            self.copy_operators(
-                project_id=project_id,
-                deployment_id=deployment.uuid,
-                stored_operators=stored_experiment.operators
+        if deployment.experiments:
+            deployments = self.create_deployments_from_experiments(
+                experiments=deployment.experiments,
+                project_id=project_id
             )
-
-            self.fix_positions(project_id=project_id,
-                               deployment_id=deployment.uuid,
-                               new_position=sys.maxsize)  # will add to end of list
 
         # Temporary: also run deployment (while web-ui isn't ready)
         for deployment in deployments:
@@ -153,8 +128,10 @@ class DeploymentController:
                                            deployment_id=deployment.uuid)
 
         self.session.commit()
-        self.session.refresh(deployment)
-        return schemas.Deployment.from_orm(deployment)
+        for deployment in deployments:
+            self.session.refresh(deployment)
+
+        return schemas.DeploymentList.from_orm(deployments, len(deployments))
 
     def get_deployment(self, project_id: str, deployment_id: str):
         """
@@ -292,40 +269,56 @@ class DeploymentController:
 
         return schemas.Message(message="Deployment deleted")
 
-    def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
+    def create_deployments_from_experiments(self, experiments: list, project_id: str):
         """
-        Reorders the deployments in a project when a deployment is updated/deleted.
+        Create deployments from given experiments.
 
         Parameters
         ----------
+        experiments : list
+            List of experiments uuids to copy.
         project_id : str
-        deployment_id : str
-        new_position : int
-            The position where the experiment is shown.
+
+        Returns
+        -------
+        list
+            A list of projects.models.deployment.Deployment.
+
+        Raises
+        ------
+        BadRequest
+            When any of the experiments does not exist.
         """
-        other_deployments = self.session.query(models.Deployment) \
-            .filter_by(project_id=project_id) \
-            .filter(models.Deployment.uuid != deployment_id) \
-            .order_by(models.Deployment.position.asc()) \
-            .all()
+        experiments_dict = {e.uuid: e for e in self.session.query(models.Experiment).filter_by(project_id=project_id)}
 
-        if deployment_id is not None:
-            deployment = self.session.query(models.Deployment).get(deployment_id)
-            other_deployments.insert(new_position, deployment)
+        for experiment_id in experiments:
+            if experiment_id not in experiments_dict:
+                raise BadRequest("some experiments do not exist")
 
-        for index, deployment in enumerate(other_deployments):
-            data = {"position": index}
-            is_last = (index == len(other_deployments) - 1)
-            # if deployment_id WAS NOT informed, then set the higher position as is_active=True
-            if deployment_id is None and is_last:
-                data["is_active"] = True
-            # if deployment_id WAS informed, then set experiment.is_active=True
-            elif deployment_id is not None and deployment_id == deployment.uuid:
-                data["is_active"] = True
-            else:
-                data["is_active"] = False
+        deployments = []
 
-            self.session.query(models.Deployment).filter_by(uuid=deployment.uuid).update(data)
+        for experiment_id in experiments:
+            experiment = experiments_dict[experiment_id]
+            deployment = models.Deployment(uuid=uuid_alpha(),
+                                        experiment_id=experiment_id,
+                                        name=experiment.name,
+                                        project_id=project_id)
+            self.session.add(deployment)
+            self.session.flush()
+
+            deployments.append(deployment)
+
+            self.copy_operators(
+                project_id=project_id,
+                deployment_id=deployment.uuid,
+                stored_operators=experiment.operators
+            )
+
+            self.fix_positions(project_id=project_id,
+                            deployment_id=deployment.uuid,
+                            new_position=sys.maxsize)  # will add to end of list
+
+        return deployments
 
 
     def create_deployment_from_template(self, template_id: str, project_id: str):
@@ -336,6 +329,11 @@ class DeploymentController:
         ----------
         template_id : str
         project_id : str
+
+        Returns
+        -------
+        list
+            A list of projects.models.deployment.Deployment.
         """
         template = self.template_controller.get_template(template_id)
         deployment = models.Deployment(uuid=uuid_alpha(),
@@ -369,10 +367,7 @@ class DeploymentController:
             task["created_uuid"] = operator_id
             operators_created.append(task)
 
-        self.session.commit()
-        self.session.refresh(deployment)
-
-        return schemas.Deployment.from_orm(deployment)
+        return [deployment]
 
 
     def copy_deployment(self, deployment_id: str, project_id: str):
@@ -386,7 +381,8 @@ class DeploymentController:
         
         Returns
         -------
-        projects.schemas.deployment.Deployment
+        list
+            A list of projects.models.deployment.Deployment.
 
         Raises
         ------
@@ -414,10 +410,7 @@ class DeploymentController:
                                deployment_id=deployment.uuid,
                                new_position=sys.maxsize)  # will add to end of list
 
-        self.session.commit()
-        self.session.refresh(deployment)
-
-        return schemas.Deployment.from_orm(deployment)
+        return [deployment]
 
 
     def copy_operators(self, project_id: str, deployment_id: str, stored_operators: schemas.OperatorList):
@@ -464,3 +457,38 @@ class DeploymentController:
                                                      deployment_id=deployment_id,
                                                      operator_id=value["copy_uuid"],
                                                      operator=operator)
+
+    def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
+        """
+        Reorders the deployments in a project when a deployment is updated/deleted.
+
+        Parameters
+        ----------
+        project_id : str
+        deployment_id : str
+        new_position : int
+            The position where the experiment is shown.
+        """
+        other_deployments = self.session.query(models.Deployment) \
+            .filter_by(project_id=project_id) \
+            .filter(models.Deployment.uuid != deployment_id) \
+            .order_by(models.Deployment.position.asc()) \
+            .all()
+
+        if deployment_id is not None:
+            deployment = self.session.query(models.Deployment).get(deployment_id)
+            other_deployments.insert(new_position, deployment)
+
+        for index, deployment in enumerate(other_deployments):
+            data = {"position": index}
+            is_last = (index == len(other_deployments) - 1)
+            # if deployment_id WAS NOT informed, then set the higher position as is_active=True
+            if deployment_id is None and is_last:
+                data["is_active"] = True
+            # if deployment_id WAS informed, then set experiment.is_active=True
+            elif deployment_id is not None and deployment_id == deployment.uuid:
+                data["is_active"] = True
+            else:
+                data["is_active"] = False
+
+            self.session.query(models.Deployment).filter_by(uuid=deployment.uuid).update(data)

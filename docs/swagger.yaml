@@ -1876,9 +1876,14 @@ components:
           type: string
           format: uuid
     Deployments:
-      type: array
-      items:
-        $ref: "#/components/schemas/Deployment"
+      type: object
+      properties:
+        deployments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deployment"
+        total:
+          type: integer
     Prediction:
       oneOf:
         - $ref: "#/components/schemas/Data"
@@ -2269,12 +2274,16 @@ components:
     TemplateExperiment:
       type: object
       properties:
+        name:
+          type: string
         experimentId:
           type: string
           format: uuid
     TemplateDeployment:
       type: object
       properties:
+        name:
+          type: string
         deploymentId:
           type: string
           format: uuid
@@ -2685,10 +2694,12 @@ components:
             experiment:
               summary: From a experimentId
               value:
+                name: string
                 experimentId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             deployment:
               summary: From a deploymentId
               value:
+                name: string
                 deploymentId:
                   "3fa85f64-5717-4562-b3fc-2c963f66afa6"
     TemplatePatch:
