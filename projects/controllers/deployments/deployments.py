@@ -21,7 +21,6 @@ class DeploymentController:
         self.session = session
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
-        self.run_controller = RunController(session)
         self.template_controller = TemplateController(session)
         self.background_tasks = background_tasks
 
@@ -121,11 +120,6 @@ class DeploymentController:
                 experiments=deployment.experiments,
                 project_id=project_id
             )
-
-        # Temporary: also run deployment (while web-ui isn't ready)
-        for deployment in deployments:
-            self.run_controller.create_run(project_id=project_id,
-                                           deployment_id=deployment.uuid)
 
         self.session.commit()
         for deployment in deployments:
@@ -259,13 +253,6 @@ class DeploymentController:
         self.fix_positions(project_id=project_id)
 
         self.session.commit()
-
-        # Temporary: also delete run deployment (while web-ui isn't ready)
-        self.run_controller = self.run_controller.terminate_run(
-            project_id=project_id,
-            deployment_id=deployment_id,
-            run_id="latest"
-        )
 
         return schemas.Message(message="Deployment deleted")
 
