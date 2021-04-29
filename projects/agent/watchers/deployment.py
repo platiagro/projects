@@ -79,7 +79,7 @@ def update_seldon_deployment(seldon_deployment_manifest, session):
 
     if status is not None:
         state = status["state"]
-        
+
         if state == "Available":
             state = "Succeeded"
         elif state == "Creating":

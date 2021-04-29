@@ -62,7 +62,6 @@ class DeploymentController:
 
         return schemas.DeploymentList.from_orm(deployments, len(deployments))
 
-
     def create_deployment(self, deployment: schemas.DeploymentCreate, project_id: str):
         """
         Creates new deployments in our database and adjusts the position of others.
@@ -154,7 +153,6 @@ class DeploymentController:
             raise NOT_FOUND
 
         return schemas.Deployment.from_orm(deployment)
-
 
     def update_deployment(self, deployment: schemas.DeploymentUpdate, project_id: str, deployment_id: str):
         """
