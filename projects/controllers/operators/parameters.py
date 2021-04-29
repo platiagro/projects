@@ -15,11 +15,11 @@ class OperatorParameterController:
         ----------
         operator_id : str
         name : str
-        operator: schemas.operator.OperatorUpdate
+        parameter: schemas.operator.ParameterUpdate
 
         Returns
         -------
-        projects.schemas.operator.ParameterUpdate
+        projects.schemas.operator.Operator
         """
         # get parameters from given operator_id
         operator = self.session.query(models.Operator).get(operator_id)

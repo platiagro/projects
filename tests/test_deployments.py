@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.object_storage import BUCKET_NAME
 
 TEST_CLIENT = TestClient(app)
 
@@ -46,17 +45,10 @@ TASKS_JSON = dumps([
         "task_id": TASK_ID,
         "dependencies": []
     },
-    {
-        "uuid": OPERATOR_ID_2,
-        "position_x": 200.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID_2,
-        "dependencies": [OPERATOR_ID]
-    },
 ])
 PARAMETERS_JSON = dumps(PARAMETERS)
-EXPERIMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = f"minio://{BUCKET_NAME}/tasks/{TASK_ID}/Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
+DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -118,33 +110,29 @@ class TestDeployments(TestCase):
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text)
+        conn.execute(text, (TASK_ID_2, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON,
+                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ()"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_2, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON, EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES ('{TASK_DATASET_ID}', '{NAME}', '{DESCRIPTION}', '{IMAGE}', '{COMMANDS_JSON}', '{ARGUMENTS_JSON}', '{TASK_DATASET_TAGS_JSON}', '{EXPERIMENT_NOTEBOOK_PATH}', '{DEPLOYMENT_NOTEBOOK_PATH}', 0, '{CREATED_AT}', '{UPDATED_AT}')"
-        )
         conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TASK_DATASET_TAGS_JSON,
                             dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
                             POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
+        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
                             POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -169,7 +157,7 @@ class TestDeployments(TestCase):
                f"(SELECT uuid FROM deployments where project_id = '{PROJECT_ID}')"
         conn.execute(text)
 
-        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}, {TASK_ID_2}')"
+        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}', '{TASK_ID_2}')"
         conn.execute(text)
 
         text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
@@ -209,6 +197,13 @@ class TestDeployments(TestCase):
         result = rv.json()
         expected = {"message": "templateId is not implemented yet"}
         self.assertIsInstance(result, dict)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
+            "copyFrom": "unk",
+        })
+        result = rv.json()
+        expected = {"message": "source deployment does not exist"}
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
@@ -230,7 +225,7 @@ class TestDeployments(TestCase):
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
             "experiments": [EXPERIMENT_ID_2],
         })
-        result = rv.json()
+        result = rv.json()["deployments"]
         self.assertIsInstance(result, list)
         self.assertIn("operators", result[0])
         operator = result[0]["operators"][0]
@@ -239,7 +234,16 @@ class TestDeployments(TestCase):
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
             "templateId": TEMPLATE_ID
         })
-        result = rv.json()
+        result = rv.json()["deployments"]
+        self.assertIsInstance(result, list)
+        self.assertIn("operators", result[0])
+        operator = result[0]["operators"][0]
+        self.assertEqual(TASK_ID, operator["taskId"])
+
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
+            "copyFrom": DEPLOYMENT_ID,
+        })
+        result = rv.json()["deployments"]
         self.assertIsInstance(result, list)
         self.assertIn("operators", result[0])
         operator = result[0]["operators"][0]

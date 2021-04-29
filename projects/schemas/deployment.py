@@ -20,6 +20,7 @@ class DeploymentBase(BaseModel):
 class DeploymentCreate(DeploymentBase):
     experiments: Optional[List[str]]
     template_id: Optional[str]
+    copy_from: Optional[str]
 
 
 class DeploymentUpdate(DeploymentBase):
