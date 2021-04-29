@@ -3,7 +3,7 @@
 import warnings
 from json import loads
 
-from kfp import compiler, dsl
+from kfp import dsl
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 
