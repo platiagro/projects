@@ -153,7 +153,7 @@ class DeploymentController:
 
         deployment_runs = get_deployment_runs(deployment_id)
 
-        if not deployment_runs:
+        if deployment_runs:
             deployment.deployed_at = deployment_runs["createdAt"]
             deployment.status = deployment_runs["status"]
             deployment.url = deployment_runs["url"]
