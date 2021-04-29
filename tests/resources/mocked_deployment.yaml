@@ -3,64 +3,72 @@ kind: Workflow
 metadata:
   generateName: deployment-$deploymentId-
   annotations:
-    {
-      pipelines.kubeflow.org/pipeline_spec: '{"name": "Deployment."}',
-    }
+    pipelines.kubeflow.org/pipeline_spec: '{"name": "deployment-$deploymentId-"}'
 spec:
-  entrypoint: deployment
+  arguments: {}
+  entrypoint: deployment-$deploymentId
+  serviceAccountName: pipeline-runner
   templates:
-    - name: mocked-deployment-$deploymentId
+    - name: deployment-$deploymentId
       dag:
         tasks:
-          - {
-              name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7,
-              template: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7,
-            }
           - name: deployment
             template: deployment
             dependencies: []
+            arguments: {}
+      metadata:
+        annotations:
+          sidecar.istio.io/inject: "false"
     - name: deployment
+      activeDeadlineSeconds: 300
+      inputs: {}
+      metadata:
+        annotations:
+          sidecar.istio.io/inject: "false"
+      outputs:
+        parameters:
+        - name: deployment-manifest
+          valueFrom:
+            jsonPath: '{}'
+        - name: deployment-name
+          valueFrom:
+            jsonPath: '{.metadata.name}'
       resource:
         action: create
-        successCondition: status.state == Available
         manifest: |
           apiVersion: machinelearning.seldon.io/v1alpha2
           kind: SeldonDeployment
           metadata:
-            deploymentName: $deploymentId
             labels:
               app: seldon
             name: $deploymentId
-            namespace: deployments
           spec:
             annotations:
               deployment_version: v1
-              seldon.io/engine-separate-pod: 'true'
-              seldon.io/grpc-read-timeout: '60000'
-              seldon.io/rest-connection-timeout: '60000'
-              seldon.io/rest-read-timeout: '60000'
-            name: aa23c286-1524-4ae9-ae44-6c3e63eb9861
+              prometheus.io/scrape: 'false'
+              seldon.io/executor: 'true'
+            name: $deploymentId
             predictors:
-            - componentSpecs:
+            - annotations:
+                sidecar.istio.io/inject: 'false'
+              componentSpecs:
               - spec:
                   containers:
                   - env:
                     - name: EXPERIMENT_ID
-                      value: aa23c286-1524-4ae9-ae44-6c3e63eb9861
+                      value: e6f52fe2-a4a1-42bc-9aeb-ef0735fa3468
                     - name: OPERATOR_ID
-                      value: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
-                    - name: PARAMETERS
-                      value: '[]'
+                      value: $operatorId
+                    - name: TASK_NAME
+                      value: "$taskName"
                     image: seldonio/mock_classifier:1.5.0-dev
-                    name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
+                    name: $operatorId
                     securityContext:
                       allowPrivilegeEscalation: false
                       runAsUser: 0
               graph:
                 children: []
-                endpoint:
-                  type: REST
-                name: d9ca87b1-0d9d-4850-a4db-38f4c18d6fa7
+                name: $operatorId
                 type: MODEL
               labels:
                 version: v1
@@ -69,17 +77,5 @@ spec:
               svcOrchSpec:
                 env:
                 - name: SELDON_LOG_LEVEL
-                  value: DEBUG
-            resources:
-              requests:
-                memory: 2G
-      outputs:
-        parameters:
-          - name: deployment-manifest
-            valueFrom: { jsonPath: "{}" }
-          - name: deployment-name
-            valueFrom: { jsonPath: "{.metadata.name}" }
-      activeDeadlineSeconds: 300
-  arguments:
-    parameters: []
-  serviceAccountName: pipeline-runner
+                  value: INFO
+        successCondition: status.state == Available
