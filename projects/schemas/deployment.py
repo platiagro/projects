@@ -42,7 +42,7 @@ class Deployment(DeploymentBase):
     updated_at: datetime
     status: str
     url: Optional[str]
-    deployed_at: Optional[str]
+    deployed_at: Optional[datetime]
 
     @classmethod
     def from_orm(cls, model):

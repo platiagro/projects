@@ -22,6 +22,8 @@ EXPERIMENT_NAME = "Experimento 1"
 EXPERIMENT_ID_2 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DESCRIPTION = "Description"
+STATUS = "Pending"
+URL = None
 
 PROJECT_ID_2 = str(uuid_alpha())
 PROJECT_ID_3 = str(uuid_alpha())
@@ -63,10 +65,10 @@ class TestProjects(TestCase):
         conn.execute(text, (EXPERIMENT_ID_2, EXPERIMENT_NAME, PROJECT_ID_3, 0, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID_3, EXPERIMENT_ID_2, '0', 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID_3, EXPERIMENT_ID_2, '0', 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
         conn.close()
 
     def tearDown(self):

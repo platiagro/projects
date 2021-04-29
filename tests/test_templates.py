@@ -29,6 +29,8 @@ TASKS_JSON = dumps([TASK_ID])
 PARAMETERS_JSON = dumps(PARAMETERS)
 POSITION_X = 0.3
 POSITION_Y = 0.5
+STATUS = "Pending"
+URL = None
 TASKS = [
     {
         "dependencies": [],
@@ -101,10 +103,10 @@ class TestTemplates(TestCase):
         conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, 0, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
