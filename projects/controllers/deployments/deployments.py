@@ -4,7 +4,6 @@ import sys
 from datetime import datetime
 
 from projects import models, schemas
-from projects.controllers.deployments.runs import RunController
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.operators import OperatorController
 from projects.controllers.templates import TemplateController
@@ -99,7 +98,7 @@ class DeploymentController:
         """
         # ^ is xor operator. it's equivalent to (a and not b) or (not a and b)
         # this is a xor for three input variables
-        if not ((bool(deployment.experiments) ^ bool(deployment.template_id)) or 
+        if not ((bool(deployment.experiments) ^ bool(deployment.template_id)) or
                 (bool(deployment.template_id) ^ bool(deployment.copy_from))):
             raise BadRequest("either experiments, templateId or copyFrom is required")
 
@@ -287,26 +286,23 @@ class DeploymentController:
         for experiment_id in experiments:
             experiment = experiments_dict[experiment_id]
             deployment = models.Deployment(uuid=uuid_alpha(),
-                                        experiment_id=experiment_id,
-                                        name=experiment.name,
-                                        project_id=project_id)
+                                           experiment_id=experiment_id,
+                                           name=experiment.name,
+                                           project_id=project_id)
             self.session.add(deployment)
             self.session.flush()
 
             deployments.append(deployment)
 
-            self.copy_operators(
-                project_id=project_id,
-                deployment_id=deployment.uuid,
-                stored_operators=experiment.operators
-            )
+            self.copy_operators(project_id=project_id,
+                                deployment_id=deployment.uuid,
+                                stored_operators=experiment.operators)
 
             self.fix_positions(project_id=project_id,
-                            deployment_id=deployment.uuid,
-                            new_position=sys.maxsize)  # will add to end of list
+                               deployment_id=deployment.uuid,
+                               new_position=sys.maxsize)  # will add to end of list
 
         return deployments
-
 
     def create_deployment_from_template(self, template_id: str, project_id: str):
         """
@@ -356,7 +352,6 @@ class DeploymentController:
 
         return [deployment]
 
-
     def copy_deployment(self, deployment_id: str, project_id: str):
         """
         Makes a copy of a deployment in our database.
@@ -365,7 +360,7 @@ class DeploymentController:
         -----------
         deployment_id: str
         project_id: str
-        
+
         Returns
         -------
         list
@@ -394,11 +389,10 @@ class DeploymentController:
                             stored_operators=stored_deployment.operators)
 
         self.fix_positions(project_id=project_id,
-                               deployment_id=deployment.uuid,
-                               new_position=sys.maxsize)  # will add to end of list
+                           deployment_id=deployment.uuid,
+                           new_position=sys.maxsize)  # will add to end of list
 
         return [deployment]
-
 
     def copy_operators(self, project_id: str, deployment_id: str, stored_operators: schemas.OperatorList):
         """

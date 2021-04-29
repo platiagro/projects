@@ -6,7 +6,6 @@ from sqlalchemy import Column, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
 
 from projects.database import Base
-from projects.models.task import Task
 
 
 class Monitoring(Base):

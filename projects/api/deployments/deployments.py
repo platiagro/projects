@@ -56,7 +56,7 @@ async def handle_post_deployments(project_id: str,
 
     deployment_controller = DeploymentController(session)
     deployments = deployment_controller.create_deployment(project_id=project_id,
-                                                         deployment=deployment)
+                                                          deployment=deployment)
     return deployments
 
 
