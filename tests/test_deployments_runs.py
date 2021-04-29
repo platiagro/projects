@@ -20,6 +20,8 @@ CREATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 EXPERIMENT_ID = str(uuid_alpha())
 POSITION = 0
+STATUS = "Pending"
+URL = None
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
@@ -78,16 +80,16 @@ class TestDeploymentsRuns(TestCase):
         conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (DEPLOYMENT_ID_2, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (DEPLOYMENT_ID_2, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
