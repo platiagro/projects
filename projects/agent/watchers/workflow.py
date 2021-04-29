@@ -1,8 +1,8 @@
+import dateutil.parser
 import logging
 import http
 import re
 import uuid
-from datetime import datetime
 
 from kubernetes import watch
 from kubernetes.client.rest import ApiException
@@ -143,12 +143,11 @@ def update_seldon_deployment(deployment_id, status, created_at_str, session):
     created_at_str : str
     """
     if created_at_str is not None:
-        created_at = datetime.strptime(created_at_str, "%Y-%m-%dT%H:%M:%SZ")
-        deployed_at = str(created_at.isoformat(timespec="milliseconds"))
+        deployed_at = dateutil.parser.isoparse(created_at_str)
     else:
         deployed_at = created_at_str
 
-    if status is (None or "Running"):
+    if status in (None, "Running"):
         status = "Pending"
 
     session.query(models.Deployment) \
