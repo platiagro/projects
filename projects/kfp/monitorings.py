@@ -94,6 +94,7 @@ def deploy_monitoring(deployment_id,
         service = MONITORING_SERVICE.substitute({
             "name": service_name,
             "namespace": KF_PIPELINES_NAMESPACE,
+            "monitoringId": monitoring_id,
             "experimentId": experiment_id,
             "deploymentId": deployment_id,
             "runId": run_id,
