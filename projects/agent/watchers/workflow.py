@@ -15,6 +15,8 @@ GROUP = "argoproj.io"
 VERSION = "v1alpha1"
 PLURAL = "workflows"
 
+RECURRENT_MESSAGES = ["ContainerCreating", ]
+
 
 def watch_workflows(api, session):
     """
@@ -121,13 +123,12 @@ def update_status(workflow_manifest, session):
         else:
             status = str(node["phase"])
 
-            status_message = node.get("message", None)
-            if status_message is not None:
-                status_message = str(status_message)
-
-        session.query(models.Operator) \
-            .filter_by(uuid=operator_id) \
-            .update({"status": status, "status_message": status_message})
+            status_message = str(node.get("message")) if node.get("message") else None 
+            
+        if str(status_message) not in recurrent_messages:
+            session.query(models.Operator) \
+                .filter_by(uuid=operator_id) \
+                .update({"status": status, "status_message": status_message})
 
     session.commit()
 
