@@ -122,7 +122,6 @@ def update_status(workflow_manifest, session):
             status_message = None
         else:
             status = str(node["phase"])
-
             status_message = str(node.get("message")) if node.get("message") else None 
             
         if str(status_message) not in recurrent_messages:
