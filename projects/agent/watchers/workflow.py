@@ -125,9 +125,13 @@ def update_status(workflow_manifest, session):
             if status_message is not None:
                 status_message = str(status_message)
 
-        session.query(models.Operator) \
-            .filter_by(uuid=operator_id) \
-            .update({"status": status, "status_message": status_message})
+        # Discarding recurrent messages
+        recurrent_messages = ["ContainerCreating", ]
+
+        if str(status_message) not in recurrent_messages:
+            session.query(models.Operator) \
+                .filter_by(uuid=operator_id) \
+                .update({"status": status, "status_message": status_message})
 
     session.commit()
 
