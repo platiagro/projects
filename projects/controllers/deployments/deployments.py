@@ -143,7 +143,6 @@ class DeploymentController:
 
         return schemas.Deployment.from_orm(deployment)
 
-
     def update_deployment(self, deployment: schemas.DeploymentUpdate, project_id: str, deployment_id: str):
         """
         Updates a deployment in our database and adjusts the position of others.
