@@ -118,7 +118,7 @@ def update_status(workflow_manifest, session):
 
         status_message = str(node.get("message")) if node.get("message") else None
         # if workflow was interrupted, then status = "Terminated"
-        if str(node["message"]) == "terminated":
+        if str(node.get("message")) == "terminated":
             status = "Terminated"
             status_message = None
         else:
