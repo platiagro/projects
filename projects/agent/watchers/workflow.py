@@ -116,18 +116,17 @@ def update_status(workflow_manifest, session):
         except ValueError:
             continue
 
+        status_message = str(node.get("message")) if node.get("message") else None
         # if workflow was interrupted, then status = "Terminated"
-        if "message" in node and str(node["message"]) == "terminated":
+        if str(node["message"]) == "terminated":
             status = "Terminated"
             status_message = None
         else:
             status = str(node["phase"])
-            status_message = str(node.get("message")) if node.get("message") else None
 
-        if str(status_message) not in RECURRENT_MESSAGES:
-            session.query(models.Operator) \
-                .filter_by(uuid=operator_id) \
-                .update({"status": status, "status_message": status_message})
+        session.query(models.Operator) \
+            .filter_by(uuid=operator_id) \
+            .update({"status": status, "status_message": status_message})
 
     session.commit()
 
