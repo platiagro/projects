@@ -122,9 +122,9 @@ def update_status(workflow_manifest, session):
             status_message = None
         else:
             status = str(node["phase"])
-            status_message = str(node.get("message")) if node.get("message") else None 
-            
-        if str(status_message) not in recurrent_messages:
+            status_message = str(node.get("message")) if node.get("message") else None
+
+        if str(status_message) not in RECURRENT_MESSAGES:
             session.query(models.Operator) \
                 .filter_by(uuid=operator_id) \
                 .update({"status": status, "status_message": status_message})
