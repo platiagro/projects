@@ -142,7 +142,7 @@ MONITORING_SERVICE = Template("""{
                         "env": [
                             {
                                 "name": "MONITORING_ID",
-                                "value": "$monitoringId",
+                                "value": "$monitoringId"
                             },
                             {
                                 "name": "EXPERIMENT_ID",
