@@ -15,8 +15,7 @@ from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation, \
-    update_task_config_map, update_persistent_volume_claim, remove_persistent_volume_claim, \
-    get_notebook_state
+    update_task_config_map, update_persistent_volume_claim, remove_persistent_volume_claim
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
@@ -109,8 +108,7 @@ class TaskController:
             query = query.limit(page_size).offset((page - 1) * page_size)
 
         tasks = query.all()
-        container_state = get_notebook_state()
-        return schemas.TaskList.from_orm(container_state, tasks, total)
+        return schemas.TaskList.from_orm(tasks, total)
 
     def create_task(self, task: schemas.TaskCreate):
         """

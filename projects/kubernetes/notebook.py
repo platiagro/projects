@@ -576,33 +576,3 @@ async def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_
     container_stream.close()
 
     warnings.warn(f"Setting metadata in {notebook_path}...")
-
-
-def get_notebook_state():
-    """
-    Get notebook server state.
-
-    Returns
-    -------
-    bool
-
-    Raises
-    ------
-    ApiException
-    """
-    load_kube_config()
-    v1 = client.CoreV1Api()
-    try:
-        pod = v1.read_namespaced_pod(
-            name=NOTEBOOK_POD_NAME,
-            namespace=NOTEBOOK_NAMESPACE,
-            _request_timeout=5,
-        )
-        if pod.status.phase == "Running" \
-           and all([c.state.running for c in pod.status.container_statuses]):
-            return True
-        return False
-    except ApiException as e:
-        body = literal_eval(e.body)
-        message = body["message"]
-        raise InternalServerError(f"Error while trying to get notebook server state: {message}")

@@ -77,14 +77,12 @@ class Task(TaskBase):
 
 
 class TaskList(BaseModel):
-    containerState: bool
     tasks: List[Task]
     total: int
 
     @classmethod
-    def from_orm(cls, container_state, models, total):
+    def from_orm(cls, models, total):
         return TaskList(
-            containerState=container_state,
             tasks=[Task.from_orm(model) for model in models],
             total=total,
         )
