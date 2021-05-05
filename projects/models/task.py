@@ -3,7 +3,7 @@
 import os
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, JSON, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text
 from sqlalchemy.sql import expression
 
 from projects import __version__
@@ -28,6 +28,7 @@ class Task(Base):
     cpu_request = Column(String(255), nullable=True)
     memory_limit = Column(String(255), nullable=True)
     memory_request = Column(String(255), nullable=True)
+    readiness_probe_initial_delay_seconds = Column(Integer, nullable=True)
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
