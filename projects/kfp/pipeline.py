@@ -9,8 +9,7 @@ from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
 from projects import __version__
-from projects.kfp import DEPLOYMENT_INIT_TIMEOUT, KF_PIPELINES_NAMESPACE, \
-    SELDON_REST_TIMEOUT, kfp_client
+from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
 from projects.object_storage import MINIO_ACCESS_KEY, MINIO_SECRET_KEY
@@ -21,9 +20,14 @@ TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
 )
 TASK_DEFAULT_CPU_LIMIT = getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
 TASK_DEFAULT_CPU_REQUEST = getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
-TASK_DEFAULT_MEMORY_LIMIT = getenv("TASK_DEFAULT_MEMORY_LIMIT", "10G")
-TASK_DEFAULT_MEMORY_REQUEST = getenv("TASK_DEFAULT_MEMORY_REQUEST", "2G")
+TASK_DEFAULT_MEMORY_LIMIT = getenv("TASK_DEFAULT_MEMORY_LIMIT", "10Gi")
+TASK_DEFAULT_MEMORY_REQUEST = getenv("TASK_DEFAULT_MEMORY_REQUEST", "2Gi")
+TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = getenv(
+    "TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS",
+    "60",
+)
 TASK_NVIDIA_VISIBLE_DEVICES = getenv("TASK_NVIDIA_VISIBLE_DEVICES", "none")
+SELDON_REST_TIMEOUT = getenv("SELDON_REST_TIMEOUT", "60000")
 
 SELDON_LOGGER_ENDPOINT = getenv(
     "SELDON_LOGGER_ENDPOINT",
@@ -278,6 +282,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     kfp.dsl.ResourceOp
     """
     component_specs = []
+    max_initial_delay_seconds = 0
 
     for operator in operators:
         memory_limit = operator.task.memory_limit
@@ -287,6 +292,12 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         memory_request = operator.task.memory_request
         if memory_request is None:
             memory_request = TASK_DEFAULT_MEMORY_REQUEST
+
+        initial_delay_seconds = operator.task.readiness_probe_initial_delay_seconds
+        if initial_delay_seconds is None:
+            initial_delay_seconds = int(TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS)
+
+        max_initial_delay_seconds = max(max_initial_delay_seconds, initial_delay_seconds)
 
         component_specs.append(
             COMPONENT_SPEC.substitute({
@@ -299,6 +310,7 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "memoryRequest": memory_request,
                 "taskName": operator.task.name,
                 "nvidiaVisibleDevices": TASK_NVIDIA_VISIBLE_DEVICES,
+                "initialDelaySeconds": initial_delay_seconds,
             })
         )
 
@@ -349,11 +361,15 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     # mounts the "/tmp/data" volume from experiment (if exists)
     sdep_resource = mount_volume_from_experiment(sdep_resource, experiment_id)
 
+    # defines a timeout for this workflow step as the
+    # maximum readiness_initial_delay_seconds + 60 seconds
+    timeout = max_initial_delay_seconds + 60
+
     resource_op = dsl.ResourceOp(
         name="deployment",
         k8s_resource=sdep_resource,
         success_condition="status.state == Available",
-    ).set_timeout(int(DEPLOYMENT_INIT_TIMEOUT))
+    ).set_timeout(timeout)
 
     return resource_op
 
