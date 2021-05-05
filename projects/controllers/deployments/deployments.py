@@ -237,6 +237,16 @@ class DeploymentController:
 
         self.session.commit()
 
+        try:
+            self.run_controller = self.run_controller.terminate_run(
+                project_id=project_id,
+                deployment_id=deployment_id,
+                run_id="latest"
+            )
+        except NotFound:
+            # we can ignore this exception
+            pass
+
         return schemas.Message(message="Deployment deleted")
 
     def create_deployments_from_experiments(self, experiments: list, project_id: str):
