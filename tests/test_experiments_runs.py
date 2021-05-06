@@ -23,9 +23,9 @@ PARAMETERS = {"coef": 0.1}
 POSITION = 0
 POSITION_X = 0.3
 POSITION_Y = 0.5
-IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
+IMAGE = "busybox"
 COMMANDS = None
-ARGUMENTS = None
+ARGUMENTS = ["echo", "-e", "hello\nhello"]
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
@@ -67,7 +67,7 @@ class TestExperimentsRuns(TestCase):
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS, TAGS_JSON, dumps([]),
                             EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -76,7 +76,7 @@ class TestExperimentsRuns(TestCase):
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, None, None, TASK_DATASET_TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS, TASK_DATASET_TAGS_JSON, dumps([]),
                             EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -98,7 +98,7 @@ class TestExperimentsRuns(TestCase):
         kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
         kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
-            job_name=EXPERIMENT_ID,
+            job_name=f"experiment-{EXPERIMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
 
@@ -160,6 +160,12 @@ class TestExperimentsRuns(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_terminate_run(self):
+        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun")
+        result = rv.json()
+        expected = {"message": "The specified run does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
         rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
         result = rv.json()
         expected = {"message": "Run terminated."}

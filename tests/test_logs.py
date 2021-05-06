@@ -97,7 +97,7 @@ class TestLogs(TestCase):
         kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
         kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
-            job_name=EXPERIMENT_ID,
+            job_name=f"experiment-{EXPERIMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
 
@@ -111,7 +111,7 @@ class TestLogs(TestCase):
         kfp_experiment = kfp_client().create_experiment(name=DEPLOYMENT_ID)
         kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
-            job_name=DEPLOYMENT_ID,
+            job_name=f"deployment-{DEPLOYMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
 

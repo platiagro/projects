@@ -31,10 +31,12 @@ PARAMETERS_JSON = dumps({"coef": 0.1})
 DEP_EMPTY_JSON = dumps([])
 POSITION_X = 0
 POSITION_Y = 0
-IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
+IMAGE = "busybox"
+COMMANDS = None
+ARGUMENTS = ["echo", "-e", "hello\nhello"]
 TAGS_JSON = dumps(["PREDICTOR"])
-DEPLOY_NOTEBOOK_PATH = "Deployment.ipynb"
-EX_NOTEBOOK_PATH = "Experiment.ipynb"
+DEPLOY_NOTEBOOK_PATH = ""
+EX_NOTEBOOK_PATH = ""
 
 
 class TestDeploymentsRuns(TestCase):
@@ -49,7 +51,7 @@ class TestDeploymentsRuns(TestCase):
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, "name", "desc", IMAGE, None, None, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID, "name", "desc", IMAGE, COMMANDS, ARGUMENTS, TAGS_JSON, dumps([]),
                             EX_NOTEBOOK_PATH, DEPLOY_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -86,14 +88,16 @@ class TestDeploymentsRuns(TestCase):
         conn.execute(text, (DEPLOYMENT_ID_2, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, "
+            f"position_x, position_y, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (OPERATOR_ID, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
                             POSITION_Y, DEP_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, "
+            f"position_x, position_y, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
@@ -110,7 +114,7 @@ class TestDeploymentsRuns(TestCase):
         kfp_experiment = kfp_client().create_experiment(name=DEPLOYMENT_ID)
         kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
-            job_name=DEPLOYMENT_ID,
+            job_name=f"deployment-{DEPLOYMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
 
@@ -157,21 +161,24 @@ class TestDeploymentsRuns(TestCase):
     def test_create_run(self):
         rv = TEST_CLIENT.post(f"/projects/foo/deployments/{DEPLOYMENT_ID}/runs", json={})
         result = rv.json()
-        expected = {'message': 'The specified project does not exist'}
+        expected = {"message": "The specified project does not exist"}
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 404)
+        self.assertDictEqual(result, expected)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/foo/runs", json={})
         result = rv.json()
-        expected = {'message': 'The specified deployment does not exist'}
+        expected = {"message": "The specified deployment does not exist"}
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 404)
+        self.assertDictEqual(result, expected)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID_2}/runs", json={})
         result = rv.json()
-        expected = {'message': 'Necessary at least one operator.'}
+        expected = {"message": "Necessary at least one operator"}
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 400)
+        self.assertDictEqual(result, expected)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
         result = rv.json()
