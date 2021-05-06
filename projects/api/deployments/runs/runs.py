@@ -72,10 +72,10 @@ async def handle_post_runs(project_id: str,
 
 
 @router.get("/{run_id}")
-async def handle_get_run(session,
-                         project_id: str,
+async def handle_get_run(project_id: str,
                          deployment_id: str,
-                         run_id: str):
+                         run_id: str,
+                         session: Session = Depends(session_scope)):
     """
     Handles GET requests to /<run_id>.
 
@@ -104,10 +104,10 @@ async def handle_get_run(session,
 
 
 @router.delete("/{run_id}")
-async def handle_delete_runs(session,
-                             project_id: str,
+async def handle_delete_runs(project_id: str,
                              deployment_id: str,
-                             run_id: str):
+                             run_id: str,
+                             session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<run_id>.
 
