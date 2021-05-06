@@ -67,7 +67,7 @@ def start_run(operators, project_id, experiment_id, deployment_id=None, deployme
         The run attributes.
     """
     if len(operators) == 0:
-        raise ValueError("Necessary at least one operator.")
+        raise ValueError("Necessary at least one operator")
 
     if deployment_id is None:
         name = f"experiment-{experiment_id}"
@@ -220,7 +220,7 @@ def terminate_run(run_id, experiment_id):
         run_id = get_latest_run_id(experiment_id)
     kfp_client().runs.terminate_run(run_id=run_id)
 
-    return {"message": "Run terminated."}
+    return {"message": "Run terminated"}
 
 
 def retry_run(run_id, experiment_id):
