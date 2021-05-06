@@ -36,7 +36,10 @@ class PredictionController:
             file = upload_file.file
             request = parse_file_buffer_to_seldon_request(file=file)
         elif dataset is not None:
-            dataframe = load_dataset(dataset)
+            try:
+                dataframe = load_dataset(dataset)
+            except FileNotFoundError:
+                raise BadRequest("a valid dataset is required")
             request = parse_dataframe_to_seldon_request(dataframe=dataframe)
         else:
             raise BadRequest("either dataset name or file is required")

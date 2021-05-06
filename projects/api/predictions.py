@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Predictions API Router."""
+from json.decoder import JSONDecodeError
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from projects.controllers import DeploymentController, PredictionController, \
     ProjectController
+from projects.exceptions import BadRequest
 from projects.database import session_scope
 
 router = APIRouter(
@@ -42,11 +44,15 @@ async def handle_post_prediction(project_id: str,
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     # at this endpoint, we can accept both form-data and json as the request content-type
+    
     kwargs = {}
     if file is not None:
         kwargs = {"upload_file": file}
     else:
-        kwargs = await request.json()
+        try:
+            kwargs = await request.json()
+        except JSONDecodeError:
+            raise BadRequest("either form-data or json is required")
 
     prediction_controller = PredictionController(session)
     return prediction_controller.create_prediction(project_id=project_id,
