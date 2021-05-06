@@ -5,8 +5,6 @@ from pathlib import Path
 
 from kfp import Client
 
-SELDON_REST_TIMEOUT = getenv("SELDON_REST_TIMEOUT", "60000")
-DEPLOYMENT_INIT_TIMEOUT = getenv("DEPLOYMENT_INIT_TIMEOUT", "300")
 KF_PIPELINES_NAMESPACE = getenv("KF_PIPELINES_NAMESPACE", "anonymous")
 
 

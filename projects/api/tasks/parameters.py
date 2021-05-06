@@ -27,7 +27,7 @@ async def handle_list_parameters(task_id: str,
     dict
     """
     task_controller = TaskController(session)
-    task_controller.raise_if_task_does_not_exist(session)
+    task_controller.raise_if_task_does_not_exist(task_id=task_id)
 
     parameter_controller = ParameterController(session)
     parameters = parameter_controller.list_parameters(task_id=task_id)
