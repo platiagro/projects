@@ -225,7 +225,6 @@ jobs:
         MINIKUBE_IP=$(minikube ip)
         echo ${MINIKUBE_IP}
         echo ::set-output name=MINIKUBE_IP::${MINIKUBE_IP}
-        curl -sSL ${MINIKUBE_IP}:30000/apis/v1beta1/runs
       env:
         BRANCH: "1.2.0"
 
