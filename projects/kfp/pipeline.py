@@ -358,7 +358,6 @@ def undeploy_pipeline(resource):
         undeploy,
         {},
         run_name="undeploy",
-        namespace=KF_PIPELINES_NAMESPACE
     )
 
 
