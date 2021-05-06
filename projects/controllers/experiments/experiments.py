@@ -332,6 +332,12 @@ class ExperimentController:
             task["created_uuid"] = operator_id
             operators_created.append(task)
 
+        self.session.commit()
+
+        experiment = self.session.query(models.Experiment).get(experiment_id)
+
+        return schemas.Experiment.from_orm(experiment)
+
     def fix_positions(self, project_id: str, experiment_id: Optional[str] = None, new_position: Optional[int] = None):
         """
         Reorders the experiments in a project when an experiment is updated/deleted.
