@@ -47,21 +47,6 @@ class TestExperimentsRuns(TestCase):
     def setUp(self):
         self.maxDiff = None
 
-        with open("tests/resources/mocked_experiment.yaml", "r") as file:
-            content = file.read()
-
-        content = content.replace("$experimentId", EXPERIMENT_ID)
-        with open("tests/resources/mocked.yaml", "w") as file:
-            file.write(content)
-
-        # Run a default pipeline for tests
-        kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
-        kfp_client().run_pipeline(
-            experiment_id=kfp_experiment.id,
-            job_name=EXPERIMENT_ID,
-            pipeline_package_path="tests/resources/mocked.yaml",
-        )
-
         conn = engine.connect()
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
@@ -100,6 +85,27 @@ class TestExperimentsRuns(TestCase):
         conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
                             POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
+
+        # Creates pipelines for log generation
+        with open("tests/resources/mocked_experiment.yaml", "r") as file:
+            content = file.read()
+        content = content.replace("$experimentId", EXPERIMENT_ID)
+        content = content.replace("$taskName", NAME)
+        content = content.replace("$operatorId", OPERATOR_ID)
+        with open("tests/resources/mocked.yaml", "w") as file:
+            file.write(content)
+        kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
+        kfp_client().run_pipeline(
+            experiment_id=kfp_experiment.id,
+            job_name=EXPERIMENT_ID,
+            pipeline_package_path="tests/resources/mocked.yaml",
+        )
+
+        # Awaits 30 seconds (for the pipeline to run and complete)
+        # It's a bad solution since the pod may not have completed yet
+        # subprocess.run(['kubectl', 'wait', ...]) would be a better solution,
+        # but its not compatible with the version of argo workflows we're using
+        time.sleep(30)
 
     def tearDown(self):
         conn = engine.connect()

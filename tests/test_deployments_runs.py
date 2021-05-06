@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from json import dumps
 from os import remove
 from unittest import TestCase
@@ -28,6 +29,8 @@ TASK_ID = str(uuid_alpha())
 TASK_ID_2 = str(uuid_alpha())
 PARAMETERS_JSON = dumps({"coef": 0.1})
 DEP_EMPTY_JSON = dumps([])
+POSITION_X = 0
+POSITION_Y = 0
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 TAGS_JSON = dumps(["PREDICTOR"])
 DEPLOY_NOTEBOOK_PATH = "Deployment.ipynb"
@@ -38,20 +41,6 @@ class TestDeploymentsRuns(TestCase):
 
     def setUp(self):
         self.maxDiff = None
-
-        with open("tests/resources/mocked_deployment.yaml", "r") as file:
-            content = file.read()
-
-        content = content.replace("$deploymentId", DEPLOYMENT_ID)
-        with open("tests/resources/mocked.yaml", "w") as file:
-            file.write(content)
-
-        kfp_experiment = kfp_client().create_experiment(name=DEPLOYMENT_ID)
-        kfp_client().run_pipeline(
-            experiment_id=kfp_experiment.id,
-            job_name=DEPLOYMENT_ID,
-            pipeline_package_path="tests/resources/mocked.yaml",
-        )
 
         conn = engine.connect()
         text = (
@@ -97,22 +86,46 @@ class TestDeploymentsRuns(TestCase):
         conn.execute(text, (DEPLOYMENT_ID_2, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, DEPLOYMENT_ID,
-                     TASK_ID_2, PARAMETERS_JSON, DEP_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
+                            POSITION_Y, DEP_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, DEPLOYMENT_ID,
-                     TASK_ID, PARAMETERS_JSON, dumps([OPERATOR_ID]), CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
+                            POSITION_X, POSITION_Y, dumps([OPERATOR_ID]), CREATED_AT, UPDATED_AT,))
         conn.close()
+
+        with open("tests/resources/mocked_deployment.yaml", "r") as file:
+            content = file.read()
+        content = content.replace("$deploymentId", DEPLOYMENT_ID)
+        content = content.replace("$taskName", NAME)
+        content = content.replace("$operatorId", OPERATOR_ID_2)
+        with open("tests/resources/mocked.yaml", "w") as file:
+            file.write(content)
+        kfp_experiment = kfp_client().create_experiment(name=DEPLOYMENT_ID)
+        kfp_client().run_pipeline(
+            experiment_id=kfp_experiment.id,
+            job_name=DEPLOYMENT_ID,
+            pipeline_package_path="tests/resources/mocked.yaml",
+        )
+
+        # Awaits 30 seconds (for the pipeline to run and complete)
+        # It's a bad solution since the pod may not have completed yet
+        # subprocess.run(['kubectl', 'wait', ...]) would be a better solution,
+        # but its not compatible with the version of argo workflows we're using
+        time.sleep(30)
 
     def tearDown(self):
         conn = engine.connect()
+
+        text = f"DELETE FROM operators WHERE deployment_id in" \
+               f"(SELECT uuid FROM deployments where project_id = '{PROJECT_ID}')"
+        conn.execute(text)
 
         text = f"DELETE FROM operators WHERE experiment_id in" \
                f"(SELECT uuid FROM experiments where project_id = '{PROJECT_ID}')"
@@ -168,18 +181,6 @@ class TestDeploymentsRuns(TestCase):
         self.assertEqual(DEPLOYMENT_ID, result["deploymentId"])
         self.assertEqual(rv.status_code, 200)
 
-    def test_get_deployment_log(self):
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/foo/runs/latest/logs")
-        result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
-
-        # rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
-        # result = rv.json()
-        # self.assertIsInstance(result, list)
-        # self.assertEqual(rv.status_code, 200)
-
     def test_get_run(self):
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
         result = rv.json()
@@ -189,6 +190,6 @@ class TestDeploymentsRuns(TestCase):
     def test_delete_run(self):
         rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
         result = rv.json()
-        expected = {"message": "Deployment deleted."}
+        expected = {"message": "Deployment deleted"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
