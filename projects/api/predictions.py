@@ -44,7 +44,6 @@ async def handle_post_prediction(project_id: str,
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     # at this endpoint, we can accept both form-data and json as the request content-type
-    
     kwargs = {}
     if file is not None:
         kwargs = {"upload_file": file}
