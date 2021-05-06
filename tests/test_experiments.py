@@ -64,7 +64,7 @@ TASKS_JSON = dumps([
 ])
 EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
-EXPERIMENT_NOTEBOOK_PATH_2 = {}
+EXPERIMENT_NOTEBOOK_PATH_2 = ""
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
@@ -83,32 +83,40 @@ class TestExperiments(TestCase):
 
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps(
-            []), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps([]),
+                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_2, NAME_2, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps(
-            []), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID_2, NAME_2, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps([]),
+                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_3, NAME_3, DESCRIPTION, IMAGE, None, None, TAGS_JSON_2, dumps(
-            []), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID_3, NAME_3, DESCRIPTION, IMAGE, None, None, TAGS_JSON_2, dumps([]),
+                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_4, NAME_4, DESCRIPTION, IMAGE, None, None, TAGS_JSON_2, dumps(
-            []), EXPERIMENT_NOTEBOOK_PATH_2, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID_4, NAME_4, DESCRIPTION, IMAGE, None, None, TAGS_JSON_2, dumps([]),
+                            EXPERIMENT_NOTEBOOK_PATH_2, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
@@ -144,31 +152,36 @@ class TestExperiments(TestCase):
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID,
+                     PARAMETERS_JSON, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, TASK_ID,
+                     PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_3, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID_3, PARAMETERS_JSON_2, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_3, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID_3,
+                     PARAMETERS_JSON_2, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_4, None, "Unset", None, EXPERIMENT_ID_3, TASK_ID, PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_4, None, "Unset", None, EXPERIMENT_ID_3, TASK_ID,
+                     PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, created_at, dependencies, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_5, None, "Unset", None, EXPERIMENT_ID_4, TASK_ID_4, PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_5, None, "Unset", None, EXPERIMENT_ID_4, TASK_ID_4,
+                     PARAMETERS_JSON, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
