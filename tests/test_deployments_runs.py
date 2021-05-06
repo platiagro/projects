@@ -55,17 +55,22 @@ class TestDeploymentsRuns(TestCase):
 
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, 'name', 'desc', IMAGE, None, None, TAGS_JSON, dumps(
-            []), EX_NOTEBOOK_PATH, DEPLOY_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID, "name", "desc", IMAGE, None, None, TAGS_JSON, dumps([]),
+                            EX_NOTEBOOK_PATH, DEPLOY_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_2, 'name', 'desc', IMAGE, None, None, TAGS_JSON, dumps([]), EX_NOTEBOOK_PATH, None, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID_2, "name", "desc", IMAGE, None, None, TAGS_JSON, dumps([]),
+                            EX_NOTEBOOK_PATH, None, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
@@ -95,13 +100,15 @@ class TestDeploymentsRuns(TestCase):
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, DEPLOYMENT_ID, TASK_ID_2, PARAMETERS_JSON, DEP_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, DEPLOYMENT_ID,
+                     TASK_ID_2, PARAMETERS_JSON, DEP_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, deployment_id, task_id, parameters, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, dumps([OPERATOR_ID]), CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, DEPLOYMENT_ID,
+                     TASK_ID, PARAMETERS_JSON, dumps([OPERATOR_ID]), CREATED_AT, UPDATED_AT,))
         conn.close()
 
     def tearDown(self):

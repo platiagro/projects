@@ -63,11 +63,13 @@ class TestLogs(TestCase):
         conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, 0, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON,
-                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, EXPERIMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps([]),
+                            EXPERIMENT_NOTEBOOK_PATH, EXPERIMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
