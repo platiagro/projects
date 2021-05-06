@@ -6,6 +6,7 @@ from datetime import datetime
 from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.operators import OperatorController
+from projects.controllers.deployments.runs import RunController
 from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
@@ -19,6 +20,7 @@ class DeploymentController:
         self.session = session
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
+        self.run_controller = RunController(session)
         self.template_controller = TemplateController(session)
         self.background_tasks = background_tasks
 
@@ -236,6 +238,16 @@ class DeploymentController:
         self.fix_positions(project_id=project_id)
 
         self.session.commit()
+
+        try:
+            self.run_controller.terminate_run(
+                project_id=project_id,
+                deployment_id=deployment_id,
+                run_id="latest"
+            )
+        except NotFound:
+            # we can ignore this exception
+            pass
 
         return schemas.Message(message="Deployment deleted")
 
