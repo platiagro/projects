@@ -152,14 +152,42 @@ jobs:
               path: /data/pv0002/
         EOF
 
+    - name: Install Istio
+      run: |
+        curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.3.5 sh -
+        cd istio-1.3.5
+        for i in install/kubernetes/helm/istio-init/files/crd*yaml; do kubectl apply -f $i; done
+        kubectl apply -f install/kubernetes/istio-demo.yaml
+
+        kubectl create namespace kubeflow
+
+        cat <<EOF | kubectl apply -f -
+          apiVersion: networking.istio.io/v1alpha3
+          kind: Gateway
+          metadata:
+            name: kubeflow-gateway
+            namespace: kubeflow
+          spec:
+            selector:
+              istio: ingressgateway # use istio default controller
+            servers:
+            - port:
+                number: 80
+                name: http
+                protocol: HTTP
+              hosts:
+              - "*"
+        EOF
+
     - name: Install Seldon Core
       run: |
-        kubectl create namespace kubeflow
         helm install seldon-core seldon-core-operator \
           --repo https://storage.googleapis.com/seldon-charts \
           --set usageMetrics.enabled=false \
           --namespace kubeflow \
-          --version v1.4.0
+          --version v1.4.0 \
+          --set istio.enabled=true \
+          --set istio.gateway=kubeflow/kubeflow-gateway
 
     - name: Install Kubeflow Pipelines
       id: kfp
