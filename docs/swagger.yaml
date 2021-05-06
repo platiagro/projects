@@ -2577,6 +2577,12 @@ components:
                 format: uuid
     PredictionPost:
       content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              dataset:
+                type: string
         multipart/form-data:
           schema:
             type: object

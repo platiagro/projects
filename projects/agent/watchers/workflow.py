@@ -124,7 +124,7 @@ def update_status(workflow_manifest, session):
         else:
             status = str(node["phase"])
 
-        if status_message not in RECURRENT_MESSAGES:      
+        if status_message not in RECURRENT_MESSAGES:
             session.query(models.Operator) \
                 .filter_by(uuid=operator_id) \
                 .update({"status": status, "status_message": status_message})

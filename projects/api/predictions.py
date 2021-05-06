@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 """Predictions API Router."""
-from fastapi import APIRouter, Depends, File, UploadFile
+from json.decoder import JSONDecodeError
+from typing import Optional
+
+from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from projects.controllers import DeploymentController, PredictionController, \
     ProjectController
+from projects.exceptions import BadRequest
 from projects.database import session_scope
 
 router = APIRouter(
@@ -15,7 +19,8 @@ router = APIRouter(
 @router.post("")
 async def handle_post_prediction(project_id: str,
                                  deployment_id: str,
-                                 file: UploadFile = File(...),
+                                 request: Request,
+                                 file: Optional[UploadFile] = File(None),
                                  session: Session = Depends(session_scope)):
     """
     Handles POST request to /.
@@ -24,6 +29,8 @@ async def handle_post_prediction(project_id: str,
     -------
     project_id : str
     deployment_id : str
+    request : starlette.requests.Request
+    file : starlette.datastructures.UploadFile
     session : sqlalchemy.orm.session.Session
 
     Returns
@@ -36,8 +43,17 @@ async def handle_post_prediction(project_id: str,
     deployment_controller = DeploymentController(session)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
+    # at this endpoint, we can accept both form-data and json as the request content-type
+    kwargs = {}
+    if file is not None:
+        kwargs = {"upload_file": file}
+    else:
+        try:
+            kwargs = await request.json()
+        except JSONDecodeError:
+            raise BadRequest("either form-data or json is required")
+
     prediction_controller = PredictionController(session)
-    prediction = prediction_controller.create_prediction(project_id=project_id,
-                                                         deployment_id=deployment_id,
-                                                         file=file.file)
-    return prediction
+    return prediction_controller.create_prediction(project_id=project_id,
+                                                   deployment_id=deployment_id,
+                                                   **kwargs)
