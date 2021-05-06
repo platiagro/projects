@@ -26,6 +26,7 @@ POSITION_Y = 0.5
 IMAGE = "busybox"
 COMMANDS = None
 ARGUMENTS = ["echo", "-e", "hello\nhello"]
+ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
@@ -67,7 +68,7 @@ class TestExperimentsRuns(TestCase):
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
                             EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -76,7 +77,7 @@ class TestExperimentsRuns(TestCase):
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS, TASK_DATASET_TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS_JSON, TASK_DATASET_TAGS_JSON, dumps([]),
                             EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -102,11 +103,11 @@ class TestExperimentsRuns(TestCase):
             pipeline_package_path="tests/resources/mocked.yaml",
         )
 
-        # Awaits 30 seconds (for the pipeline to run and complete)
+        # Awaits 60 seconds (for the pipeline to run and complete)
         # It's a bad solution since the pod may not have completed yet
         # subprocess.run(['kubectl', 'wait', ...]) would be a better solution,
         # but its not compatible with the version of argo workflows we're using
-        time.sleep(30)
+        time.sleep(60)
 
     def tearDown(self):
         conn = engine.connect()
@@ -168,7 +169,7 @@ class TestExperimentsRuns(TestCase):
 
         rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
         result = rv.json()
-        expected = {"message": "Run terminated."}
+        expected = {"message": "Run terminated"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 

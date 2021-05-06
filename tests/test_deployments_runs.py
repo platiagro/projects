@@ -34,6 +34,7 @@ POSITION_Y = 0
 IMAGE = "busybox"
 COMMANDS = None
 ARGUMENTS = ["echo", "-e", "hello\nhello"]
+ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS_JSON = dumps(["PREDICTOR"])
 DEPLOY_NOTEBOOK_PATH = ""
 EX_NOTEBOOK_PATH = ""
@@ -51,7 +52,7 @@ class TestDeploymentsRuns(TestCase):
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, "name", "desc", IMAGE, COMMANDS, ARGUMENTS, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID, "name", "desc", IMAGE, COMMANDS, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
                             EX_NOTEBOOK_PATH, DEPLOY_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (

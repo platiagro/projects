@@ -115,11 +115,11 @@ class TestLogs(TestCase):
             pipeline_package_path="tests/resources/mocked.yaml",
         )
 
-        # Awaits 30 seconds (for the pipeline to run and complete)
+        # Awaits 60 seconds (for the pipeline to run and complete)
         # It's a bad solution since the pod may not have completed yet
         # subprocess.run(['kubectl', 'wait', ...]) would be a better solution,
         # but its not compatible with the version of argo workflows we're using
-        time.sleep(30)
+        time.sleep(60)
 
     def tearDown(self):
         conn = engine.connect()
