@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from io import BytesIO
 from json import dumps
 from unittest import TestCase
 
