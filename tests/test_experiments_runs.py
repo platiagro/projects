@@ -168,7 +168,7 @@ class TestExperimentsRuns(TestCase):
 
         rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
         result = rv.json()
-        expected = {"message": "Run terminated."}
+        expected = {"message": "Run terminated"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
