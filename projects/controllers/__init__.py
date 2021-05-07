@@ -5,19 +5,9 @@ from projects.controllers.deployments.responses import ResponseController
 from projects.controllers.experiments.experiments import ExperimentController
 from projects.controllers.experiments.runs.figures import FigureController
 from projects.controllers.experiments.runs.metrics import MetricController
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 from projects.controllers.logs import LogController
-=======
->>>>>>> f6417b6 (Created API that returns a list of figures that were generated during the monitoring.)
 from projects.controllers.monitorings import MonitoringController
-=======
-from projects.controllers.monitorings.monitorings import MonitoringController
->>>>>>> ed7c113 (Created API that returns a list of figures that were generated during the monitoring.)
-=======
-from projects.controllers.monitorings import MonitoringController
->>>>>>> f6417b6 (Created API that returns a list of figures that were generated during the monitoring.)
 from projects.controllers.operators import OperatorController
 from projects.controllers.operators.parameters import OperatorParameterController
 from projects.controllers.tasks.parameters import ParameterController
