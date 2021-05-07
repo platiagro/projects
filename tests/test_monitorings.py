@@ -116,7 +116,11 @@ class TestMonitorings(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_create_monitoring(self):
-        rv = TEST_CLIENT.post("/projects/unk/deployments/unk/monitorings", json={})
+        rv = TEST_CLIENT.post(
+            f"/projects/unk/deployments/unk/monitorings", 
+            json={
+                "taskId": "unk"
+            })
         result = rv.json()
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
