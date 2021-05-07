@@ -158,7 +158,7 @@ class TestMonitorings(TestCase):
             "deploymentId": DEPLOYMENT_ID,
             "taskId": TASK_ID_2,
         }
-        machine_generated = ["uuid", "createdAt"]
+        machine_generated = ["uuid", "createdAt", "task"]
         for attr in machine_generated:
             self.assertIn(attr, result)
             del result[attr]
