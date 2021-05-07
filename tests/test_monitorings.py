@@ -117,7 +117,7 @@ class TestMonitorings(TestCase):
 
     def test_create_monitoring(self):
         rv = TEST_CLIENT.post(
-            f"/projects/unk/deployments/unk/monitorings", 
+            f"/projects/unk/deployments/unk/monitorings",
             json={
                 "taskId": "unk"
             })
@@ -126,7 +126,11 @@ class TestMonitorings(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/unk/monitorings", json={})
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments/unk/monitorings",
+            json={
+                "taskId": "unk"
+            })
         result = rv.json()
         expected = {"message": "The specified deployment does not exist"}
         self.assertDictEqual(expected, result)
