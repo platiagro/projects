@@ -5,6 +5,7 @@ from projects.controllers.deployments.responses import ResponseController
 from projects.controllers.experiments.experiments import ExperimentController
 from projects.controllers.experiments.runs.figures import FigureController
 from projects.controllers.experiments.runs.metrics import MetricController
+
 from projects.controllers.logs import LogController
 from projects.controllers.monitorings import MonitoringController
 from projects.controllers.operators import OperatorController
@@ -14,6 +15,7 @@ from projects.controllers.projects import ProjectController
 from projects.controllers.predictions import PredictionController
 from projects.controllers.tasks.tasks import TaskController
 from projects.controllers.templates import TemplateController
+from projects.controllers.monitorings.figures import MonitoringFigureController
 
 __all__ = [
     'ComparisonController',
@@ -32,4 +34,5 @@ __all__ = [
     'ResponseController',
     'TaskController',
     'TemplateController',
+    'MonitoringFigureController'
 ]
