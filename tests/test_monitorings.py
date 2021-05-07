@@ -181,3 +181,20 @@ class TestMonitorings(TestCase):
         result = rv.json()
         expected = {"message": "Monitoring deleted"}
         self.assertDictEqual(expected, result)
+
+    def test_list_figures_monitoring(self):
+        rv = TEST_CLIENT.get(f"/projects/1/deployments/unk/monitorings/unk/figures")
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/unk/monitorings/unk/figures")
+        result = rv.json()
+        expected = {"message": "The specified deployment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/monitorings/{MONITORING_ID}/figures")
+        result = rv.json()
+        self.assertIsInstance(result, list)

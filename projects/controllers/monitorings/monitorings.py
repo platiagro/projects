@@ -14,6 +14,25 @@ class MonitoringController:
         self.session = session
         self.task_controller = TaskController(session)
 
+    def raise_if_monitoring_does_not_exist(self, monitoring_id: str):
+        """
+        Raises an exception if the specified monitoring does not exist.
+
+        Parameters
+        ----------
+        monitoring_id : str
+
+        Raises
+        ------
+        NotFound
+        """
+        exists = self.session.query(models.Monitoring.uuid) \
+            .filter_by(uuid=monitoring_id) \
+            .scalar() is not None
+
+        if not exists:
+            raise NotFound("The specified monitoring does not exist")
+
     def list_monitorings(self, project_id: str, deployment_id: str):
         """
         Lists all monitorings under a deployment.
