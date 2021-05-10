@@ -82,14 +82,9 @@ def parse_file_buffer_to_seldon_request(file):
     -------
     dict
         Seldon API request
-
-    Raises
-    ------
-    BadRequest
-        When `file` has no header.
     """
     try:
-        df = pandas.read_csv(file._file, sep=None, engine='python')
+        df = pandas.read_csv(file, sep=None, engine='python')
 
         return parse_dataframe_to_seldon_request(df)
 

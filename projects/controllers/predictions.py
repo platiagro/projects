@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Predictions controller."""
 import json
+from typing import Optional
 
 import requests
 from platiagro import load_dataset
@@ -15,7 +16,7 @@ class PredictionController:
     def __init__(self, session):
         self.session = session
 
-    def create_prediction(self, project_id: str, deployment_id: str, upload_file: bytes = None, dataset: str = None):
+    def create_prediction(self, project_id: str, deployment_id: str, upload_file: Optional[bytes] = None, dataset: Optional[str] = None):
         """
         POST a prediction file to seldon deployment.
 
@@ -34,13 +35,18 @@ class PredictionController:
         """
         if upload_file is not None:
             file = upload_file.file
-            request = parse_file_buffer_to_seldon_request(file=file)
+            request = parse_file_buffer_to_seldon_request(file=file._file)
         elif dataset is not None:
             try:
-                dataframe = load_dataset(dataset)
+                dataset = load_dataset(dataset)
+                request = parse_dataframe_to_seldon_request(dataframe=dataset)
+
+            except AttributeError:
+                request = parse_file_buffer_to_seldon_request(file=dataset)
+
             except FileNotFoundError:
                 raise BadRequest("a valid dataset is required")
-            request = parse_dataframe_to_seldon_request(dataframe=dataframe)
+
         else:
             raise BadRequest("either dataset name or file is required")
 
