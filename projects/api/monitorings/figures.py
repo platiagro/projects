@@ -40,8 +40,8 @@ async def handle_list_figures_monitorings(project_id: str,
     monitoring_controller = MonitoringController(session)
     monitoring_controller.raise_if_monitoring_does_not_exist(monitoring_id)
 
-    Monitoring_figure_controller = MonitoringFigureController(session)
-    figures_monitoring = Monitoring_figure_controller.list_figures(project_id=project_id,
+    monitoring_figure_controller = MonitoringFigureController(session)
+    figures_monitoring = monitoring_figure_controller.list_figures(project_id=project_id,
                                                                    deployment_id=deployment_id,
                                                                    monitoring_id=monitoring_id)
     return figures_monitoring
