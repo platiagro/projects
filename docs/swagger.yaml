@@ -1305,6 +1305,37 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/monitorings/{monitoringId}/figures:
+    get:
+      summary: "List all figures"
+      tags:
+        - "Monitorings"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: monitoringId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Figures"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/deployments/{deploymentId}/runs:
     get:
       summary: "List all experiment runs sorted by created_at in ascending order."
