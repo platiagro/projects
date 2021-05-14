@@ -40,6 +40,7 @@ class ParameterUpdate(BaseModel):
 class OperatorTask(BaseModel):
     name: str
     tags: List[str]
+    parameters: List[Dict]
 
 
 class Operator(OperatorBase):
@@ -63,6 +64,7 @@ class Operator(OperatorBase):
         task = OperatorTask(
             name=model.task.name,
             tags=model.task.tags,
+            parameters=model.task.parameters,
         )
         name = task.name if model.name is None else model.name
         return Operator(
