@@ -13,7 +13,7 @@ from sqlalchemy import asc, desc
 
 from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
-from projects.exceptions import BadRequest, NotFound
+from projects.exceptions import BadRequest, ForbiddenRequest, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation, \
     update_task_config_map, update_persistent_volume_claim, remove_persistent_volume_claim
 
@@ -341,6 +341,9 @@ class TaskController:
         if task is None:
             raise NOT_FOUND
 
+        if task.operator:
+            raise ForbiddenRequest("Task related to an operator")
+  
         # remove the volume for the task in the notebook server
         self.background_tasks.add_task(
             remove_persistent_volume_claim,
