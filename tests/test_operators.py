@@ -254,6 +254,7 @@ class TestOperators(TestCase):
             "task": {
                 "name": NAME,
                 "tags": TAGS,
+                "parameters": [],
             },
             "dependencies": [],
             "parameters": {},
@@ -294,6 +295,7 @@ class TestOperators(TestCase):
             "task": {
                 "name": NAME,
                 "tags": TAGS,
+                "parameters": [],
             },
             "dependencies": [],
             "parameters": {"coef": 1.0},
@@ -325,6 +327,7 @@ class TestOperators(TestCase):
             "task": {
                 "name": NAME,
                 "tags": TAGS,
+                "parameters": [],
             },
             "dependencies": [],
             "positionX": 0,
@@ -356,6 +359,7 @@ class TestOperators(TestCase):
             "task": {
                 "name": NAME,
                 "tags": ["DATASETS"],
+                "parameters": [],
             },
             "dependencies": [],
             "parameters": {},
@@ -388,6 +392,7 @@ class TestOperators(TestCase):
             "task": {
                 "name": NAME,
                 "tags": ["DATASETS"],
+                "parameters": [],
             },
             "dependencies": [],
             "parameters": {"dataset": 'iris.csv'},
@@ -458,6 +463,7 @@ class TestOperators(TestCase):
             "task": {
                 "name": NAME,
                 "tags": TAGS,
+                "parameters": [],
             },
             "dependencies": result['dependencies'],
             "parameters": PARAMETERS,
@@ -488,6 +494,7 @@ class TestOperators(TestCase):
             "task": {
                 "name": NAME,
                 "tags": TAGS,
+                "parameters": [],
             },
             "dependencies": result['dependencies'],
             "parameters": {"coef": 0.2},
@@ -516,6 +523,7 @@ class TestOperators(TestCase):
             "task": {
                 "name": NAME,
                 "tags": TAGS,
+                "parameters": [],
             },
             "dependencies": [OPERATOR_ID_3],
             "parameters": {"coef": 0.2},
