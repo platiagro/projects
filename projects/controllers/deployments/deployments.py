@@ -6,11 +6,9 @@ from datetime import datetime
 from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.operators import OperatorController
-from projects.controllers.deployments.runs import RunController
 from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
-from projects.kfp.monitorings import undeploy_monitoring
 
 NOT_FOUND = NotFound("The specified deployment does not exist")
 
@@ -20,7 +18,6 @@ class DeploymentController:
         self.session = session
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
-        self.run_controller = RunController(session)
         self.template_controller = TemplateController(session)
         self.background_tasks = background_tasks
 
@@ -214,40 +211,11 @@ class DeploymentController:
         if deployment is None:
             raise NOT_FOUND
 
-        # remove responses
-        self.session.query(models.Response).filter(models.Response.deployment_id == deployment_id).delete()
-
-        # remove operators
-        self.session.query(models.Operator).filter(models.Operator.deployment_id == deployment_id).delete()
-
-        # remove monitorings
-        monitorings = self.session.query(models.Monitoring).filter(models.Monitoring.deployment_id == deployment_id)
-        # Undeploy monitorings
-        if monitorings:
-            for monitoring in monitorings:
-                self.background_tasks.add_task(
-                    undeploy_monitoring,
-                    monitoring_id=monitoring.uuid
-                )
-
-        # delete monitorings on database
-        monitorings.delete()
-
         self.session.delete(deployment)
 
         self.fix_positions(project_id=project_id)
 
         self.session.commit()
-
-        try:
-            self.run_controller.terminate_run(
-                project_id=project_id,
-                deployment_id=deployment_id,
-                run_id="latest"
-            )
-        except NotFound:
-            # we can ignore this exception
-            pass
 
         return schemas.Message(message="Deployment deleted")
 
