@@ -35,6 +35,22 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 SAMPLE_NOTEBOOK = '{"cells":[{"cell_type":"code","execution_count":null,"metadata":{"tags":["parameters"]},"outputs":[],"source":["shuffle = True #@param {type: \\"boolean\\"}"]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}'
 
 TASK_ID_2 = str(uuid_alpha())
+TASK_ID_3 = str(uuid_alpha())
+
+
+PROJECT_ID = str(uuid_alpha())
+
+EXPERIMENT_ID = str(uuid_alpha())
+POSITION = 0
+
+OPERATOR_ID = str(uuid_alpha())
+PARAMETERS = {"coef": 0.1}
+PARAMETERS_JSON = dumps(PARAMETERS)
+POSITION_X = 0
+POSITION_Y = 0
+DEPENDENCIES_OP_ID = [OPERATOR_ID]
+DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
+
 
 
 class TestTasks(TestCase):
@@ -54,6 +70,33 @@ class TestTasks(TestCase):
         )
         conn.execute(text, (TASK_ID_2, 'foo 2', DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON,
                             dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+       
+        conn = engine.connect()
+        text = (
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (TASK_ID_3, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON,
+                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+
+        text = (
+            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s)"
+        )
+        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
+       
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
+
+        text = (
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
+                            POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
 
         try:
@@ -116,7 +159,19 @@ class TestTasks(TestCase):
             )
 
         conn = engine.connect()
-        text = f"DELETE FROM tasks WHERE uuid in ('{TASK_ID}', '{TASK_ID_2}')"
+        text = f"DELETE FROM operators WHERE uuid = '{OPERATOR_ID}'"
+        conn.execute(text)
+
+        conn = engine.connect()
+        text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
+        conn.execute(text)
+
+        conn = engine.connect()
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
+        conn.execute(text)
+
+        conn = engine.connect()
+        text = f"DELETE FROM tasks WHERE uuid in ('{TASK_ID}', '{TASK_ID_2}', '{TASK_ID_3}')"
         conn.execute(text)
 
         conn = engine.connect()
@@ -596,3 +651,10 @@ class TestTasks(TestCase):
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
+
+        # task is related to an operator
+        rv = TEST_CLIENT.delete(f"/tasks/{TASK_ID_3}")
+        result = rv.json()
+        expected = {"message": "Task related to an operator"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 403)
