@@ -7,6 +7,7 @@ from kfp import dsl
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 
+from projects.exceptions import NotFound
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp.pipeline import undeploy_pipeline
 from projects.kfp.templates import MONITORING_SERVICE, MONITORING_TRIGGER
@@ -136,31 +137,38 @@ def undeploy_monitoring(monitoring_id):
     Parameters
     ----------
     monitoring_id : str
-    """
 
+    Raises
+    ------
+    NotFound
+        When monitoring resources do not exist.
+    """
     load_kube_config()
     api = client.CustomObjectsApi()
 
-    # Undeploy service
-    service_name = f"service-{monitoring_id}"
-    service_custom_object = api.get_namespaced_custom_object(
-        group="serving.knative.dev",
-        version="v1alpha1",
-        namespace=KF_PIPELINES_NAMESPACE,
-        plural="services",
-        name=service_name
-    )
+    try:
+        # Undeploy service
+        service_name = f"service-{monitoring_id}"
+        service_custom_object = api.get_namespaced_custom_object(
+            group="serving.knative.dev",
+            version="v1alpha1",
+            namespace=KF_PIPELINES_NAMESPACE,
+            plural="services",
+            name=service_name
+        )
 
-    undeploy_pipeline(service_custom_object)
+        undeploy_pipeline(service_custom_object)
 
-    # Undeploy trigger
-    trigger_name = f"trigger-{monitoring_id}"
-    trigger_custom_object = api.get_namespaced_custom_object(
-        group="eventing.knative.dev",
-        version="v1alpha1",
-        namespace=KF_PIPELINES_NAMESPACE,
-        plural="triggers",
-        name=trigger_name
-    )
+        # Undeploy trigger
+        trigger_name = f"trigger-{monitoring_id}"
+        trigger_custom_object = api.get_namespaced_custom_object(
+            group="eventing.knative.dev",
+            version="v1alpha1",
+            namespace=KF_PIPELINES_NAMESPACE,
+            plural="triggers",
+            name=trigger_name
+        )
 
-    undeploy_pipeline(trigger_custom_object)
+        undeploy_pipeline(trigger_custom_object)
+    except ApiException:
+        raise NotFound("Monitoring resources do not exist.")

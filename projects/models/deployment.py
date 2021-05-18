@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Deployment model."""
 from datetime import datetime
+from warnings import warn
 
 from sqlalchemy import Boolean, Column, DateTime, event, \
     Integer, String, Text, ForeignKey
@@ -9,6 +10,8 @@ from sqlalchemy.sql import expression
 
 from projects.controllers.deployments.runs import RunController
 from projects.database import Base
+from projects.exceptions import NotFound
+from projects.models.monitoring import Monitoring
 from projects.models.operator import Operator
 from projects.models.response import Response
 
@@ -27,6 +30,9 @@ class Deployment(Base):
     responses = relationship("Response",
                              primaryjoin=uuid == Response.deployment_id,
                              cascade="all, delete-orphan")
+    monitorings = relationship("Monitoring",
+                               primaryjoin=uuid == Monitoring.deployment_id,
+                               cascade="all, delete-orphan")
     position = Column(Integer, nullable=False, default=-1)
     status = Column(String(255), nullable=False, default="Pending")
     url = Column(String(255), nullable=True)
@@ -37,4 +43,7 @@ class Deployment(Base):
 
 @event.listens_for(Deployment, "after_delete")
 def undeploy(_mapper, connection, target):
-    RunController(connection).terminate_run(deployment_id=target.uuid)
+    try:
+        RunController(connection).terminate_run(deployment_id=target.uuid)
+    except NotFound as e:
+        warn(e.message)
