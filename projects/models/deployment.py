@@ -15,6 +15,8 @@ from projects.models.monitoring import Monitoring
 from projects.models.operator import Operator
 from projects.models.response import Response
 
+CASCADE = "all, delete-orphan"
+
 
 class Deployment(Base):
     __tablename__ = "deployments"
@@ -26,13 +28,13 @@ class Deployment(Base):
     operators = relationship("Operator",
                              primaryjoin=uuid == Operator.deployment_id,
                              lazy="joined",
-                             cascade="all, delete-orphan")
+                             cascade=CASCADE)
     responses = relationship("Response",
                              primaryjoin=uuid == Response.deployment_id,
-                             cascade="all, delete-orphan")
+                             cascade=CASCADE)
     monitorings = relationship("Monitoring",
                                primaryjoin=uuid == Monitoring.deployment_id,
-                               cascade="all, delete-orphan")
+                               cascade=CASCADE)
     position = Column(Integer, nullable=False, default=-1)
     status = Column(String(255), nullable=False, default="Pending")
     url = Column(String(255), nullable=True)
