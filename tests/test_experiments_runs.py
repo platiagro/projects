@@ -25,7 +25,7 @@ POSITION_X = 0.3
 POSITION_Y = 0.5
 IMAGE = "busybox"
 COMMANDS = None
-ARGUMENTS = ["echo", "-e", "hello\nhello"]
+ARGUMENTS = ["sleep", "120"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
@@ -94,22 +94,20 @@ class TestExperimentsRuns(TestCase):
         content = content.replace("$experimentId", EXPERIMENT_ID)
         content = content.replace("$taskName", NAME)
         content = content.replace("$operatorId", OPERATOR_ID)
+        content = content.replace("$image", IMAGE)
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
         kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
-        kfp_client().run_pipeline(
+        run = kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=f"experiment-{EXPERIMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
 
-        # Awaits 60 seconds (for the pipeline to run and complete)
-        # It's a bad solution since the pod may not have completed yet
-        # subprocess.run(['kubectl', 'wait', ...]) would be a better solution,
-        # but its not compatible with the version of argo workflows we're using
-        time.sleep(60)
-
     def tearDown(self):
+        kfp_experiment = kfp_client().get_experiment(experiment_name=EXPERIMENT_ID)
+        kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
+
         conn = engine.connect()
 
         text = f"DELETE FROM operators WHERE experiment_id in" \
@@ -167,17 +165,8 @@ class TestExperimentsRuns(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
-        result = rv.json()
-        expected = {"message": "Run terminated"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
-
-    # def test_retry_run(self):
-    #         TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
-
-    #         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/retry")
-    #         result = rv.json()
-    #         expected = {"message": "Run re-initiated successfully"}
-    #         self.assertDictEqual(expected, result)
-    #         self.assertEqual(rv.status_code, 200)
+        # rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
+        # result = rv.json()
+        # expected = {"message": "Run terminated"}
+        # self.assertDictEqual(expected, result)
+        # self.assertEqual(rv.status_code, 200)

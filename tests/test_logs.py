@@ -30,7 +30,7 @@ EXPERIMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPENDENCIES_OP_ID = []
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
-IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
+IMAGE = "busybox"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 EXPERIMENT_NOTEBOOK_PATH = ""
@@ -92,14 +92,17 @@ class TestLogs(TestCase):
         content = content.replace("$experimentId", EXPERIMENT_ID)
         content = content.replace("$taskName", NAME)
         content = content.replace("$operatorId", OPERATOR_ID)
+        content = content.replace("$image", IMAGE)
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
         kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
-        kfp_client().run_pipeline(
+        run = kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=f"experiment-{EXPERIMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
+        # Awaits 120 seconds (for the pipeline to run and complete)
+        kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
 
         with open("tests/resources/mocked_deployment.yaml", "r") as file:
             content = file.read()
@@ -109,19 +112,21 @@ class TestLogs(TestCase):
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
         kfp_experiment = kfp_client().create_experiment(name=DEPLOYMENT_ID)
-        kfp_client().run_pipeline(
+        run = kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=f"deployment-{DEPLOYMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
-
-        # Awaits 60 seconds (for the pipeline to run and complete)
-        # It's a bad solution since the pod may not have completed yet
-        # subprocess.run(['kubectl', 'wait', ...]) would be a better solution,
-        # but its not compatible with the version of argo workflows we're using
-        time.sleep(60)
+        # Awaits 120 seconds (for the pipeline to run and complete)
+        kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
 
     def tearDown(self):
+        kfp_experiment = kfp_client().get_experiment(experiment_name=EXPERIMENT_ID)
+        kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
+
+        kfp_experiment = kfp_client().get_experiment(experiment_name=DEPLOYMENT_ID)
+        kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
+
         conn = engine.connect()
         text = f"DELETE FROM operators WHERE uuid IN ('{OPERATOR_ID}', '{OPERATOR_ID_2}')"
         conn.execute(text)
