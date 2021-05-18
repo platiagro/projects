@@ -29,9 +29,6 @@ class Deployment(Base):
                              primaryjoin=uuid == Operator.deployment_id,
                              lazy="joined",
                              cascade=CASCADE)
-    responses = relationship("Response",
-                             primaryjoin=uuid == Response.deployment_id,
-                             cascade=CASCADE)
     monitorings = relationship("Monitoring",
                                primaryjoin=uuid == Monitoring.deployment_id,
                                cascade=CASCADE)
