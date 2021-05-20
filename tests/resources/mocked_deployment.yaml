@@ -61,6 +61,8 @@ spec:
                       value: $operatorId
                     - name: TASK_NAME
                       value: "$taskName"
+                    - name: LOG_LEVEL
+                      value: DEBUG
                     image: seldonio/mock_classifier:1.5.0-dev
                     name: $operatorId
                     securityContext:

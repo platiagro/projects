@@ -163,17 +163,4 @@ class TestLogs(TestCase):
         self.assertEqual(rv.status_code, 200)
 
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
-        result = rv.json()
-        result_logs = result.get("logs")
-        expected = {
-            "level": "INFO",
-            "title": NAME,
-        }
-        # title and created_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["createdAt", "message"]
-        for attr in machine_generated:
-            self.assertIn(attr, result_logs[0])
-            del result_logs[0][attr]
-        self.assertDictEqual(expected, result_logs[0])
         self.assertEqual(rv.status_code, 200)
