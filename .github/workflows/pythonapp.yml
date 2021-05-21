@@ -219,9 +219,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install .
+        python -m pip install --no-cache-dir --upgrade pip
+        pip install --no-cache-dir -r requirements.txt
+        pip install --no-cache-dir .
 
     - name: Test with pytest
       run: |
@@ -230,7 +230,6 @@ jobs:
         coverage erase
         coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_templates.py
         coverage xml -i
-        pip freeze | xargs pip uninstall -y  # make some disk space available for docker build
       env:
         MINIO_ENDPOINT: localhost:9000
         MINIO_ACCESS_KEY: minio
@@ -241,6 +240,22 @@ jobs:
         JUPYTER_ENDPOINT: http://localhost:8888
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
+
+    - name: Make disk space available for docker build
+      if: ${{ always() }}
+      run: |
+        pip freeze | grep '==' | sed s/==.*//g | xargs pip uninstall -y
+        kubectl delete ns kubeflow
+        kubectl delete ns istio-system
+        kubectl delete ns metallb-system
+        for I in `seq 1 10`; do rm -rf /data/pv000${I}/; done
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        docker images
+        df -h
+        docker system df
 
     - name: SonarCloud Scan
       if: ${{ always() }}
