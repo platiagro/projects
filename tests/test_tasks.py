@@ -24,8 +24,8 @@ ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
-EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
+EXPERIMENT_NOTEBOOK_PATH = None
+DEPLOYMENT_NOTEBOOK_PATH = None
 IS_DEFAULT = False
 PARAMETERS = [{"default": True, "name": "shuffle", "type": "boolean"}]
 CREATED_AT = "2000-01-01 00:00:00"
@@ -35,8 +35,6 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 SAMPLE_NOTEBOOK = '{"cells":[{"cell_type":"code","execution_count":null,"metadata":{"tags":["parameters"]},"outputs":[],"source":["shuffle = True #@param {type: \\"boolean\\"}"]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}'
 
 TASK_ID_2 = str(uuid_alpha())
-TASK_ID_3 = str(uuid_alpha())
-
 
 PROJECT_ID = str(uuid_alpha())
 
@@ -64,7 +62,7 @@ class TestTasks(TestCase):
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, CREATED_AT, UPDATED_AT,))
+                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
@@ -73,22 +71,14 @@ class TestTasks(TestCase):
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (TASK_ID_2, 'foo 2', DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON,
-                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
-       
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID_3, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON,
-                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s)"
         )
         conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
-       
+
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
@@ -103,65 +93,7 @@ class TestTasks(TestCase):
                             POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
 
-        try:
-            MINIO_CLIENT.make_bucket(BUCKET_NAME)
-        except BucketAlreadyOwnedByYou:
-            pass
-
-        session = requests.Session()
-        session.cookies.update(COOKIES)
-        session.headers.update(HEADERS)
-        session.hooks = {
-            "response": lambda r, *args, **kwargs: r.raise_for_status(),
-        }
-
-        session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks",
-            data=dumps({"type": "directory", "content": None}),
-        )
-
-        session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks/{NAME}",
-            data=dumps({"type": "directory", "content": None}),
-        )
-
-        session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks/{NAME}/Deployment.ipynb",
-            data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
-        )
-
-        session.put(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks/{NAME}/Experiment.ipynb",
-            data=dumps({"type": "notebook", "content": loads(SAMPLE_NOTEBOOK)}),
-        )
-
     def tearDown(self):
-        prefix = f"tasks/{NAME}"
-        for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
-            MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
-
-        session = requests.Session()
-        session.cookies.update(COOKIES)
-        session.headers.update(HEADERS)
-        session.hooks = {
-            "response": lambda r, *args, **kwargs: r.raise_for_status(),
-        }
-
-        r = session.get(
-            url=f"{JUPYTER_ENDPOINT}/api/contents/tasks",
-        )
-        contents = r.json()["content"]
-        for content in contents:
-            session.delete(
-                url=f"{JUPYTER_ENDPOINT}/api/contents/{content['path']}/Experiment.ipynb",
-            )
-            session.delete(
-                url=f"{JUPYTER_ENDPOINT}/api/contents/{content['path']}/Deployment.ipynb",
-            )
-            session.delete(
-                url=f"{JUPYTER_ENDPOINT}/api/contents/{content['path']}",
-            )
-
         conn = engine.connect()
         text = f"DELETE FROM operators WHERE uuid = '{OPERATOR_ID}'"
         conn.execute(text)
@@ -175,7 +107,7 @@ class TestTasks(TestCase):
         conn.execute(text)
 
         conn = engine.connect()
-        text = f"DELETE FROM tasks WHERE uuid in ('{TASK_ID}', '{TASK_ID_2}', '{TASK_ID_3}')"
+        text = f"DELETE FROM tasks WHERE uuid in ('{TASK_ID}', '{TASK_ID_2}')"
         conn.execute(text)
 
         conn = engine.connect()
@@ -238,9 +170,7 @@ class TestTasks(TestCase):
         # should raise bad request
         rv = TEST_CLIENT.post("/tasks", json={})
         result = rv.json()
-        self.assertEqual(rv.status_code, 400)
-        expected = {"message": "name is required"}
-        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 422)
 
         # when invalid tag is sent
         # should raise bad request
@@ -286,7 +216,7 @@ class TestTasks(TestCase):
             "copyFrom": "unk",
         })
         result = rv.json()
-        expected = {"message": "Source task does not exist"}
+        expected = {"message": "source task does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -301,20 +231,14 @@ class TestTasks(TestCase):
             "name": "test create a task using an empty template notebook",
             "description": "long test",
             "tags": ["DEFAULT"],
-            "isDefault": IS_DEFAULT,
-            "parameters": [
-                {"default": "", "name": "dataset", "type": "string"},
-            ],
+            "parameters": [],
         }
         # uuid, commands, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
         # are machine-generated we assert they exist, but we don't assert their values
         machine_generated = [
             "uuid",
-            "image",
             "commands",
             "arguments",
-            "experimentNotebookPath",
-            "deploymentNotebookPath",
             "createdAt",
             "updatedAt",
         ]
@@ -337,16 +261,12 @@ class TestTasks(TestCase):
             "name": "test copy",
             "description": "long test",
             "tags": TAGS,
-            "isDefault": IS_DEFAULT,
-            "parameters": PARAMETERS,
+            "parameters": [],
         }
         machine_generated = [
             "uuid",
-            "image",
             "commands",
             "arguments",
-            "experimentNotebookPath",
-            "deploymentNotebookPath",
             "createdAt",
             "updatedAt",
         ]
@@ -370,16 +290,12 @@ class TestTasks(TestCase):
             "name": "test",
             "description": "long test",
             "tags": TAGS,
-            "isDefault": IS_DEFAULT,
-            "parameters": PARAMETERS,
+            "parameters": [],
         }
         machine_generated = [
             "uuid",
-            "image",
             "commands",
             "arguments",
-            "experimentNotebookPath",
-            "deploymentNotebookPath",
             "createdAt",
             "updatedAt",
         ]
@@ -403,19 +319,13 @@ class TestTasks(TestCase):
         expected = {
             "name": "test tasks with image and command",
             "description": "long test",
-            "image": IMAGE,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
             "tags": TAGS,
-            "isDefault": IS_DEFAULT,
-            "parameters": [
-                {"default": "", "name": "dataset", "type": "string"},
-            ],
+            "parameters": [],
         }
         machine_generated = [
             "uuid",
-            "experimentNotebookPath",
-            "deploymentNotebookPath",
             "createdAt",
             "updatedAt",
         ]
@@ -446,11 +356,7 @@ class TestTasks(TestCase):
             "name": "test fake dataset task",
             "description": None,
             "tags": ["DATASETS"],
-            "isDefault": IS_DEFAULT,
             "parameters": [],
-            "experimentNotebookPath": None,
-            "deploymentNotebookPath": None,
-            "image": IMAGE,
         }
         machine_generated = [
             "uuid",
@@ -478,14 +384,10 @@ class TestTasks(TestCase):
             "uuid": TASK_ID,
             "name": "name foo",
             "description": DESCRIPTION,
-            "image": IMAGE,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
             "tags": TAGS,
-            "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
-            "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
-            "isDefault": IS_DEFAULT,
-            "parameters": PARAMETERS,
+            "parameters": [],
             "createdAt": CREATED_AT_ISO,
             "updatedAt": UPDATED_AT_ISO,
         }
@@ -494,7 +396,9 @@ class TestTasks(TestCase):
 
     def test_update_task(self):
         # task none
-        rv = TEST_CLIENT.patch("/tasks/foo", json={})
+        rv = TEST_CLIENT.patch("/tasks/foo", json={
+            "name": "foo 2",
+        })
         result = rv.json()
         expected = {"message": "The specified task does not exist"}
         self.assertDictEqual(expected, result)
@@ -516,13 +420,6 @@ class TestTasks(TestCase):
         result = rv.json()
         self.assertEqual(rv.status_code, 400)
 
-        # invalid key
-        rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-            "unk": "bar",
-        })
-        result = rv.json()
-        self.assertEqual(rv.status_code, 400)
-
         # update task using the same name
         rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
             "name": "name foo",
@@ -539,14 +436,10 @@ class TestTasks(TestCase):
             "uuid": TASK_ID,
             "name": "new name foo",
             "description": DESCRIPTION,
-            "image": IMAGE,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
             "tags": TAGS,
-            "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
-            "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
-            "isDefault": IS_DEFAULT,
-            "parameters": PARAMETERS,
+            "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
         machine_generated = ["updatedAt"]
@@ -565,14 +458,10 @@ class TestTasks(TestCase):
             "uuid": TASK_ID,
             "name": "new name foo",
             "description": DESCRIPTION,
-            "image": IMAGE,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
             "tags": ["FEATURE_ENGINEERING"],
-            "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
-            "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
-            "isDefault": IS_DEFAULT,
-            "parameters": PARAMETERS,
+            "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
         machine_generated = ["updatedAt"]
@@ -591,14 +480,10 @@ class TestTasks(TestCase):
             "uuid": TASK_ID,
             "name": "new name foo",
             "description": DESCRIPTION,
-            "image": IMAGE,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
             "tags": ["FEATURE_ENGINEERING"],
-            "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
-            "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
-            "isDefault": IS_DEFAULT,
-            "parameters": PARAMETERS,
+            "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
         machine_generated = ["updatedAt"]
@@ -617,14 +502,10 @@ class TestTasks(TestCase):
             "uuid": TASK_ID,
             "name": "new name foo",
             "description": DESCRIPTION,
-            "image": IMAGE,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
             "tags": ["FEATURE_ENGINEERING"],
-            "experimentNotebookPath": EXPERIMENT_NOTEBOOK_PATH,
-            "deploymentNotebookPath": DEPLOYMENT_NOTEBOOK_PATH,
-            "isDefault": IS_DEFAULT,
-            "parameters": PARAMETERS,
+            "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
         machine_generated = ["updatedAt"]
@@ -642,12 +523,12 @@ class TestTasks(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        # jupyter file is not none
+        # task is related to an operator
         rv = TEST_CLIENT.delete(f"/tasks/{TASK_ID}")
         result = rv.json()
-        expected = {"message": "Task deleted"}
+        expected = {"message": "Task related to an operator"}
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 403)
 
         # jupyter file is none
         rv = TEST_CLIENT.delete(f"/tasks/{TASK_ID_2}")
@@ -655,10 +536,3 @@ class TestTasks(TestCase):
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
-
-        # task is related to an operator
-        rv = TEST_CLIENT.delete(f"/tasks/{TASK_ID_3}")
-        result = rv.json()
-        expected = {"message": "Task related to an operator"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 403)
