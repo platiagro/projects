@@ -271,12 +271,19 @@ class TaskController:
             valid_str = ",".join(VALID_TAGS)
             raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
+        stored_task = self.session.query(models.Task).get(task_id)
+
         if task.experiment_notebook:
             with tempfile.NamedTemporaryFile("w", delete=False) as f:
                 json.dump(task.experiment_notebook, f)
 
+            task.experiment_notebook_path = stored_task.experiment_notebook_path
+
+            if task.experiment_notebook_path is None:
+                task.experiment_notebook_path = "Experiment.ipynb"
+
             filepath = f.name
-            destination_path = f"{task.name}/{task.experiment_notebook_path}"
+            destination_path = f"{stored_task.name}/{task.experiment_notebook_path}"
             copy_file_to_pod(filepath, destination_path)
             os.remove(filepath)
 
@@ -284,12 +291,15 @@ class TaskController:
             with tempfile.NamedTemporaryFile("w", delete=False) as f:
                 json.dump(task.deployment_notebook, f)
 
+            task.deployment_notebook_path = stored_task.deployment_notebook_path
+
+            if task.deployment_notebook_path is None:
+                task.deployment_notebook_path = "Deployment.ipynb"
+
             filepath = f.name
-            destination_path = f"{task.name}/{task.deployment_notebook_path}"
+            destination_path = f"{stored_task.name}/{task.deployment_notebook_path}"
             copy_file_to_pod(filepath, destination_path)
             os.remove(filepath)
-
-        stored_task = self.session.query(models.Task).get(task_id)
 
         # checks whether task.name has changed
         if stored_task.name != task.name and task.name:
@@ -311,8 +321,8 @@ class TaskController:
             )
 
         update_data = task.dict(exclude_unset=True)
-        del task.experiment_notebook
-        del task.deployment_notebook
+        update_data.pop("experiment_notebook", None)
+        update_data.pop("deployment_notebook", None)
         update_data.update({"updated_at": datetime.utcnow()})
 
         self.session.query(models.Task).filter_by(uuid=task_id).update(update_data)
