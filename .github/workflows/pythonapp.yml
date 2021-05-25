@@ -32,11 +32,6 @@ jobs:
         ports:
         - 9000:9000
 
-      jupyter:
-        image: jupyter/base-notebook
-        ports:
-        - 8888:8888
-
     steps:
     - uses: actions/checkout@v2
 
@@ -189,6 +184,55 @@ jobs:
               - "*"
         EOF
 
+    - name: Install JupyterLab
+      run: |
+        ./kustomize build "github.com/platiagro/manifests/jupyter/notebook-controller/base/?ref=$BRANCH" | kubectl apply -f -
+        kubectl create namespace anonymous
+
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: vol-tasks
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+        EOF
+
+        cat <<EOF | kubectl apply -f -
+        apiVersion: kubeflow.org/v1
+        kind: Notebook
+        metadata:
+          labels:
+            add-nvidia-visible-devices: "true"
+            app: server
+          name: server
+          namespace: anonymous
+        spec:
+          template:
+            spec:
+              containers:
+              - env:
+                - name: EXPERIMENT_ID
+                  value: notebook
+                - name: OPERATOR_ID
+                  value: notebook
+                image: jupyter/base-notebook
+                name: server
+                volumeMounts:
+                - mountPath: /home/jovyan/tasks
+                  name: vol-tasks
+              volumes:
+              - name: vol-tasks
+                persistentVolumeClaim:
+                  claimName: vol-tasks
+        EOF
+      env:
+        BRANCH: "v0.2.0-kubeflow-v1.2-branch"
+
     - name: Install Seldon Core
       run: |
         helm install seldon-core seldon-core-operator \
@@ -237,7 +281,7 @@ jobs:
         MYSQL_DB_HOST: localhost
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
-        JUPYTER_ENDPOINT: http://localhost:8888
+        JUPYTER_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}/notebook/anonymous/server
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
 
