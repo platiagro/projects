@@ -273,33 +273,9 @@ class TaskController:
 
         stored_task = self.session.query(models.Task).get(task_id)
 
-        if task.experiment_notebook:
-            with tempfile.NamedTemporaryFile("w", delete=False) as f:
-                json.dump(task.experiment_notebook, f)
-
-            task.experiment_notebook_path = stored_task.experiment_notebook_path
-
-            if task.experiment_notebook_path is None:
-                task.experiment_notebook_path = "Experiment.ipynb"
-
-            filepath = f.name
-            destination_path = f"{stored_task.name}/{task.experiment_notebook_path}"
-            copy_file_to_pod(filepath, destination_path)
-            os.remove(filepath)
-
-        if task.deployment_notebook:
-            with tempfile.NamedTemporaryFile("w", delete=False) as f:
-                json.dump(task.deployment_notebook, f)
-
-            task.deployment_notebook_path = stored_task.deployment_notebook_path
-
-            if task.deployment_notebook_path is None:
-                task.deployment_notebook_path = "Deployment.ipynb"
-
-            filepath = f.name
-            destination_path = f"{stored_task.name}/{task.deployment_notebook_path}"
-            copy_file_to_pod(filepath, destination_path)
-            os.remove(filepath)
+        # If the contents of experiment/deployment notebook were sent,
+        # saves them to the notebook server pod
+        self.copy_notebooks_to_pod(task, stored_task)
 
         # checks whether task.name has changed
         if stored_task.name != task.name and task.name:
@@ -388,3 +364,40 @@ class TaskController:
 
         if image and pattern.match(image) is None:
             raise BadRequest("invalid docker image name")
+
+    def copy_notebooks_to_pod(self, task, stored_task):
+        """
+        Copies the notebook contents to the pod (if it was sent on TaskUpdate).
+
+        Parameters
+        ----------
+        task : projects.schemas.task.TaskUpdate
+        stored_task : projects.models.task.Task
+        """
+        if task.experiment_notebook:
+            with tempfile.NamedTemporaryFile("w", delete=False) as f:
+                json.dump(task.experiment_notebook, f)
+
+            task.experiment_notebook_path = stored_task.experiment_notebook_path
+
+            if task.experiment_notebook_path is None:
+                task.experiment_notebook_path = "Experiment.ipynb"
+
+            filepath = f.name
+            destination_path = f"{stored_task.name}/{task.experiment_notebook_path}"
+            copy_file_to_pod(filepath, destination_path)
+            os.remove(filepath)
+
+        if task.deployment_notebook:
+            with tempfile.NamedTemporaryFile("w", delete=False) as f:
+                json.dump(task.deployment_notebook, f)
+
+            task.deployment_notebook_path = stored_task.deployment_notebook_path
+
+            if task.deployment_notebook_path is None:
+                task.deployment_notebook_path = "Deployment.ipynb"
+
+            filepath = f.name
+            destination_path = f"{stored_task.name}/{task.deployment_notebook_path}"
+            copy_file_to_pod(filepath, destination_path)
+            os.remove(filepath)
