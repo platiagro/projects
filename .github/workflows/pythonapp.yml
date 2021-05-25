@@ -187,13 +187,18 @@ jobs:
     - name: Install JupyterLab
       run: |
         ./kustomize build "github.com/platiagro/manifests/jupyter/notebook-controller/base/?ref=$BRANCH" | kubectl apply -f -
+        sleep 10
+        kubectl -n kubeflow wait --for=condition=Ready pods --all --timeout=120s
+
         kubectl create namespace anonymous
+        kubectl label namespace anonymous istio-injection=enabled
 
         cat <<EOF | kubectl apply -f -
         apiVersion: v1
         kind: PersistentVolumeClaim
         metadata:
           name: vol-tasks
+          namespace: anonymous
         spec:
           accessModes:
           - ReadWriteOnce
@@ -230,6 +235,9 @@ jobs:
                 persistentVolumeClaim:
                   claimName: vol-tasks
         EOF
+
+        sleep 120
+        kubectl -n anonymous wait --for=condition=Ready pods --all --timeout=120s
       env:
         BRANCH: "v0.2.0-kubeflow-v1.2-branch"
 
@@ -266,6 +274,7 @@ jobs:
         python -m pip install --no-cache-dir --upgrade pip
         pip install --no-cache-dir -r requirements.txt
         pip install --no-cache-dir .
+        pip install --no-cache-dir --force-reinstall "kubernetes==12.0.1"
 
     - name: Test with pytest
       run: |
