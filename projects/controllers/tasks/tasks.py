@@ -13,7 +13,7 @@ from sqlalchemy import asc, desc
 
 from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
-from projects.exceptions import BadRequest, ForbiddenRequest, NotFound
+from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation, \
     update_task_config_map, update_persistent_volume_claim, remove_persistent_volume_claim
 
@@ -154,6 +154,9 @@ class TaskController:
         stored_task_name = None
         if task.copy_from:
             stored_task = self.session.query(models.Task).get(task.copy_from)
+            if stored_task is None:
+                raise BadRequest("source task does not exist")
+
             task.image = stored_task.image
             task.commands = stored_task.commands
             task.arguments = stored_task.arguments
@@ -342,8 +345,8 @@ class TaskController:
             raise NOT_FOUND
 
         if task.operator:
-            raise ForbiddenRequest("Task related to an operator")
-  
+            raise Forbidden("Task related to an operator")
+
         # remove the volume for the task in the notebook server
         self.background_tasks.add_task(
             remove_persistent_volume_claim,
