@@ -149,15 +149,13 @@ class RunController:
 
         return run
 
-    def terminate_run(self, project_id, deployment_id, run_id):
+    def terminate_run(self, deployment_id):
         """
         Terminates a run in Kubeflow Pipelines.
 
         Parameters
         ----------
-        project_id : str
         deployment_id : str
-        run_id : str
 
         Returns
         -------
@@ -166,7 +164,7 @@ class RunController:
         Raises
         ------
         NotFound
-            When any of project_id, deployment_id, or run_id does not exist.
+            When deployment run does not exist.
         """
         load_kube_config()
         api = client.CustomObjectsApi()

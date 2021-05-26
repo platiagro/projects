@@ -2101,6 +2101,10 @@ components:
               type: array
               items:
                 type: string
+            parameters:
+              type: array
+              items:
+                $ref: "#/components/schemas/Parameter"
         dependencies:
           type: array
           items:
