@@ -4,8 +4,6 @@ import json
 import os
 from datetime import datetime
 
-from kfp_server_api.exceptions import ApiValueError
-
 from projects.exceptions import BadRequest
 from projects.kfp import kfp_client
 from projects.kfp.pipeline import compile_pipeline

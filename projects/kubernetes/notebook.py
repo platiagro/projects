@@ -77,6 +77,37 @@ def create_persistent_volume_claim(name, mount_path):
             body=body,
         )
 
+    except ApiException as e:
+        body = literal_eval(e.body)
+        message = body["message"]
+        raise InternalServerError(f"Error while trying to create persistent volume claim: {message}")
+
+    try:
+        notebook = custom_api.get_namespaced_custom_object(
+            group=NOTEBOOK_GROUP,
+            version="v1",
+            namespace=NOTEBOOK_NAMESPACE,
+            plural="notebooks",
+            name=NOTEBOOK_NAME,
+            _request_timeout=5,
+        )
+
+        # Prevents the creation of duplicate mountPath
+        pod_vols = enumerate(notebook["spec"]["template"]["spec"]["containers"][0]["volumeMounts"])
+        vol_index = next((i for i, v in pod_vols if v["mountPath"] == mount_path), -1)
+        if vol_index > -1:
+            warnings.warn(f"Notebook server already has a task at: {mount_path}. Skipping the mount of volume {name}")
+            return
+
+    except ApiException as e:
+        if e.status == 404:
+            warnings.warn(f"Notebook server does not exist. Skipping the mount of volume {name}")
+            return
+        body = literal_eval(e.body)
+        message = body["message"]
+        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+
+    try:
         body = [
             {
                 "op": "add",
@@ -453,7 +484,7 @@ def get_file_from_pod(filepath):
         container_stream.update(timeout=10)
         if container_stream.peek_stdout():
             file_content = container_stream.read_stdout()
-            warnings.warn(f"File content fetched.")
+            warnings.warn("File content fetched.")
     container_stream.close()
 
     return file_content

@@ -13,7 +13,7 @@ from projects.kubernetes.utils import get_container_logs
 from projects.schemas.log import Log, LogList
 
 EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
-LOG_PATTERN = re.compile(r"(.*?)\s(INFO|WARN|WARNING|ERROR|DEBUG)?\s*(.*)")
+LOG_PATTERN = re.compile(r"(.*?)\s(.*?)(INFO|WARN|WARNING|ERROR|DEBUG)?\s*(.*)")
 
 
 class LogController:
