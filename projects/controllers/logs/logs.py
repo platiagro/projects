@@ -13,7 +13,7 @@ from projects.kubernetes.utils import get_container_logs
 from projects.schemas.log import Log, LogList
 
 EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
-LOG_PATTERN = re.compile(r"(.*?)\s(INFO|WARN|WARNING|ERROR|DEBUG)?\s*(.*)")
+LOG_PATTERN = re.compile(r"(.*?)\s(INFO|WARN|WARNING|ERROR|DEBUG)\s*(.*)")
 
 
 class LogController:
@@ -116,6 +116,7 @@ class LogController:
         list
             Detailed logs with level, Time Stamp and message from pod container.
         """
+        # default return for empty logs
         if raw_logs is None:
             return [
                 Log(
@@ -155,12 +156,16 @@ class LogController:
                 level = match.group(2) or "INFO"
                 line = match.group(3)
 
+                message_lines.append(line)
                 try:
                     created_at = dateutil.parser.isoparse(date_str)
                 except (ValueError, OverflowError):
                     pass
+            else:
+                # this is necessary to remove kubernetes timestamps
+                # of the lines in the message body
+                message_lines.append(line.split(' ', 1)[1])
 
-            message_lines.append(line)
             line = buffer.readline()
 
         if len(message_lines) > 0:
