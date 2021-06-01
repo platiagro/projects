@@ -202,6 +202,9 @@ class TaskController:
         )
 
         task_dict = task.dict(exclude_unset=True)
+        task_dict.pop("copy_from", None)
+        task_dict.pop("experiment_notebook", None)
+        task_dict.pop("deployment_notebook", None)
         task_dict["uuid"] = task_id
         task_dict["experiment_notebook_path"] = experiment_notebook_path
         task_dict["deployment_notebook_path"] = deployment_notebook_path
