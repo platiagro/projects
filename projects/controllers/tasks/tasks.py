@@ -11,7 +11,7 @@ from typing import Optional
 from sqlalchemy import func
 from sqlalchemy import asc, desc
 
-from projects import models, schemas
+from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation, \
@@ -22,6 +22,19 @@ VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEER
               "PREDICTOR", "COMPUTER_VISION", "NLP", "MONITORING"]
 DEPLOYMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Experiment.ipynb"))
+
+TASK_DEFAULT_EXPERIMENT_IMAGE = os.getenv(
+    "TASK_DEFAULT_EXPERIMENT_IMAGE",
+    f"platiagro/platiagro-experiment-image:{__version__}",
+)
+TASK_DEFAULT_CPU_LIMIT = os.getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
+TASK_DEFAULT_CPU_REQUEST = os.getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
+TASK_DEFAULT_MEMORY_LIMIT = os.getenv("TASK_DEFAULT_MEMORY_LIMIT", "10Gi")
+TASK_DEFAULT_MEMORY_REQUEST = os.getenv("TASK_DEFAULT_MEMORY_REQUEST", "2Gi")
+TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(os.getenv(
+    "TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS",
+    "60",
+))
 
 NOT_FOUND = NotFound("The specified task does not exist")
 
@@ -188,24 +201,14 @@ class TaskController:
             copy_name=stored_task_name,
         )
 
+        task_dict = task.dict(exclude_unset=True)
+        task_dict["uuid"] = task_id
+        task_dict["experiment_notebook_path"] = experiment_notebook_path
+        task_dict["deployment_notebook_path"] = deployment_notebook_path
+
         # saves task info to the database
-        task = models.Task(
-            uuid=task_id,
-            name=task.name,
-            description=task.description,
-            tags=task.tags,
-            image=task.image,
-            commands=task.commands,
-            arguments=task.arguments,
-            parameters=task.parameters if task.parameters else [],
-            experiment_notebook_path=experiment_notebook_path,
-            deployment_notebook_path=deployment_notebook_path,
-            cpu_limit=task.cpu_limit,
-            cpu_request=task.cpu_request,
-            memory_limit=task.memory_limit,
-            memory_request=task.memory_request,
-            is_default=task.is_default,
-        )
+        task = models.Task(**task_dict)
+
         self.session.add(task)
         self.session.commit()
         self.session.refresh(task)
