@@ -11,9 +11,9 @@ from typing import Optional
 from sqlalchemy import func
 from sqlalchemy import asc, desc
 
-from projects import models, schemas
+from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
-from projects.exceptions import BadRequest, ForbiddenRequest, NotFound
+from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation, \
     update_task_config_map, update_persistent_volume_claim, remove_persistent_volume_claim
 
@@ -22,6 +22,19 @@ VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEER
               "PREDICTOR", "COMPUTER_VISION", "NLP", "MONITORING"]
 DEPLOYMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Experiment.ipynb"))
+
+TASK_DEFAULT_EXPERIMENT_IMAGE = os.getenv(
+    "TASK_DEFAULT_EXPERIMENT_IMAGE",
+    f"platiagro/platiagro-experiment-image:{__version__}",
+)
+TASK_DEFAULT_CPU_LIMIT = os.getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
+TASK_DEFAULT_CPU_REQUEST = os.getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
+TASK_DEFAULT_MEMORY_LIMIT = os.getenv("TASK_DEFAULT_MEMORY_LIMIT", "10Gi")
+TASK_DEFAULT_MEMORY_REQUEST = os.getenv("TASK_DEFAULT_MEMORY_REQUEST", "2Gi")
+TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(os.getenv(
+    "TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS",
+    "60",
+))
 
 NOT_FOUND = NotFound("The specified task does not exist")
 
@@ -127,9 +140,6 @@ class TaskController:
         BadRequest
             When task attributes are invalid.
         """
-        if not isinstance(task.name, str):
-            raise BadRequest("name is required")
-
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
         if task.copy_from and has_notebook:
@@ -154,6 +164,9 @@ class TaskController:
         stored_task_name = None
         if task.copy_from:
             stored_task = self.session.query(models.Task).get(task.copy_from)
+            if stored_task is None:
+                raise BadRequest("source task does not exist")
+
             task.image = stored_task.image
             task.commands = stored_task.commands
             task.arguments = stored_task.arguments
@@ -188,24 +201,17 @@ class TaskController:
             copy_name=stored_task_name,
         )
 
+        task_dict = task.dict(exclude_unset=True)
+        task_dict.pop("copy_from", None)
+        task_dict.pop("experiment_notebook", None)
+        task_dict.pop("deployment_notebook", None)
+        task_dict["uuid"] = task_id
+        task_dict["experiment_notebook_path"] = experiment_notebook_path
+        task_dict["deployment_notebook_path"] = deployment_notebook_path
+
         # saves task info to the database
-        task = models.Task(
-            uuid=task_id,
-            name=task.name,
-            description=task.description,
-            tags=task.tags,
-            image=task.image,
-            commands=task.commands,
-            arguments=task.arguments,
-            parameters=task.parameters if task.parameters else [],
-            experiment_notebook_path=experiment_notebook_path,
-            deployment_notebook_path=deployment_notebook_path,
-            cpu_limit=task.cpu_limit,
-            cpu_request=task.cpu_request,
-            memory_limit=task.memory_limit,
-            memory_request=task.memory_request,
-            is_default=task.is_default,
-        )
+        task = models.Task(**task_dict)
+
         self.session.add(task)
         self.session.commit()
         self.session.refresh(task)
@@ -268,25 +274,11 @@ class TaskController:
             valid_str = ",".join(VALID_TAGS)
             raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
-        if task.experiment_notebook:
-            with tempfile.NamedTemporaryFile("w", delete=False) as f:
-                json.dump(task.experiment_notebook, f)
-
-            filepath = f.name
-            destination_path = f"{task.name}/{task.experiment_notebook_path}"
-            copy_file_to_pod(filepath, destination_path)
-            os.remove(filepath)
-
-        if task.deployment_notebook:
-            with tempfile.NamedTemporaryFile("w", delete=False) as f:
-                json.dump(task.deployment_notebook, f)
-
-            filepath = f.name
-            destination_path = f"{task.name}/{task.deployment_notebook_path}"
-            copy_file_to_pod(filepath, destination_path)
-            os.remove(filepath)
-
         stored_task = self.session.query(models.Task).get(task_id)
+
+        # If the contents of experiment/deployment notebook were sent,
+        # saves them to the notebook server pod
+        self.copy_notebooks_to_pod(task, stored_task)
 
         # checks whether task.name has changed
         if stored_task.name != task.name and task.name:
@@ -308,8 +300,8 @@ class TaskController:
             )
 
         update_data = task.dict(exclude_unset=True)
-        del task.experiment_notebook
-        del task.deployment_notebook
+        update_data.pop("experiment_notebook", None)
+        update_data.pop("deployment_notebook", None)
         update_data.update({"updated_at": datetime.utcnow()})
 
         self.session.query(models.Task).filter_by(uuid=task_id).update(update_data)
@@ -342,8 +334,8 @@ class TaskController:
             raise NOT_FOUND
 
         if task.operator:
-            raise ForbiddenRequest("Task related to an operator")
-  
+            raise Forbidden("Task related to an operator")
+
         # remove the volume for the task in the notebook server
         self.background_tasks.add_task(
             remove_persistent_volume_claim,
@@ -375,3 +367,40 @@ class TaskController:
 
         if image and pattern.match(image) is None:
             raise BadRequest("invalid docker image name")
+
+    def copy_notebooks_to_pod(self, task, stored_task):
+        """
+        Copies the notebook contents to the pod (if it was sent on TaskUpdate).
+
+        Parameters
+        ----------
+        task : projects.schemas.task.TaskUpdate
+        stored_task : projects.models.task.Task
+        """
+        if task.experiment_notebook:
+            with tempfile.NamedTemporaryFile("w", delete=False) as f:
+                json.dump(task.experiment_notebook, f)
+
+            task.experiment_notebook_path = stored_task.experiment_notebook_path
+
+            if task.experiment_notebook_path is None:
+                task.experiment_notebook_path = "Experiment.ipynb"
+
+            filepath = f.name
+            destination_path = f"{stored_task.name}/{task.experiment_notebook_path}"
+            copy_file_to_pod(filepath, destination_path)
+            os.remove(filepath)
+
+        if task.deployment_notebook:
+            with tempfile.NamedTemporaryFile("w", delete=False) as f:
+                json.dump(task.deployment_notebook, f)
+
+            task.deployment_notebook_path = stored_task.deployment_notebook_path
+
+            if task.deployment_notebook_path is None:
+                task.deployment_notebook_path = "Deployment.ipynb"
+
+            filepath = f.name
+            destination_path = f"{stored_task.name}/{task.deployment_notebook_path}"
+            copy_file_to_pod(filepath, destination_path)
+            os.remove(filepath)

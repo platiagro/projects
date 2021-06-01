@@ -30,7 +30,7 @@ EXPERIMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPENDENCIES_OP_ID = []
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
-IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
+IMAGE = "busybox"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 EXPERIMENT_NOTEBOOK_PATH = ""
@@ -63,11 +63,13 @@ class TestLogs(TestCase):
         conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, 0, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON,
-                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, EXPERIMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps([]),
+                            EXPERIMENT_NOTEBOOK_PATH, EXPERIMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
@@ -90,14 +92,17 @@ class TestLogs(TestCase):
         content = content.replace("$experimentId", EXPERIMENT_ID)
         content = content.replace("$taskName", NAME)
         content = content.replace("$operatorId", OPERATOR_ID)
+        content = content.replace("$image", IMAGE)
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
         kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
-        kfp_client().run_pipeline(
+        run = kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
-            job_name=EXPERIMENT_ID,
+            job_name=f"experiment-{EXPERIMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
+        # Awaits 120 seconds (for the pipeline to run and complete)
+        kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
 
         with open("tests/resources/mocked_deployment.yaml", "r") as file:
             content = file.read()
@@ -107,19 +112,21 @@ class TestLogs(TestCase):
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
         kfp_experiment = kfp_client().create_experiment(name=DEPLOYMENT_ID)
-        kfp_client().run_pipeline(
+        run = kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
-            job_name=DEPLOYMENT_ID,
+            job_name=f"deployment-{DEPLOYMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
-
-        # Awaits 30 seconds (for the pipeline to run and complete)
-        # It's a bad solution since the pod may not have completed yet
-        # subprocess.run(['kubectl', 'wait', ...]) would be a better solution,
-        # but its not compatible with the version of argo workflows we're using
-        time.sleep(30)
+        # Awaits 120 seconds (for the pipeline to run and complete)
+        kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
 
     def tearDown(self):
+        kfp_experiment = kfp_client().get_experiment(experiment_name=EXPERIMENT_ID)
+        kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
+
+        kfp_experiment = kfp_client().get_experiment(experiment_name=DEPLOYMENT_ID)
+        kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
+
         conn = engine.connect()
         text = f"DELETE FROM operators WHERE uuid IN ('{OPERATOR_ID}', '{OPERATOR_ID_2}')"
         conn.execute(text)
@@ -156,17 +163,4 @@ class TestLogs(TestCase):
         self.assertEqual(rv.status_code, 200)
 
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
-        result = rv.json()
-        result_logs = result.get("logs")
-        expected = {
-            "level": "INFO",
-            "title": NAME,
-        }
-        # title and created_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["createdAt", "message"]
-        for attr in machine_generated:
-            self.assertIn(attr, result_logs[0])
-            del result_logs[0][attr]
-        self.assertDictEqual(expected, result_logs[0])
         self.assertEqual(rv.status_code, 200)

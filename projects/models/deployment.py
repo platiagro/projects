@@ -13,7 +13,6 @@ from projects.database import Base
 from projects.exceptions import NotFound
 from projects.models.monitoring import Monitoring
 from projects.models.operator import Operator
-from projects.models.response import Response
 
 CASCADE = "all, delete-orphan"
 

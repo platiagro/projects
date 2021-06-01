@@ -1,9 +1,6 @@
-from .kfp import kfp_client, KF_PIPELINES_NAMESPACE, SELDON_REST_TIMEOUT, \
-    DEPLOYMENT_INIT_TIMEOUT
+from .kfp import kfp_client, KF_PIPELINES_NAMESPACE
 
 __all__ = [
     "kfp_client",
     "KF_PIPELINES_NAMESPACE",
-    "SELDON_REST_TIMEOUT",
-    "DEPLOYMENT_INIT_TIMEOUT",
 ]

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from json import dumps
 from unittest import TestCase
 
@@ -22,9 +23,10 @@ PARAMETERS = {"coef": 0.1}
 POSITION = 0
 POSITION_X = 0.3
 POSITION_Y = 0.5
-IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
+IMAGE = "busybox"
 COMMANDS = None
-ARGUMENTS = None
+ARGUMENTS = ["sleep", "120"]
+ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
@@ -47,21 +49,6 @@ class TestExperimentsRuns(TestCase):
     def setUp(self):
         self.maxDiff = None
 
-        with open("tests/resources/mocked_experiment.yaml", "r") as file:
-            content = file.read()
-
-        content = content.replace("$experimentId", EXPERIMENT_ID)
-        with open("tests/resources/mocked.yaml", "w") as file:
-            file.write(content)
-
-        # Run a default pipeline for tests
-        kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
-        kfp_client().run_pipeline(
-            experiment_id=kfp_experiment.id,
-            job_name=EXPERIMENT_ID,
-            pipeline_package_path="tests/resources/mocked.yaml",
-        )
-
         conn = engine.connect()
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
@@ -76,18 +63,22 @@ class TestExperimentsRuns(TestCase):
         conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps(
-            []), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
+                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, None, None, TASK_DATASET_TAGS_JSON,
-                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS_JSON, TASK_DATASET_TAGS_JSON, dumps([]),
+                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
@@ -97,7 +88,28 @@ class TestExperimentsRuns(TestCase):
                             POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
 
+        # Creates pipelines for log generation
+        with open("tests/resources/mocked_experiment.yaml", "r") as file:
+            content = file.read()
+        content = content.replace("$experimentId", EXPERIMENT_ID)
+        content = content.replace("$taskName", NAME)
+        content = content.replace("$operatorId", OPERATOR_ID)
+        content = content.replace("$image", IMAGE)
+        with open("tests/resources/mocked.yaml", "w") as file:
+            file.write(content)
+        kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
+        run = kfp_client().run_pipeline(
+            experiment_id=kfp_experiment.id,
+            job_name=f"experiment-{EXPERIMENT_ID}",
+            pipeline_package_path="tests/resources/mocked.yaml",
+        )
+        # Awaits 120 seconds (for the pipeline to run and complete)
+        kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
+
     def tearDown(self):
+        kfp_experiment = kfp_client().get_experiment(experiment_name=EXPERIMENT_ID)
+        kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
+
         conn = engine.connect()
 
         text = f"DELETE FROM operators WHERE experiment_id in" \
@@ -149,17 +161,14 @@ class TestExperimentsRuns(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_terminate_run(self):
-        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
+        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun")
         result = rv.json()
-        expected = {"message": "Run terminated."}
+        expected = {"message": "The specified run does not exist"}
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 404)
 
-    # def test_retry_run(self):
-    #         TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
-
-    #         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/retry")
-    #         result = rv.json()
-    #         expected = {"message": "Run re-initiated successfully"}
-    #         self.assertDictEqual(expected, result)
-    #         self.assertEqual(rv.status_code, 200)
+        # rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
+        # result = rv.json()
+        # expected = {"message": "Run terminated"}
+        # self.assertDictEqual(expected, result)
+        # self.assertEqual(rv.status_code, 200)

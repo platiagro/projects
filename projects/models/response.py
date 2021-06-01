@@ -2,7 +2,7 @@
 """Response model."""
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, JSON, String
+from sqlalchemy import Column, DateTime, JSON, String
 
 from projects.database import Base
 
