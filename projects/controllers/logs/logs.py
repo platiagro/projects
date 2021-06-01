@@ -162,9 +162,15 @@ class LogController:
                 except (ValueError, OverflowError):
                     pass
             else:
-                # this is necessary to remove kubernetes timestamps
-                # of the lines in the message body
-                message_lines.append(line.split(' ', 1)[1])
+                # This is necessary to remove kubernetes timestamps
+                # of the lines in the message body. This regex will
+                # look for timestamp at the beginning of line.
+                line = re.sub(
+                    r"^([0-9]{4}(-[0-9]{2}){2}T[0-9]{2}(:[0-9]{2}){2}.[0-9]+Z\s)",
+                    "", line, 2
+                )
+
+                message_lines.append(line)
 
             line = buffer.readline()
 
