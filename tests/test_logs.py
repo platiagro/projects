@@ -151,7 +151,7 @@ class TestLogs(TestCase):
         expected = {
             "level": "INFO",
             "title": NAME,
-            "message": "hello",
+            "message": "hello\nhello",
         }
         # title and created_at are machine-generated
         # we assert they exist, but we don't assert their values

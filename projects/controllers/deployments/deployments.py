@@ -375,7 +375,9 @@ class DeploymentController:
         copies_map = {}
 
         for stored_operator in stored_operators:
+            name = "Fonte de dados" if "DATASETS" in stored_operator.task.tags else None
             operator = schemas.OperatorCreate(
+                name=name,
                 task_id=stored_operator.task_id,
                 deployment_id=deployment_id,
                 parameters=stored_operator.parameters,
