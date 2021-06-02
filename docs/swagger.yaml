@@ -244,22 +244,6 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /projects/deleteprojects:
-    post:
-      summary: "Delete multiple projects."
-      tags:
-        - "Projects"
-      requestBody:
-        $ref: "#/components/requestBodies/Deleteprojects"
-      responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}:
     get:
       summary: "Detail a specific project by ID."
@@ -316,6 +300,22 @@ paths:
           schema:
             type: string
             format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/deleteprojects:
+    post:
+      summary: "Delete multiple projects."
+      tags:
+        - "Projects"
+      requestBody:
+        $ref: "#/components/requestBodies/Deleteprojects"
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -1512,33 +1512,6 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /templates:
-    get:
-      summary: "List all templates sorted by name in natural sort order."
-      tags:
-        - "Templates"
-      responses:
-        "200":
-          $ref: "#/components/responses/Templates"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    post:
-      summary: "Create a new template from an experiment."
-      tags:
-        - "Templates"
-      requestBody:
-        $ref: "#/components/requestBodies/TemplatePost"
-      responses:
-        "200":
-          $ref: "#/components/responses/Template"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/deployments/{deploymentId}/responses:
     post:
       summary: "Create a deployment response."
@@ -1562,6 +1535,33 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/Message"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /templates:
+    get:
+      summary: "List all templates sorted by name in natural sort order."
+      tags:
+        - "Templates"
+      responses:
+        "200":
+          $ref: "#/components/responses/Templates"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new template from an experiment."
+      tags:
+        - "Templates"
+      requestBody:
+        $ref: "#/components/requestBodies/TemplatePost"
+      responses:
+        "200":
+          $ref: "#/components/responses/Template"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -1622,6 +1622,22 @@ paths:
           schema:
             type: string
             format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /templates/deletetemplates:
+    post:
+      summary: "Delete multiple templates."
+      tags:
+        - "Templates"
+      requestBody:
+        $ref: "#/components/requestBodies/Deletetemplates"
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -2545,9 +2561,8 @@ components:
           schema:
             type: array
             items:
-              properties:
-                uuid:
-                  type: string
+              type: string
+              format: uuid
     ExperimentPost:
       content:
         application/json:
@@ -2728,6 +2743,14 @@ components:
             properties:
               name:
                 type: string
+    Deletetemplates:
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
   responses:
     Comparison:
       description: ""

@@ -213,6 +213,39 @@ class TemplateController:
 
         return schemas.Message(message="Template deleted")
 
+    def delete_multiple_templates(self, template_ids):
+        """
+        Delete multiple templates.
+
+        Parameters
+        ----------
+        template_ids : str
+            The list of template ids.
+
+        Returns
+        -------
+        projects.schemas.message.Message
+
+        Raises
+        ------
+        BadRequest
+            When any template_id does not exist.
+        """
+        total_elements = len(template_ids)
+        if total_elements < 1:
+            raise BadRequest("inform at least one template")
+
+        templates = self.session.query(models.Template) \
+            .filter(models.Template.uuid.in_(template_ids)) \
+            .all()
+
+        for template in templates:
+            self.session.delete(template)
+
+        self.session.commit()
+
+        return schemas.Message(message="Successfully removed templates")
+
     def order_operators_by_dependencies(self, operators_ordered, operator):
         """
         Order operators by dependencies.
