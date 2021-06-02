@@ -18,4 +18,4 @@ filetype==1.0.7
 # HTTP library
 requests==2.25.1
 # HTTP library
-urllib3==1.26.4
+urllib3==1.26.5
