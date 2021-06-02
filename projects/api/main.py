@@ -20,7 +20,8 @@ from projects.api.experiments.runs import datasets, figures, \
 from projects.api.experiments.operators import parameters as operator_parameters
 from projects.api.tasks import parameters
 from projects.database import engine, init_db
-from projects.exceptions import BadRequest, NotFound, InternalServerError
+from projects.exceptions import BadRequest, Forbidden, NotFound, \
+    InternalServerError
 from projects.api.monitorings import figures as monitoring_figures
 
 
@@ -63,6 +64,7 @@ async def ping():
 @app.exception_handler(BadRequest)
 @app.exception_handler(NotFound)
 @app.exception_handler(InternalServerError)
+@app.exception_handler(Forbidden)
 async def handle_errors(request: Request, exception: Exception):
     """
     Handles exceptions raised by the API.

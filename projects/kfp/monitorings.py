@@ -126,7 +126,6 @@ def deploy_monitoring(deployment_id,
         monitoring,
         {},
         run_name="monitoring",
-        namespace=KF_PIPELINES_NAMESPACE
     )
 
 
