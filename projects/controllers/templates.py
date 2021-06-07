@@ -210,6 +210,7 @@ class TemplateController:
             raise NOT_FOUND
 
         self.session.delete(template)
+        self.session.commit()
 
         return schemas.Message(message="Template deleted")
 
