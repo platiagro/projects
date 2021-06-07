@@ -413,14 +413,23 @@ class TestTasks(TestCase):
         result = rv.json()
         expected = {
             "description": "test without the name",
-            "commands": COMMANDS,
-            "arguments": ARGUMENTS,
             "tags": TAGS,
             "parameters": PARAMETERS,
-            "createdAt": CREATED_AT_ISO,
-            "updatedAt": UPDATED_AT_ISO,
-        }
 
+        }
+        machine_generated = [
+            "uuid",
+            "image",
+            "commands",
+            "arguments",
+            "experimentNotebookPath",
+            "deploymentNotebookPath",
+            "createdAt",
+            "updatedAt",
+        ]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
