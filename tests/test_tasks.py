@@ -175,14 +175,6 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task(self):
-        # when name is missing
-        # should raise bad request
-        rv = TEST_CLIENT.post("/tasks", json={})
-        result = rv.json()
-        self.assertEqual(rv.status_code, 400)
-        expected = {"message": "name is required"}
-        self.assertDictEqual(expected, result)
-
         # when invalid tag is sent
         # should raise bad request
         rv = TEST_CLIENT.post("/tasks", json={
