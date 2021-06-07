@@ -134,10 +134,10 @@ class TaskController:
         BadRequest
             When task attributes are invalid.
         """
+        has_notebook = task.experiment_notebook or task.deployment_notebook
+        
         if not isinstance(task.name, str):
             task.name = self.generate_name_task("Tarefa em branco")
-
-        has_notebook = task.experiment_notebook or task.deployment_notebook
 
         if task.copy_from and has_notebook:
             raise BadRequest("Either provide notebooks or a task to copy from")
