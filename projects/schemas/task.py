@@ -17,7 +17,7 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    name: str
+    name: Optional[str]
     description: Optional[str]
     tags: Optional[List[str]]
     copy_from: Optional[str]
@@ -52,7 +52,7 @@ class TaskUpdate(TaskBase):
 
 class Task(TaskBase):
     uuid: str
-    name: str
+    name: Optional[str]
     description: Optional[str]
     commands: Optional[List[str]]
     arguments: Optional[List[str]]

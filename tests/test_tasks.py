@@ -406,6 +406,35 @@ class TestTasks(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
+    def test_create_task_name_none(self):
+        rv = TEST_CLIENT.post("/tasks", json={
+            "description": "test without the name",
+            "tags": TAGS,
+            "copyFrom": TASK_ID,
+        })
+        result = rv.json()
+        expected = {
+            "description": "test without the name",
+            "tags": TAGS,
+            "isDefault": IS_DEFAULT,
+            "parameters": PARAMETERS,
+        }
+        machine_generated = [
+            "uuid",
+            "image",
+            "commands",
+            "arguments",
+            "experimentNotebookPath",
+            "deploymentNotebookPath",
+            "createdAt",
+            "updatedAt",
+        ]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
     def test_get_task(self):
         rv = TEST_CLIENT.get("/tasks/foo")
         result = rv.json()
