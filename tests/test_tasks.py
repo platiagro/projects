@@ -175,12 +175,6 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task(self):
-        # when name is missing
-        # should raise bad request
-        rv = TEST_CLIENT.post("/tasks", json={})
-        result = rv.json()
-        self.assertEqual(rv.status_code, 422)
-
         # when invalid tag is sent
         # should raise bad request
         rv = TEST_CLIENT.post("/tasks", json={
@@ -405,6 +399,10 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_create_task_name_none(self):
+        rv = TEST_CLIENT.post("/tasks", json={})
+        result = rv.json()
+        self.assertEqual(rv.status_code, 200)
+        
         rv = TEST_CLIENT.post("/tasks", json={
             "description": "test without the name"
         })
