@@ -175,6 +175,35 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task(self):
+        rv = TEST_CLIENT.post("/tasks", json={})
+        result = rv.json()
+        self.assertEqual(rv.status_code, 200)
+        
+        rv = TEST_CLIENT.post("/tasks", json={
+            "description": "test without the name"
+        })
+        result = rv.json()
+        expected = {
+            "name": "Tarefa em branco - 2",
+            "description": "test without the name",
+            "tags": [
+                "DEFAULT"
+            ]
+        }
+        machine_generated = [
+            "uuid",
+            "commands",
+            "arguments",
+            "parameters",
+            "createdAt",
+            "updatedAt",
+        ]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+        
         # when invalid tag is sent
         # should raise bad request
         rv = TEST_CLIENT.post("/tasks", json={
@@ -391,36 +420,6 @@ class TestTasks(TestCase):
             "updatedAt",
             "commands",
             "arguments",
-        ]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
-
-    def test_create_task_name_none(self):
-        rv = TEST_CLIENT.post("/tasks", json={})
-        result = rv.json()
-        self.assertEqual(rv.status_code, 200)
-        
-        rv = TEST_CLIENT.post("/tasks", json={
-            "description": "test without the name"
-        })
-        result = rv.json()
-        expected = {
-            "name": "Tarefa em branco - 2",
-            "description": "test without the name",
-            "tags": [
-                "DEFAULT"
-            ]
-        }
-        machine_generated = [
-            "uuid",
-            "commands",
-            "arguments",
-            "parameters",
-            "createdAt",
-            "updatedAt",
         ]
         for attr in machine_generated:
             self.assertIn(attr, result)
