@@ -2361,6 +2361,9 @@ components:
                 cpuRequest: "1000m"
                 memoryLimit: "10G"
                 memoryRequest: "10G"
+            unnamed_notebook:
+              summary: Unnamed notebook
+              value: {}
             docker:
               summary: Custom docker image
               value:
