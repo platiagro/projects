@@ -179,7 +179,7 @@ class TestTasks(TestCase):
         # should raise bad request
         rv = TEST_CLIENT.post("/tasks", json={})
         result = rv.json()
-        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 422)
 
         # when invalid tag is sent
         # should raise bad request
