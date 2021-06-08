@@ -198,9 +198,9 @@ class TestTasks(TestCase):
         for attr in machine_generated:
             self.assertIn(attr, result)
             del result[attr]
-        self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
-        
+        self.assertDictEqual(expected, result)
+
         # when invalid tag is sent
         # should raise bad request
         rv = TEST_CLIENT.post("/tasks", json={
