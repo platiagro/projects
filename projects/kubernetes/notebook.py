@@ -77,6 +77,37 @@ def create_persistent_volume_claim(name, mount_path):
             body=body,
         )
 
+    except ApiException as e:
+        body = literal_eval(e.body)
+        message = body["message"]
+        raise InternalServerError(f"Error while trying to create persistent volume claim: {message}")
+
+    try:
+        notebook = custom_api.get_namespaced_custom_object(
+            group=NOTEBOOK_GROUP,
+            version="v1",
+            namespace=NOTEBOOK_NAMESPACE,
+            plural="notebooks",
+            name=NOTEBOOK_NAME,
+            _request_timeout=5,
+        )
+
+        # Prevents the creation of duplicate mountPath
+        pod_vols = enumerate(notebook["spec"]["template"]["spec"]["containers"][0]["volumeMounts"])
+        vol_index = next((i for i, v in pod_vols if v["mountPath"] == mount_path), -1)
+        if vol_index > -1:
+            warnings.warn(f"Notebook server already has a task at: {mount_path}. Skipping the mount of volume {name}")
+            return
+
+    except ApiException as e:
+        if e.status == 404:
+            warnings.warn(f"Notebook server does not exist. Skipping the mount of volume {name}")
+            return
+        body = literal_eval(e.body)
+        message = body["message"]
+        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+
+    try:
         body = [
             {
                 "op": "add",
@@ -147,15 +178,28 @@ def update_persistent_volume_claim(name, mount_path):
     custom_api = client.CustomObjectsApi(api_client=ApiClientForJsonPatch())
 
     try:
-        pod = v1.read_namespaced_pod(
-            name=NOTEBOOK_POD_NAME,
+        notebook = custom_api.get_namespaced_custom_object(
+            group=NOTEBOOK_GROUP,
+            version="v1",
             namespace=NOTEBOOK_NAMESPACE,
+            plural="notebooks",
+            name=NOTEBOOK_NAME,
             _request_timeout=5,
         )
-        pod_vols = enumerate(pod.spec.volumes)
-        vol_index = next((i for i, v in pod_vols if v.name == f"{name}"), -1)
+    except ApiException as e:
+        if e.status == 404:
+            warnings.warn(f"Notebook server does not exist. Skipping update volume mount path {name}")
+            return
+        body = literal_eval(e.body)
+        message = body["message"]
+        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+
+    try:
+        pod_vols = enumerate(notebook["spec"]["template"]["spec"]["volumes"])
+        vol_index = next((i for i, v in pod_vols if v["name"] == f"{name}"), -1)
         if vol_index == -1:
-            raise InternalServerError(f"Not found volume: {name}")
+            warnings.warn(f"Volume mount path not found: {name}")
+            return
 
         body = [
             {
@@ -213,15 +257,28 @@ def remove_persistent_volume_claim(name, mount_path):
     custom_api = client.CustomObjectsApi(api_client=ApiClientForJsonPatch())
 
     try:
-        pod = v1.read_namespaced_pod(
-            name=NOTEBOOK_POD_NAME,
+        notebook = custom_api.get_namespaced_custom_object(
+            group=NOTEBOOK_GROUP,
+            version="v1",
             namespace=NOTEBOOK_NAMESPACE,
+            plural="notebooks",
+            name=NOTEBOOK_NAME,
             _request_timeout=5,
         )
-        pod_vols = enumerate(pod.spec.volumes)
-        vol_index = next((i for i, v in pod_vols if v.name == f"{name}"), -1)
+    except ApiException as e:
+        if e.status == 404:
+            warnings.warn(f"Notebook server does not exist. Skipping removing volume mount path {name}")
+            return
+        body = literal_eval(e.body)
+        message = body["message"]
+        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+
+    try:
+        pod_vols = enumerate(notebook["spec"]["template"]["spec"]["volumes"])
+        vol_index = next((i for i, v in pod_vols if v["name"] == f"{name}"), -1)
         if vol_index == -1:
-            raise InternalServerError(f"Not found volume: {name}")
+            warnings.warn(f"Volume mount path not found: {name}")
+            return
 
         v1.delete_namespaced_persistent_volume_claim(
             name=name,
@@ -294,29 +351,42 @@ def handle_task_creation(task,
     create_persistent_volume_claim(name=f"vol-task-{task_id}",
                                    mount_path=f"{JUPYTER_WORKSPACE}/{task.name}")
 
-    experiment_path = f"{task.name}/{experiment_notebook_path}"
-    deployment_path = f"{task.name}/{deployment_notebook_path}"
+    experiment_path = None
+    deployment_path = None
+
+    if experiment_notebook_path:
+        experiment_path = f"{task.name}/{experiment_notebook_path}"
+
+    if deployment_notebook_path:
+        deployment_path = f"{task.name}/{deployment_notebook_path}"
 
     if copy_name:
+        # the dot (.) at the end ensures that the contents of a folder is copied
+        # and not the folder itself
         source_path = f"{JUPYTER_WORKSPACE}/{copy_name}/."
         destination_path = f"{JUPYTER_WORKSPACE}/{task.name}/"
         copy_files_in_pod(source_path, destination_path)
     else:
-        # copies experiment notebook file to pod
-        with NamedTemporaryFile("w", delete=False) as f:
-            json.dump(task.experiment_notebook, f)
 
-        filepath = f.name
-        copy_file_to_pod(filepath, experiment_path)
-        os.remove(filepath)
+        if task.experiment_notebook:
+            experiment_path = f"{task.name}/Experiment.ipynb"
+            # copies experiment notebook file to pod
+            with NamedTemporaryFile("w", delete=False) as f:
+                json.dump(task.experiment_notebook, f)
 
-        # copies deployment notebook file to pod
-        with NamedTemporaryFile("w", delete=False) as f:
-            json.dump(task.deployment_notebook, f)
+            filepath = f.name
+            copy_file_to_pod(filepath, experiment_path)
+            os.remove(filepath)
 
-        filepath = f.name
-        copy_file_to_pod(filepath, deployment_path)
-        os.remove(filepath)
+        if task.deployment_notebook:
+            deployment_path = f"{task.name}/Deployment.ipynb"
+            # copies deployment notebook file to pod
+            with NamedTemporaryFile("w", delete=False) as f:
+                json.dump(task.deployment_notebook, f)
+
+            filepath = f.name
+            copy_file_to_pod(filepath, deployment_path)
+            os.remove(filepath)
 
     # create ConfigMap for monitoring tasks
     if MONITORING_TAG in task.tags:
@@ -334,23 +404,25 @@ def handle_task_creation(task,
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    loop.run_until_complete(
-        set_notebook_metadata(
-            notebook_path=experiment_path,
-            task_id=task_id,
-            experiment_id=experiment_id,
-            operator_id=operator_id,
+    if experiment_path:
+        loop.run_until_complete(
+            set_notebook_metadata(
+                notebook_path=experiment_path,
+                task_id=task_id,
+                experiment_id=experiment_id,
+                operator_id=operator_id,
+            )
         )
-    )
 
-    loop.run_until_complete(
-        set_notebook_metadata(
-            notebook_path=deployment_path,
-            task_id=task_id,
-            experiment_id=experiment_id,
-            operator_id=operator_id,
+    if deployment_path:
+        loop.run_until_complete(
+            set_notebook_metadata(
+                notebook_path=deployment_path,
+                task_id=task_id,
+                experiment_id=experiment_id,
+                operator_id=operator_id,
+            )
         )
-    )
 
 
 def update_task_config_map(task_name,
@@ -412,7 +484,7 @@ def get_file_from_pod(filepath):
         container_stream.update(timeout=10)
         if container_stream.peek_stdout():
             file_content = container_stream.read_stdout()
-            warnings.warn(f"File content fetched.")
+            warnings.warn("File content fetched.")
     container_stream.close()
 
     return file_content

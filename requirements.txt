@@ -9,11 +9,13 @@ platiagro @ git+https://github.com/platiagro/sdk.git@master
 SQLAlchemy==1.3.22
 # MySQL driver
 PyMySQL==1.0.2
-# Requests
-requests==2.23.0
 # Kubeflow Pipelines SDK
 kfp==1.2.0
 # Kubernetes python client
 kubernetes==10.0
 # package to infer file type and MIME type
 filetype==1.0.7
+# HTTP library
+requests==2.25.1
+# HTTP library
+urllib3==1.26.5

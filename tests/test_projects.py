@@ -319,13 +319,13 @@ class TestProjects(TestCase):
         self.assertDictEqual(expected, result)
 
     def test_delete_projects(self):
-        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[{"uuid": "1234"}])
+        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[])
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {"message": "inform at least one project"}
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
+        self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[{"uuid": f"{PROJECT_ID_2}"}])
+        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[PROJECT_ID_2])
         result = rv.json()
         expected = {"message": "Successfully removed projects"}
         self.assertDictEqual(expected, result)
