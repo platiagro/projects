@@ -417,16 +417,6 @@ class TestTasks(TestCase):
             "parameters": PARAMETERS,
 
         }
-        machine_generated = [
-            "uuid",
-            "commands",
-            "arguments",
-            "createdAt",
-            "updatedAt",
-        ]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
