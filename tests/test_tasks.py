@@ -421,8 +421,6 @@ class TestTasks(TestCase):
             "uuid",
             "commands",
             "arguments",
-            "experimentNotebookPath",
-            "deploymentNotebookPath",
             "createdAt",
             "updatedAt",
         ]
