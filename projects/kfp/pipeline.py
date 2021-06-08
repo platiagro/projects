@@ -12,7 +12,7 @@ from projects import __version__
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
-from projects.object_storage import MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+from projects.object_storage import MINIO_ENDPOINT
 
 TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
     "TASK_DEFAULT_DEPLOYMENT_IMAGE",
@@ -187,14 +187,30 @@ def create_container_op(operator, experiment_id, **kwargs):
         ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
+                name="MINIO_ENDPOINT",
+                value=MINIO_ENDPOINT,
+            ),
+        ) \
+        .add_env_variable(
+            k8s_client.V1EnvVar(
                 name="MINIO_ACCESS_KEY",
-                value=MINIO_ACCESS_KEY,
+                value_from=k8s_client.V1EnvVarSource(
+                    secret_key_ref=k8s_client.V1SecretKeySelector(
+                        name="minio-secrets",
+                        key="MINIO_ACCESS_KEY",
+                    ),
+                ),
             ),
         ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="MINIO_SECRET_KEY",
-                value=MINIO_SECRET_KEY,
+                value_from=k8s_client.V1EnvVarSource(
+                    secret_key_ref=k8s_client.V1SecretKeySelector(
+                        name="minio-secrets",
+                        key="MINIO_SECRET_KEY",
+                    ),
+                ),
             ),
         )
 
