@@ -175,6 +175,17 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task(self):
+        # when invalid tag is sent
+        # should raise bad request
+        rv = TEST_CLIENT.post("/tasks", json={
+            "name": "test",
+            "description": "long test",
+            "tags": ["UNK"],
+            "copyFrom": TASK_ID,
+        })
+        result = rv.json()
+        self.assertEqual(rv.status_code, 400)
+
         # Passing the name null
         rv = TEST_CLIENT.post("/tasks", json={
             "description": "test without the name"
@@ -204,17 +215,6 @@ class TestTasks(TestCase):
         rv = TEST_CLIENT.post("/tasks", json={})
         result = rv.json()
         self.assertEqual(rv.status_code, 200)
-
-        # when invalid tag is sent
-        # should raise bad request
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test",
-            "description": "long test",
-            "tags": ["UNK"],
-            "copyFrom": TASK_ID,
-        })
-        result = rv.json()
-        self.assertEqual(rv.status_code, 400)
 
         # task name already exists
         rv = TEST_CLIENT.post("/tasks", json={
