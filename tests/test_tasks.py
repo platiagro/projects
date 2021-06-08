@@ -192,7 +192,6 @@ class TestTasks(TestCase):
         })
         result = rv.json()
         expected = {
-            "name": "Tarefa em branco - 2",
             "description": "test without the name",
             "tags": [
                 "DEFAULT"
@@ -200,6 +199,7 @@ class TestTasks(TestCase):
         }
         machine_generated = [
             "uuid",
+            "name",
             "commands",
             "arguments",
             "parameters",
