@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Templates API Router."""
+from typing import List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -110,3 +112,23 @@ async def handle_delete_template(template_id: str,
     template_controller = TemplateController(session)
     template = template_controller.delete_template(template_id=template_id)
     return template
+
+
+@router.post("/deletetemplates")
+async def handle_post_deletetemplates(templates: List[str],
+                                      session: Session = Depends(session_scope)):
+    """
+    Handles POST requests to /deletetemplates.
+
+    Parameters
+    ----------
+    templates : List[str]
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    projects.schemas.message.Message
+    """
+    template_controller = TemplateController(session)
+    results = template_controller.delete_multiple_templates(template_ids=templates)
+    return results

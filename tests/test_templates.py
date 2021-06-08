@@ -305,3 +305,16 @@ class TestTemplates(TestCase):
         result = rv.json()
         expected = {"message": "Template deleted"}
         self.assertDictEqual(expected, result)
+
+    def test_delete_multiple_templates(self):
+        rv = TEST_CLIENT.post("/templates/deletetemplates", json=[])
+        result = rv.json()
+        expected = {"message": "inform at least one template"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+        rv = TEST_CLIENT.post("/templates/deletetemplates", json=[TEMPLATE_ID])
+        result = rv.json()
+        expected = {"message": "Successfully removed templates"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
