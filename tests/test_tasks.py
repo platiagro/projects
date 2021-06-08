@@ -419,7 +419,6 @@ class TestTasks(TestCase):
         }
         machine_generated = [
             "uuid",
-            "image",
             "commands",
             "arguments",
             "experimentNotebookPath",
