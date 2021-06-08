@@ -46,6 +46,29 @@ def text_to_list(order):
     return order_by
 
 
+def parse_dataframe_to_seldon_request(dataframe):
+    """
+    Parse a pandas dataframe to seldon request.
+
+    Parameters
+    ----------
+    dataframe : pandas.core.frame.DataFrame
+
+    Returns
+    -------
+    dict
+        In seldon request format.
+    """
+    dataframe = dataframe.to_dict('split')
+
+    return {
+                "data": {
+                    "names": dataframe['columns'],
+                    "ndarray": dataframe['data'],
+                }
+            }
+
+
 def parse_file_buffer_to_seldon_request(file):
     """
     Reads file buffer and parse to seldon request.
@@ -59,22 +82,11 @@ def parse_file_buffer_to_seldon_request(file):
     -------
     dict
         Seldon API request
-
-    Raises
-    ------
-    BadRequest
-        When `file` has no header.
     """
     try:
-        df = pandas.read_csv(file._file, sep=None, engine='python')
-        df = df.to_dict('split')
+        df = pandas.read_csv(file, sep=None, engine='python')
 
-        return {
-            "data": {
-                "names": df['columns'],
-                "ndarray": df['data'],
-            }
-        }
+        return parse_dataframe_to_seldon_request(df)
 
     except UnicodeDecodeError:
         file.seek(0)

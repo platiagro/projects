@@ -31,7 +31,7 @@ spec:
             value: "{{workflow.uid}}"
           - name: TASK_NAME
             value: $taskName
-        image: busybox
+        image: $image
       inputs: {}
       metadata:
         labels:

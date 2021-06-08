@@ -32,11 +32,6 @@ jobs:
         ports:
         - 9000:9000
 
-      jupyter:
-        image: jupyter/base-notebook
-        ports:
-        - 8888:8888
-
     steps:
     - uses: actions/checkout@v2
 
@@ -125,41 +120,136 @@ jobs:
 
     - name: Create Persistent Volumes
       run: |
+        for I in `seq 1 10`; do
         cat <<EOF | kubectl apply -f -
           apiVersion: v1
           kind: PersistentVolume
           metadata:
-            name: pv0001
+            name: pv000${I}
           spec:
             accessModes:
               - ReadWriteOnce
             capacity:
               storage: 20Gi
             hostPath:
-              path: /data/pv0001/
+              path: /data/pv000${I}/
         EOF
+        done
+
+    - name: Create load balancer
+      run: |
+        kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.3/manifests/metallb.yaml
+        MINIKUBE_IP=$(minikube ip)
         cat <<EOF | kubectl apply -f -
           apiVersion: v1
-          kind: PersistentVolume
+          kind: ConfigMap
           metadata:
-            name: pv0002
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            capacity:
-              storage: 20Gi
-            hostPath:
-              path: /data/pv0002/
+            namespace: metallb-system
+            name: config
+          data:
+            config: |
+              address-pools:
+              - name: default
+                protocol: layer2
+                addresses:
+                - ${MINIKUBE_IP}-${MINIKUBE_IP}
         EOF
+        sleep 10
+        kubectl -n metallb-system wait --for=condition=Ready pods --all --timeout=60s
+
+    - name: Install Istio
+      run: |
+        curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.3.5 sh -
+        cd istio-1.3.5
+        for i in install/kubernetes/helm/istio-init/files/crd*yaml; do kubectl apply -f $i; done
+        kubectl apply -f install/kubernetes/istio-demo.yaml
+
+        kubectl create namespace kubeflow
+
+        cat <<EOF | kubectl apply -f -
+          apiVersion: networking.istio.io/v1alpha3
+          kind: Gateway
+          metadata:
+            name: kubeflow-gateway
+            namespace: kubeflow
+          spec:
+            selector:
+              istio: ingressgateway # use istio default controller
+            servers:
+            - port:
+                number: 80
+                name: http
+                protocol: HTTP
+              hosts:
+              - "*"
+        EOF
+
+    - name: Install JupyterLab
+      run: |
+        ./kustomize build "github.com/platiagro/manifests/jupyter/notebook-controller/base/?ref=$BRANCH" | kubectl apply -f -
+        sleep 10
+        kubectl -n kubeflow wait --for=condition=Ready pods --all --timeout=120s
+
+        kubectl create namespace anonymous
+        kubectl label namespace anonymous istio-injection=enabled
+
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: vol-tasks
+          namespace: anonymous
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+        EOF
+
+        cat <<EOF | kubectl apply -f -
+        apiVersion: kubeflow.org/v1
+        kind: Notebook
+        metadata:
+          labels:
+            add-nvidia-visible-devices: "true"
+            app: server
+          name: server
+          namespace: anonymous
+        spec:
+          template:
+            spec:
+              containers:
+              - env:
+                - name: EXPERIMENT_ID
+                  value: notebook
+                - name: OPERATOR_ID
+                  value: notebook
+                image: jupyter/base-notebook
+                name: server
+                volumeMounts:
+                - mountPath: /home/jovyan/tasks
+                  name: vol-tasks
+              volumes:
+              - name: vol-tasks
+                persistentVolumeClaim:
+                  claimName: vol-tasks
+        EOF
+
+        sleep 120
+        kubectl -n anonymous wait --for=condition=Ready pods --all --timeout=120s
+      env:
+        BRANCH: "v0.2.0-kubeflow-v1.2-branch"
 
     - name: Install Seldon Core
       run: |
-        kubectl create namespace kubeflow
         helm install seldon-core seldon-core-operator \
           --repo https://storage.googleapis.com/seldon-charts \
           --set usageMetrics.enabled=false \
           --namespace kubeflow \
-          --version v1.4.0
+          --version v1.4.0 \
+          --set istio.enabled=true \
+          --set istio.gateway=kubeflow/kubeflow-gateway
 
     - name: Install Kubeflow Pipelines
       id: kfp
@@ -176,15 +266,15 @@ jobs:
         MINIKUBE_IP=$(minikube ip)
         echo ${MINIKUBE_IP}
         echo ::set-output name=MINIKUBE_IP::${MINIKUBE_IP}
-        curl -sSL ${MINIKUBE_IP}:30000/apis/v1beta1/runs
       env:
         BRANCH: "1.2.0"
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install .
+        python -m pip install --no-cache-dir --upgrade pip
+        pip install --no-cache-dir -r requirements.txt
+        pip install --no-cache-dir .
+        pip install --no-cache-dir --force-reinstall "kubernetes==12.0.1"
 
     - name: Test with pytest
       run: |
@@ -200,9 +290,25 @@ jobs:
         MYSQL_DB_HOST: localhost
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
-        JUPYTER_ENDPOINT: http://localhost:8888
+        JUPYTER_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}/notebook/anonymous/server
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
+
+    - name: Make disk space available for docker build
+      if: ${{ always() }}
+      run: |
+        pip freeze | grep '==' | sed s/==.*//g | xargs pip uninstall -y
+        kubectl delete ns kubeflow
+        kubectl delete ns istio-system
+        kubectl delete ns metallb-system
+        for I in `seq 1 10`; do rm -rf /data/pv000${I}/; done
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        docker images
+        df -h
+        docker system df
 
     - name: SonarCloud Scan
       if: ${{ always() }}

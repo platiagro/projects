@@ -20,7 +20,9 @@ from projects.api.experiments.runs import datasets, figures, \
 from projects.api.experiments.operators import parameters as operator_parameters
 from projects.api.tasks import parameters
 from projects.database import engine, init_db
-from projects.exceptions import BadRequest, NotFound, InternalServerError
+from projects.exceptions import BadRequest, Forbidden, NotFound, \
+    InternalServerError
+from projects.api.monitorings import figures as monitoring_figures
 
 
 app = FastAPI(
@@ -43,6 +45,7 @@ app.include_router(deployment_operators.router)
 app.include_router(deployment_runs.router)
 app.include_router(deployment_logs.router)
 app.include_router(monitorings.router)
+app.include_router(monitoring_figures.router)
 app.include_router(predictions.router)
 app.include_router(tasks.router)
 app.include_router(parameters.router)
@@ -61,6 +64,7 @@ async def ping():
 @app.exception_handler(BadRequest)
 @app.exception_handler(NotFound)
 @app.exception_handler(InternalServerError)
+@app.exception_handler(Forbidden)
 async def handle_errors(request: Request, exception: Exception):
     """
     Handles exceptions raised by the API.

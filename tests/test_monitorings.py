@@ -37,18 +37,22 @@ class TestMonitorings(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, parameters, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps(
-            []), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, PARAMETERS_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, PARAMETERS_JSON,
+                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, experiment_notebook_path, deployment_notebook_path, is_default, parameters, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_2, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, dumps(
-            []), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, 0, PARAMETERS_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID_2, NAME, DESCRIPTION, IMAGE, None, None, TAGS_JSON, PARAMETERS_JSON,
+                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
@@ -118,13 +122,18 @@ class TestMonitorings(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_create_monitoring(self):
-        rv = TEST_CLIENT.post("/projects/unk/deployments/unk/monitorings", json={})
+        rv = TEST_CLIENT.post("/projects/unk/deployments/unk/monitorings", json={
+            "taskId": TASK_ID_2,
+        })
         result = rv.json()
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/unk/monitorings", json={})
+
+        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/unk/monitorings", json={
+            "taskId": TASK_ID_2,
+        })
         result = rv.json()
         expected = {"message": "The specified deployment does not exist"}
         self.assertDictEqual(expected, result)
@@ -152,7 +161,7 @@ class TestMonitorings(TestCase):
             "deploymentId": DEPLOYMENT_ID,
             "taskId": TASK_ID_2,
         }
-        machine_generated = ["uuid", "createdAt"]
+        machine_generated = ["uuid", "createdAt", "task"]
         for attr in machine_generated:
             self.assertIn(attr, result)
             del result[attr]
@@ -181,3 +190,21 @@ class TestMonitorings(TestCase):
         result = rv.json()
         expected = {"message": "Monitoring deleted"}
         self.assertDictEqual(expected, result)
+
+    def test_list_figures_monitoring(self):
+        rv = TEST_CLIENT.get(f"/projects/1/deployments/unk/monitorings/unk/figures")
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/unk/monitorings/unk/figures")
+        result = rv.json()
+        expected = {"message": "The specified deployment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/monitorings/{MONITORING_ID}/figures")
+        result = rv.json()
+        self.assertIsInstance(result, list)
+        self.assertEqual(rv.status_code, 200)

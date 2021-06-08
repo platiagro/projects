@@ -9,21 +9,17 @@ from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
 from projects import __version__
-from projects.kfp import DEPLOYMENT_INIT_TIMEOUT, KF_PIPELINES_NAMESPACE, \
-    SELDON_REST_TIMEOUT, kfp_client
+from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
-from projects.object_storage import MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+from projects.object_storage import MINIO_ENDPOINT
 
 TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
     "TASK_DEFAULT_DEPLOYMENT_IMAGE",
     f"platiagro/platiagro-deployment-image:{__version__}",
 )
-TASK_DEFAULT_CPU_LIMIT = getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
-TASK_DEFAULT_CPU_REQUEST = getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
-TASK_DEFAULT_MEMORY_LIMIT = getenv("TASK_DEFAULT_MEMORY_LIMIT", "10G")
-TASK_DEFAULT_MEMORY_REQUEST = getenv("TASK_DEFAULT_MEMORY_REQUEST", "2G")
 TASK_NVIDIA_VISIBLE_DEVICES = getenv("TASK_NVIDIA_VISIBLE_DEVICES", "none")
+SELDON_REST_TIMEOUT = getenv("SELDON_REST_TIMEOUT", "60000")
 
 SELDON_LOGGER_ENDPOINT = getenv(
     "SELDON_LOGGER_ENDPOINT",
@@ -63,11 +59,7 @@ def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, 
             container_op = create_container_op(operator=operator,
                                                experiment_id=experiment_id,
                                                notebook_path=notebook_path,
-                                               dataset=dataset,
-                                               cpu_limit=operator.task.cpu_limit,
-                                               cpu_request=operator.task.cpu_request,
-                                               memory_limit=operator.task.memory_limit,
-                                               memory_request=operator.task.memory_request)
+                                               dataset=dataset)
             containers[operator.uuid] = (operator, container_op)
 
         if deployment_id is not None:
@@ -152,22 +144,6 @@ def create_container_op(operator, experiment_id, **kwargs):
     """
     notebook_path = kwargs.get("notebook_path")
     dataset = kwargs.get("dataset")
-    cpu_limit = kwargs.get("cpu_limit")
-    cpu_request = kwargs.get("cpu_request")
-    memory_limit = kwargs.get("memory_limit")
-    memory_request = kwargs.get("memory_request")
-
-    if cpu_limit is None:
-        cpu_limit = TASK_DEFAULT_CPU_LIMIT
-
-    if cpu_request is None:
-        cpu_request = TASK_DEFAULT_CPU_REQUEST
-
-    if memory_limit is None:
-        memory_limit = TASK_DEFAULT_MEMORY_LIMIT
-
-    if memory_request is None:
-        memory_request = TASK_DEFAULT_MEMORY_REQUEST
 
     container_op = dsl.ContainerOp(
         name=operator.uuid,
@@ -176,7 +152,7 @@ def create_container_op(operator, experiment_id, **kwargs):
         arguments=operator.task.arguments,
     )
 
-    container_op.add_pod_annotation(name='name', value=operator.task.name)
+    container_op.add_pod_annotation(name="name", value=operator.task.name)
 
     container_op.container.set_image_pull_policy("IfNotPresent") \
         .add_env_variable(
@@ -211,14 +187,30 @@ def create_container_op(operator, experiment_id, **kwargs):
         ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
+                name="MINIO_ENDPOINT",
+                value=MINIO_ENDPOINT,
+            ),
+        ) \
+        .add_env_variable(
+            k8s_client.V1EnvVar(
                 name="MINIO_ACCESS_KEY",
-                value=MINIO_ACCESS_KEY,
+                value_from=k8s_client.V1EnvVarSource(
+                    secret_key_ref=k8s_client.V1SecretKeySelector(
+                        name="minio-secrets",
+                        key="MINIO_ACCESS_KEY",
+                    ),
+                ),
             ),
         ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="MINIO_SECRET_KEY",
-                value=MINIO_SECRET_KEY,
+                value_from=k8s_client.V1EnvVarSource(
+                    secret_key_ref=k8s_client.V1SecretKeySelector(
+                        name="minio-secrets",
+                        key="MINIO_SECRET_KEY",
+                    ),
+                ),
             ),
         )
 
@@ -253,10 +245,10 @@ def create_container_op(operator, experiment_id, **kwargs):
             )
 
     container_op.container \
-        .set_memory_request(memory_request) \
-        .set_memory_limit(memory_limit) \
-        .set_cpu_request(cpu_request) \
-        .set_cpu_limit(cpu_limit)
+        .set_memory_request(operator.task.memory_request) \
+        .set_memory_limit(operator.task.memory_limit) \
+        .set_cpu_request(operator.task.cpu_request) \
+        .set_cpu_limit(operator.task.cpu_limit)
 
     return container_op
 
@@ -278,15 +270,13 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     kfp.dsl.ResourceOp
     """
     component_specs = []
+    max_initial_delay_seconds = 0
 
     for operator in operators:
-        memory_limit = operator.task.memory_limit
-        if memory_limit is None:
-            memory_limit = TASK_DEFAULT_MEMORY_LIMIT
-
-        memory_request = operator.task.memory_request
-        if memory_request is None:
-            memory_request = TASK_DEFAULT_MEMORY_REQUEST
+        max_initial_delay_seconds = max(
+            max_initial_delay_seconds,
+            operator.task.readiness_probe_initial_delay_seconds,
+        )
 
         component_specs.append(
             COMPONENT_SPEC.substitute({
@@ -295,10 +285,11 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
                 "experimentId": experiment_id,
                 "deploymentId": deployment_id,
                 "taskId": operator.task.uuid,
-                "memoryLimit": memory_limit,
-                "memoryRequest": memory_request,
+                "memoryLimit": operator.task.memory_limit,
+                "memoryRequest": operator.task.memory_request,
                 "taskName": operator.task.name,
                 "nvidiaVisibleDevices": TASK_NVIDIA_VISIBLE_DEVICES,
+                "initialDelaySeconds": operator.task.readiness_probe_initial_delay_seconds,
             })
         )
 
@@ -349,11 +340,15 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     # mounts the "/tmp/data" volume from experiment (if exists)
     sdep_resource = mount_volume_from_experiment(sdep_resource, experiment_id)
 
+    # defines a timeout for this workflow step as the
+    # maximum readiness_initial_delay_seconds + 60 seconds
+    timeout = max_initial_delay_seconds + 60
+
     resource_op = dsl.ResourceOp(
         name="deployment",
         k8s_resource=sdep_resource,
         success_condition="status.state == Available",
-    ).set_timeout(int(DEPLOYMENT_INIT_TIMEOUT))
+    ).set_timeout(timeout)
 
     return resource_op
 
@@ -379,7 +374,6 @@ def undeploy_pipeline(resource):
         undeploy,
         {},
         run_name="undeploy",
-        namespace=KF_PIPELINES_NAMESPACE
     )
 
 

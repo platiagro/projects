@@ -77,6 +77,26 @@ COMPONENT_SPEC = Template("""
                         "value": "$nvidiaVisibleDevices"
                     }
                 ],
+                "livenessProbe": {
+                    "failureThreshold": 3,
+                    "initialDelaySeconds": $initialDelaySeconds,
+                    "periodSeconds": 5,
+                    "successThreshold": 1,
+                    "tcpSocket": {
+                        "port": "http"
+                    },
+                    "timeoutSeconds": 1
+                },
+                "readinessProbe": {
+                    "failureThreshold": 3,
+                    "initialDelaySeconds": $initialDelaySeconds,
+                    "periodSeconds": 5,
+                    "successThreshold": 1,
+                    "tcpSocket": {
+                        "port": "http"
+                    },
+                    "timeoutSeconds": 1
+                },
                 "volumeMounts": [
                     {
                         "name": "workspace",

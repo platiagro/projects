@@ -7,6 +7,12 @@ class BadRequest(Exception):
         self.code = 400
 
 
+class Forbidden(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        self.code = 403
+
+
 class NotFound(Exception):
     def __init__(self, message: str):
         self.message = message
