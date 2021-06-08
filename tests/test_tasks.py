@@ -201,6 +201,10 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 200)
         self.assertDictEqual(expected, result)
 
+        rv = TEST_CLIENT.post("/tasks", json={})
+        result = rv.json()
+        self.assertEqual(rv.status_code, 200)
+
         # when invalid tag is sent
         # should raise bad request
         rv = TEST_CLIENT.post("/tasks", json={
