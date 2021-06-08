@@ -420,7 +420,7 @@ class TestTasks(TestCase):
             ],
             "parameters": [],
             "createdAt": CREATED_AT_ISO,
-            "updatedAt": UPDATED_AT_ISO
+            "updatedAt": UPDATED_AT_ISO,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
