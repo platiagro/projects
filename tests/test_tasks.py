@@ -420,6 +420,7 @@ class TestTasks(TestCase):
             "uuid",
             "commands",
             "arguments",
+            "parameters",
             "createdAt",
             "updatedAt",
         ]
