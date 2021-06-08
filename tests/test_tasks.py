@@ -175,10 +175,7 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task(self):
-        rv = TEST_CLIENT.post("/tasks", json={})
-        result = rv.json()
-        self.assertEqual(rv.status_code, 200)
-        
+        # Passing the name null
         rv = TEST_CLIENT.post("/tasks", json={
             "description": "test without the name"
         })
