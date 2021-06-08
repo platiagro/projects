@@ -406,16 +406,21 @@ class TestTasks(TestCase):
 
     def test_create_task_name_none(self):
         rv = TEST_CLIENT.post("/tasks", json={
-            "description": "test without the name",
-            "tags": TAGS,
-            "copyFrom": TASK_ID,
+            "description": "test without the name"
         })
         result = rv.json()
         expected = {
+            "uuid": TASK_ID,
+            "name": "Tarefa em branco - 2",
             "description": "test without the name",
-            "tags": TAGS,
-            "parameters": PARAMETERS,
-
+            "commands": COMMANDS,
+            "arguments": ARGUMENTS,
+            "tags": [
+               TAGS
+            ],
+            "parameters": [],
+            "createdAt": CREATED_AT_ISO,
+            "updatedAt": UPDATED_AT_ISO
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
