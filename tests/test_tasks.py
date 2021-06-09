@@ -183,7 +183,7 @@ class TestTasks(TestCase):
         })
         result = rv.json()
         expected = {
-            "name": "Tarefa em branco - 2",
+            "name": "Tarefa em branco - 1",
             "description": "test with name null",
             "tags": [
                 "DEFAULT"
