@@ -56,7 +56,7 @@ class TaskUpdate(TaskBase):
 
 class Task(TaskBase):
     uuid: str
-    name: Optional[str]
+    name: str
     description: Optional[str]
     commands: Optional[List[str]]
     arguments: Optional[List[str]]

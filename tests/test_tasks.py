@@ -50,8 +50,8 @@ DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
 
-
 class TestTasks(TestCase):
+
     def setUp(self):
         self.maxDiff = None
         conn = engine.connect()
@@ -183,6 +183,7 @@ class TestTasks(TestCase):
         })
         result = rv.json()
         expected = {
+            "name": "Tarefa em branco - 2",
             "description": "test without the name",
             "tags": [
                 "DEFAULT"
@@ -190,7 +191,6 @@ class TestTasks(TestCase):
         }
         machine_generated = [
             "uuid",
-            "name",
             "commands",
             "arguments",
             "parameters",

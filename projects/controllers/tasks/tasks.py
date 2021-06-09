@@ -166,7 +166,6 @@ class TaskController:
         self.raise_if_invalid_docker_image(task.image)
 
         check_comp_name = self.session.query(models.Task).filter_by(name=task.name).first()
-        print(check_comp_name)
         if check_comp_name:
             raise BadRequest("a task with that name already exists")
 
