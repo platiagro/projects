@@ -11,6 +11,7 @@ from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.jupyter import COOKIES, HEADERS, JUPYTER_ENDPOINT
 from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from projects.controllers.tasks import TaskController
 
 TEST_CLIENT = TestClient(app)
 
@@ -48,7 +49,7 @@ POSITION_X = 0
 POSITION_Y = 0
 DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
-
+NAME_TASK = TaskController.generate_name_task("Tarefa em branco")
 
 class TestTasks(TestCase):
 
@@ -183,7 +184,7 @@ class TestTasks(TestCase):
         })
         result = rv.json()
         expected = {
-            "name": "Tarefa em branco - 1",
+            "name": NAME_TASK,
             "description": "test with name null",
             "tags": [
                 "DEFAULT"
