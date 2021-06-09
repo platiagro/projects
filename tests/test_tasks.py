@@ -179,12 +179,12 @@ class TestTasks(TestCase):
 
         # Passing the name null
         rv = TEST_CLIENT.post("/tasks", json={
-            "description": "test without the name"
+            "description": "test with name null"
         })
         result = rv.json()
         expected = {
             "name": "Tarefa em branco - 2",
-            "description": "test without the name",
+            "description": "test with name null",
             "tags": [
                 "DEFAULT"
             ]
