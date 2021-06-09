@@ -148,7 +148,7 @@ class TaskController:
             When task attributes are invalid.
         """
         has_notebook = task.experiment_notebook or task.deployment_notebook
-        
+
         if not isinstance(task.name, str):
             task.name = self.generate_name_task("Tarefa em branco")
 
