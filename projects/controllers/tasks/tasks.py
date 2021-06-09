@@ -123,6 +123,13 @@ class TaskController:
         tasks = query.all()
         return schemas.TaskList.from_orm(tasks, total)
 
+    def generate_name_task(self, name, attempt=1):
+        name_task = f"{name} - {attempt}"
+        check_comp_name = self.session.query(models.Task).filter_by(name=name_task).first()
+        if check_comp_name:
+            return self.generate_name_task(name, attempt + 1)
+        return name_task
+
     def create_task(self, task: schemas.TaskCreate):
         """
         Creates a new task in our database and a volume claim in the cluster.
@@ -141,6 +148,9 @@ class TaskController:
             When task attributes are invalid.
         """
         has_notebook = task.experiment_notebook or task.deployment_notebook
+
+        if not isinstance(task.name, str):
+            task.name = self.generate_name_task("Tarefa em branco")
 
         if task.copy_from and has_notebook:
             raise BadRequest("Either provide notebooks or a task to copy from")
