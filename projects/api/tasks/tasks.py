@@ -1,24 +1,21 @@
 # -*- coding: utf-8 -*-
 """Tasks API Router."""
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
-from sqlalchemy.orm import Session
 import base64
 import os
-import projects.schemas.task
-
-from projects.schemas.mailing import EmailSchema
-from projects.kubernetes.notebook import get_files_from_task
-from projects.controllers import TaskController
-from projects.database import session_scope
-from projects.utils import format_query_params
-from pydantic import EmailStr, BaseModel
-from fastapi_mail import FastMail, MessageSchema,ConnectionConfig
 from typing import List
+
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
+from pydantic import BaseModel, EmailStr
+from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse
 
-
-
-
+import projects.schemas.task
+from projects.controllers import TaskController
+from projects.database import session_scope
+from projects.kubernetes.notebook import get_files_from_task
+from projects.schemas.mailing import EmailSchema
+from projects.utils import format_query_params
 
 router = APIRouter(
     prefix="/tasks",
