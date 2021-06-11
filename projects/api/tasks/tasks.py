@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse
 
 import projects.schemas.task
+import projects.schemas.message
 from projects.controllers import TaskController
 from projects.database import session_scope
 from projects.kubernetes.notebook import get_files_from_task
@@ -139,12 +140,26 @@ async def handle_delete_task(task_id: str,
     return result
 
 
-@router.post("/{task_id}/email")
+@router.post("/{task_id}/email", status_code=200)
 async def handle_task_email_sender(task_id: str,
                                    background_tasks: BackgroundTasks,
                                    email: EmailSchema,
-                                   session: Session = Depends(session_scope)) -> JSONResponse:
-    # TODO make docstring
+                                   session: Session = Depends(session_scope)):
+    """
+    Handles DELETE requests to /<task_id>.
+
+    Parameters
+    ----------
+    task_id : str
+    background_tasks : fastapi.BackgroundTasks
+    email: projects.schema.mailing.EmailSchema
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    message: str
+    
+    """
 
     # getting task instance
     task_controller = TaskController(session)
@@ -189,4 +204,4 @@ async def handle_task_email_sender(task_id: str,
     os.remove('taskfiles.zip')
 
     # TODO change this response
-    return JSONResponse(status_code=200, content={"message": "email has been sent"})
+    return {"message": "email has been sent"}
