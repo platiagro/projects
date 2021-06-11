@@ -18,8 +18,8 @@ from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation,
     update_task_config_map, update_persistent_volume_claim, remove_persistent_volume_claim
 
 PREFIX = "tasks"
-VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
-              "PREDICTOR", "COMPUTER_VISION", "NLP", "MONITORING"]
+VALID_CATEGORIES = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
+                    "PREDICTOR", "COMPUTER_VISION", "NLP", "MONITORING"]
 DEPLOYMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Deployment.ipynb"))
 EXPERIMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Experiment.ipynb"))
 
@@ -158,8 +158,8 @@ class TaskController:
         if not task.tags or len(task.tags) == 0:
             task.tags = ["DEFAULT"]
 
-        if any(tag not in VALID_TAGS for tag in task.tags):
-            valid_str = ",".join(VALID_TAGS)
+        if any(tag not in VALID_CATEGORIES for tag in task.tags):
+            valid_str = ",".join(VALID_CATEGORIES)
             raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
         # check if image is a valid docker image
@@ -280,8 +280,8 @@ class TaskController:
         if stored_task and stored_task.uuid != task_id:
             raise BadRequest("a task with that name already exists")
 
-        if task.tags and any(tag not in VALID_TAGS for tag in task.tags):
-            valid_str = ",".join(VALID_TAGS)
+        if task.tags and any(tag not in VALID_CATEGORIES for tag in task.tags):
+            valid_str = ",".join(VALID_CATEGORIES)
             raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
 
         stored_task = self.session.query(models.Task).get(task_id)

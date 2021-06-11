@@ -19,7 +19,11 @@ class TaskBase(BaseModel):
 class TaskCreate(TaskBase):
     name: Optional[str]
     description: Optional[str]
+    category: Optional[str]
     tags: Optional[List[str]]
+    data_in: Optional[str]
+    data_out: Optional[str]
+    docs: Optional[str]
     copy_from: Optional[str]
     image: Optional[str]
     commands: Optional[List[str]]
@@ -39,7 +43,11 @@ class TaskCreate(TaskBase):
 class TaskUpdate(TaskBase):
     name: Optional[str]
     description: Optional[str]
+    category: Optional[str]
     tags: Optional[List[str]]
+    data_in: Optional[str]
+    data_out: Optional[str]
+    docs: Optional[str]
     image: Optional[str]
     commands: Optional[List[str]]
     arguments: Optional[List[str]]
@@ -60,7 +68,11 @@ class Task(TaskBase):
     description: Optional[str]
     commands: Optional[List[str]]
     arguments: Optional[List[str]]
-    tags: List[str]
+    category: Optional[str]
+    tags: Optional[List[str]]
+    data_in: Optional[str]
+    data_out: Optional[str]
+    docs: Optional[str]
     parameters: List[Dict]
     created_at: datetime
     updated_at: datetime
@@ -73,7 +85,11 @@ class Task(TaskBase):
             description=model.description,
             commands=model.commands,
             arguments=model.arguments,
+            category=model.category,
             tags=model.tags,
+            data_in=model.data_in,
+            data_out=model.data_out,
+            docs=model.docs,
             parameters=model.parameters,
             created_at=model.created_at,
             updated_at=model.updated_at,
