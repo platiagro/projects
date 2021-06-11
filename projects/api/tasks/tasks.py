@@ -150,9 +150,6 @@ async def handle_task_email_sender(task_id: str,
     task_controller = TaskController(session)
     task = task_controller.get_task(task_id=task_id)
     
-
-
-
     template = f"""
             <html>
             <body>
