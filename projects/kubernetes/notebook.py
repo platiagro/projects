@@ -503,16 +503,14 @@ def get_files_from_task(task_name):
     str
         File content.
     """
-    task_folder = f"{JUPYTER_WORKSPACE}/{task_name}"
 
     warnings.warn(f"Zipping contents of task: '{task_name}'")
     load_kube_config()
     api_instance = client.CoreV1Api()
-    
-    # TODO change /home/jovyan/tasks to JUPYTER_WORKSPACE
+
     python_script = (
         f"import os; "
-        f"os.chdir('/home/jovyan/tasks/{task_name}'); "
+        f"os.chdir('{JUPYTER_WORKSPACE}/{task_name}'); "
         f"os.system('zip -q -r - * | base64'); "
     )
     exec_command = ["python", "-c", python_script]
@@ -539,9 +537,10 @@ def get_files_from_task(task_name):
             warnings.warn("File content fetched.")
     container_stream.close()
 
-    clean_zip_file_content = zip_file_content.replace("\n", "") 
-     
-    return clean_zip_file_content    
+    # the stdout string contains \n character, we must remove
+    clean_zip_file_content = zip_file_content.replace("\n", "")
+    return clean_zip_file_content
+
 
 def copy_file_to_pod(filepath, destination_path):
     """
