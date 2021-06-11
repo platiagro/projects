@@ -50,8 +50,8 @@ DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
 
-
 class TestTasks(TestCase):
+
     def setUp(self):
         self.maxDiff = None
         conn = engine.connect()
@@ -166,12 +166,6 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task(self):
-        # when name is missing
-        # should raise bad request
-        rv = TEST_CLIENT.post("/tasks", json={})
-        result = rv.json()
-        self.assertEqual(rv.status_code, 422)
-
         # when invalid tag is sent
         # should raise bad request
         rv = TEST_CLIENT.post("/tasks", json={
@@ -182,6 +176,36 @@ class TestTasks(TestCase):
         })
         result = rv.json()
         self.assertEqual(rv.status_code, 400)
+
+        # Passing the name null
+        rv = TEST_CLIENT.post("/tasks", json={
+            "description": "test with name null"
+        })
+        result = rv.json()
+        expected = {
+            "name": "Tarefa em branco - 1",
+            "description": "test with name null",
+            "tags": [
+                "DEFAULT"
+            ]
+        }
+        machine_generated = [
+            "uuid",
+            "commands",
+            "arguments",
+            "parameters",
+            "createdAt",
+            "updatedAt",
+        ]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertEqual(rv.status_code, 200)
+        self.assertDictEqual(expected, result)
+
+        rv = TEST_CLIENT.post("/tasks", json={})
+        result = rv.json()
+        self.assertEqual(rv.status_code, 200)
 
         # task name already exists
         rv = TEST_CLIENT.post("/tasks", json={
