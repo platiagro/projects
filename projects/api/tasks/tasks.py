@@ -146,7 +146,8 @@ async def handle_task_email_sender(task_id: str,
                                    background_tasks: BackgroundTasks,
                                    email: EmailSchema,
                                    session: Session = Depends(session_scope)) -> JSONResponse:
-
+    
+    # getting task instance
     task_controller = TaskController(session)
     task = task_controller.get_task(task_id=task_id)
     
@@ -163,7 +164,7 @@ async def handle_task_email_sender(task_id: str,
          
             """
         
-    # getting file contente as base64 string
+    # getting file content as base64 string
     file_as_b64 = get_files_from_task(task.name)
     
     # decoding as byte
@@ -182,11 +183,11 @@ async def handle_task_email_sender(task_id: str,
         attachments=['taskfiles.zip'],
         subtype="html"
         )
-    
     fm = FastMail(email.conf)
     background_tasks.add_task(fm.send_message,message)
     
     # removing file after send email
     os.remove('taskfiles.zip')
     
-    return JSONResponse(status_code=200, content={"message": "email has been sent"})   
+    # TODO change this response
+    return JSONResponse(status_code=200, content={"message": "email has been sent"})
