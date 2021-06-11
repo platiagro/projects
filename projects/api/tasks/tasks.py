@@ -6,7 +6,6 @@ import os
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi_mail import FastMail, MessageSchema
 from sqlalchemy.orm import Session
-from starlette.responses import JSONResponse
 
 import projects.schemas.task
 import projects.schemas.message
@@ -158,7 +157,7 @@ async def handle_task_email_sender(task_id: str,
     Returns
     -------
     message: str
-    
+
     """
 
     # getting task instance
