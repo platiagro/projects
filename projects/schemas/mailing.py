@@ -6,7 +6,7 @@ from fastapi_mail import ConnectionConfig
 from typing import List
 
 MAIL_USERNAME = os.getenv("MAIL_USERNAME", "")
-MAIL_PASSWORD = os.getenv("MAIL_USERNAME", "")
+MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "")
 MAIL_SENDER_ADDRESS = os.getenv("MAIL_SENDER_ADDRESS", "")
 MAIL_SERVER = os.getenv("MAIL_USERNAME", "")
 
