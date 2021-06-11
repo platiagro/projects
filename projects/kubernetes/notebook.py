@@ -6,18 +6,17 @@ import os
 import tarfile
 import time
 import warnings
-
+from ast import literal_eval
 from tempfile import NamedTemporaryFile, TemporaryFile
 
-from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import InternalServerError
-from projects.kfp.monitorings import create_monitoring_task_config_map, \
-    delete_monitoring_task_config_map
+from projects.kfp.monitorings import (create_monitoring_task_config_map,
+                                      delete_monitoring_task_config_map)
 from projects.kubernetes.kube_config import load_kube_config
 
 JUPYTER_WORKSPACE = "/home/jovyan/tasks"
