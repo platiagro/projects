@@ -202,5 +202,4 @@ async def handle_task_email_sender(task_id: str,
     # removing file after send email
     os.remove('taskfiles.zip')
 
-    # TODO change this response
     return {"message": "email has been sent"}
