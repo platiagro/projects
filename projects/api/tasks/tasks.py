@@ -19,6 +19,8 @@ router = APIRouter(
     prefix="/tasks",
 )
 
+ATTACHMENT_FILE_NAME = 'taskfiles.zip'
+
 
 @router.get("", response_model=projects.schemas.task.TaskList)
 async def handle_list_tasks(request: Request,
@@ -185,7 +187,7 @@ async def handle_task_email_sender(task_id: str,
     file_as_bytes = base64.b64decode(base64_bytes)
 
     # using bytes to build the zipfile
-    with open('taskfiles.zip', 'wb') as f:
+    with open(ATTACHMENT_FILE_NAME, 'wb') as f:
         f.write(file_as_bytes)
     f.close()
 
@@ -193,7 +195,7 @@ async def handle_task_email_sender(task_id: str,
         subject=f"Arquivos da tarefa '{task.name}'",
         recipients=email.dict().get("email"),  # List of recipients, as many as you can pass
         body=template,
-        attachments=['taskfiles.zip'],
+        attachments=[ATTACHMENT_FILE_NAME],
         subtype="html"
         )
     fm = FastMail(email.conf)
@@ -201,5 +203,4 @@ async def handle_task_email_sender(task_id: str,
 
     # removing file after send email
     os.remove('taskfiles.zip')
-
     return {"message": "email has been sent"}
