@@ -163,13 +163,19 @@ async def simple_send(task_id: str,
                       background_tasks: BackgroundTasks,
                       email: EmailSchema,
                       session: Session = Depends(session_scope)) -> JSONResponse:
-    template = """
+
+    task_controller = TaskController(session)
+    task = task_controller.get_task(task_id=task_id)
+    
+
+
+
+    template = f"""
             <html>
             <body>
-            
             <p>  
-            <br> Obrigado por usar a platiagro! Arquivos da tarefa se encontram em anexo.
-                 Email enviado automaticamente, favor não responder!
+            <br> Obrigado por usar a platiagro! Arquivos da tarefa '{task.name}' se encontram em anexo.
+                 Esse email foi enviado automaticamente, por gentileza não responda.  
             </p>
     
             </body>
@@ -177,24 +183,22 @@ async def simple_send(task_id: str,
          
             """
     
-    task_controller = TaskController(session)
-    task = task_controller.get_task(task_id=task_id)
-    print(task.name)
+
     
     # getting file contente as base64 string
-    file_as_b64 = get_files_from_task('Regressor SVM')
+    file_as_b64 = get_files_from_task(task.name)
     
     # decoding as byte
     base64_bytes = file_as_b64.encode('ascii')
     file_as_bytes = base64.b64decode(base64_bytes) 
 
-    # using bytes to build file 
+    # using bytes to build the zipfile 
     with open('taskfiles.zip', 'wb') as f:
         f.write(file_as_bytes)
     f.close()
     
     message = MessageSchema(
-        subject="Arquivos da tarefa",
+        subject=f"Arquivos da tarefa '{task.name}'",
         recipients=["andreluizsplinter@gmail.com"],  # List of recipients, as many as you can pass 
         body=template,
         attachments=['taskfiles.zip'],
