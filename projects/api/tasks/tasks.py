@@ -144,6 +144,7 @@ async def handle_task_email_sender(task_id: str,
                                    background_tasks: BackgroundTasks,
                                    email: EmailSchema,
                                    session: Session = Depends(session_scope)) -> JSONResponse:
+    # TODO make docstring
 
     # getting task instance
     task_controller = TaskController(session)
