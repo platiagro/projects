@@ -52,7 +52,7 @@ class TestDeploymentsRuns(TestCase):
         conn = engine.connect()
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
-            f"tags, parameters, data_in, data_out, docs, experiment_notebook_path, "
+            f"tags, data_in, data_out, docs, parameters, experiment_notebook_path, "
             f"deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -62,12 +62,12 @@ class TestDeploymentsRuns(TestCase):
 
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
-            f"tags, parameters, data_in, data_out, docs, experiment_notebook_path, "
+            f"tags, data_in, data_out, docs, parameters, experiment_notebook_path, "
             f"deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_2, "name", "desc", IMAGE, None, None, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID_2, "name", "desc", IMAGE, None, None, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
                             EX_NOTEBOOK_PATH, None, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
