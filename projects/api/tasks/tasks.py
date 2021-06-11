@@ -2,11 +2,19 @@
 """Tasks API Router."""
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
-
+import base64
+import os
 import projects.schemas.task
+from projects.kubernetes.notebook import get_files_from_task
 from projects.controllers import TaskController
 from projects.database import session_scope
 from projects.utils import format_query_params
+from pydantic import EmailStr, BaseModel
+from fastapi_mail import FastMail, MessageSchema,ConnectionConfig
+from typing import List
+from starlette.responses import JSONResponse
+
+
 
 router = APIRouter(
     prefix="/tasks",
@@ -130,3 +138,73 @@ async def handle_delete_task(task_id: str,
     task_controller = TaskController(session, background_tasks)
     result = task_controller.delete_task(task_id=task_id)
     return result
+
+
+
+
+class EmailSchema(BaseModel):
+    email: List[EmailStr]
+
+
+    conf = ConnectionConfig(
+        MAIL_USERNAME = " postmaster@sandbox7472bf2b72ea467e8e577e4ee53ca4dd.mailgun.org",
+        MAIL_PASSWORD = "05966f90ce1132a11c8dc73f768f5d1b-90ac0eb7-3971aefc",
+        MAIL_FROM = "aluifs@cpqd.com.br",
+        MAIL_PORT = 587,
+        MAIL_SERVER = "smtp.mailgun.org",
+        MAIL_TLS = True,
+        MAIL_SSL = False,
+        #USE_CREDENTIALS = True
+)
+
+
+@router.post("/{task_id}/email")
+async def simple_send(task_id: str,
+                      background_tasks: BackgroundTasks,
+                      email: EmailSchema,
+                      session: Session = Depends(session_scope)) -> JSONResponse:
+    template = """
+            <html>
+            <body>
+            
+            <p>  
+            <br> Obrigado por usar a platiagro! Arquivos da tarefa se encontram em anexo.
+                 Email enviado automaticamente, favor não responder!
+            </p>
+    
+            </body>
+            </html>
+         
+            """
+    
+    task_controller = TaskController(session)
+    task = task_controller.get_task(task_id=task_id)
+    print(task.name)
+    
+    # getting file contente as base64 string
+    file_as_b64 = get_files_from_task('Regressor SVM')
+    
+    # decoding as byte
+    base64_bytes = file_as_b64.encode('ascii')
+    file_as_bytes = base64.b64decode(base64_bytes) 
+
+    # using bytes to build file 
+    with open('taskfiles.zip', 'wb') as f:
+        f.write(file_as_bytes)
+    f.close()
+    
+    message = MessageSchema(
+        subject="Arquivos da tarefa",
+        recipients=["andreluizsplinter@gmail.com"],  # List of recipients, as many as you can pass 
+        body=template,
+        attachments=['taskfiles.zip'],
+        subtype="html"
+        )
+    
+    fm = FastMail(email.conf)
+    background_tasks.add_task(fm.send_message,message)
+    
+    # removing file after send email
+    os.remove('taskfiles.zip')
+    
+    return JSONResponse(status_code=200, content={"message": "email has been sent"})   

@@ -457,7 +457,7 @@ def get_file_from_pod(filepath):
     str
         File content.
     """
-    notebook_path = f"{JUPYTER_WORKSPACE}/{filepath}"
+    notebook_path = f"{JUPYTER_WORKSPACE}/{filepath}/"
 
     warnings.warn(f"Fetching {notebook_path} from pod...")
     load_kube_config()
@@ -488,6 +488,60 @@ def get_file_from_pod(filepath):
     container_stream.close()
 
     return file_content
+
+
+def get_files_from_task(task_name):
+    """
+    Get all files inside a task folder in a notebook server.
+
+    Parameters
+    ----------
+     task_name: str
+
+    Returns
+    -------
+    str
+        File content.
+    """
+    task_folder = f"{JUPYTER_WORKSPACE}/{task_name}"
+
+    warnings.warn(f"Zipping contents of task: '{task_name}'")
+    load_kube_config()
+    api_instance = client.CoreV1Api()
+    #print(task_name)
+    #exec_command = ["zip", "-q", "-r", "-", task_folder, ] 
+    python_script = (
+        f"import os; "
+        f"os.chdir('/home/jovyan/tasks/{task_name}'); "
+        f"os.system('zip -q -r - * | base64'); "
+    )
+    exec_command = ["python", "-c", python_script]
+    #exec_command = ["base64","zip", "-q", "-r", "-", task_folder] 
+
+
+    container_stream = stream(
+        api_instance.connect_get_namespaced_pod_exec,
+        name=NOTEBOOK_POD_NAME,
+        namespace=NOTEBOOK_NAMESPACE,
+        command=exec_command,
+        container=NOTEBOOK_CONTAINER_NAME,
+        stderr=True,
+        stdin=False,
+        stdout=True,
+        tty=False,
+        _preload_content=False,
+    )
+
+    zip_file_content = ""
+
+    while container_stream.is_open():
+        container_stream.update(timeout=10)
+        if container_stream.peek_stdout():
+            zip_file_content = container_stream.read_stdout()
+            warnings.warn("File content fetched.")
+    container_stream.close()
+
+    return zip_file_content.replace("\n", "")    
 
 
 def copy_file_to_pod(filepath, destination_path):
