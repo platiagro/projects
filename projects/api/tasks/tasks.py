@@ -159,10 +159,10 @@ class EmailSchema(BaseModel):
 
 
 @router.post("/{task_id}/email")
-async def simple_send(task_id: str,
-                      background_tasks: BackgroundTasks,
-                      email: EmailSchema,
-                      session: Session = Depends(session_scope)) -> JSONResponse:
+async def handle_task_email_sender(task_id: str,
+                                   background_tasks: BackgroundTasks,
+                                   email: EmailSchema,
+                                   session: Session = Depends(session_scope)) -> JSONResponse:
 
     task_controller = TaskController(session)
     task = task_controller.get_task(task_id=task_id)
@@ -182,9 +182,7 @@ async def simple_send(task_id: str,
             </html>
          
             """
-    
-
-    
+        
     # getting file contente as base64 string
     file_as_b64 = get_files_from_task(task.name)
     
