@@ -214,7 +214,9 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 200)
         self.assertDictEqual(expected, result)
 
-        rv = TEST_CLIENT.post("/tasks", json={})
+        rv = TEST_CLIENT.post("/tasks", json={
+            "category": CATEGORY
+        })
         result = rv.json()
         self.assertEqual(rv.status_code, 200)
 
