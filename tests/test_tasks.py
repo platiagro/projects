@@ -185,18 +185,23 @@ class TestTasks(TestCase):
 
         # Passing the name null
         rv = TEST_CLIENT.post("/tasks", json={
-            "description": "test with name null"
+            "description": "test with name null",
+            "category": "DEFAULT"
         })
         result = rv.json()
         expected = {
             "name": "Tarefa em branco - 1",
             "description": "test with name null",
+            "category": "DEFAULT",
             "tags": [
                 "DEFAULT"
             ]
         }
         machine_generated = [
             "uuid",
+            "data_in",
+            "data_out",
+            "docs",
             "commands",
             "arguments",
             "parameters",
