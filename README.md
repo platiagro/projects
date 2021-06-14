@@ -125,6 +125,14 @@ pip install .
 ```bash
 platiagro-init-db
 ```
+(Optional) For config SMTP parameters:
+
+```bash
+export MAIL_USERNAME=
+export MAIL_PASSWORD=
+export MAIL_SENDER_ADDRESS=
+export MAIL_SERVER=
+```
 
 Then, start the API server:
 
