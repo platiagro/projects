@@ -49,6 +49,8 @@ POSITION_Y = 0
 DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
+EMAILS_TO_SEND = ["some.fictional.email.107554@gmail.com"]
+
 
 class TestTasks(TestCase):
 
@@ -538,6 +540,15 @@ class TestTasks(TestCase):
             del result[attr]
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
+    
+    def test_send_email(self):
+       rv = TEST_CLIENT.post("/tasks/{TASK_ID_2}/email", json={
+            "email": EMAILS_TO_SEND
+        })
+       result = rv.json()
+       expected = {"message": "email has been sent"}
+       self.assertDictEqual(expected, result)
+       self.assertEqual(rv.status_code, 200)
 
     def test_delete_task(self):
         # task is none
