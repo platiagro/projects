@@ -477,7 +477,11 @@ class TestTasks(TestCase):
             "description": DESCRIPTION,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
+            "category": CATEGORY,
             "tags": TAGS,
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
             "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
