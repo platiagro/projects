@@ -202,5 +202,5 @@ async def handle_task_email_sender(task_id: str,
     background_tasks.add_task(fm.send_message, message)
 
     # removing file after send email
-    os.remove('taskfiles.zip')
+    os.remove(ATTACHMENT_FILE_NAME)
     return {"message": "email has been sent"}
