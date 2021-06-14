@@ -555,7 +555,11 @@ class TestTasks(TestCase):
             "description": DESCRIPTION,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
+            "category": CATEGORY,
             "tags": ["FEATURE_ENGINEERING"],
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
             "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
