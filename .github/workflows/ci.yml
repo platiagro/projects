@@ -1,6 +1,18 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
+name: Projects - CI
+
+on:
+  push:
+    branches:
+    - master
+    - v*-branch
+
+  pull_request:
+    branches:
+    - master
+    - v*-branch
 
 jobs:
   build:
@@ -25,12 +37,43 @@ jobs:
         ports:
         - 9000:9000
 
+    strategy:
+      matrix:
+        python-version: ["3.7"]
+
+    steps:
+    - name: Checkout 🛎️
+      uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set output variables
+      id: vars
+      run: |
+        CODE_REVIEW=$(cat ./CODE-REVIEW.md)
+        echo ::set-output name=CODE_REVIEW::${CODE_REVIEW}
+
+        VERSION=$(python -c "import projects; print(projects.__version__)")
+        if [ ${{ github.ref }} = "refs/heads/master" ]; then
+          echo ::set-output name=TAG::${VERSION}-SNAPSHOT
+        elif [[ ${{ github.ref }} =~ ^refs/heads/v.*-branch$ ]]; then
+          echo ::set-output name=TAG::${VERSION}
+        else
+          echo ::set-output name=TAG::${VERSION}-${{ github.sha }}
+        fi
+
+        echo ::set-output name=BRANCH::${{ github.ref }}
+        echo ::set-output name=COMMIT::${{ github.sha }}
+
     - name: Code review tips
       uses: unsplash/comment-on-pr@master
       if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
+        msg: ${{ steps.vars.outputs.CODE_REVIEW }}
 
     - name: start minikube
       id: minikube
@@ -219,21 +262,9 @@ jobs:
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
 
-    - name: Debug in workflows
-      if: ${{ always() }}
-      run: |
-        kubectl -n kubeflow describe pod
-        kubectl -n kubeflow get workflows
-        kubectl -n kubeflow get pod
-
     - name: Make disk space available for docker build
       if: ${{ always() }}
       run: |
-        pip freeze | grep '==' | sed s/==.*//g | xargs pip uninstall -y
-        kubectl delete ns kubeflow
-        kubectl delete ns istio-system
-        kubectl delete ns metallb-system
-        for I in `seq 1 10`; do rm -rf /data/pv000${I}/; done
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf /opt/ghc
         sudo rm -rf "/usr/local/share/boost"
@@ -246,3 +277,42 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and push docker image (PROJECTS API) 📦
+      id: docker_build_api
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: docker.io/platiagro/projects:${{ steps.vars.outputs.TAG }}
+        file: Dockerfile
+        build-args: |
+          COMMIT=${{ steps.vars.outputs.COMMIT }}
+          BRANCH=${{ steps.vars.outputs.BRANCH }}
+
+    - name: Image digest
+      run: echo ${{ steps.docker_build_api.outputs.digest }}
+
+    - name: Build and push docker image (PERSISTENCE AGENT) 📦
+      id: docker_build_agent
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: docker.io/platiagro/persistence-agent:${{ steps.vars.outputs.TAG }}
+        file: Dockerfile.persistenceagent
+        build-args: |
+          COMMIT=${{ steps.vars.outputs.COMMIT }}
+          BRANCH=${{ steps.vars.outputs.BRANCH }}
+
+    - name: Image digest
+      run: echo ${{ steps.docker_build_agent.outputs.digest }}
