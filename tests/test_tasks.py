@@ -262,11 +262,13 @@ class TestTasks(TestCase):
         rv = TEST_CLIENT.post("/tasks", json={
             "name": "test create a task using an empty template notebook",
             "description": "long test",
+            "category": CATEGORY,
         })
         result = rv.json()
         expected = {
             "name": "test create a task using an empty template notebook",
             "description": "long test",
+            "category": CATEGORY,
             "tags": ["DEFAULT"],
             "parameters": [],
         }
