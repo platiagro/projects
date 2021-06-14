@@ -1,4 +1,4 @@
-fastapi==0.63.0
+fastapi==0.65.2
 # ASGI server
 uvicorn==0.13.3
 # Streaming multipart parser
