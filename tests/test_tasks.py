@@ -270,15 +270,15 @@ class TestTasks(TestCase):
             "description": "long test",
             "category": CATEGORY,
             "tags": ["DEFAULT"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
             "parameters": [],
         }
         # uuid, commands, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
         # are machine-generated we assert they exist, but we don't assert their values
         machine_generated = [
             "uuid",
+            "dataIn",
+            "dataOut",
+            "docs",
             "commands",
             "arguments",
             "createdAt",
