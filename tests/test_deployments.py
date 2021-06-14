@@ -127,7 +127,7 @@ class TestDeployments(TestCase):
                             EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category "
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
             f"tags, data_in, data_out, docs, parameters, experiment_notebook_path, "
             f"deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
