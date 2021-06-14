@@ -219,7 +219,6 @@ jobs:
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
 
-<<<<<<< HEAD
     - name: Debug in workflows
       if: ${{ always() }}
       run: |
@@ -235,8 +234,6 @@ jobs:
         kubectl delete ns istio-system
         kubectl delete ns metallb-system
         for I in `seq 1 10`; do rm -rf /data/pv000${I}/; done
-=======
->>>>>>> 0a8068e708beabc13e6b9a86b18810452bac90c1
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf /opt/ghc
         sudo rm -rf "/usr/local/share/boost"
