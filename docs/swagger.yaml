@@ -2356,7 +2356,11 @@ components:
               value:
                 name: string
                 description: string
+                category: "DEFAULT"
                 tags: ["DEFAULT"]
+                dataIn: string
+                dataOut: string
+                docs: string
                 cpuLimit: "1000m"
                 cpuRequest: "1000m"
                 memoryLimit: "10G"
@@ -2369,7 +2373,11 @@ components:
               value:
                 name: string
                 description: string
+                category: "DEFAULT"
                 tags: ["DEFAULT"]
+                dataIn: string
+                dataOut: string
+                docs: string
                 commands: ["cmd"]
                 arguments: ["arg"]
                 image: your-custom-docker-image:tag
@@ -2389,7 +2397,11 @@ components:
               value:
                 name: string
                 description: string
+                category: DEFAULT
                 tags: ["DEFAULT"]
+                dataIn: string
+                dataOut: string
+                docs: string
                 cpuLimit: "1000m"
                 cpuRequest: "1000m"
                 memoryLimit: "10G"
@@ -2472,7 +2484,11 @@ components:
           example:
             name: string
             description: string
+            category: DEFAULT
             tags: ["DEFAULT"]
+            dataIn: string
+            dataOut: string
+            docs: string
             commands: ["cmd"]
             arguments: ["arg"]
             image: your-custom-docker-image:tag
