@@ -261,10 +261,10 @@ jobs:
         JUPYTER_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}/notebook/anonymous/server
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
-        MAIL_USERNAME: ${{MAIL_USERNAME}}
-        MAIL_PASSWORD: ${{MAIL_USERNAME}}
-        MAIL_SENDER_ADDRESS: ${{MAIL_USERNAME}}
-        MAIL_SERVER: ${{MAIL_USERNAME}}
+        MAIL_USERNAME: ${{ MAIL_USERNAME }}
+        MAIL_PASSWORD: ${{ MAIL_PASSWORD }}
+        MAIL_SENDER_ADDRESS: ${{ MAIL_ADDRESS }}
+        MAIL_SERVER: ${{ MAIL_USERNAME }}
 
 
     - name: Make disk space available for docker build
