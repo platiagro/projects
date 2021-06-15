@@ -55,7 +55,9 @@ class ResultController:
                     has_results = True
 
         if not has_results:
-            raise NotFound("The specified operator has no results")
+            if operator_id:
+                raise NotFound("The specified operator has no results")
+            raise NotFound("The specified run has no results")
 
         zip_file.seek(0)
 
@@ -73,3 +75,4 @@ class ResultController:
                 return {"filename": filename,
                         "data": get_object(object_name),
                         "operatorId": object_name_splitted[0]}
+        return None
