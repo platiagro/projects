@@ -345,6 +345,9 @@ class TestTasks(TestCase):
         }
         machine_generated = [
             "uuid",
+            "dataIn",
+            "dataOut",
+            "docs",
             "commands",
             "arguments",
             "createdAt",
