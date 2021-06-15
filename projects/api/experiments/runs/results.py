@@ -48,7 +48,6 @@ async def handle_get_results(project_id: str,
 
     response = StreamingResponse(results, media_type="application/x-zip-compressed")
     response.headers["Content-Disposition"] = "attachment; filename=results.zip"
-    print(type(response))
     return response
 
 

@@ -5,6 +5,7 @@ import re
 import zipfile
 
 from projects.exceptions import NotFound
+from projects.kfp.runs import get_latest_run_id
 from projects.object_storage import list_objects, get_object
 
 class ResultController:
@@ -19,10 +20,14 @@ class ResultController:
         ----------
         experiment_id: str
         run_id: str
+            The run_id. If `run_id=latest`, then returns results from the latest run_id.
 
         Returns
         -------
         """
+        if run_id == "latest":
+            run_id = get_latest_run_id(experiment_id)
+
         zip_file = io.BytesIO()
 
         has_results = False
@@ -46,16 +51,21 @@ class ResultController:
     
     def get_operator_results(self, experiment_id: str, run_id: str, operator_id: str):
         """
-        Get results from experiment in a .zip file.
+        Get results from a specific operator in a .zip file.
 
         Parameters
         ----------
         experiment_id: str
         run_id: str
+            The run_id. If `run_id=latest`, then returns results from the latest run_id.
+        operator_id: str
 
         Returns
         -------
         """
+        if run_id == "latest":
+            run_id = get_latest_run_id(experiment_id)
+
         zip_file = io.BytesIO()
 
         has_results = False
