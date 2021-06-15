@@ -49,7 +49,7 @@ POSITION_Y = 0
 DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
-EMAILS_TO_SEND = ["some.fictional.email.107554@gmail.com"]
+EMAILS_TO_SEND = ["some.fictional.email.107554@maildrop.cc"]
 
 
 class TestTasks(TestCase):
