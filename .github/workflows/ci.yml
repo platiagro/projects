@@ -52,9 +52,6 @@ jobs:
     - name: Set output variables
       id: vars
       run: |
-        CODE_REVIEW=$(cat ./CODE-REVIEW.md)
-        echo ::set-output name=CODE_REVIEW::${CODE_REVIEW}
-
         VERSION=$(python -c "import projects; print(projects.__version__)")
         if [ ${{ github.ref }} = "refs/heads/master" ]; then
           echo ::set-output name=TAG::${VERSION}-SNAPSHOT
@@ -68,11 +65,11 @@ jobs:
         echo ::set-output name=COMMIT::${{ github.sha }}
 
     - name: Code review tips
-      uses: harupy/comment-on-pr@master
+      uses: machine-learning-apps/pr-comment@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        filename: CODE_REVIEW.md
+        path: CODE-REVIEW.md
 
     - name: start minikube
       id: minikube
