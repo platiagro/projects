@@ -147,7 +147,7 @@ async def handle_task_email_sender(task_id: str,
                                    email: EmailSchema,
                                    session: Session = Depends(session_scope)):
     """
-    Handles mailing of contens of .
+    Handles mailing of contents of task
 
     Parameters
     ----------

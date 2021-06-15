@@ -2571,6 +2571,16 @@ components:
                 "nbformat": 4,
                 "nbformat_minor": 4,
               }
+    TaskMailing:
+      content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: array
+                  items:
+                    type: string
     Project:
       content:
         application/json:
