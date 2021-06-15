@@ -60,6 +60,29 @@ def list_objects(prefix):
     return objects
 
 
+def get_object(object_name):
+    """
+    Get data from object in MinIO.
+
+    Parameters
+    ----------
+    object_name : str
+
+    Returns
+    -------
+    bytes
+    """
+    # ensures MinIO bucket exists
+    make_bucket(BUCKET_NAME)
+
+    object_data = MINIO_CLIENT.get_object(
+        bucket_name=BUCKET_NAME,
+        object_name=object_name,
+    ).data
+
+    return object_data
+
+
 def remove_object(object_name):
     """
     Remove object from MinIO.
