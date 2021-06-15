@@ -407,6 +407,7 @@ class TestTasks(TestCase):
         # dataset task that has null notebooks
         rv = TEST_CLIENT.post("/tasks", json={
             "name": "test fake dataset task",
+            "category": CATEGORY,
             "tags": ["DATASETS"],
             "image": IMAGE,
         })
@@ -414,11 +415,15 @@ class TestTasks(TestCase):
         expected = {
             "name": "test fake dataset task",
             "description": None,
+            "category": CATEGORY,
             "tags": ["DATASETS"],
             "parameters": [],
         }
         machine_generated = [
             "uuid",
+            "dataIn",
+            "dataOut",
+            "docs",
             "createdAt",
             "updatedAt",
             "commands",
