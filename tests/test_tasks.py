@@ -198,9 +198,9 @@ class TestTasks(TestCase):
             "tags": [
                 "DEFAULT"
             ],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
         }
         machine_generated = [
             "uuid",
@@ -272,9 +272,9 @@ class TestTasks(TestCase):
             "description": "long test",
             "category": CATEGORY,
             "tags": ["DEFAULT"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
         }
         # uuid, commands, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
@@ -307,9 +307,9 @@ class TestTasks(TestCase):
             "description": "long test",
             "category": CATEGORY,
             "tags": TAGS,
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
         }
         machine_generated = [
@@ -341,9 +341,9 @@ class TestTasks(TestCase):
             "description": "long test",
             "category": CATEGORY,
             "tags": TAGS,
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
         }
         machine_generated = [
@@ -378,9 +378,9 @@ class TestTasks(TestCase):
             "arguments": ARGUMENTS,
             "category": CATEGORY,
             "tags": TAGS,
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
         }
         machine_generated = [
@@ -417,9 +417,9 @@ class TestTasks(TestCase):
             "description": None,
             "category": CATEGORY,
             "tags": ["DATASETS"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
         }
         machine_generated = [
@@ -452,9 +452,9 @@ class TestTasks(TestCase):
             "arguments": ARGUMENTS,
             "category": CATEGORY,
             "tags": TAGS,
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
             "createdAt": CREATED_AT_ISO,
             "updatedAt": UPDATED_AT_ISO,
@@ -508,9 +508,9 @@ class TestTasks(TestCase):
             "arguments": ARGUMENTS,
             "category": CATEGORY,
             "tags": TAGS,
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
@@ -534,9 +534,9 @@ class TestTasks(TestCase):
             "arguments": ARGUMENTS,
             "category": CATEGORY,
             "tags": ["FEATURE_ENGINEERING"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
@@ -560,9 +560,9 @@ class TestTasks(TestCase):
             "arguments": ARGUMENTS,
             "category": CATEGORY,
             "tags": ["FEATURE_ENGINEERING"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
@@ -586,9 +586,9 @@ class TestTasks(TestCase):
             "arguments": ARGUMENTS,
             "category": CATEGORY,
             "tags": ["FEATURE_ENGINEERING"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "parameters": [],
             "createdAt": CREATED_AT_ISO,
         }
