@@ -158,9 +158,9 @@ class TaskController:
         if not task.tags or len(task.tags) == 0:
             task.tags = ["DEFAULT"]
 
-        if any(tag not in VALID_CATEGORIES for tag in task.tags):
+        if task.category is not None and task.category not in VALID_CATEGORIES:
             valid_str = ",".join(VALID_CATEGORIES)
-            raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
+            raise BadRequest(f"Invalid category. Choose any of {valid_str}")
 
         # check if image is a valid docker image
         self.raise_if_invalid_docker_image(task.image)
