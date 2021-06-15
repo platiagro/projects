@@ -330,6 +330,7 @@ class TestTasks(TestCase):
         rv = TEST_CLIENT.post("/tasks", json={
             "name": "test",
             "description": "long test",
+            "category": CATEGORY,
             "tags": TAGS,
             "experimentNotebook": loads(SAMPLE_NOTEBOOK),
             "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
@@ -338,6 +339,7 @@ class TestTasks(TestCase):
         expected = {
             "name": "test",
             "description": "long test",
+            "category": CATEGORY,
             "tags": TAGS,
             "parameters": [],
         }
