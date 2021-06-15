@@ -66,6 +66,7 @@ jobs:
 
     - name: Code review tips
       uses: machine-learning-apps/pr-comment@master
+      if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
