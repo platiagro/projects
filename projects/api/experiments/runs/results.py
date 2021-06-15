@@ -13,6 +13,7 @@ router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}",
 )
 
+
 @router.get("/results")
 async def handle_get_results(project_id: str,
                              experiment_id: str,
@@ -86,9 +87,9 @@ async def handle_get_operator_results(project_id: str,
     run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
 
     result_controller = ResultController(session)
-    results = result_controller.get_operator_results(experiment_id=experiment_id,
-                                                     run_id=run_id,
-                                                     operator_id=operator_id)
+    results = result_controller.get_results(experiment_id=experiment_id,
+                                            run_id=run_id,
+                                            operator_id=operator_id)
 
     response = StreamingResponse(results, media_type="application/x-zip-compressed")
     response.headers["Content-Disposition"] = "attachment; filename=results.zip"
