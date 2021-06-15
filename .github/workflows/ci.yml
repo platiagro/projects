@@ -68,12 +68,12 @@ jobs:
         echo ::set-output name=COMMIT::${{ github.sha }}
 
     - name: Code review tips
-      uses: unsplash/comment-on-pr@master
-      if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
+      uses: harupy/comment-on-pr@master
+      if: ${{ github.event_name == 'pull_request' && github.event.action == 'edited' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        msg: ${{ steps.vars.outputs.CODE_REVIEW }}
+        filename: CODE_REVIEW.md
 
     - name: start minikube
       id: minikube
