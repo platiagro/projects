@@ -367,6 +367,7 @@ class TestTasks(TestCase):
             "image": IMAGE,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
+            "category": CATEGORY,
             "tags": TAGS
         })
         result = rv.json()
@@ -375,11 +376,15 @@ class TestTasks(TestCase):
             "description": "long test",
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
+            "category": CATEGORY,
             "tags": TAGS,
             "parameters": [],
         }
         machine_generated = [
             "uuid",
+            "dataIn",
+            "dataOut",
+            "docs",
             "createdAt",
             "updatedAt",
         ]
