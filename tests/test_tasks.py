@@ -194,7 +194,12 @@ class TestTasks(TestCase):
         expected = {
             "name": "Tarefa em branco - 1",
             "description": "test with name null",
+            "image": IMAGE,
             "category": CATEGORY,
+            "cpuLimit": "100m",
+            "cpuRequest": "100m",
+            "memoryLimit": "1Gi",
+            "memoryRequest": "1Gi",
             "tags": [
                 "DEFAULT"
             ],
@@ -204,6 +209,8 @@ class TestTasks(TestCase):
         }
         machine_generated = [
             "uuid",
+            "hasNotebook",
+            "readinessProbeInitialDelaySeconds",
             "commands",
             "arguments",
             "parameters",
