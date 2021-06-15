@@ -188,22 +188,22 @@ class TestTasks(TestCase):
         # Passing the name null
         rv = TEST_CLIENT.post("/tasks", json={
             "description": "test with name null",
-            "category": "DEFAULT"
+            "category": CATEGORY
         })
         result = rv.json()
         expected = {
             "name": "Tarefa em branco - 1",
             "description": "test with name null",
-            "category": "DEFAULT",
+            "category": CATEGORY,
             "tags": [
                 "DEFAULT"
-            ]
+            ],
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
         }
         machine_generated = [
             "uuid",
-            "dataIn",
-            "dataOut",
-            "docs",
             "commands",
             "arguments",
             "parameters",
@@ -272,15 +272,15 @@ class TestTasks(TestCase):
             "description": "long test",
             "category": CATEGORY,
             "tags": ["DEFAULT"],
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
             "parameters": [],
         }
         # uuid, commands, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
         # are machine-generated we assert they exist, but we don't assert their values
         machine_generated = [
             "uuid",
-            "dataIn",
-            "dataOut",
-            "docs",
             "commands",
             "arguments",
             "createdAt",
@@ -307,13 +307,13 @@ class TestTasks(TestCase):
             "description": "long test",
             "category": CATEGORY,
             "tags": TAGS,
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
             "parameters": [],
         }
         machine_generated = [
             "uuid",
-            "dataIn",
-            "dataOut",
-            "docs",
             "commands",
             "arguments",
             "createdAt",
@@ -341,13 +341,13 @@ class TestTasks(TestCase):
             "description": "long test",
             "category": CATEGORY,
             "tags": TAGS,
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
             "parameters": [],
         }
         machine_generated = [
             "uuid",
-            "dataIn",
-            "dataOut",
-            "docs",
             "commands",
             "arguments",
             "createdAt",
@@ -378,13 +378,13 @@ class TestTasks(TestCase):
             "arguments": ARGUMENTS,
             "category": CATEGORY,
             "tags": TAGS,
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
             "parameters": [],
         }
         machine_generated = [
             "uuid",
-            "dataIn",
-            "dataOut",
-            "docs",
             "createdAt",
             "updatedAt",
         ]
@@ -417,13 +417,13 @@ class TestTasks(TestCase):
             "description": None,
             "category": CATEGORY,
             "tags": ["DATASETS"],
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
             "parameters": [],
         }
         machine_generated = [
             "uuid",
-            "dataIn",
-            "dataOut",
-            "docs",
             "createdAt",
             "updatedAt",
             "commands",

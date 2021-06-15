@@ -188,19 +188,21 @@ class TaskController:
             task.cpu_request = stored_task.cpu_request
             task.memory_limit = stored_task.memory_limit
             task.memory_request = stored_task.memory_request
+
         else:
-            # relative path to the mount_path
-            experiment_notebook_path = "Experiment.ipynb"
-            deployment_notebook_path = "Deployment.ipynb"
+            if task.image is not None:
+                experiment_notebook_path = None
+                deployment_notebook_path = None
+                task.experiment_notebook = None
+                task.deployment_notebook = None
+            else:
+                # relative path to the mount_path
+                experiment_notebook_path = "Experiment.ipynb"
+                deployment_notebook_path = "Deployment.ipynb"
+                task.experiment_notebook = EXPERIMENT_NOTEBOOK
+                task.deployment_notebook = DEPLOYMENT_NOTEBOOK
 
         task_id = str(uuid_alpha())
-
-        # loads a sample notebook if none was sent
-        if task.experiment_notebook is None:
-            task.experiment_notebook = EXPERIMENT_NOTEBOOK
-
-        if task.deployment_notebook is None:
-            task.deployment_notebook = DEPLOYMENT_NOTEBOOK
 
         self.background_tasks.add_task(
             handle_task_creation,
@@ -280,9 +282,9 @@ class TaskController:
         if stored_task and stored_task.uuid != task_id:
             raise BadRequest("a task with that name already exists")
 
-        if task.tags and any(tag not in VALID_CATEGORIES for tag in task.tags):
+        if task.category is not None and task.category not in VALID_CATEGORIES:
             valid_str = ",".join(VALID_CATEGORIES)
-            raise BadRequest(f"Invalid tag. Choose any of {valid_str}")
+            raise BadRequest(f"Invalid category. Choose any of {valid_str}")
 
         stored_task = self.session.query(models.Task).get(task_id)
 

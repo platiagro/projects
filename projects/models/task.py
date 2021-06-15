@@ -6,6 +6,8 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text
 from sqlalchemy.sql import expression
 
+from sqlalchemy.ext.hybrid import hybrid_property
+
 from projects import __version__
 from projects.database import Base
 
@@ -49,3 +51,7 @@ class Task(Base):
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    @hybrid_property
+    def has_notebook(self):
+        return bool(self.experiment_notebook_path or self.deployment_notebook_path)
