@@ -1,6 +1,6 @@
 # PlatIAgro Projects
 
-[![Build Status](https://github.com/platiagro/projects/workflows/Python%20application/badge.svg)](https://github.com/platiagro/projects/actions?query=workflow%3A%22Python+application%22)
+[![.github/workflows/ci.yml](https://github.com/platiagro/projects/actions/workflows/ci.yml/badge.svg)](https://github.com/platiagro/projects/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=platiagro_projects&metric=alert_status)](https://sonarcloud.io/dashboard?id=platiagro_projects)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
