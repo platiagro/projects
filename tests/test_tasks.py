@@ -179,6 +179,7 @@ class TestTasks(TestCase):
         rv = TEST_CLIENT.post("/tasks", json={
             "name": "test",
             "description": "long test",
+            "category": CATEGORY,
             "tags": ["UNK"],
             "copyFrom": TASK_ID,
         })
@@ -500,7 +501,7 @@ class TestTasks(TestCase):
             "tags": ["UNK"],
         })
         result = rv.json()
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 200)
 
         # update task using the same name
         rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
