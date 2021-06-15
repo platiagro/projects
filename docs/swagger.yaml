@@ -202,7 +202,7 @@ paths:
         tags:
           - "Tasks"
         requestBody:
-          $ref: "#/components/requestBodies/TaskPost"
+          $ref: "#/components/requestBodies/TaskMailing"
         parameters:
         - name: taskId
           in: path
@@ -212,9 +212,9 @@ paths:
             format: uuid
         responses:
           "200":
-            $ref: "#/components/responses/Task"
-          "400":
-            $ref: "#/components/responses/BadRequest"
+            $ref: "#/components/responses/TaskMailing"
+          "404":
+            $ref: "#/components/responses/NotFound"
           "500":
             $ref: "#/components/responses/InternalServerError"
           "503":
@@ -2812,6 +2812,15 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Tasks"
+    TaskMailing:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
     Parameters:
       description: ""
       content:
