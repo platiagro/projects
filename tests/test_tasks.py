@@ -350,8 +350,7 @@ class TestTasks(TestCase):
         # when experimentNotebook and deploymentNotebook are sent
         # should create a task using their values as source
         rv = TEST_CLIENT.post("/tasks", json={
-            "uuid": TASK_ID_2,
-            "name": "test",
+            "name": "test 02",
             "description": "long test",
             "category": CATEGORY,
             "tags": TAGS,
@@ -360,8 +359,7 @@ class TestTasks(TestCase):
         })
         result = rv.json()
         expected = {
-            "uuid": TASK_ID_2,
-            "name": "test",
+            "name": "test 02",
             "description": "long test",
             "category": CATEGORY,
             "tags": TAGS,
@@ -371,6 +369,7 @@ class TestTasks(TestCase):
             "parameters": [],
         }
         machine_generated = [
+            "uuid",
             "commands",
             "arguments",
             "createdAt",
