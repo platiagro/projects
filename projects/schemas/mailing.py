@@ -10,8 +10,9 @@ MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "")
 MAIL_SENDER_ADDRESS = os.getenv("MAIL_SENDER_ADDRESS", "")
 MAIL_SERVER = os.getenv("MAIL_SERVER", "")
 MAIL_PORT = os.getenv("MAIL_PORT", 587)
-MAIL_TLS=os.getenv("MAIL_TLS", True)
-MAIL_SSL=os.getenv("MAIL_SSL", False)
+MAIL_TLS = os.getenv("MAIL_TLS", True)
+MAIL_SSL = os.getenv("MAIL_SSL", False)
+
 
 class EmailSchema(BaseModel):
     emails: List[EmailStr]
