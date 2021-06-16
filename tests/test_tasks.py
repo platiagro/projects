@@ -184,7 +184,7 @@ class TestTasks(TestCase):
             "copyFrom": TASK_ID,
         })
         result = rv.json()
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 200)
 
         # Passing the name null
         rv = TEST_CLIENT.post("/tasks", json={
@@ -520,13 +520,20 @@ class TestTasks(TestCase):
             "name": "new name foo",
             "description": DESCRIPTION,
             "commands": COMMANDS,
+            "cpuLimit": "100m",
+            "cpuRequest": "100m",
             "arguments": ARGUMENTS,
             "category": CATEGORY,
             "tags": TAGS,
-            "dataIn": None,
-            "dataOut": None,
-            "docs": None,
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
+            "hasNotebook": False,
+            "image": IMAGE,
+            "memoryLimit": "1Gi",
+            "memoryRequest": "1Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "300",
             "createdAt": CREATED_AT_ISO,
         }
         machine_generated = ["updatedAt"]
