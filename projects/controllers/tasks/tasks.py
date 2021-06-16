@@ -5,17 +5,25 @@ import os
 import pkgutil
 import re
 import tempfile
+import base64
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import func
-from sqlalchemy import asc, desc
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi_mail import FastMail, MessageSchema
+from sqlalchemy import asc, desc, func
 
+from projects.kubernetes.notebook import get_files_from_task
+from projects.schemas.mailing import EmailSchema
 from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
-from projects.kubernetes.notebook import copy_file_to_pod, handle_task_creation, \
-    update_task_config_map, update_persistent_volume_claim, remove_persistent_volume_claim
+from projects.kubernetes.notebook import (copy_file_to_pod,
+                                          handle_task_creation,
+                                          remove_persistent_volume_claim,
+                                          update_persistent_volume_claim,
+                                          update_task_config_map)
+from projects.schemas.mailing import EmailSchema
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
@@ -416,22 +424,31 @@ class TaskController:
             copy_file_to_pod(filepath, destination_path)
             os.remove(filepath)
     
-    def send_emails(self, task_id, email: EmailSchema):
+    def send_emails(self, email, task_id):
         """
         Handles mailing of contents of task
 
         Parameters
         ----------
         task_id : str
-        email: projects.schema.mailing.EmailSchema
         
         Returns
         -------
         message: str
 
         """
-    
-       
+        template= """
+                  <html>
+                  <body>
+                  <p>
+                  <br> Obrigado por usar a platiagro! Arquivos da tarefa {{task.name}} se encontram em anexo.
+                  Esse email foi enviado automaticamente, por gentileza não responda.
+                  </p>
+
+                  </body>
+                  </html>
+                  """    
+            
         task = self.session.query(models.Task).get(task_id)
 
         if task is None:
@@ -457,9 +474,8 @@ class TaskController:
             subtype="html"
             )
         fm = FastMail(email.conf)
-        background_tasks.add_task(fm.send_message, message)
+        self.background_tasks.add_task(fm.send_message, message)
 
         # removing file after send email
         os.remove(ATTACHMENT_FILE_NAME)
         return {"message": "email has been sent"}
-    
