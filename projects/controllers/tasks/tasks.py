@@ -6,12 +6,10 @@ import os
 import pkgutil
 import re
 import tempfile
-import pathlib
 from datetime import datetime
 from typing import Optional
 
 from fastapi_mail import FastMail, MessageSchema
-from fastapi import UploadFile, File
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
@@ -476,11 +474,10 @@ class TaskController:
         file_as_bytes = base64.b64decode(base64_bytes)
 
         # using bytes to build the zipfile
-        with tempfile.NamedTemporaryFile("wb", delete=False, 
+        with tempfile.NamedTemporaryFile("wb", delete=False,
                                          dir=os.path.dirname(__file__),
-                                         suffix= '.zip') as f:
+                                         suffix='.zip') as f:
             f.write(file_as_bytes)
-        
 
         message = MessageSchema(
             subject=f"Arquivos da tarefa '{task.name}'",
