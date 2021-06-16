@@ -4,7 +4,7 @@ from datetime import datetime
 from os.path import join
 from typing import Optional
 
-from sqlalchemy import asc, desc, func
+from sqlalchemy import asc, desc, func, collate
 
 from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
@@ -70,8 +70,8 @@ class ProjectController:
         query_total = self.session.query(func.count(models.Project.uuid))
 
         for column, value in filters.items():
-            query = query.filter(getattr(models.Project, column).ilike(f"%{value}%"))
-            query_total = query_total.filter(getattr(models.Project, column).ilike(f"%{value}%"))
+            query = query.filter(getattr(models.Project, column).ilike(f"%{value}%").collate("utf8mb4_bin"))
+            query_total = query_total.filter(getattr(models.Project, column).ilike(f"%{value}%").collate("utf8mb4_bin"))
 
         total = query_total.scalar()
 
