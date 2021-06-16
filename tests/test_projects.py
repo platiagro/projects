@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from tests.test_experiments import IS_ACTIVE
 from unittest import TestCase
 
 from fastapi.testclient import TestClient
@@ -10,24 +11,23 @@ from projects.database import engine
 TEST_CLIENT = TestClient(app)
 
 PROJECT_ID = str(uuid_alpha())
+PROJECT_ID_2 = str(uuid_alpha())
 NAME = "foo"
 NAME_2 = "foo 2"
 NAME_3 = "foo 3"
+DESCRIPTION = "Description"
+EXPERIMENT_ID = str(uuid_alpha())
+EXPERIMENT_ID_2 = str(uuid_alpha())
+EXPERIMENT_NAME = "Experimento 1"
+DEPLOYMENT_ID = str(uuid_alpha())
+STATUS = "Pending"
+URL = None
+POSITION = 0
+IS_ACTIVE = True
 CREATED_AT = "2000-01-01 00:00:00"
 CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
-EXPERIMENT_ID = str(uuid_alpha())
-EXPERIMENT_NAME = "Experimento 1"
-EXPERIMENT_ID_2 = str(uuid_alpha())
-DEPLOYMENT_ID = str(uuid_alpha())
-DESCRIPTION = "Description"
-STATUS = "Pending"
-URL = None
-
-PROJECT_ID_2 = str(uuid_alpha())
-PROJECT_ID_3 = str(uuid_alpha())
-NAME_2 = "foo 2"
 
 
 class TestProjects(TestCase):
@@ -38,48 +38,45 @@ class TestProjects(TestCase):
             f"INSERT INTO projects (uuid, name, description, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, DESCRIPTION, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID, NAME, DESCRIPTION, CREATED_AT, UPDATED_AT))
 
         text = (
             f"INSERT INTO projects (uuid, name, description, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID_2, NAME_2, DESCRIPTION, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO projects (uuid, name, description, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID_3, NAME_3, DESCRIPTION, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID_2, NAME_2, DESCRIPTION, CREATED_AT, UPDATED_AT))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (EXPERIMENT_ID, EXPERIMENT_NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, IS_ACTIVE, CREATED_AT, UPDATED_AT))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (EXPERIMENT_ID_2, EXPERIMENT_NAME, PROJECT_ID_3, 0, 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (EXPERIMENT_ID_2, NAME, PROJECT_ID_2, POSITION, IS_ACTIVE, CREATED_AT, UPDATED_AT))
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID_3, EXPERIMENT_ID_2, '0', 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID_2, EXPERIMENT_ID_2, POSITION, IS_ACTIVE, STATUS, URL, CREATED_AT, UPDATED_AT))
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
-        text = f"DELETE FROM deployments WHERE uuid = '{DEPLOYMENT_ID}'"
+        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID_2}'"
         conn.execute(text)
 
-        text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
+        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID_2}'"
+        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID_2}'"
+        conn.execute(text)
+
+        text = f"DELETE e.* FROM experiments e INNER JOIN projects p ON e.project_id = p.uuid WHERE p.name = '{NAME_3}'"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
@@ -88,8 +85,9 @@ class TestProjects(TestCase):
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_2}'"
         conn.execute(text)
 
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_3}'"
+        text = f"DELETE FROM projects WHERE name = '{NAME_3}'"
         conn.execute(text)
+
         conn.close()
 
     def test_list_projects(self):
@@ -142,10 +140,7 @@ class TestProjects(TestCase):
 
     def test_create_project(self):
         rv = TEST_CLIENT.post("/projects", json={})
-        result = rv.json()
-        expected = {"message": "name is required"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 422)
 
         rv = TEST_CLIENT.post("/projects", json={
             "name": NAME
@@ -155,20 +150,19 @@ class TestProjects(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        project_name = str(uuid_alpha())
-
         rv = TEST_CLIENT.post("/projects", json={
-            "name": project_name,
-            "description": "description"
+            "name": NAME_3,
+            "description": DESCRIPTION
         })
         result = rv.json()
         result_experiments = result.pop("experiments")
         expected = {
-            "name": project_name,
-            "description": "description",
+            "name": NAME_3,
+            "description": DESCRIPTION,
             "hasDeployment": False,
             "hasExperiment": True,
             "hasPreDeployment": False,
+            "deployments": []
         }
         # uuid, created_at, updated_at are machine-generated
         # we assert they exist, but we don't assert their values
@@ -180,12 +174,12 @@ class TestProjects(TestCase):
 
         expected = {
             "name": EXPERIMENT_NAME,
-            "position": 0,
-            "isActive": True,
+            "position": POSITION,
+            "isActive": IS_ACTIVE,
             "operators": [],
         }
         self.assertEqual(len(result_experiments), 1)
-        machine_generated = ["uuid", "projectId", "createdAt", "updatedAt", "deployments"]
+        machine_generated = ["uuid", "projectId", "createdAt", "updatedAt"]
         for attr in machine_generated:
             self.assertIn(attr, result_experiments[0])
             del result_experiments[0][attr]
@@ -198,43 +192,13 @@ class TestProjects(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}")
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID_2}")
         result = rv.json()
         result_experiments = result.pop("experiments")
+        result_deployments = result.pop("deployments")
         expected = {
-            "uuid": PROJECT_ID,
-            "name": NAME,
-            "createdAt": CREATED_AT_ISO,
-            "updatedAt": UPDATED_AT_ISO,
-            "description": DESCRIPTION,
-            "hasDeployment": False,
-            "hasExperiment": True,
-            "hasPreDeployment": False,
-        }
-        self.assertDictEqual(expected, result)
-
-        expected = {
-            "uuid": EXPERIMENT_ID,
-            "name": EXPERIMENT_NAME,
-            "projectId": PROJECT_ID,
-            "position": 0,
-            "isActive": True,
-            "operators": [],
-            "deployments": [],
-        }
-        self.assertEqual(len(result_experiments), 1)
-        machine_generated = ["createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result_experiments[0])
-            del result_experiments[0][attr]
-        self.assertDictEqual(expected, result_experiments[0])
-
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID_3}")
-        result = rv.json()
-        result_experiments = result.pop("experiments")
-        expected = {
-            "uuid": PROJECT_ID_3,
-            "name": NAME_3,
+            "uuid": PROJECT_ID_2,
+            "name": NAME_2,
             "createdAt": CREATED_AT_ISO,
             "updatedAt": UPDATED_AT_ISO,
             "description": DESCRIPTION,
@@ -243,6 +207,39 @@ class TestProjects(TestCase):
             "hasPreDeployment": True,
         }
         self.assertDictEqual(expected, result)
+
+        expected = {
+            "uuid": EXPERIMENT_ID_2,
+            "name": NAME,
+            "projectId": PROJECT_ID_2,
+            "position": 0,
+            "isActive": True,
+            "operators": [],
+        }
+        self.assertEqual(len(result_experiments), 1)
+        machine_generated = ["createdAt", "updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result_experiments[0])
+            del result_experiments[0][attr]
+        self.assertDictEqual(expected, result_experiments[0])
+
+        expected = {
+            "uuid": DEPLOYMENT_ID,
+            "name": NAME,
+            "projectId": PROJECT_ID_2,
+            "experimentId": EXPERIMENT_ID_2,
+            "position": POSITION,
+            "isActive": IS_ACTIVE,
+            "operators": [],
+            "url": URL,
+            "status": STATUS,
+        }
+        self.assertEqual(len(result_deployments), 1)
+        machine_generated = ["createdAt", "updatedAt", "deployedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result_deployments[0])
+            del result_deployments[0][attr]
+        self.assertDictEqual(expected, result_deployments[0])
 
     def test_update_project(self):
         rv = TEST_CLIENT.patch("/projects/foo", json={})
@@ -259,12 +256,7 @@ class TestProjects(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}", json={
-            "unk": "bar",
-        })
-        self.assertEqual(rv.status_code, 400)
-
-        # update project using the same name
+        #update project using the same name
         rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}", json={
             "name": NAME,
         })
@@ -278,11 +270,12 @@ class TestProjects(TestCase):
         expected = {
             "uuid": PROJECT_ID,
             "name": "bar",
-            "createdAt": CREATED_AT_ISO,
             "description": DESCRIPTION,
+            "createdAt": CREATED_AT_ISO,
             "hasPreDeployment": False,
             "hasDeployment": False,
             "hasExperiment": True,
+            "deployments": []
         }
         machine_generated = ["updatedAt"]
         for attr in machine_generated:
@@ -292,12 +285,11 @@ class TestProjects(TestCase):
 
         expected = {
             "uuid": EXPERIMENT_ID,
-            "name": EXPERIMENT_NAME,
+            "name": NAME,
             "projectId": PROJECT_ID,
-            "position": 0,
-            "isActive": True,
+            "position": POSITION,
+            "isActive": IS_ACTIVE,
             "operators": [],
-            "deployments": [],
         }
         self.assertEqual(len(result_experiments), 1)
         machine_generated = ["createdAt", "updatedAt"]

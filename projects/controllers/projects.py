@@ -81,7 +81,7 @@ class ProjectController:
 
         # Sorts records
         try:
-            (column, sort) = order_by.replace('+', ' ').strip().split()
+            (column, sort) = order_by.strip().split()
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Project.__table__.columns.keys()
         except (AssertionError, ValueError):
@@ -115,9 +115,6 @@ class ProjectController:
         BadRequest
             When the project attributes are invalid.
         """
-        if not isinstance(project.name, str):
-            raise BadRequest("name is required")
-
         store_project = self.session.query(models.Project) \
             .filter_by(name=project.name) \
             .first()
