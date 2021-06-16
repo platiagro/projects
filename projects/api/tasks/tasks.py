@@ -4,12 +4,11 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
 
-from projects.schemas.mailing import EmailSchema
-
-import projects.schemas.task
 import projects.schemas.message
+import projects.schemas.task
 from projects.controllers import TaskController
 from projects.database import session_scope
+from projects.schemas.mailing import EmailSchema
 from projects.utils import format_query_params
 
 router = APIRouter(

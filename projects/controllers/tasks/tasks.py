@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
 """Tasks controller."""
+import base64
 import json
 import os
 import pkgutil
 import re
 import tempfile
-import base64
 from datetime import datetime
 from typing import Optional
 
-from jinja2 import Template
 from fastapi_mail import FastMail, MessageSchema
+from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
-from projects.kubernetes.notebook import get_files_from_task
 from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import (copy_file_to_pod,
+                                          get_files_from_task,
                                           handle_task_creation,
                                           remove_persistent_volume_claim,
                                           update_persistent_volume_claim,
