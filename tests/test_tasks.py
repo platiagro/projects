@@ -279,11 +279,18 @@ class TestTasks(TestCase):
             "name": "test create a task using an empty template notebook",
             "description": "long test",
             "category": CATEGORY,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
             "tags": ["DEFAULT"],
             "dataIn": None,
             "dataOut": None,
             "docs": None,
+            "hasNotebook": True,
+            "image": IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "60",
         }
         # uuid, commands, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
         # are machine-generated we assert they exist, but we don't assert their values
@@ -524,7 +531,7 @@ class TestTasks(TestCase):
             "cpuRequest": "100m",
             "arguments": ARGUMENTS,
             "category": CATEGORY,
-            "tags": TAGS,
+            "tags": ["UNK"],
             "dataIn": DATA_IN,
             "dataOut": DATA_OUT,
             "docs": DOCS,
