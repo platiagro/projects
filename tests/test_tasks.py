@@ -362,11 +362,18 @@ class TestTasks(TestCase):
             "name": "test 02",
             "description": "long test",
             "category": CATEGORY,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
             "tags": TAGS,
             "dataIn": None,
             "dataOut": None,
             "docs": None,
+            "hasNotebook": True,
+            "image": IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "60",
         }
         machine_generated = [
             "uuid",
