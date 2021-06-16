@@ -143,7 +143,7 @@ async def handle_delete_task(task_id: str,
 
 @router.post("/{task_id}/email", status_code=200)
 async def handle_task_email_sender(task_id: str,
-                                   email: EmailSchema, 
+                                   email_schema: EmailSchema, 
                                    background_tasks: BackgroundTasks,
                                    session: Session = Depends(session_scope)):
     """
@@ -154,7 +154,7 @@ async def handle_task_email_sender(task_id: str,
     task_id : str
     background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
-    email: EmailSchema
+    email: projects.schema.mailing.EmailSchema
 
     Returns
     -------
@@ -163,6 +163,6 @@ async def handle_task_email_sender(task_id: str,
     """
     
     task_controller = TaskController(session, background_tasks)
-    result = task_controller.send_emails(email, task_id=task_id)
+    result = task_controller.send_emails(email_schema, task_id=task_id)
 
     return result

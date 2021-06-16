@@ -9,12 +9,13 @@ import base64
 from datetime import datetime
 from typing import Optional
 
+from jinja2 import Template
+from fastapi.templating import Jinja2Templates
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi_mail import FastMail, MessageSchema
 from sqlalchemy import asc, desc, func
 
 from projects.kubernetes.notebook import get_files_from_task
-from projects.schemas.mailing import EmailSchema
 from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
@@ -44,6 +45,7 @@ TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(os.getenv(
     "60",
 ))
 
+EMAIL_MESSAGE_TEMPLATE = pkgutil.get_data("projects", "config/email-template.html")
 ATTACHMENT_FILE_NAME = 'taskfiles.zip'
 NOT_FOUND = NotFound("The specified task does not exist")
 
@@ -423,37 +425,50 @@ class TaskController:
             destination_path = f"{stored_task.name}/{task.deployment_notebook_path}"
             copy_file_to_pod(filepath, destination_path)
             os.remove(filepath)
-    
-    def send_emails(self, email, task_id):
+   
+    def make_email_message(self, html_file_content, task_name):
+        """
+        Build an email body message for a specific task 
+
+        Parameters
+        ----------
+        html_file_content: bytes
+        task_name : str
+        
+        Returns
+        -------
+        template: str
+
+        """
+
+        # byte to string 
+        html_string = str(html_file_content, 'utf-8')
+
+        # body message html string to Jinja2 template
+        jinja2_like_template = Template(html_string)  
+
+        template = jinja2_like_template.render(task_name = task_name)
+        return template    
+
+    def send_emails(self, email_schema: schemas.mailing.EmailSchema, task_id):
         """
         Handles mailing of contents of task
 
         Parameters
         ----------
         task_id : str
+        email_schema: projects.schemas.mailing.EmailSchema
         
         Returns
         -------
         message: str
 
         """
-        template= """
-                  <html>
-                  <body>
-                  <p>
-                  <br> Obrigado por usar a platiagro! Arquivos da tarefa {{task.name}} se encontram em anexo.
-                  Esse email foi enviado automaticamente, por gentileza não responda.
-                  </p>
-
-                  </body>
-                  </html>
-                  """    
             
         task = self.session.query(models.Task).get(task_id)
-
         if task is None:
            raise NOT_FOUND
-
+        
         # getting file content, which is by the way in base64
         file_as_b64 = get_files_from_task(task.name)
 
@@ -468,12 +483,12 @@ class TaskController:
 
         message = MessageSchema(
             subject=f"Arquivos da tarefa '{task.name}'",
-            recipients=email.dict().get("email"),  # List of recipients, as many as you can pass
-            body=template,
+            recipients=email_schema.dict().get("email"),  # List of recipients, as many as you can pass
+            body=self.make_email_message(EMAIL_MESSAGE_TEMPLATE, task.name),
             attachments=[ATTACHMENT_FILE_NAME],
             subtype="html"
             )
-        fm = FastMail(email.conf)
+        fm = FastMail(email_schema.conf)
         self.background_tasks.add_task(fm.send_message, message)
 
         # removing file after send email
