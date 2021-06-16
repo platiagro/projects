@@ -452,11 +452,18 @@ class TestTasks(TestCase):
             "name": "test fake dataset task",
             "description": None,
             "category": CATEGORY,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
             "tags": ["DATASETS"],
             "dataIn": None,
             "dataOut": None,
             "docs": None,
+            "hasNotebook": False,
+            "image": IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "60",
         }
         machine_generated = [
             "uuid",
