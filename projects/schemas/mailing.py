@@ -12,7 +12,7 @@ MAIL_SERVER = os.getenv("MAIL_SERVER", "")
 
 
 class EmailSchema(BaseModel):
-    email: List[EmailStr]
+    emails: List[EmailStr]
 
     try:
         conf = ConnectionConfig(

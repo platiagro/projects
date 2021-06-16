@@ -137,7 +137,7 @@ async def handle_delete_task(task_id: str,
     return result
 
 
-@router.post("/{task_id}/email", status_code=200)
+@router.post("/{task_id}/emails", status_code=200)
 async def handle_task_email_sender(task_id: str,
                                    email_schema: EmailSchema,
                                    background_tasks: BackgroundTasks,

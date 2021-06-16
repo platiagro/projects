@@ -43,7 +43,7 @@ TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(os.getenv(
 ))
 
 EMAIL_MESSAGE_TEMPLATE = pkgutil.get_data("projects", "config/email-template.html")
-ATTACHMENT_FILE_NAME = 'taskfiles.zip'
+
 NOT_FOUND = NotFound("The specified task does not exist")
 
 
@@ -481,7 +481,7 @@ class TaskController:
 
         message = MessageSchema(
             subject=f"Arquivos da tarefa '{task.name}'",
-            recipients=email_schema.dict().get("email"),  # List of recipients, as many as you can pass
+            recipients=email_schema.dict().get("emails"),  # List of recipients, as many as you can pass
             body=self.make_email_message(EMAIL_MESSAGE_TEMPLATE, task.name),
             attachments=[f.name],
             subtype="html"
