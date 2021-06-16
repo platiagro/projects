@@ -36,6 +36,7 @@ TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(os.getenv(
     "60",
 ))
 
+ATTACHMENT_FILE_NAME = 'taskfiles.zip'
 NOT_FOUND = NotFound("The specified task does not exist")
 
 
@@ -414,3 +415,51 @@ class TaskController:
             destination_path = f"{stored_task.name}/{task.deployment_notebook_path}"
             copy_file_to_pod(filepath, destination_path)
             os.remove(filepath)
+    
+    def send_emails(self, task_id, email: EmailSchema):
+        """
+        Handles mailing of contents of task
+
+        Parameters
+        ----------
+        task_id : str
+        email: projects.schema.mailing.EmailSchema
+        
+        Returns
+        -------
+        message: str
+
+        """
+    
+       
+        task = self.session.query(models.Task).get(task_id)
+
+        if task is None:
+           raise NOT_FOUND
+
+        # getting file content, which is by the way in base64
+        file_as_b64 = get_files_from_task(task.name)
+
+        # decoding as byte
+        base64_bytes = file_as_b64.encode('ascii')
+        file_as_bytes = base64.b64decode(base64_bytes)
+
+        # using bytes to build the zipfile
+        with open(ATTACHMENT_FILE_NAME, 'wb') as f:
+            f.write(file_as_bytes)
+        f.close()
+
+        message = MessageSchema(
+            subject=f"Arquivos da tarefa '{task.name}'",
+            recipients=email.dict().get("email"),  # List of recipients, as many as you can pass
+            body=template,
+            attachments=[ATTACHMENT_FILE_NAME],
+            subtype="html"
+            )
+        fm = FastMail(email.conf)
+        background_tasks.add_task(fm.send_message, message)
+
+        # removing file after send email
+        os.remove(ATTACHMENT_FILE_NAME)
+        return {"message": "email has been sent"}
+    
