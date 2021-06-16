@@ -564,10 +564,28 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_send_email(self):
-        rv = TEST_CLIENT.post(f"/tasks/{TASK_ID}/email", json={
-             "email": EMAILS_TO_SEND
+
+        # valid request
+        rv = TEST_CLIENT.post(f"/tasks/{TASK_ID}/emails", json={
+             "emails": EMAILS_TO_SEND
          })
         result = rv.json()
         expected = {"message": "email has been sent"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
+
+        # string is not an email
+        rv = TEST_CLIENT.post(f"/tasks/{TASK_ID}/emails", json={
+             "emails":["notEmailString",]
+         })
+        result = rv.json()
+        self.assertEqual(rv.status_code, 422)
+
+        # task does not exist
+        rv = TEST_CLIENT.post(f"/tasks/{TASK_ID}/emails", json={
+             "emails": EMAILS_TO_SEND
+         })
+        result = rv.json()
+        expected = {"message": "The specified task does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
