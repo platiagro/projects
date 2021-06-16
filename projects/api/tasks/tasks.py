@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tasks API Router."""
-import base64
-import os
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
-from fastapi_mail import FastMail, MessageSchema
 from sqlalchemy.orm import Session
 
 from projects.schemas.mailing import EmailSchema
@@ -143,7 +140,7 @@ async def handle_delete_task(task_id: str,
 
 @router.post("/{task_id}/email", status_code=200)
 async def handle_task_email_sender(task_id: str,
-                                   email_schema: EmailSchema, 
+                                   email_schema: EmailSchema,
                                    background_tasks: BackgroundTasks,
                                    session: Session = Depends(session_scope)):
     """
@@ -161,7 +158,7 @@ async def handle_task_email_sender(task_id: str,
     message: str
 
     """
-    
+
     task_controller = TaskController(session, background_tasks)
     result = task_controller.send_emails(email_schema, task_id=task_id)
 

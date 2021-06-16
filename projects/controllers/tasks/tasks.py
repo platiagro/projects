@@ -10,8 +10,6 @@ from datetime import datetime
 from typing import Optional
 
 from jinja2 import Template
-from fastapi.templating import Jinja2Templates
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi_mail import FastMail, MessageSchema
 from sqlalchemy import asc, desc, func
 
@@ -24,7 +22,6 @@ from projects.kubernetes.notebook import (copy_file_to_pod,
                                           remove_persistent_volume_claim,
                                           update_persistent_volume_claim,
                                           update_task_config_map)
-from projects.schemas.mailing import EmailSchema
 
 PREFIX = "tasks"
 VALID_TAGS = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
@@ -425,30 +422,30 @@ class TaskController:
             destination_path = f"{stored_task.name}/{task.deployment_notebook_path}"
             copy_file_to_pod(filepath, destination_path)
             os.remove(filepath)
-   
+
     def make_email_message(self, html_file_content, task_name):
         """
-        Build an email body message for a specific task 
+        Build an email body message for a specific task
 
         Parameters
         ----------
         html_file_content: bytes
         task_name : str
-        
+
         Returns
         -------
         template: str
 
         """
 
-        # byte to string 
+        # byte to string
         html_string = str(html_file_content, 'utf-8')
 
         # body message html string to Jinja2 template
-        jinja2_like_template = Template(html_string)  
+        jinja2_like_template = Template(html_string)
 
-        template = jinja2_like_template.render(task_name = task_name)
-        return template    
+        template = jinja2_like_template.render(task_name=task_name)
+        return template
 
     def send_emails(self, email_schema: schemas.mailing.EmailSchema, task_id):
         """
@@ -458,17 +455,17 @@ class TaskController:
         ----------
         task_id : str
         email_schema: projects.schemas.mailing.EmailSchema
-        
+
         Returns
         -------
         message: str
 
         """
-            
+
         task = self.session.query(models.Task).get(task_id)
         if task is None:
-           raise NOT_FOUND
-        
+            raise NOT_FOUND
+
         # getting file content, which is by the way in base64
         file_as_b64 = get_files_from_task(task.name)
 
