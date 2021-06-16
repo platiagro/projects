@@ -6,10 +6,12 @@ import os
 import pkgutil
 import re
 import tempfile
+import pathlib
 from datetime import datetime
 from typing import Optional
 
 from fastapi_mail import FastMail, MessageSchema
+from fastapi import UploadFile, File
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
@@ -447,7 +449,7 @@ class TaskController:
         template = jinja2_like_template.render(task_name=task_name)
         return template
 
-    def send_emails(self, email_schema: schemas.mailing.EmailSchema, task_id):
+    def send_emails(self, email_schema, task_id):
         """
         Handles mailing of contents of task
 
@@ -474,20 +476,22 @@ class TaskController:
         file_as_bytes = base64.b64decode(base64_bytes)
 
         # using bytes to build the zipfile
-        with open(ATTACHMENT_FILE_NAME, 'wb') as f:
+        with tempfile.NamedTemporaryFile("wb", delete=False, 
+                                         dir=os.path.dirname(__file__),
+                                         suffix= '.zip') as f:
             f.write(file_as_bytes)
-        f.close()
+        
 
         message = MessageSchema(
             subject=f"Arquivos da tarefa '{task.name}'",
             recipients=email_schema.dict().get("email"),  # List of recipients, as many as you can pass
             body=self.make_email_message(EMAIL_MESSAGE_TEMPLATE, task.name),
-            attachments=[ATTACHMENT_FILE_NAME],
+            attachments=[f.name],
             subtype="html"
             )
         fm = FastMail(email_schema.conf)
         self.background_tasks.add_task(fm.send_message, message)
 
         # removing file after send email
-        os.remove(ATTACHMENT_FILE_NAME)
+        os.remove(f.name)
         return {"message": "email has been sent"}
