@@ -30,7 +30,6 @@ async def handle_list_projects(request: Request,
     -------
     projects.schemas.project.ProjectList
     """
-    project_controller = ProjectController(session)
     filters = format_query_params(str(request.query_params))
     order_by = filters.pop("order", None)
     page = filters.pop("page", 1)
@@ -39,6 +38,8 @@ async def handle_list_projects(request: Request,
     page_size = filters.pop("page_size", 10)
     if page_size:
         page_size = int(page_size)
+
+    project_controller = ProjectController(session)
     projects = project_controller.list_projects(page=page,
                                                 page_size=page_size,
                                                 order_by=order_by,
