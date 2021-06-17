@@ -582,7 +582,7 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 422)
 
         # task does not exist
-        rv = TEST_CLIENT.post(f"/tasks/{TASK_ID}/emails", json={
+        rv = TEST_CLIENT.post(f"/tasks/foo/emails", json={
              "emails": EMAILS_TO_SEND
          })
         result = rv.json()
