@@ -25,10 +25,7 @@ LATEST_RUN = "latest"
 TASK_ID = str(uuid_alpha())
 NAME = "foo"
 IMAGE = "platiagro/platiagro-experiment-image-test:0.2.0"
-TAGS = ["PREDICTOR"]
-TAGS_JSON = dumps(TAGS)
-PARAMETERS = {"foo": "bar"}
-PARAMETERS_JSON = dumps(PARAMETERS)
+CATEGORY = "DEFAULT"
 CREATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 
@@ -61,12 +58,12 @@ class TestResults(TestCase):
         conn.execute(text, (EXPERIMENT_ID_2, NAME, PROJECT_ID, 1, 1, CREATED_AT, UPDATED_AT))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, image, tags, parameters, "
+            f"INSERT INTO tasks (uuid, name, image, category, parameters, "
             f"experiment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, IMAGE, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID, NAME, IMAGE, CATEGORY, dumps([]),
                             "Experiment.ipynb", "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
