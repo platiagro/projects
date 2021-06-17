@@ -1698,6 +1698,24 @@ components:
           type: string
         description:
           type: string
+        category:
+          type: string
+          enum: ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
+                 "PREDICTOR", "COMPUTER_VISION", "NLP", "MONITORING"]
+        tags:
+          type: array
+          items:
+            type: string
+        dataIn:
+          type: string
+        dataOut:
+          type: string
+        docs:
+          type: string
+        hasNotebook:
+          type: boolean
+        image:
+          type: string
         commands:
           type: array
           items:
@@ -1714,11 +1732,8 @@ components:
           type: string
         memoryRequest:
           type: string
-        tags:
-          type: array
-          items:
-            type: string
-            enum: [DEFAULT, FEATURE_ENGINEERING, PREDICTOR]
+        readinessProbeInitialDelaySeconds:
+          type: integer
         parameters:
           type: array
           items:
