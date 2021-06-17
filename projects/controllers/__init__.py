@@ -5,6 +5,7 @@ from projects.controllers.deployments.responses import ResponseController
 from projects.controllers.experiments.experiments import ExperimentController
 from projects.controllers.experiments.runs.figures import FigureController
 from projects.controllers.experiments.runs.metrics import MetricController
+from projects.controllers.experiments.runs.results import ResultController
 
 from projects.controllers.logs import LogController
 from projects.controllers.monitorings import MonitoringController
@@ -22,6 +23,7 @@ __all__ = [
     'DatasetController',
     'DeploymentController',
     'ExperimentController',
+    'ResultController',
     'FigureController',
     'LogController',
     'MetricController',
