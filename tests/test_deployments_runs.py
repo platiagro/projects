@@ -35,6 +35,10 @@ IMAGE = "busybox"
 COMMANDS = None
 ARGUMENTS = ["echo", "-e", "hello\nhello"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
+CATEGORY = "DEFAULT"
+DATA_IN = ""
+DATA_OUT = ""
+DOCS = ""
 TAGS_JSON = dumps(["PREDICTOR"])
 DEPLOY_NOTEBOOK_PATH = ""
 EX_NOTEBOOK_PATH = ""
@@ -47,21 +51,23 @@ class TestDeploymentsRuns(TestCase):
 
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
+            f"tags, data_in, data_out, docs, parameters, experiment_notebook_path, "
+            f"deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, "name", "desc", IMAGE, COMMANDS, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID, "name", "desc", IMAGE, COMMANDS, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
                             EX_NOTEBOOK_PATH, DEPLOY_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
+            f"tags, data_in, data_out, docs, parameters, experiment_notebook_path, "
+            f"deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_2, "name", "desc", IMAGE, None, None, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID_2, "name", "desc", IMAGE, None, None, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
                             EX_NOTEBOOK_PATH, None, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (

@@ -22,6 +22,10 @@ COMMANDS = ["CMD"]
 COMMANDS_JSON = dumps(COMMANDS)
 ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
+CATEGORY = "DEFAULT"
+DATA_IN = ""
+DATA_OUT = ""
+DOCS = ""
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 EXPERIMENT_NOTEBOOK_PATH = None
@@ -56,22 +60,25 @@ class TestTasks(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
+            f"tags, data_in, data_out, docs, parameters, experiment_notebook_path, "
+            f"deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
                             EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
+            f"tags, data_in, data_out, docs, parameters, experiment_notebook_path, "
+            f"deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_2, 'foo 2', DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON,
-                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TASK_ID_2, 'foo 2', DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, DATA_IN,
+                            DATA_OUT, DOCS, dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi",
+                            "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
@@ -86,7 +93,8 @@ class TestTasks(TestCase):
         conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, "
+            f"position_y, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
@@ -171,26 +179,39 @@ class TestTasks(TestCase):
         rv = TEST_CLIENT.post("/tasks", json={
             "name": "test",
             "description": "long test",
+            "category": CATEGORY,
             "tags": ["UNK"],
             "copyFrom": TASK_ID,
         })
         result = rv.json()
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 200)
 
         # Passing the name null
         rv = TEST_CLIENT.post("/tasks", json={
-            "description": "test with name null"
+            "description": "test with name null",
+            "category": CATEGORY
         })
         result = rv.json()
         expected = {
             "name": "Tarefa em branco - 1",
             "description": "test with name null",
+            "image": IMAGE,
+            "category": CATEGORY,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "tags": [
                 "DEFAULT"
-            ]
+            ],
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
         }
         machine_generated = [
             "uuid",
+            "hasNotebook",
+            "readinessProbeInitialDelaySeconds",
             "commands",
             "arguments",
             "parameters",
@@ -203,7 +224,9 @@ class TestTasks(TestCase):
         self.assertEqual(rv.status_code, 200)
         self.assertDictEqual(expected, result)
 
-        rv = TEST_CLIENT.post("/tasks", json={})
+        rv = TEST_CLIENT.post("/tasks", json={
+            "category": CATEGORY
+        })
         result = rv.json()
         self.assertEqual(rv.status_code, 200)
 
@@ -249,13 +272,25 @@ class TestTasks(TestCase):
         rv = TEST_CLIENT.post("/tasks", json={
             "name": "test create a task using an empty template notebook",
             "description": "long test",
+            "category": CATEGORY,
         })
         result = rv.json()
         expected = {
             "name": "test create a task using an empty template notebook",
             "description": "long test",
+            "category": CATEGORY,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
             "tags": ["DEFAULT"],
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
+            "hasNotebook": True,
+            "image": IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "60",
         }
         # uuid, commands, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
         # are machine-generated we assert they exist, but we don't assert their values
@@ -277,6 +312,7 @@ class TestTasks(TestCase):
         rv = TEST_CLIENT.post("/tasks", json={
             "name": "test copy",
             "description": "long test",
+            "category": CATEGORY,
             "tags": TAGS,
             "copyFrom": TASK_ID,
         })
@@ -284,8 +320,19 @@ class TestTasks(TestCase):
         expected = {
             "name": "test copy",
             "description": "long test",
+            "category": CATEGORY,
+            "cpuLimit": "100m",
+            "cpuRequest": "100m",
             "tags": TAGS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
+            "hasNotebook": False,
+            "image": IMAGE,
+            "memoryLimit": "1Gi",
+            "memoryRequest": "1Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "60",
         }
         machine_generated = [
             "uuid",
@@ -303,18 +350,30 @@ class TestTasks(TestCase):
         # when experimentNotebook and deploymentNotebook are sent
         # should create a task using their values as source
         rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test",
+            "name": "test 02",
             "description": "long test",
+            "category": CATEGORY,
             "tags": TAGS,
             "experimentNotebook": loads(SAMPLE_NOTEBOOK),
             "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
         })
         result = rv.json()
         expected = {
-            "name": "test",
+            "name": "test 02",
             "description": "long test",
+            "category": CATEGORY,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
             "tags": TAGS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
+            "hasNotebook": True,
+            "image": IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "60",
         }
         machine_generated = [
             "uuid",
@@ -337,6 +396,7 @@ class TestTasks(TestCase):
             "image": IMAGE,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
+            "category": CATEGORY,
             "tags": TAGS
         })
         result = rv.json()
@@ -344,9 +404,20 @@ class TestTasks(TestCase):
             "name": "test tasks with image and command",
             "description": "long test",
             "commands": COMMANDS,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
             "arguments": ARGUMENTS,
+            "category": CATEGORY,
             "tags": TAGS,
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
+            "hasNotebook": False,
+            "image": IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "60",
         }
         machine_generated = [
             "uuid",
@@ -372,6 +443,7 @@ class TestTasks(TestCase):
         # dataset task that has null notebooks
         rv = TEST_CLIENT.post("/tasks", json={
             "name": "test fake dataset task",
+            "category": CATEGORY,
             "tags": ["DATASETS"],
             "image": IMAGE,
         })
@@ -379,8 +451,19 @@ class TestTasks(TestCase):
         expected = {
             "name": "test fake dataset task",
             "description": None,
+            "category": CATEGORY,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
             "tags": ["DATASETS"],
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
+            "hasNotebook": False,
+            "image": IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "60",
         }
         machine_generated = [
             "uuid",
@@ -409,9 +492,20 @@ class TestTasks(TestCase):
             "name": "name foo",
             "description": DESCRIPTION,
             "commands": COMMANDS,
+            "cpuLimit": "100m",
+            "cpuRequest": "100m",
             "arguments": ARGUMENTS,
+            "category": CATEGORY,
             "tags": TAGS,
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
+            "hasNotebook": False,
+            "image": IMAGE,
+            "memoryLimit": "1Gi",
+            "memoryRequest": "1Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "300",
             "createdAt": CREATED_AT_ISO,
             "updatedAt": UPDATED_AT_ISO,
         }
@@ -442,7 +536,7 @@ class TestTasks(TestCase):
             "tags": ["UNK"],
         })
         result = rv.json()
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 200)
 
         # update task using the same name
         rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
@@ -461,9 +555,20 @@ class TestTasks(TestCase):
             "name": "new name foo",
             "description": DESCRIPTION,
             "commands": COMMANDS,
+            "cpuLimit": "100m",
+            "cpuRequest": "100m",
             "arguments": ARGUMENTS,
-            "tags": TAGS,
+            "category": CATEGORY,
+            "tags": ["UNK"],
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
+            "hasNotebook": False,
+            "image": IMAGE,
+            "memoryLimit": "1Gi",
+            "memoryRequest": "1Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "300",
             "createdAt": CREATED_AT_ISO,
         }
         machine_generated = ["updatedAt"]
@@ -483,9 +588,20 @@ class TestTasks(TestCase):
             "name": "new name foo",
             "description": DESCRIPTION,
             "commands": COMMANDS,
+            "cpuLimit": "100m",
+            "cpuRequest": "100m",
             "arguments": ARGUMENTS,
+            "category": CATEGORY,
             "tags": ["FEATURE_ENGINEERING"],
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
+            "hasNotebook": False,
+            "image": IMAGE,
+            "memoryLimit": "1Gi",
+            "memoryRequest": "1Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "300",
             "createdAt": CREATED_AT_ISO,
         }
         machine_generated = ["updatedAt"]
@@ -506,8 +622,19 @@ class TestTasks(TestCase):
             "description": DESCRIPTION,
             "commands": COMMANDS,
             "arguments": ARGUMENTS,
+            "cpuLimit": "100m",
+            "cpuRequest": "100m",
+            "category": CATEGORY,
             "tags": ["FEATURE_ENGINEERING"],
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
+            "hasNotebook": True,
+            "image": IMAGE,
+            "memoryLimit": "1Gi",
+            "memoryRequest": "1Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "300",
             "createdAt": CREATED_AT_ISO,
         }
         machine_generated = ["updatedAt"]
@@ -527,9 +654,20 @@ class TestTasks(TestCase):
             "name": "new name foo",
             "description": DESCRIPTION,
             "commands": COMMANDS,
+            "cpuLimit": "100m",
+            "cpuRequest": "100m",
             "arguments": ARGUMENTS,
+            "category": CATEGORY,
             "tags": ["FEATURE_ENGINEERING"],
+            "dataIn": DATA_IN,
+            "dataOut": DATA_OUT,
+            "docs": DOCS,
+            "hasNotebook": True,
+            "image": IMAGE,
+            "memoryLimit": "1Gi",
+            "memoryRequest": "1Gi",
             "parameters": [],
+            "readinessProbeInitialDelaySeconds": "300",
             "createdAt": CREATED_AT_ISO,
         }
         machine_generated = ["updatedAt"]

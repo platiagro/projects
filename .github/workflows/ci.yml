@@ -246,7 +246,7 @@ jobs:
         pip install pytest pytest-cov
         platiagro-init-db
         coverage erase
-        coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_results.py tests/test_tasks.py tests/test_templates.py
+        coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_results.py tests/test_projects.py tests/test_tasks.py tests/test_templates.py
         coverage xml -i
       env:
         MINIO_ENDPOINT: localhost:9000
@@ -258,6 +258,13 @@ jobs:
         JUPYTER_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}/notebook/anonymous/server
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
+
+    - name: Debug workflows
+      if: ${{ always() }}
+      run: |
+        kubectl -n kubeflow describe pod
+        kubectl -n kubeflow get workflows
+        kubectl -n kubeflow get pod
 
     - name: Make disk space available for docker build
       if: ${{ always() }}

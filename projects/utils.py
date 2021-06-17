@@ -2,6 +2,7 @@
 """Utility functions."""
 import re
 from itertools import chain
+from urllib.parse import parse_qsl
 
 
 def to_camel_case(snake_str):
@@ -69,9 +70,4 @@ def format_query_params(query_params):
     -------
     dict
     """
-    params = {}
-    if query_params:
-        for query_param in query_params.split('&'):
-            splited = query_param.split('=')
-            params[splited[0]] = splited[1]
-    return params
+    return dict(parse_qsl(query_params))

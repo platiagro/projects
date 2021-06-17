@@ -25,6 +25,10 @@ DESCRIPTION = "long foo"
 IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
+CATEGORY = "DEFAULT"
+DATA_IN = ""
+DATA_OUT = ""
+DOCS = ""
 TASKS_JSON = dumps([TASK_ID])
 PARAMETERS_JSON = dumps(PARAMETERS)
 POSITION_X = 0.3
@@ -77,21 +81,21 @@ class TestTemplates(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
             f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, "name", "desc", "image", None, None, dumps(["TAGS"]), dumps([]),
+        conn.execute(text, (TASK_ID, "name", "desc", "image", None, None, CATEGORY, dumps(["TAGS"]), DATA_IN, DATA_OUT, DOCS, dumps([]),
                             "experiment_path", "deploy_path", "100m", "100m", "1Gi", "1Gi", 30, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
             f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_2, "name", "desc", "image", None, None, dumps(["TAGS"]), dumps([]),
+        conn.execute(text, (TASK_ID_2, "name", "desc", "image", None, None, CATEGORY, dumps(["TAGS"]), DATA_IN, DATA_OUT, DOCS, dumps([]),
                             "experiment_path", "deploy_path", "100m", "100m", "1Gi", "1Gi", 30, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
