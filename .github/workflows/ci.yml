@@ -262,6 +262,13 @@ jobs:
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
 
+    - name: Debug workflows
+      if: ${{ always() }}
+      run: |
+        kubectl -n kubeflow describe pod
+        kubectl -n kubeflow get workflows
+        kubectl -n kubeflow get pod
+
     - name: Make disk space available for docker build
       if: ${{ always() }}
       run: |
