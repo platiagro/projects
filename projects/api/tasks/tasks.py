@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 """Tasks API Router."""
+
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
 
+import projects.schemas.message
 import projects.schemas.task
 from projects.controllers import TaskController
 from projects.database import session_scope
+from projects.schemas.mailing import EmailSchema
 from projects.utils import format_query_params
 
 router = APIRouter(
     prefix="/tasks",
 )
+
+ATTACHMENT_FILE_NAME = 'taskfiles.zip'
 
 
 @router.get("", response_model=projects.schemas.task.TaskList)
@@ -129,4 +134,31 @@ async def handle_delete_task(task_id: str,
     """
     task_controller = TaskController(session, background_tasks)
     result = task_controller.delete_task(task_id=task_id)
+    return result
+
+
+@router.post("/{task_id}/emails", status_code=200)
+async def handle_task_email_sender(task_id: str,
+                                   email_schema: EmailSchema,
+                                   background_tasks: BackgroundTasks,
+                                   session: Session = Depends(session_scope)):
+    """
+    Handles request to /{task_id}/email
+
+    Parameters
+    ----------
+    task_id : str
+    background_tasks : fastapi.BackgroundTasks
+    session : sqlalchemy.orm.session.Session
+    email: projects.schema.mailing.EmailSchema
+
+    Returns
+    -------
+    message: str
+
+    """
+
+    task_controller = TaskController(session, background_tasks)
+    result = task_controller.send_emails(email_schema, task_id=task_id)
+
     return result

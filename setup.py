@@ -33,7 +33,7 @@ setup(
     url="https://github.com/platiagro/projects",
     packages=find_packages(),
     package_data={
-        "projects": ["config/*.ipynb"],
+        "projects": ["config/*.ipynb", "config/*.html" ],
     },
     install_requires=requirements,
     extras_require=extras,
