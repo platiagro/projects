@@ -74,9 +74,11 @@ jobs:
 
     - name: start minikube
       id: minikube
-      uses: medyagh/setup-minikube@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: medyagh/setup-minikube@v2.4.2
+      with:
+        minikube version: v1.21.0
+        kubernetes version: v1.18.19
+        github token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install Kustomize / Helm
       run: |
