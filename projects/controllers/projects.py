@@ -4,7 +4,7 @@ from datetime import datetime
 from os.path import join
 from typing import Optional
 
-from sqlalchemy import asc, desc, func, collate
+from sqlalchemy import asc, desc, func
 
 from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
