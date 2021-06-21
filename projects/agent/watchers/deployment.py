@@ -33,7 +33,7 @@ def watch_seldon_deployments(api, session):
         namespace=KF_PIPELINES_NAMESPACE,
         plural=PLURAL,
     )
-
+    logging.basicConfig(level=logging.INFO)
     while True:
         stream = w.stream(
             api.list_namespaced_custom_object,
