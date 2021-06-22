@@ -52,9 +52,6 @@ jobs:
     - name: Set output variables
       id: vars
       run: |
-        CODE_REVIEW=$(cat ./CODE-REVIEW.md)
-        echo ::set-output name=CODE_REVIEW::${CODE_REVIEW}
-
         VERSION=$(python -c "import projects; print(projects.__version__)")
         if [ ${{ github.ref }} = "refs/heads/master" ]; then
           echo ::set-output name=TAG::${VERSION}-SNAPSHOT
@@ -68,12 +65,12 @@ jobs:
         echo ::set-output name=COMMIT::${{ github.sha }}
 
     - name: Code review tips
-      uses: unsplash/comment-on-pr@master
+      uses: machine-learning-apps/pr-comment@master
       if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        msg: ${{ steps.vars.outputs.CODE_REVIEW }}
+        path: CODE-REVIEW.md
 
     - name: start minikube
       id: minikube
@@ -249,7 +246,7 @@ jobs:
         pip install pytest pytest-cov
         platiagro-init-db
         coverage erase
-        coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_tasks.py tests/test_templates.py
+        coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_results.py tests/test_projects.py tests/test_tasks.py tests/test_templates.py
         coverage xml -i
       env:
         MINIO_ENDPOINT: localhost:9000
@@ -261,7 +258,10 @@ jobs:
         JUPYTER_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}/notebook/anonymous/server
         KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
         KF_PIPELINES_NAMESPACE: kubeflow
-
+        MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+        MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+        MAIL_SENDER_ADDRESS: ${{ secrets.MAIL_SENDER_ADDRESS }}
+        MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
 
 
     - name: Debug workflows
