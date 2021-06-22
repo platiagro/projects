@@ -85,12 +85,12 @@ class Operator(OperatorBase):
         )
 
 
-class Paremeter(BaseModel):
+class Parameter(BaseModel):
     parameters: Dict
 
     @classmethod
     def from_orm(cls, model):
-        return Paremeter(
+        return Parameter(
             parameters=model.parameters,
         )
 
