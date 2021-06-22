@@ -263,7 +263,6 @@ class TestExperiments(TestCase):
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments", json={})
-        result = rv.json()
         self.assertEqual(rv.status_code, 422)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments", json={

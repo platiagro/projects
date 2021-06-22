@@ -74,9 +74,11 @@ jobs:
 
     - name: start minikube
       id: minikube
-      uses: medyagh/setup-minikube@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: manusa/actions-setup-minikube@v2.4.2
+      with:
+        minikube version: v1.21.0
+        kubernetes version: v1.18.19
+        github token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install Kustomize / Helm
       run: |
@@ -263,7 +265,6 @@ jobs:
         MAIL_SENDER_ADDRESS: ${{ secrets.MAIL_SENDER_ADDRESS }}
         MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
 
-
     - name: Debug workflows
       if: ${{ always() }}
       run: |
@@ -287,18 +288,22 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     - name: Set up QEMU
+      if: ${{ always() }}
       uses: docker/setup-qemu-action@v1
 
     - name: Set up Docker Buildx
+      if: ${{ always() }}
       uses: docker/setup-buildx-action@v1
 
     - name: Login to DockerHub
+      if: ${{ always() }}
       uses: docker/login-action@v1
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Build and push docker image (PROJECTS API) 📦
+      if: ${{ always() }}
       id: docker_build_api
       uses: docker/build-push-action@v2
       with:
@@ -310,9 +315,11 @@ jobs:
           BRANCH=${{ steps.vars.outputs.BRANCH }}
 
     - name: Image digest
+      if: ${{ always() }}
       run: echo ${{ steps.docker_build_api.outputs.digest }}
 
     - name: Build and push docker image (PERSISTENCE AGENT) 📦
+      if: ${{ always() }}
       id: docker_build_agent
       uses: docker/build-push-action@v2
       with:

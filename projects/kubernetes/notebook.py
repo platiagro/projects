@@ -6,18 +6,17 @@ import os
 import tarfile
 import time
 import warnings
-
+from ast import literal_eval
 from tempfile import NamedTemporaryFile, TemporaryFile
 
-from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import InternalServerError
-from projects.kfp.monitorings import create_monitoring_task_config_map, \
-    delete_monitoring_task_config_map
+from projects.kfp.monitorings import (create_monitoring_task_config_map,
+                                      delete_monitoring_task_config_map)
 from projects.kubernetes.kube_config import load_kube_config
 
 JUPYTER_WORKSPACE = "/home/jovyan/tasks"
@@ -457,7 +456,7 @@ def get_file_from_pod(filepath):
     str
         File content.
     """
-    notebook_path = f"{JUPYTER_WORKSPACE}/{filepath}"
+    notebook_path = f"{JUPYTER_WORKSPACE}/{filepath}/"
 
     warnings.warn(f"Fetching {notebook_path} from pod...")
     load_kube_config()
@@ -488,6 +487,58 @@ def get_file_from_pod(filepath):
     container_stream.close()
 
     return file_content
+
+
+def get_files_from_task(task_name):
+    """
+    Get all files inside a task folder in a notebook server.
+
+    Parameters
+    ----------
+     task_name: str
+
+    Returns
+    -------
+    str
+        File content.
+    """
+
+    warnings.warn(f"Zipping contents of task: '{task_name}'")
+    load_kube_config()
+    api_instance = client.CoreV1Api()
+
+    python_script = (
+        f"import os; "
+        f"os.chdir('{JUPYTER_WORKSPACE}/{task_name}'); "
+        f"os.system('zip -q -r - * | base64'); "
+    )
+    exec_command = ["python", "-c", python_script]
+
+    container_stream = stream(
+        api_instance.connect_get_namespaced_pod_exec,
+        name=NOTEBOOK_POD_NAME,
+        namespace=NOTEBOOK_NAMESPACE,
+        command=exec_command,
+        container=NOTEBOOK_CONTAINER_NAME,
+        stderr=True,
+        stdin=False,
+        stdout=True,
+        tty=False,
+        _preload_content=False,
+    )
+
+    zip_file_content = ""
+
+    while container_stream.is_open():
+        container_stream.update(timeout=10)
+        if container_stream.peek_stdout():
+            zip_file_content = container_stream.read_stdout()
+            warnings.warn("File content fetched.")
+    container_stream.close()
+
+    # the stdout string contains \n character, we must remove
+    clean_zip_file_content = zip_file_content.replace("\n", "")
+    return clean_zip_file_content
 
 
 def copy_file_to_pod(filepath, destination_path):

@@ -70,8 +70,8 @@ class ProjectController:
         query_total = self.session.query(func.count(models.Project.uuid))
 
         for column, value in filters.items():
-            query = query.filter(getattr(models.Project, column).ilike(f"%{value}%"))
-            query_total = query_total.filter(getattr(models.Project, column).ilike(f"%{value}%"))
+            query = query.filter(getattr(models.Project, column).ilike(f"%{value}%").collate("utf8mb4_bin"))
+            query_total = query_total.filter(getattr(models.Project, column).ilike(f"%{value}%").collate("utf8mb4_bin"))
 
         total = query_total.scalar()
 
@@ -81,7 +81,7 @@ class ProjectController:
 
         # Sorts records
         try:
-            (column, sort) = order_by.replace('+', ' ').strip().split()
+            (column, sort) = order_by.strip().split()
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Project.__table__.columns.keys()
         except (AssertionError, ValueError):
@@ -115,9 +115,6 @@ class ProjectController:
         BadRequest
             When the project attributes are invalid.
         """
-        if not isinstance(project.name, str):
-            raise BadRequest("name is required")
-
         store_project = self.session.query(models.Project) \
             .filter_by(name=project.name) \
             .first()

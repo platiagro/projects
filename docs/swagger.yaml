@@ -196,6 +196,29 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+    /tasks/{taskId}/email:
+      post:
+        summary: "Send email with task folder content"
+        tags:
+          - "Tasks"
+        requestBody:
+          $ref: "#/components/requestBodies/TaskMailing"
+        parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        responses:
+          "200":
+            $ref: "#/components/responses/TaskMailing"
+          "404":
+            $ref: "#/components/responses/NotFound"
+          "500":
+            $ref: "#/components/responses/InternalServerError"
+          "503":
+            $ref: "#/components/responses/ServiceUnavailable"  
   /projects:
     get:
       summary: "List projects. Supports pagination, and sorting."
@@ -865,6 +888,76 @@ paths:
           $ref: "#/components/responses/Message"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/results:
+    get:
+      summary: "Download a zip file with all results from run."
+      tags: 
+        - "Results"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/RunResults"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/results:
+    get:
+      summary: "Download a zip file with all results from operator."
+      tags: 
+        - "Results"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/RunResults"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -2579,6 +2672,16 @@ components:
                 "nbformat": 4,
                 "nbformat_minor": 4,
               }
+    TaskMailing:
+      content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: array
+                  items:
+                    type: string
     Project:
       content:
         application/json:
@@ -2810,6 +2913,15 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Tasks"
+    TaskMailing:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
     Parameters:
       description: ""
       content:
@@ -2894,6 +3006,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Logs"
+    RunResults:
+      description: ""
+      content:
+        application/x-zip-compressed:
+          schema:
+            type: string
+            format: binary
+      headers:
+        Content-Disposition:
+          schema:
+            type: string
+            example: attachment; filename="results.zip"
     Datasets:
       description: ""
       content:
