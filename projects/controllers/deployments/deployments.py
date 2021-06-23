@@ -373,9 +373,15 @@ class DeploymentController:
         # Creates a dict to map source operator_id to its copy operator_id.
         # This map will be used to build the dependencies using new operator_ids
         copies_map = {}
-
+        any_stored_operators_contains_dataset = False
         for stored_operator in stored_operators:
-            name = "Fonte de dados" if "DATASETS" in stored_operator.task.tags else None
+
+            if "DATASETS" in stored_operator.task.tags:
+                name = "Fontes de dados"
+                any_stored_operators_contains_dataset = True
+            else:
+                name = None
+
             operator = schemas.OperatorCreate(
                 name=name,
                 task_id=stored_operator.task_id,
@@ -406,6 +412,17 @@ class DeploymentController:
                                                      deployment_id=deployment_id,
                                                      operator_id=value["copy_uuid"],
                                                      operator=operator)
+
+        # creates a DATASET type operator if doesn't exist any
+        if any_stored_operators_contains_dataset:
+            operator = self.operator_controller.create_operator(
+                operator=operator,
+                project_id=project_id,
+                deployment_id=deployment_id,
+                parameter={"type": "L"},
+
+            )
+
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """
