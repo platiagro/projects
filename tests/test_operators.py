@@ -600,6 +600,6 @@ class TestOperators(TestCase):
         rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/foo",
                                json={"value": "foo"})
         result = rv.json()
-        expected = {"foo": "foo"}
-        self.assertDictEqual(expected, result["parameters"])
+        expected = "foo"
+        self.assertEqual(expected, result)
         self.assertEqual(rv.status_code, 200)

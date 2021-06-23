@@ -19,7 +19,7 @@ class OperatorParameterController:
 
         Returns
         -------
-        projects.schemas.operator.Operator
+        returns the updated value.
         """
         # get parameters from given operator_id
         operator = self.session.query(models.Operator).get(operator_id)
@@ -40,6 +40,4 @@ class OperatorParameterController:
         self.session.query(models.Operator).filter_by(uuid=operator_id).update(update_data)
         self.session.commit()
 
-        operator = self.session.query(models.Operator).get(operator_id)
-
-        return schemas.Operator.from_orm(operator)
+        return value
