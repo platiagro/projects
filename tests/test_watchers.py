@@ -26,5 +26,8 @@ class TestWatchers(TestCase):
         
         manifest_file_ref = open('mock_manifest.json')
         manifest_as_dict = load(manifest_file_ref)
-        print(manifest_as_dict)
-        update_status(manifest_as_dict, session)
+        
+        try:
+            update_status(manifest_as_dict, session)
+        except Exception as e:
+            self.fail(f'Errors found while running test: {e}')    
