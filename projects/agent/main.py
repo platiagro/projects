@@ -34,10 +34,10 @@ def run():
     load_kube_config()
     api = client.CustomObjectsApi()
 
-    workflows_thread = threading.Thread(target=watch_workflows, args=(api, session))
+    # workflows_thread = threading.Thread(target=watch_workflows, args=(api, session))
     sdeps_thread = threading.Thread(target=watch_seldon_deployments, args=(api, session))
 
-    workflows_thread.start()
+    #workflows_thread.start()
     sdeps_thread.start()
 
 

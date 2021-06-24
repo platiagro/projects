@@ -46,6 +46,7 @@ def watch_seldon_deployments(api, session):
 
         try:
             for sdep_manifest in stream:
+                print(sdep_manifest)
                 logging.info("Event: %s %s " % (sdep_manifest["type"],
                              sdep_manifest["object"]["metadata"]["name"]))
 
