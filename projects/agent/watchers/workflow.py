@@ -3,6 +3,7 @@ import logging
 import http
 import re
 import uuid
+import json
 
 from kubernetes import watch
 from kubernetes.client.rest import ApiException
@@ -10,12 +11,16 @@ from kubernetes.client.rest import ApiException
 from projects import models
 from projects.agent.utils import list_resource_version
 from projects.kfp import KF_PIPELINES_NAMESPACE
+from projects.controllers.experiments.runs import RunController
+
 
 GROUP = "argoproj.io"
 VERSION = "v1alpha1"
 PLURAL = "workflows"
 
 RECURRENT_MESSAGES = ["ContainerCreating", ]
+
+
 
 
 def watch_workflows(api, session):
@@ -29,6 +34,9 @@ def watch_workflows(api, session):
     """
     w = watch.Watch()
 
+    # we want this log to be flush on terminal
+    logging.basicConfig(level=logging.INFO)
+
     # When retrieving a collection of resources the response from the server
     # will contain a resourceVersion value that can be used to initiate a watch
     # against the server.
@@ -38,9 +46,7 @@ def watch_workflows(api, session):
         namespace=KF_PIPELINES_NAMESPACE,
         plural=PLURAL,
     )
-    logging.basicConfig(level=logging.INFO)
     while True:
-
         stream = w.stream(
             api.list_namespaced_custom_object,
             group=GROUP,
@@ -49,7 +55,6 @@ def watch_workflows(api, session):
             plural=PLURAL,
             resource_version=resource_version,
         )
-
         try:
             for workflow_manifest in stream:
                 logging.info("Event: %s %s " % (workflow_manifest["type"],
@@ -155,3 +160,5 @@ def update_seldon_deployment(deployment_id, status, created_at_str, session):
         .update({"status": status, "deployed_at": deployed_at})
 
     session.commit()
+
+
