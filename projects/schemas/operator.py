@@ -85,6 +85,16 @@ class Operator(OperatorBase):
         )
 
 
+class Parameter(BaseModel):
+    parameters: Dict
+
+    @classmethod
+    def from_orm(cls, model):
+        return Parameter(
+            parameters=model.parameters,
+        )
+
+
 class OperatorList(BaseModel):
     operators: List[Operator]
     total: int

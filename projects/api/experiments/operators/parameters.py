@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.patch("/{name}", response_model=projects.schemas.operator.Operator)
+@router.patch("/{name}")
 async def handle_patch_parameter(project_id: str,
                                  experiment_id: str,
                                  operator_id: str,
@@ -34,7 +34,7 @@ async def handle_patch_parameter(project_id: str,
 
     Returns
     -------
-    projects.schemas.operator.Operator
+    returns the updated value.
     """
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)

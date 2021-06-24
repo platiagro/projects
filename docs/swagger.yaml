@@ -196,29 +196,29 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-    /tasks/{taskId}/email:
-      post:
-        summary: "Send email with task folder content"
-        tags:
-          - "Tasks"
-        requestBody:
-          $ref: "#/components/requestBodies/TaskMailing"
-        parameters:
-        - name: taskId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        responses:
-          "200":
-            $ref: "#/components/responses/TaskMailing"
-          "404":
-            $ref: "#/components/responses/NotFound"
-          "500":
-            $ref: "#/components/responses/InternalServerError"
-          "503":
-            $ref: "#/components/responses/ServiceUnavailable"  
+  /tasks/{taskId}/emails:
+    post:
+      summary: "Send email with task folder content"
+      tags:
+        - "Tasks"
+      requestBody:
+        $ref: "#/components/requestBodies/TaskMailing"
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/TaskMailing"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /projects:
     get:
       summary: "List projects. Supports pagination, and sorting."
@@ -735,7 +735,7 @@ paths:
         $ref: "#/components/requestBodies/ParameterPatch"
       responses:
         "200":
-          $ref: "#/components/responses/Operator"
+          $ref: "#/components/responses/AnyValue"
         "400":
           $ref: "#/components/responses/BadRequest"
         "404":
@@ -895,7 +895,7 @@ paths:
   /projects/{projectId}/experiments/{experimentId}/runs/{runId}/results:
     get:
       summary: "Download a zip file with all results from run."
-      tags: 
+      tags:
         - "Results"
       parameters:
         - in: path
@@ -927,7 +927,7 @@ paths:
   /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/results:
     get:
       summary: "Download a zip file with all results from operator."
-      tags: 
+      tags:
         - "Results"
       parameters:
         - in: path
@@ -1742,6 +1742,9 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
+    AnyValue:
+      nullable: true
+      description: Can be any value - string, number, boolean, array or object, including `null`.
     Comparison:
       type: object
       properties:
@@ -2678,7 +2681,7 @@ components:
             schema:
               type: object
               properties:
-                email:
+                emails:
                   type: array
                   items:
                     type: string
@@ -2833,15 +2836,7 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              value:
-                oneOf:
-                  - type: string
-                  - type: integer
-                  - type: array
-                  - type: number
-                  - type: boolean
+            $ref: "#/components/schemas/AnyValue"
     ResponsePost:
       content:
         application/json:
@@ -2889,6 +2884,15 @@ components:
               type: string
               format: uuid
   responses:
+    AnyValue:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AnyValue"
+        text/plain:
+          schema:
+            type: string
     Comparison:
       description: ""
       content:
