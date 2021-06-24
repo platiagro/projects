@@ -373,12 +373,12 @@ class DeploymentController:
         # Creates a dict to map source operator_id to its copy operator_id.
         # This map will be used to build the dependencies using new operator_ids
         copies_map = {}
-        any_stored_operators_contains_dataset = False
+        some_stored_operators_contains_dataset = False
         for stored_operator in stored_operators:
 
             if "DATASETS" in stored_operator.task.tags:
                 name = "Fontes de dados"
-                any_stored_operators_contains_dataset = True
+                some_stored_operators_contains_dataset = True
             else:
                 name = None
 
@@ -414,7 +414,7 @@ class DeploymentController:
                                                      operator=operator)
 
         # creates a DATASET type operator if doesn't exist any
-        if any_stored_operators_contains_dataset:
+        if some_stored_operators_contains_dataset:
             operator = self.operator_controller.create_operator(
                 operator=operator,
                 project_id=project_id,
