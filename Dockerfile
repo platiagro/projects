@@ -24,5 +24,5 @@ WORKDIR /app/
 
 EXPOSE 8080
 
-ENTRYPOINT ["python", "-m", "projects.api.main"]
-CMD ["--init-db"]
+ENTRYPOINT ["uvicorn", "projects.api:app"]
+CMD ["--host", "0.0.0.0", "--port", "8080", "--workers", "4"]
