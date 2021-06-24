@@ -23,6 +23,9 @@ def watch_seldon_deployments(api, session):
     session : sqlalchemy.orm.session.Session
     """
     w = watch.Watch()
+   
+    # we want this log to be flush on terminal
+    logging.basicConfig(level=logging.INFO)
 
     # When retrieving a collection of resources the response from the server
     # will contain a resourceVersion value that can be used to initiate a watch
@@ -33,7 +36,7 @@ def watch_seldon_deployments(api, session):
         namespace=KF_PIPELINES_NAMESPACE,
         plural=PLURAL,
     )
-    logging.basicConfig(level=logging.INFO)
+
     while True:
         stream = w.stream(
             api.list_namespaced_custom_object,
@@ -46,7 +49,6 @@ def watch_seldon_deployments(api, session):
 
         try:
             for sdep_manifest in stream:
-                print(sdep_manifest)
                 logging.info("Event: %s %s " % (sdep_manifest["type"],
                              sdep_manifest["object"]["metadata"]["name"]))
 
