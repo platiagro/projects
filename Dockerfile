@@ -24,5 +24,5 @@ WORKDIR /app/
 
 EXPOSE 8080
 
-ENTRYPOINT ["uvicorn", "projects.api:app"]
+ENTRYPOINT ["uvicorn", "projects.api.main:app"]
 CMD ["--host", "0.0.0.0", "--port", "8080", "--workers", "4"]

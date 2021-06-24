@@ -137,14 +137,14 @@ export MAIL_SERVER=
 Then, start the API server:
 
 ```bash
-uvicorn projects.api:app
+uvicorn projects.api.main:app
 ```
 
 Arguments:
 
 ```bash
-usage: uvicorn projects.api:app [-h] [--host TEXT] [--port INTEGER] [--workers INTEGER]
-Datasets API
+usage: uvicorn projects.api.main:app [-h] [--host TEXT] [--port INTEGER] [--workers INTEGER]
+Projects API
 optional arguments:
   -h, --help         show this help message and exit
   --host TEXT        Bind socket to this host (default: 127.0.0.1)
