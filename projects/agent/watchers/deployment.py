@@ -1,5 +1,5 @@
-import logging
 import http
+import logging
 
 from kubernetes import watch
 from kubernetes.client.rest import ApiException
@@ -23,7 +23,7 @@ def watch_seldon_deployments(api, session):
     session : sqlalchemy.orm.session.Session
     """
     w = watch.Watch()
-   
+
     # we want this log to be flush on terminal
     logging.basicConfig(level=logging.INFO)
 

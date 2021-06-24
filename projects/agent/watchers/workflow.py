@@ -1,26 +1,21 @@
-import dateutil.parser
-import logging
 import http
+import logging
 import re
 import uuid
-import json
 
+import dateutil.parser
 from kubernetes import watch
 from kubernetes.client.rest import ApiException
 
 from projects import models
 from projects.agent.utils import list_resource_version
 from projects.kfp import KF_PIPELINES_NAMESPACE
-from projects.controllers.experiments.runs import RunController
-
 
 GROUP = "argoproj.io"
 VERSION = "v1alpha1"
 PLURAL = "workflows"
 
 RECURRENT_MESSAGES = ["ContainerCreating", ]
-
-
 
 
 def watch_workflows(api, session):
@@ -160,5 +155,3 @@ def update_seldon_deployment(deployment_id, status, created_at_str, session):
         .update({"status": status, "deployed_at": deployed_at})
 
     session.commit()
-
-
