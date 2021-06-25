@@ -1,13 +1,14 @@
-import dateutil.parser
-import logging
 import http
+import logging
 import re
 import uuid
 
+import dateutil.parser
 from kubernetes import watch
 from kubernetes.client.rest import ApiException
 
 from projects import models
+from projects.agent.logger import DEFAULT_LOG_LEVEL
 from projects.agent.utils import list_resource_version
 from projects.kfp import KF_PIPELINES_NAMESPACE
 
@@ -18,7 +19,7 @@ PLURAL = "workflows"
 RECURRENT_MESSAGES = ["ContainerCreating", ]
 
 
-def watch_workflows(api, session):
+def watch_workflows(api, session, **kwargs):
     """
     Watch workflows events and save data in database.
 
@@ -28,6 +29,9 @@ def watch_workflows(api, session):
     session : sqlalchemy.orm.session.Session
     """
     w = watch.Watch()
+
+    log_level = kwargs.get("log_level", DEFAULT_LOG_LEVEL)
+    logging.basicConfig(level=log_level)
 
     # When retrieving a collection of resources the response from the server
     # will contain a resourceVersion value that can be used to initiate a watch
