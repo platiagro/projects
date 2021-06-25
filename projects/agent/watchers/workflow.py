@@ -20,7 +20,7 @@ PLURAL = "workflows"
 RECURRENT_MESSAGES = ["ContainerCreating", ]
 
 
-def watch_workflows(api, session, **kwargs):
+def watch_workflows(api, session):
     """
     Watch workflows events and save data in database.
 
@@ -30,9 +30,6 @@ def watch_workflows(api, session, **kwargs):
     session : sqlalchemy.orm.session.Session
     """
     w = watch.Watch()
-
-    log_level = kwargs.get("log_level", DEFAULT_LOG_LEVEL)
-    logging.basicConfig(level=log_level)
 
     # When retrieving a collection of resources the response from the server
     # will contain a resourceVersion value that can be used to initiate a watch

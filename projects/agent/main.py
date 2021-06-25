@@ -31,7 +31,7 @@ session = scoped_session(sessionmaker(autocommit=False,
                                       bind=engine))
 
 
-def run(**kwargs):
+def run(log_level):
     """
     Watches kubernetes events and saves relevant data.
     """
@@ -42,7 +42,7 @@ def run(**kwargs):
     # watchers when an exception is caught on any thread.
     os.environ["STOP_THREADS"] = "0"
 
-    log_level = kwargs.get("log_level", DEFAULT_LOG_LEVEL)
+    logging.basicConfig(level=log_level)
 
     watchers = [watch_workflows, watch_seldon_deployments]
 
@@ -51,7 +51,7 @@ def run(**kwargs):
     # with Python threading library, with this change, we are able to catch
     # exceptions in any of the watchers and immediatly terminate all threads.
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(watcher, api, session, log_level) for watcher in watchers]
+        futures = [executor.submit(watcher, api, session) for watcher in watchers]
 
         for future in concurrent.futures.as_completed(futures):
             try:
