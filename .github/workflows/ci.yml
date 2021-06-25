@@ -246,7 +246,7 @@ jobs:
         pip install pytest pytest-cov
         platiagro-init-db
         coverage erase
-        coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_results.py tests/test_projects.py tests/test_tasks.py tests/test_templates.py tests/test_watchers.py
+        coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_results.py tests/test_projects.py tests/test_tasks.py tests/test_templates.py testes/test_watchers.py
         coverage xml -i
       env:
         MINIO_ENDPOINT: localhost:9000
@@ -262,7 +262,6 @@ jobs:
         MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
         MAIL_SENDER_ADDRESS: ${{ secrets.MAIL_SENDER_ADDRESS }}
         MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
-
 
     - name: Debug workflows
       if: ${{ always() }}
@@ -287,18 +286,22 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     - name: Set up QEMU
+      if: ${{ always() }}
       uses: docker/setup-qemu-action@v1
 
     - name: Set up Docker Buildx
+      if: ${{ always() }}
       uses: docker/setup-buildx-action@v1
 
     - name: Login to DockerHub
+      if: ${{ always() }}
       uses: docker/login-action@v1
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Build and push docker image (PROJECTS API) 📦
+      if: ${{ always() }}
       id: docker_build_api
       uses: docker/build-push-action@v2
       with:
@@ -310,9 +313,11 @@ jobs:
           BRANCH=${{ steps.vars.outputs.BRANCH }}
 
     - name: Image digest
+      if: ${{ always() }}
       run: echo ${{ steps.docker_build_api.outputs.digest }}
 
     - name: Build and push docker image (PERSISTENCE AGENT) 📦
+      if: ${{ always() }}
       id: docker_build_agent
       uses: docker/build-push-action@v2
       with:
