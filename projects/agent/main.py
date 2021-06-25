@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Persistence agent."""
 import argparse
+import concurrent.futures
+import logging
 import os
 import sys
-import threading
 
 from kubernetes import client
 from sqlalchemy import create_engine
@@ -34,11 +35,26 @@ def run():
     load_kube_config()
     api = client.CustomObjectsApi()
 
-    workflows_thread = threading.Thread(target=watch_workflows, args=(api, session))
-    sdeps_thread = threading.Thread(target=watch_seldon_deployments, args=(api, session))
+    # This env variable is responsible for stopping all running
+    # watchers when an exception is caught on any thread.
+    os.environ["STOP_THREADS"] = "0"
 
-    workflows_thread.start()
-    sdeps_thread.start()
+    watchers = [watch_workflows, watch_seldon_deployments]
+
+    # We decided to use a ThreadPoolExecutor to concurrently run our watchers.
+    # This is necessary because we couldn't easily catch watchers exceptions
+    # with Python threading library, with this change, we are able to catch
+    # exceptions in any of the watchers and immediatly terminate all threads.
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = [executor.submit(watcher, api, session) for watcher in watchers]
+
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                future.result()
+            except Exception as e:
+                os.environ["STOP_THREADS"] = "1"
+                logging.error(f"Exception caught: {e}")
+                executor.shutdown()
 
 
 def parse_args(args):

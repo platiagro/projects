@@ -1,6 +1,7 @@
 import dateutil.parser
 import logging
 import http
+import os
 import re
 import uuid
 
@@ -39,8 +40,7 @@ def watch_workflows(api, session):
         plural=PLURAL,
     )
 
-    while True:
-
+    while os.environ["STOP_THREADS"] == "0":
         stream = w.stream(
             api.list_namespaced_custom_object,
             group=GROUP,
@@ -48,6 +48,7 @@ def watch_workflows(api, session):
             namespace=KF_PIPELINES_NAMESPACE,
             plural=PLURAL,
             resource_version=resource_version,
+            timeout_seconds=60,
         )
 
         try:
