@@ -9,10 +9,10 @@ from kubernetes import client
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
+from projects.agent.logger import DEFAULT_LOG_LEVEL
 from projects.agent.watchers.deployment import watch_seldon_deployments
 from projects.agent.watchers.workflow import watch_workflows
 from projects.kubernetes.kube_config import load_kube_config
-from projects.agent.logger import DEFAULT_LOG_LEVEL
 
 DB_HOST = os.getenv("MYSQL_DB_HOST", "mysql.platiagro")
 DB_NAME = os.getenv("MYSQL_DB_NAME", "platiagro")

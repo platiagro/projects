@@ -1,9 +1,9 @@
-import dateutil.parser
-import logging
 import http
+import logging
 import re
 import uuid
 
+import dateutil.parser
 from kubernetes import watch
 from kubernetes.client.rest import ApiException
 
