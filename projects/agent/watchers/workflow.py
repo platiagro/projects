@@ -9,7 +9,6 @@ from kubernetes import watch
 from kubernetes.client.rest import ApiException
 
 from projects import models
-from projects.agent.logger import DEFAULT_LOG_LEVEL
 from projects.agent.utils import list_resource_version
 from projects.kfp import KF_PIPELINES_NAMESPACE
 
