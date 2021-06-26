@@ -6,6 +6,7 @@ from json import dumps, loads
 from os import getenv
 
 from kfp import compiler, dsl
+from kfp.dsl._resource_op import kubernetes_resource_delete_op
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
@@ -367,21 +368,22 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     return resource_op
 
 
-def undeploy_pipeline(resource):
+def undeploy_pipeline(name, kind, namespace):
     """
     Undeploy a deployment pipeline.
 
     Parameters
     ----------
-    resource : dict
-        A k8s resource which will be submitted to the cluster.
+    name : str
+    kind : str
+    namespace : str
     """
     @dsl.pipeline(name="Undeploy")
     def undeploy():
-        dsl.ResourceOp(
-            name="undeploy",
-            k8s_resource=resource,
-            action="delete"
+        kubernetes_resource_delete_op(
+            name=name,
+            kind=kind,
+            namespace=namespace,
         )
 
     kfp_client().create_run_from_pipeline_func(

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utility functions to handle monitorings."""
 import warnings
+from datetime import datetime
 from json import loads
 
 from kfp import dsl
@@ -163,8 +164,11 @@ def undeploy_monitoring(monitoring_id):
             plural="services",
             name=service_name
         )
-
-        undeploy_pipeline(service_custom_object)
+        undeploy_pipeline(
+            name=service_custom_object["metadata"]["name"],
+            kind=service_custom_object["kind"],
+            namespace=service_custom_object["metadata"]["namespace"],
+        )
 
         # Undeploy trigger
         trigger_name = f"trigger-{monitoring_id}"
@@ -175,7 +179,10 @@ def undeploy_monitoring(monitoring_id):
             plural="triggers",
             name=trigger_name
         )
-
-        undeploy_pipeline(trigger_custom_object)
+        undeploy_pipeline(
+            name=trigger_custom_object["metadata"]["name"],
+            kind=trigger_custom_object["kind"],
+            namespace=trigger_custom_object["metadata"]["namespace"],
+        )
     except ApiException:
         raise NotFound("Monitoring resources do not exist.")

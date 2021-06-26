@@ -179,7 +179,11 @@ class RunController:
         if deployments_objects:
             for deployment in deployments_objects:
                 if deployment["metadata"]["name"] == deployment_id:
-                    undeploy_pipeline(deployment)
+                    undeploy_pipeline(
+                        name=deployment["metadata"]["name"],
+                        kind=deployment["kind"],
+                        namespace=deployment["metadata"]["namespace"],
+                    )
 
         deployment_run = get_deployment_runs(deployment_id)
 
