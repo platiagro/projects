@@ -170,7 +170,7 @@ class RunController:
         api = client.CustomObjectsApi()
         custom_objects = api.list_namespaced_custom_object(
             "machinelearning.seldon.io",
-            "v1alpha2",
+            "v1",
             KF_PIPELINES_NAMESPACE,
             "seldondeployments"
         )

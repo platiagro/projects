@@ -10,7 +10,7 @@ from projects.agent.utils import list_resource_version
 from projects.kfp import KF_PIPELINES_NAMESPACE
 
 GROUP = "machinelearning.seldon.io"
-VERSION = "v1alpha2"
+VERSION = "v1"
 PLURAL = "seldondeployments"
 
 
