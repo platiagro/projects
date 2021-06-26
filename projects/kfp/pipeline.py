@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Kubeflow Pipelines interface."""
 from collections import defaultdict
+from datetime import datetime
 from json import dumps, loads
 from os import getenv
 
@@ -348,7 +349,20 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
         name="deployment",
         k8s_resource=sdep_resource,
         success_condition="status.state == Available",
+        attribute_outputs={
+            "deployment_id": deployment_id,
+            "created_at": datetime.utcnow().isoformat(),
+        },
     ).set_timeout(timeout)
+
+    # attribute_outputs makes this ResourceOp to have a unique cache key
+    # Each op is cached based on a key formed by:
+    # container, inputs, outputs, volumes, initContainers and sidecars
+    # See: https://github.com/kubeflow/pipelines/blob/cc83e1089b573256e781ed2e4ac90f604129e769/backend/src/cache/server/mutation.go#L232-L245
+
+    # If the keys are repeated, then the workflow will not run for a second time.
+    # This caused issues for ResourceOps where the cache keys were the same for all resources.
+    # (only the resource yaml changes; container, inputs, outputs, volumes, initContainers and sidecars were the same).
 
     return resource_op
 

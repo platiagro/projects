@@ -105,7 +105,11 @@ def deploy_monitoring(deployment_id,
         monitoring_service = dsl.ResourceOp(
             name=service_name,
             k8s_resource=service_resource,
-            success_condition="status.conditions.1.status == True"
+            success_condition="status.conditions.1.status == True",
+            attribute_outputs={
+                "monitoring_id": monitoring_id,
+                "created_at": datetime.utcnow().isoformat(),
+            },  # makes this ResourceOp to have a unique cache key
         )
 
         trigger_name = f"trigger-{monitoring_id}"
@@ -116,10 +120,14 @@ def deploy_monitoring(deployment_id,
             "service": service_name,
         })
         trigger_resource = loads(trigger)
-        dsl.ResourceOp(
+        trigger_op = dsl.ResourceOp(
             name="monitoring_trigger",
             k8s_resource=trigger_resource,
-            success_condition="status.conditions.2.status == True"
+            success_condition="status.conditions.2.status == True",
+            attribute_outputs={
+                "monitoring_id": monitoring_id,
+                "created_at": datetime.utcnow().isoformat(),
+            },  # makes this ResourceOp to have a unique cache key
         ).after(monitoring_service)
 
     kfp_client().create_run_from_pipeline_func(
