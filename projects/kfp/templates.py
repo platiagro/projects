@@ -2,7 +2,7 @@
 from string import Template
 
 SELDON_DEPLOYMENT = Template("""{
-    "apiVersion": "machinelearning.seldon.io/v1alpha2",
+    "apiVersion": "machinelearning.seldon.io/v1",
     "kind": "SeldonDeployment",
     "metadata": {
         "labels": {
@@ -10,7 +10,6 @@ SELDON_DEPLOYMENT = Template("""{
             "projectId": "$projectId"
         },
         "name": "$deploymentId",
-        "deploymentId": "$deploymentId",
         "namespace": "$namespace"
     },
     "spec": {
@@ -25,9 +24,6 @@ SELDON_DEPLOYMENT = Template("""{
             {
                 "componentSpecs": [$componentSpecs
                 ],
-                "annotations": {
-                    "sidecar.istio.io/inject": "false"
-                },
                 "graph": $graph,
                 "labels": {
                     "version": "v1"
