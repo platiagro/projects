@@ -120,7 +120,7 @@ def deploy_monitoring(deployment_id,
             "service": service_name,
         })
         trigger_resource = loads(trigger)
-        trigger_op = dsl.ResourceOp(
+        dsl.ResourceOp(
             name="monitoring_trigger",
             k8s_resource=trigger_resource,
             success_condition="status.conditions.2.status == True",
