@@ -343,8 +343,8 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     sdep_resource = mount_volume_from_experiment(sdep_resource, experiment_id)
 
     # defines a timeout for this workflow step as the
-    # maximum readiness_initial_delay_seconds + 60 seconds
-    timeout = max_initial_delay_seconds + 60
+    # maximum readiness_initial_delay_seconds + 120 seconds
+    timeout = max_initial_delay_seconds + 120
 
     resource_op = dsl.ResourceOp(
         name="deployment",
