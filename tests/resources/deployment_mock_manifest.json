@@ -1,0 +1,1002 @@
+{
+   "object":{
+      "apiVersion":"argoproj.io/v1alpha1",
+      "kind":"Workflow",
+      "metadata":{
+         "annotations":{
+            "pipelines.kubeflow.org/kfp_sdk_version":"1.2.0",
+            "pipelines.kubeflow.org/pipeline_compilation_time":"2021-06-24T14:42:09.535639",
+            "pipelines.kubeflow.org/pipeline_spec":"{\"name\": \"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df\"}",
+            "pipelines.kubeflow.org/run_name":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-2021-06-24 14-42-09"
+         },
+         "creationTimestamp":"2021-06-24T14:42:09Z",
+         "generateName":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-",
+         "generation":7,
+         "labels":{
+            "pipeline/persistedFinalState":"true",
+            "pipeline/runid":"bb39d772-1422-47a6-aa87-e949384ad663",
+            "pipelines.kubeflow.org/kfp_sdk_version":"1.2.0",
+            "workflows.argoproj.io/completed":"true",
+            "workflows.argoproj.io/phase":"Succeeded"
+         },
+         "managedFields":[
+            {
+               "apiVersion":"argoproj.io/v1alpha1",
+               "fieldsType":"FieldsV1",
+               "fieldsV1":{
+                  "f:metadata":{
+                     "f:labels":{
+                        "f:workflows.argoproj.io/completed":{
+                           
+                        },
+                        "f:workflows.argoproj.io/phase":{
+                           
+                        }
+                     }
+                  },
+                  "f:status":{
+                     "f:conditions":{
+                        
+                     },
+                     "f:finishedAt":{
+                        
+                     },
+                     "f:nodes":{
+                        ".":{
+                           
+                        },
+                        "f:deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d":{
+                           ".":{
+                              
+                           },
+                           "f:children":{
+                              
+                           },
+                           "f:displayName":{
+                              
+                           },
+                           "f:finishedAt":{
+                              
+                           },
+                           "f:id":{
+                              
+                           },
+                           "f:name":{
+                              
+                           },
+                           "f:outboundNodes":{
+                              
+                           },
+                           "f:phase":{
+                              
+                           },
+                           "f:progress":{
+                              
+                           },
+                           "f:resourcesDuration":{
+                              ".":{
+                                 
+                              },
+                              "f:cpu":{
+                                 
+                              },
+                              "f:memory":{
+                                 
+                              }
+                           },
+                           "f:startedAt":{
+                              
+                           },
+                           "f:templateName":{
+                              
+                           },
+                           "f:templateScope":{
+                              
+                           },
+                           "f:type":{
+                              
+                           }
+                        },
+                        "f:deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2159860658":{
+                           ".":{
+                              
+                           },
+                           "f:boundaryID":{
+                              
+                           },
+                           "f:children":{
+                              
+                           },
+                           "f:displayName":{
+                              
+                           },
+                           "f:finishedAt":{
+                              
+                           },
+                           "f:hostNodeName":{
+                              
+                           },
+                           "f:id":{
+                              
+                           },
+                           "f:name":{
+                              
+                           },
+                           "f:outputs":{
+                              ".":{
+                                 
+                              },
+                              "f:parameters":{
+                                 
+                              }
+                           },
+                           "f:phase":{
+                              
+                           },
+                           "f:progress":{
+                              
+                           },
+                           "f:resourcesDuration":{
+                              ".":{
+                                 
+                              },
+                              "f:cpu":{
+                                 
+                              },
+                              "f:memory":{
+                                 
+                              }
+                           },
+                           "f:startedAt":{
+                              
+                           },
+                           "f:templateName":{
+                              
+                           },
+                           "f:templateScope":{
+                              
+                           },
+                           "f:type":{
+                              
+                           }
+                        },
+                        "f:deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2781134237":{
+                           ".":{
+                              
+                           },
+                           "f:boundaryID":{
+                              
+                           },
+                           "f:children":{
+                              
+                           },
+                           "f:displayName":{
+                              
+                           },
+                           "f:finishedAt":{
+                              
+                           },
+                           "f:hostNodeName":{
+                              
+                           },
+                           "f:id":{
+                              
+                           },
+                           "f:inputs":{
+                              ".":{
+                                 
+                              },
+                              "f:parameters":{
+                                 
+                              }
+                           },
+                           "f:name":{
+                              
+                           },
+                           "f:outputs":{
+                              ".":{
+                                 
+                              },
+                              "f:artifacts":{
+                                 
+                              },
+                              "f:exitCode":{
+                                 
+                              }
+                           },
+                           "f:phase":{
+                              
+                           },
+                           "f:progress":{
+                              
+                           },
+                           "f:resourcesDuration":{
+                              ".":{
+                                 
+                              },
+                              "f:cpu":{
+                                 
+                              },
+                              "f:memory":{
+                                 
+                              }
+                           },
+                           "f:startedAt":{
+                              
+                           },
+                           "f:templateName":{
+                              
+                           },
+                           "f:templateScope":{
+                              
+                           },
+                           "f:type":{
+                              
+                           }
+                        },
+                        "f:deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-3387642027":{
+                           ".":{
+                              
+                           },
+                           "f:boundaryID":{
+                              
+                           },
+                           "f:children":{
+                              
+                           },
+                           "f:displayName":{
+                              
+                           },
+                           "f:finishedAt":{
+                              
+                           },
+                           "f:hostNodeName":{
+                              
+                           },
+                           "f:id":{
+                              
+                           },
+                           "f:name":{
+                              
+                           },
+                           "f:outputs":{
+                              ".":{
+                                 
+                              },
+                              "f:parameters":{
+                                 
+                              }
+                           },
+                           "f:phase":{
+                              
+                           },
+                           "f:progress":{
+                              
+                           },
+                           "f:resourcesDuration":{
+                              ".":{
+                                 
+                              },
+                              "f:cpu":{
+                                 
+                              },
+                              "f:memory":{
+                                 
+                              }
+                           },
+                           "f:startedAt":{
+                              
+                           },
+                           "f:templateName":{
+                              
+                           },
+                           "f:templateScope":{
+                              
+                           },
+                           "f:type":{
+                              
+                           }
+                        },
+                        "f:deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-4209398053":{
+                           ".":{
+                              
+                           },
+                           "f:boundaryID":{
+                              
+                           },
+                           "f:displayName":{
+                              
+                           },
+                           "f:finishedAt":{
+                              
+                           },
+                           "f:id":{
+                              
+                           },
+                           "f:name":{
+                              
+                           },
+                           "f:outputs":{
+                              ".":{
+                                 
+                              },
+                              "f:parameters":{
+                                 
+                              }
+                           },
+                           "f:phase":{
+                              
+                           },
+                           "f:progress":{
+                              
+                           },
+                           "f:resourcesDuration":{
+                              ".":{
+                                 
+                              },
+                              "f:cpu":{
+                                 
+                              },
+                              "f:memory":{
+                                 
+                              }
+                           },
+                           "f:startedAt":{
+                              
+                           },
+                           "f:templateName":{
+                              
+                           },
+                           "f:templateScope":{
+                              
+                           },
+                           "f:type":{
+                              
+                           }
+                        }
+                     },
+                     "f:phase":{
+                        
+                     },
+                     "f:progress":{
+                        
+                     },
+                     "f:resourcesDuration":{
+                        ".":{
+                           
+                        },
+                        "f:cpu":{
+                           
+                        },
+                        "f:memory":{
+                           
+                        }
+                     },
+                     "f:startedAt":{
+                        
+                     }
+                  }
+               },
+               "manager":"workflow-controller",
+               "operation":"Update",
+               "time":"2021-06-24T14:43:01Z"
+            },
+            {
+               "apiVersion":"argoproj.io/v1alpha1",
+               "fieldsType":"FieldsV1",
+               "fieldsV1":{
+                  "f:metadata":{
+                     "f:annotations":{
+                        ".":{
+                           
+                        },
+                        "f:pipelines.kubeflow.org/kfp_sdk_version":{
+                           
+                        },
+                        "f:pipelines.kubeflow.org/pipeline_compilation_time":{
+                           
+                        },
+                        "f:pipelines.kubeflow.org/pipeline_spec":{
+                           
+                        },
+                        "f:pipelines.kubeflow.org/run_name":{
+                           
+                        }
+                     },
+                     "f:generateName":{
+                        
+                     },
+                     "f:labels":{
+                        ".":{
+                           
+                        },
+                        "f:pipeline/persistedFinalState":{
+                           
+                        },
+                        "f:pipeline/runid":{
+                           
+                        },
+                        "f:pipelines.kubeflow.org/kfp_sdk_version":{
+                           
+                        }
+                     }
+                  },
+                  "f:spec":{
+                     ".":{
+                        
+                     },
+                     "f:arguments":{
+                        
+                     },
+                     "f:entrypoint":{
+                        
+                     },
+                     "f:serviceAccountName":{
+                        
+                     },
+                     "f:templates":{
+                        
+                     }
+                  },
+                  "f:status":{
+                     
+                  }
+               },
+               "manager":"apiserver",
+               "operation":"Update",
+               "time":"2021-06-24T14:43:02Z"
+            }
+         ],
+         "name":"deployment-b633dab6-1098-4d76-b995-5xxxx6d741df-xxx83",
+         "namespace":"anonymous",
+         "resourceVersion":"1105993",
+         "selfLink":"/apis/argoproj.io/v1alpha1/namespaces/anonymous/workflows/deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+         "uid":"46820cdc-2505-4c6c-89cc-e6e6776ffc6a"
+      },
+      "spec":{
+         "arguments":{
+            
+         },
+         "entrypoint":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df",
+         "serviceAccountName":"default-editor",
+         "templates":[
+            {
+               "activeDeadlineSeconds":120,
+               "arguments":{
+                  
+               },
+               "inputs":{
+                  
+               },
+               "metadata":{
+                  "annotations":{
+                     "sidecar.istio.io/inject":"false"
+                  },
+                  "labels":{
+                     "pipelines.kubeflow.org/cache_enabled":"true"
+                  }
+               },
+               "name":"deployment",
+               "outputs":{
+                  "parameters":[
+                     {
+                        "name":"deployment-manifest",
+                        "valueFrom":{
+                           "jsonPath":"{}"
+                        }
+                     },
+                     {
+                        "name":"deployment-name",
+                        "valueFrom":{
+                           "jsonPath":"{.metadata.name}"
+                        }
+                     }
+                  ]
+               },
+               "resource":{
+                  "action":"create",
+                  "manifest":"apiVersion: machinelearning.seldon.io/v1alpha2\nkind: SeldonDeployment\nmetadata:\n  deploymentId: b633dab6-1098-4d76-b4f5-5c8256d741df\n  labels:\n    app: seldon\n    projectId: eb13b29f-9f11-4de8-99f6-b3c3d9fc85ad\n  name: b633dab6-1098-4d76-b4f5-5c8256d741df\n  namespace: anonymous\nspec:\n  annotations:\n    deployment_version: v1\n    prometheus.io/scrape: 'false'\n    seldon.io/executor: 'true'\n    seldon.io/rest-timeout: '60000'\n  name: b633dab6-1098-4d76-b4f5-5c8256d741df\n  predictors:\n  - annotations:\n      sidecar.istio.io/inject: 'false'\n    componentSpecs:\n    - spec:\n        containers:\n        - env:\n          - name: EXPERIMENT_ID\n            value: b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9\n          - name: OPERATOR_ID\n            value: f08ccfda-9206-4f26-8326-ad666b1761e7\n          - name: TASK_NAME\n            value: \"Sele\\xE7\\xE3o Manual de Atributos\"\n          - name: NVIDIA_VISIBLE_DEVICES\n            value: all\n          image: platiagro/platiagro-deployment-image:0.2.0\n          livenessProbe:\n            failureThreshold: 3\n            initialDelaySeconds: 60\n            periodSeconds: 5\n            successThreshold: 1\n            tcpSocket:\n              port: http\n            timeoutSeconds: 1\n          name: f08ccfda-9206-4f26-8326-ad666b1761e7\n          readinessProbe:\n            failureThreshold: 3\n            initialDelaySeconds: 60\n            periodSeconds: 5\n            successThreshold: 1\n            tcpSocket:\n              port: http\n            timeoutSeconds: 1\n          resources:\n            limits:\n              memory: 1Gi\n            requests:\n              memory: 1Gi\n          securityContext:\n            allowPrivilegeEscalation: false\n            runAsUser: 0\n          volumeMounts:\n          - mountPath: /app\n            name: workspace\n          - mountPath: /tmp/data\n            name: data\n        volumes:\n        - name: workspace\n          persistentVolumeClaim:\n            claimName: vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91\n        - name: data\n          persistentVolumeClaim:\n            claimName: vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9\n    graph:\n      children: []\n      endpoint:\n        type: REST\n      logger:\n        mode: response\n        url: http://projects.platiagro:8080/projects/eb13b29f-9f11-4de8-99f6-b3c3d9fc85ad/deployments/b633dab6-1098-4d76-b4f5-5c8256d741df/responses\n      name: f08ccfda-9206-4f26-8326-ad666b1761e7\n      type: MODEL\n    labels:\n      version: v1\n    name: model\n    replicas: 1\n    svcOrchSpec:\n      env:\n      - name: SELDON_LOG_LEVEL\n        value: INFO\n",
+                  "successCondition":"status.state == Available"
+               }
+            },
+            {
+               "arguments":{
+                  
+               },
+               "dag":{
+                  "tasks":[
+                     {
+                        "arguments":{
+                           
+                        },
+                        "dependencies":[
+                           "f08ccfda-9206-4f26-8326-ad666b1761e7"
+                        ],
+                        "name":"deployment",
+                        "template":"deployment"
+                     },
+                     {
+                        "arguments":{
+                           "parameters":[
+                              {
+                                 "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-name",
+                                 "value":"{{tasks.vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91.outputs.parameters.vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-name}}"
+                              },
+                              {
+                                 "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-name",
+                                 "value":"{{tasks.vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9.outputs.parameters.vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-name}}"
+                              }
+                           ]
+                        },
+                        "dependencies":[
+                           "vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91",
+                           "vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9"
+                        ],
+                        "name":"f08ccfda-9206-4f26-8326-ad666b1761e7",
+                        "template":"f08ccfda-9206-4f26-8326-ad666b1761e7"
+                     },
+                     {
+                        "arguments":{
+                           
+                        },
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91",
+                        "template":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91"
+                     },
+                     {
+                        "arguments":{
+                           
+                        },
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9",
+                        "template":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9"
+                     }
+                  ]
+               },
+               "inputs":{
+                  
+               },
+               "metadata":{
+                  "annotations":{
+                     "sidecar.istio.io/inject":"false"
+                  },
+                  "labels":{
+                     "pipelines.kubeflow.org/cache_enabled":"true"
+                  }
+               },
+               "name":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df",
+               "outputs":{
+                  
+               }
+            },
+            {
+               "arguments":{
+                  
+               },
+               "container":{
+                  "env":[
+                     {
+                        "name":"EXPERIMENT_ID",
+                        "value":"b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9"
+                     },
+                     {
+                        "name":"OPERATOR_ID",
+                        "value":"f08ccfda-9206-4f26-8326-ad666b1761e7"
+                     },
+                     {
+                        "name":"RUN_ID",
+                        "value":"bb39d772-1422-47a6-aa87-e949384ad663"
+                     },
+                     {
+                        "name":"TASK_NAME",
+                        "value":"Seleção Manual de Atributos"
+                     },
+                     {
+                        "name":"NOTEBOOK_PATH",
+                        "value":"Deployment.ipynb"
+                     },
+                     {
+                        "name":"MINIO_ENDPOINT",
+                        "value":"minio.platiagro:9000"
+                     },
+                     {
+                        "name":"MINIO_ACCESS_KEY",
+                        "valueFrom":{
+                           "secretKeyRef":{
+                              "key":"MINIO_ACCESS_KEY",
+                              "name":"minio-secrets"
+                           }
+                        }
+                     },
+                     {
+                        "name":"MINIO_SECRET_KEY",
+                        "valueFrom":{
+                           "secretKeyRef":{
+                              "key":"MINIO_SECRET_KEY",
+                              "name":"minio-secrets"
+                           }
+                        }
+                     },
+                     {
+                        "name":"PARAMETER_dataset"
+                     },
+                     {
+                        "name":"PARAMETER_features_to_filter",
+                        "value":"[\"Vibracao1\"]"
+                     }
+                  ],
+                  "image":"platiagro/platiagro-experiment-image:0.2.0",
+                  "imagePullPolicy":"IfNotPresent",
+                  "name":"",
+                  "resources":{
+                     "limits":{
+                        "cpu":"1",
+                        "memory":"1Gi"
+                     },
+                     "requests":{
+                        "cpu":"10m",
+                        "memory":"1Gi"
+                     }
+                  },
+                  "volumeMounts":[
+                     {
+                        "mountPath":"/tmp/data",
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9"
+                     },
+                     {
+                        "mountPath":"/home/jovyan",
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91"
+                     }
+                  ]
+               },
+               "inputs":{
+                  "parameters":[
+                     {
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-name"
+                     },
+                     {
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-name"
+                     }
+                  ]
+               },
+               "metadata":{
+                  "annotations":{
+                     "name":"Seleção Manual de Atributos",
+                     "sidecar.istio.io/inject":"false"
+                  },
+                  "labels":{
+                     "pipelines.kubeflow.org/cache_enabled":"true"
+                  }
+               },
+               "name":"f08ccfda-9206-4f26-8326-ad666b1761e7",
+               "outputs":{
+                  
+               },
+               "volumes":[
+                  {
+                     "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91",
+                     "persistentVolumeClaim":{
+                        "claimName":"{{inputs.parameters.vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-name}}"
+                     }
+                  },
+                  {
+                     "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9",
+                     "persistentVolumeClaim":{
+                        "claimName":"{{inputs.parameters.vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-name}}"
+                     }
+                  }
+               ]
+            },
+            {
+               "arguments":{
+                  
+               },
+               "inputs":{
+                  
+               },
+               "metadata":{
+                  "annotations":{
+                     "sidecar.istio.io/inject":"false"
+                  },
+                  "labels":{
+                     "pipelines.kubeflow.org/cache_enabled":"true"
+                  }
+               },
+               "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91",
+               "outputs":{
+                  "parameters":[
+                     {
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-manifest",
+                        "valueFrom":{
+                           "jsonPath":"{}"
+                        }
+                     },
+                     {
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-name",
+                        "valueFrom":{
+                           "jsonPath":"{.metadata.name}"
+                        }
+                     },
+                     {
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-size",
+                        "valueFrom":{
+                           "jsonPath":"{.status.capacity.storage}"
+                        }
+                     }
+                  ]
+               },
+               "resource":{
+                  "action":"apply",
+                  "manifest":"apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91\n  namespace: anonymous\nspec:\n  accessModes:\n  - ReadWriteOnce\n  resources:\n    requests:\n      storage: 10Gi\n"
+               }
+            },
+            {
+               "arguments":{
+                  
+               },
+               "inputs":{
+                  
+               },
+               "metadata":{
+                  "annotations":{
+                     "sidecar.istio.io/inject":"false"
+                  },
+                  "labels":{
+                     "pipelines.kubeflow.org/cache_enabled":"true"
+                  }
+               },
+               "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9",
+               "outputs":{
+                  "parameters":[
+                     {
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-manifest",
+                        "valueFrom":{
+                           "jsonPath":"{}"
+                        }
+                     },
+                     {
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-name",
+                        "valueFrom":{
+                           "jsonPath":"{.metadata.name}"
+                        }
+                     },
+                     {
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-size",
+                        "valueFrom":{
+                           "jsonPath":"{.status.capacity.storage}"
+                        }
+                     }
+                  ]
+               },
+               "resource":{
+                  "action":"apply",
+                  "manifest":"apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9\n  namespace: anonymous\nspec:\n  accessModes:\n  - ReadWriteOnce\n  resources:\n    requests:\n      storage: 10Gi\n"
+               }
+            }
+         ]
+      },
+      "status":{
+         "state": "Available", 
+         "conditions":[
+            {
+               "status":"True",
+               "type":"Completed"
+            }
+         ],
+         "finishedAt":"2021-06-24T14:43:01Z",
+         "nodes":{
+            "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d":{
+               "children":[
+                  "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-3387642027",
+                  "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2159860658"
+               ],
+               "displayName":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "finishedAt":"2021-06-24T14:43:01Z",
+               "id":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "name":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "outboundNodes":[
+                  "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-4209398053"
+               ],
+               "phase":"Succeeded",
+               "progress":"4/4",
+               "resourcesDuration":{
+                  "cpu":16,
+                  "memory":80
+               },
+               "startedAt":"2021-06-24T14:42:09Z",
+               "templateName":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df",
+               "templateScope":"local/deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "type":"DAG"
+            },
+            "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2159860658":{
+               "boundaryID":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "children":[
+                  "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2781134237"
+               ],
+               "displayName":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9",
+               "finishedAt":"2021-06-24T14:42:20Z",
+               "hostNodeName":"vmplatiagro22",
+               "id":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2159860658",
+               "name":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d.vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9",
+               "outputs":{
+                  "parameters":[
+                     {
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-manifest",
+                        "value":"map[apiVersion:v1 kind:PersistentVolumeClaim metadata:map[annotations:map[kubectl.kubernetes.io/last-applied-configuration:{\"apiVersion\":\"v1\",\"kind\":\"PersistentVolumeClaim\",\"metadata\":{\"annotations\":{},\"name\":\"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9\",\"namespace\":\"anonymous\"},\"spec\":{\"accessModes\":[\"ReadWriteOnce\"],\"resources\":{\"requests\":{\"storage\":\"10Gi\"}}}}\n pv.kubernetes.io/bind-completed:yes pv.kubernetes.io/bound-by-controller:yes] creationTimestamp:2021-06-24T06:45:03Z finalizers:[kubernetes.io/pvc-protection] managedFields:[map[apiVersion:v1 fieldsType:FieldsV1 fieldsV1:map[f:metadata:map[f:annotations:map[f:pv.kubernetes.io/bind-completed:map[] f:pv.kubernetes.io/bound-by-controller:map[]]] f:spec:map[f:volumeName:map[]] f:status:map[f:accessModes:map[] f:capacity:map[.:map[] f:storage:map[]] f:phase:map[]]] manager:kube-controller-manager operation:Update time:2021-06-24T06:45:03Z] map[apiVersion:v1 fieldsType:FieldsV1 fieldsV1:map[f:metadata:map[f:annotations:map[.:map[] f:kubectl.kubernetes.io/last-applied-configuration:map[]]] f:spec:map[f:accessModes:map[] f:resources:map[f:requests:map[.:map[] f:storage:map[]]] f:volumeMode:map[]]] manager:kubectl operation:Update time:2021-06-24T06:45:03Z]] name:vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9 namespace:anonymous resourceVersion:982429 selfLink:/api/v1/namespaces/anonymous/persistentvolumeclaims/vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9 uid:317d5468-6486-4611-82c9-6e07bf52e69a] spec:map[accessModes:[ReadWriteOnce] resources:map[requests:map[storage:10Gi]] storageClassName:local-storage volumeMode:Filesystem volumeName:local-pv-792647c9] status:map[accessModes:[ReadWriteOnce] capacity:map[storage:97Gi] phase:Bound]]",
+                        "valueFrom":{
+                           "jsonPath":"{}"
+                        }
+                     },
+                     {
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-name",
+                        "value":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9",
+                        "valueFrom":{
+                           "jsonPath":"{.metadata.name}"
+                        }
+                     },
+                     {
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-size",
+                        "value":"97Gi",
+                        "valueFrom":{
+                           "jsonPath":"{.status.capacity.storage}"
+                        }
+                     }
+                  ]
+               },
+               "phase":"Succeeded",
+               "progress":"1/1",
+               "resourcesDuration":{
+                  "cpu":0,
+                  "memory":0
+               },
+               "startedAt":"2021-06-24T14:42:10Z",
+               "templateName":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9",
+               "templateScope":"local/deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "type":"Pod"
+            },
+            "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2781134237":{
+               "boundaryID":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "children":[
+                  "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-4209398053"
+               ],
+               "displayName":"f08ccfda-9206-4f26-8326-ad666b1761e7",
+               "finishedAt":"2021-06-24T14:42:44Z",
+               "hostNodeName":"vmplatiagro22",
+               "id":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2781134237",
+               "inputs":{
+                  "parameters":[
+                     {
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-name",
+                        "value":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91"
+                     },
+                     {
+                        "name":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9-name",
+                        "value":"vol-tmp-data-b8d4b2d4-1cf8-4a5a-9cc2-62b3735a34f9"
+                     }
+                  ]
+               },
+               "name":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d.f08ccfda-9206-4f26-8326-ad666b1761e7",
+               "outputs":{
+                  "artifacts":[
+                     {
+                        "archiveLogs":true,
+                        "name":"main-logs",
+                        "s3":{
+                           "accessKeySecret":{
+                              "key":"accesskey",
+                              "name":"mlpipeline-minio-artifact"
+                           },
+                           "bucket":"mlpipeline",
+                           "endpoint":"minio-service.kubeflow:9000",
+                           "insecure":true,
+                           "key":"artifacts/deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d/deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2781134237/main.log",
+                           "secretKeySecret":{
+                              "key":"secretkey",
+                              "name":"mlpipeline-minio-artifact"
+                           }
+                        }
+                     }
+                  ],
+                  "exitCode":"0"
+               },
+               "phase":"Succeeded",
+               "progress":"1/1",
+               "resourcesDuration":{
+                  "cpu":16,
+                  "memory":80
+               },
+               "startedAt":"2021-06-24T14:42:30Z",
+               "templateName":"f08ccfda-9206-4f26-8326-ad666b1761e7",
+               "templateScope":"local/deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "type":"Pod"
+            },
+            "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-3387642027":{
+               "boundaryID":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "children":[
+                  "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-2781134237"
+               ],
+               "displayName":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91",
+               "finishedAt":"2021-06-24T14:42:22Z",
+               "hostNodeName":"vmplatiagro22",
+               "id":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-3387642027",
+               "name":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d.vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91",
+               "outputs":{
+                  "parameters":[
+                     {
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-manifest",
+                        "value":"map[apiVersion:v1 kind:PersistentVolumeClaim metadata:map[annotations:map[kubectl.kubernetes.io/last-applied-configuration:{\"apiVersion\":\"v1\",\"kind\":\"PersistentVolumeClaim\",\"metadata\":{\"annotations\":{},\"name\":\"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91\",\"namespace\":\"anonymous\"},\"spec\":{\"accessModes\":[\"ReadWriteOnce\"],\"resources\":{\"requests\":{\"storage\":\"10Gi\"}}}}\n pv.kubernetes.io/bind-completed:yes pv.kubernetes.io/bound-by-controller:yes] creationTimestamp:2021-06-21T15:21:09Z finalizers:[kubernetes.io/pvc-protection] managedFields:[map[apiVersion:v1 fieldsType:FieldsV1 fieldsV1:map[f:spec:map[f:accessModes:map[] f:resources:map[f:requests:map[.:map[] f:storage:map[]]] f:volumeMode:map[]]] manager:OpenAPI-Generator operation:Update time:2021-06-21T15:21:09Z] map[apiVersion:v1 fieldsType:FieldsV1 fieldsV1:map[f:metadata:map[f:annotations:map[.:map[] f:pv.kubernetes.io/bind-completed:map[] f:pv.kubernetes.io/bound-by-controller:map[]]] f:spec:map[f:volumeName:map[]] f:status:map[f:accessModes:map[] f:capacity:map[.:map[] f:storage:map[]] f:phase:map[]]] manager:kube-controller-manager operation:Update time:2021-06-21T15:21:09Z] map[apiVersion:v1 fieldsType:FieldsV1 fieldsV1:map[f:metadata:map[f:annotations:map[f:kubectl.kubernetes.io/last-applied-configuration:map[]]]] manager:kubectl operation:Update time:2021-06-24T06:45:03Z]] name:vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91 namespace:anonymous resourceVersion:982423 selfLink:/api/v1/namespaces/anonymous/persistentvolumeclaims/vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91 uid:4c617fc9-3c58-40ac-b0fd-d6dbc3483752] spec:map[accessModes:[ReadWriteOnce] resources:map[requests:map[storage:10Gi]] storageClassName:local-storage volumeMode:Filesystem volumeName:local-pv-c9f7e15a] status:map[accessModes:[ReadWriteOnce] capacity:map[storage:97Gi] phase:Bound]]",
+                        "valueFrom":{
+                           "jsonPath":"{}"
+                        }
+                     },
+                     {
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-name",
+                        "value":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91",
+                        "valueFrom":{
+                           "jsonPath":"{.metadata.name}"
+                        }
+                     },
+                     {
+                        "name":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91-size",
+                        "value":"97Gi",
+                        "valueFrom":{
+                           "jsonPath":"{.status.capacity.storage}"
+                        }
+                     }
+                  ]
+               },
+               "phase":"Succeeded",
+               "progress":"1/1",
+               "resourcesDuration":{
+                  "cpu":0,
+                  "memory":0
+               },
+               "startedAt":"2021-06-24T14:42:09Z",
+               "templateName":"vol-task-f298de51-cfc1-4bc9-8ebd-0959d74d7b91",
+               "templateScope":"local/deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "type":"Pod"
+            },
+            "deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-4209398053":{
+               "boundaryID":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "displayName":"deployment",
+               "finishedAt":"2021-06-24T14:42:59Z",
+               "id":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d-4209398053",
+               "name":"deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d.deployment",
+               "outputs":{
+                  "parameters":[
+                     {
+                        "name":"deployment-manifest",
+                        "value":"map[apiVersion:machinelearning.seldon.io/v1 kind:SeldonDeployment metadata:map[creationTimestamp:2021-06-23T16:29:57Z generation:1 labels:map[app:seldon projectId:eb13b29f-9f11-4de8-99f6-b3c3d9fc85ad] managedFields:[map[apiVersion:machinelearning.seldon.io/v1alpha2 fieldsType:FieldsV1 fieldsV1:map[f:metadata:map[f:labels:map[.:map[] f:app:map[] f:projectId:map[]]] f:spec:map[.:map[] f:annotations:map[.:map[] f:deployment_version:map[] f:prometheus.io/scrape:map[] f:seldon.io/executor:map[] f:seldon.io/rest-timeout:map[]] f:name:map[]]] manager:kubectl operation:Update time:2021-06-23T16:29:57Z] map[apiVersion:machinelearning.seldon.io/v1 fieldsType:FieldsV1 fieldsV1:map[f:spec:map[f:predictors:map[]] f:status:map[.:map[] f:address:map[.:map[] f:url:map[]] f:deploymentStatus:map[.:map[] f:seldon-878b6a1227cf996118907741e28ab8fb:map[.:map[] f:availableReplicas:map[] f:replicas:map[]]] f:replicas:map[] f:serviceStatus:map[.:map[] f:a74a78f3-c822-425b-9803-5c8029c0fbf0-model:map[.:map[] f:grpcEndpoint:map[] f:httpEndpoint:map[] f:svcName:map[]] f:seldon-ed6ad6fed2163d1357361f2120969bec:map[.:map[] f:grpcEndpoint:map[] f:httpEndpoint:map[] f:svcName:map[]]] f:state:map[]]] manager:manager operation:Update time:2021-06-23T16:31:04Z]] name:a74a78f3-c822-425b-9803-5c8029c0fbf0 namespace:anonymous resourceVersion:763240 selfLink:/apis/machinelearning.seldon.io/v1/namespaces/anonymous/seldondeployments/a74a78f3-c822-425b-9803-5c8029c0fbf0 uid:3b235c03-9e64-492f-b3ad-2ccd721e2941] spec:map[annotations:map[deployment_version:v1 prometheus.io/scrape:false seldon.io/executor:true seldon.io/rest-timeout:60000] name:a74a78f3-c822-425b-9803-5c8029c0fbf0 predictors:[map[annotations:map[sidecar.istio.io/inject:false] componentSpecs:[map[spec:map[containers:[map[env:[map[name:EXPERIMENT_ID value:d3ea4c25-211f-45dc-8314-30d0c7711e95] map[name:OPERATOR_ID value:e9b74ba9-be09-43bb-8c4e-ad2c2c2a5c50] map[name:TASK_NAME value:Classificador AutoML] map[name:NVIDIA_VISIBLE_DEVICES value:all]] image:platiagro/platiagro-deployment-image:0.2.0 livenessProbe:map[failureThreshold:3 initialDelaySeconds:60 periodSeconds:5 successThreshold:1 tcpSocket:map[port:http] timeoutSeconds:1] name:e9b74ba9-be09-43bb-8c4e-ad2c2c2a5c50 readinessProbe:map[failureThreshold:3 initialDelaySeconds:60 periodSeconds:5 successThreshold:1 tcpSocket:map[port:http] timeoutSeconds:1] resources:map[limits:map[memory:4Gi] requests:map[memory:4Gi]] securityContext:map[allowPrivilegeEscalation:false runAsUser:0] volumeMounts:[map[mountPath:/app name:workspace] map[mountPath:/tmp/data name:data]]]] volumes:[map[name:workspace persistentVolumeClaim:map[claimName:vol-task-d86dbbdd-3ac5-4949-905b-d561e084e330]] map[name:data persistentVolumeClaim:map[claimName:vol-tmp-data-d3ea4c25-211f-45dc-8314-30d0c7711e95]]]]]] graph:map[children:[] endpoint:map[type:REST] logger:map[mode:response url:http://projects.platiagro:8080/projects/eb13b29f-9f11-4de8-99f6-b3c3d9fc85ad/deployments/a74a78f3-c822-425b-9803-5c8029c0fbf0/responses] name:e9b74ba9-be09-43bb-8c4e-ad2c2c2a5c50 type:MODEL] labels:map[version:v1] name:model replicas:1 svcOrchSpec:map[env:[map[name:SELDON_LOG_LEVEL value:INFO]]]]]] status:map[address:map[url:http://a74a78f3-c822-425b-9803-5c8029c0fbf0-model.anonymous.svc.cluster.local:8000/api/v1.0/predictions] deploymentStatus:map[seldon-878b6a1227cf996118907741e28ab8fb:map[availableReplicas:1 replicas:1]] replicas:1 serviceStatus:map[a74a78f3-c822-425b-9803-5c8029c0fbf0-model:map[grpcEndpoint:a74a78f3-c822-425b-9803-5c8029c0fbf0-model.anonymous:5001 httpEndpoint:a74a78f3-c822-425b-9803-5c8029c0fbf0-model.anonymous:8000 svcName:a74a78f3-c822-425b-9803-5c8029c0fbf0-model] seldon-ed6ad6fed2163d1357361f2120969bec:map[grpcEndpoint:seldon-ed6ad6fed2163d1357361f2120969bec.anonymous:9500 httpEndpoint:seldon-ed6ad6fed2163d1357361f2120969bec.anonymous:9000 svcName:seldon-ed6ad6fed2163d1357361f2120969bec]] state:Available]]",
+                        "valueFrom":{
+                           "jsonPath":"{}"
+                        }
+                     },
+                     {
+                        "name":"deployment-name",
+                        "value":"a74a78f3-c822-425b-9803-5c8029c0fbf0",
+                        "valueFrom":{
+                           "jsonPath":"{.metadata.name}"
+                        }
+                     }
+                  ]
+               },
+               "phase":"Succeeded",
+               "progress":"1/1",
+               "resourcesDuration":{
+                  "cpu":0,
+                  "memory":0
+               },
+               "startedAt":"2021-06-24T14:42:50Z",
+               "templateName":"deployment",
+               "templateScope":"local/deployment-b633dab6-1098-4d76-b4f5-5c8256d741df-rx68d",
+               "type":"Pod"
+            }
+         },
+         "phase":"Succeeded",
+         "progress":"4/4",
+         "resourcesDuration":{
+            "cpu":16,
+            "memory":80
+         },
+         "startedAt":"2021-06-24T14:42:09Z"
+      }
+   }
+}

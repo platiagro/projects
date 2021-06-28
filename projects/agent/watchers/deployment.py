@@ -1,5 +1,6 @@
-import logging
 import http
+import logging
+import os
 
 from kubernetes import watch
 from kubernetes.client.rest import ApiException
@@ -34,7 +35,7 @@ def watch_seldon_deployments(api, session):
         plural=PLURAL,
     )
 
-    while True:
+    while os.environ["STOP_THREADS"] == "0":
         stream = w.stream(
             api.list_namespaced_custom_object,
             group=GROUP,
@@ -42,6 +43,7 @@ def watch_seldon_deployments(api, session):
             namespace=KF_PIPELINES_NAMESPACE,
             plural=PLURAL,
             resource_version=resource_version,
+            timeout_seconds=60,
         )
 
         try:
