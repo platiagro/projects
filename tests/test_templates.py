@@ -131,10 +131,10 @@ class TestTemplates(TestCase):
                             POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s)"
+            f"INSERT INTO templates (uuid, name, tasks, experiment_id, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, EXPERIMENT_ID, CREATED_AT, UPDATED_AT,))
         conn.close()
 
     def tearDown(self):
@@ -213,6 +213,8 @@ class TestTemplates(TestCase):
                     "uuid": OPERATOR_ID
                 }
             ],
+            "experimentId": EXPERIMENT_ID,
+            "deploymentId": None,
         }
         # uuid, created_at, updated_at are machine-generated
         # we assert they exist, but we don't assert their values
@@ -247,6 +249,8 @@ class TestTemplates(TestCase):
                     "uuid": OPERATOR_ID_2
                 }
             ],
+            "experimentId": None,
+            "deploymentId": DEPLOYMENT_ID,
         }
 
         # uuid, created_at, updated_at are machine-generated
@@ -272,6 +276,8 @@ class TestTemplates(TestCase):
             "tasks": TASKS,
             "createdAt": CREATED_AT_ISO,
             "updatedAt": UPDATED_AT_ISO,
+            "experimentId": EXPERIMENT_ID,
+            "deploymentId": None,
         }
         self.assertDictEqual(expected, result)
 
@@ -291,6 +297,8 @@ class TestTemplates(TestCase):
             "name": "bar",
             "tasks": TASKS,
             "createdAt": CREATED_AT_ISO,
+            "experimentId": EXPERIMENT_ID,
+            "deploymentId": None,
         }
         machine_generated = ["updatedAt"]
         for attr in machine_generated:
