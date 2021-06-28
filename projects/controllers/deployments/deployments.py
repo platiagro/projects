@@ -443,12 +443,10 @@ class DeploymentController:
             operator = self.operator_controller.create_operator(
                 operator=operator,
                 project_id=project_id,
-                deployment_id=deployment_id,
-                parameter={"type": "L"},
-
+                deployment_id=deployment_id
             )
 
-            
+
 
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
