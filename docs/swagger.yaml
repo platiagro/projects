@@ -2399,6 +2399,12 @@ components:
               positionY:
                 type: number
                 format: float
+        experimentId:
+          type: string
+          format: uuid
+        deploymentId:
+          type: string
+          format: uuid
         createdAt:
           type: string
           format: date-time
