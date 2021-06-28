@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utility functions to handle monitorings."""
 import warnings
+from datetime import datetime
 from json import loads
 
 from kfp import dsl
@@ -105,7 +106,11 @@ def deploy_monitoring(deployment_id,
         monitoring_service = dsl.ResourceOp(
             name=service_name,
             k8s_resource=service_resource,
-            success_condition="status.conditions.1.status == True"
+            success_condition="status.conditions.1.status == True",
+            attribute_outputs={
+                "monitoring_id": monitoring_id,
+                "created_at": datetime.utcnow().isoformat(),
+            },  # makes this ResourceOp to have a unique cache key
         )
 
         trigger_name = f"trigger-{monitoring_id}"
@@ -119,7 +124,11 @@ def deploy_monitoring(deployment_id,
         dsl.ResourceOp(
             name="monitoring_trigger",
             k8s_resource=trigger_resource,
-            success_condition="status.conditions.2.status == True"
+            success_condition="status.conditions.2.status == True",
+            attribute_outputs={
+                "monitoring_id": monitoring_id,
+                "created_at": datetime.utcnow().isoformat(),
+            },  # makes this ResourceOp to have a unique cache key
         ).after(monitoring_service)
 
     kfp_client().create_run_from_pipeline_func(
@@ -155,8 +164,11 @@ def undeploy_monitoring(monitoring_id):
             plural="services",
             name=service_name
         )
-
-        undeploy_pipeline(service_custom_object)
+        undeploy_pipeline(
+            name=service_custom_object["metadata"]["name"],
+            kind=service_custom_object["kind"],
+            namespace=service_custom_object["metadata"]["namespace"],
+        )
 
         # Undeploy trigger
         trigger_name = f"trigger-{monitoring_id}"
@@ -167,7 +179,10 @@ def undeploy_monitoring(monitoring_id):
             plural="triggers",
             name=trigger_name
         )
-
-        undeploy_pipeline(trigger_custom_object)
+        undeploy_pipeline(
+            name=trigger_custom_object["metadata"]["name"],
+            kind=trigger_custom_object["kind"],
+            namespace=trigger_custom_object["metadata"]["namespace"],
+        )
     except ApiException:
         raise NotFound("Monitoring resources do not exist.")

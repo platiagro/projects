@@ -152,10 +152,10 @@ class TestDeployments(TestCase):
                             POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s)"
+            f"INSERT INTO templates (uuid, name, tasks, deployment_id, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, DEPLOYMENT_ID, CREATED_AT, UPDATED_AT,))
 
         conn.close()
 

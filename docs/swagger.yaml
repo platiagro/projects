@@ -2261,7 +2261,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [Unset, Setted up, Pending, Running, Failed, Successful]
+          enum: [Unset, Setted up, Pending, Running, Failed, Succeeded]
           example: Setted up
         statusMessage:
           type: string
@@ -2399,6 +2399,12 @@ components:
               positionY:
                 type: number
                 format: float
+        experimentId:
+          type: string
+          format: uuid
+        deploymentId:
+          type: string
+          format: uuid
         createdAt:
           type: string
           format: date-time

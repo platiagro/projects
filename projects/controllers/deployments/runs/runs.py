@@ -118,9 +118,6 @@ class RunController:
         self.session.query(models.Deployment) \
             .filter_by(uuid=deployment_id) \
             .update({"url": url})
-        self.session.query(models.Operator) \
-            .filter_by(deployment_id=deployment_id) \
-            .update({"status": "Pending"})
         self.session.commit()
 
         run["deploymentId"] = deployment_id
@@ -170,7 +167,7 @@ class RunController:
         api = client.CustomObjectsApi()
         custom_objects = api.list_namespaced_custom_object(
             "machinelearning.seldon.io",
-            "v1alpha2",
+            "v1",
             KF_PIPELINES_NAMESPACE,
             "seldondeployments"
         )
@@ -179,7 +176,11 @@ class RunController:
         if deployments_objects:
             for deployment in deployments_objects:
                 if deployment["metadata"]["name"] == deployment_id:
-                    undeploy_pipeline(deployment)
+                    undeploy_pipeline(
+                        name=deployment["metadata"]["name"],
+                        kind=deployment["kind"],
+                        namespace=deployment["metadata"]["namespace"],
+                    )
 
         deployment_run = get_deployment_runs(deployment_id)
 

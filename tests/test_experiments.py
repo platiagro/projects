@@ -190,10 +190,10 @@ class TestExperiments(TestCase):
                      PARAMETERS_JSON, POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO templates (uuid, name, tasks, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s)"
+            f"INSERT INTO templates (uuid, name, tasks, experiment_id, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, EXPERIMENT_ID, CREATED_AT, UPDATED_AT,))
         conn.close()
 
     def tearDown(self):

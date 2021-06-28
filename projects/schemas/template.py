@@ -30,6 +30,8 @@ class Template(TemplateBase):
     uuid: str
     name: str
     tasks: List
+    experiment_id: Optional[str]
+    deployment_id: Optional[str]
     created_at: datetime
     updated_at: datetime
 
@@ -39,6 +41,8 @@ class Template(TemplateBase):
             uuid=model.uuid,
             name=model.name,
             tasks=model.tasks,
+            experiment_id=model.experiment_id,
+            deployment_id=model.deployment_id,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )

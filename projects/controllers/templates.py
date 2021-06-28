@@ -120,7 +120,13 @@ class TemplateController:
             }
             tasks.append(task)
 
-        template = models.Template(uuid=uuid_alpha(), name=template.name, tasks=tasks)
+        template = models.Template(
+            uuid=uuid_alpha(),
+            name=template.name,
+            tasks=tasks,
+            experiment_id=template.experiment_id,
+            deployment_id=template.deployment_id,
+        )
         self.session.add(template)
         self.session.commit()
         self.session.refresh(template)
