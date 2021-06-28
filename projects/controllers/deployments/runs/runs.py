@@ -118,9 +118,6 @@ class RunController:
         self.session.query(models.Deployment) \
             .filter_by(uuid=deployment_id) \
             .update({"url": url})
-        self.session.query(models.Operator) \
-            .filter_by(deployment_id=deployment_id) \
-            .update({"status": "Pending"})
         self.session.commit()
 
         run["deploymentId"] = deployment_id
