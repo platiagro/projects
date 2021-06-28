@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Deployments controller."""
+from projects.models.task import Task
 import sys
 from datetime import datetime
 
@@ -11,6 +12,9 @@ from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 
 NOT_FOUND = NotFound("The specified deployment does not exist")
+
+# Distance on the X axis from the leftmost operator
+DATASET_OPERATOR_DISTANCE = 100
 
 
 class DeploymentController:
@@ -373,8 +377,16 @@ class DeploymentController:
         # Creates a dict to map source operator_id to its copy operator_id.
         # This map will be used to build the dependencies using new operator_ids
         copies_map = {}
+
+        # just a simple flag to detect dataset operator         
         some_stored_operators_contains_dataset = False
+
+        # We need it in case we have to create a dataset operator 
+        leftmost_operator_position = (0,0)  
+
         for stored_operator in stored_operators:
+            if stored_operator.position_x < leftmost_operator_position:
+                leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y) 
 
             if "DATASETS" in stored_operator.task.tags:
                 name = "Fontes de dados"
@@ -414,6 +426,19 @@ class DeploymentController:
 
         # creates a DATASET type operator if doesn't exist any
         if some_stored_operators_contains_dataset:
+
+            dataset_task = self.session.query(Task).filter_by(category='DATASET').first()
+
+            operator = schemas.OperatorCreate(
+                name= "Fonte de dados",
+                task_id=dataset_task,
+                deployment_id=deployment_id,
+                parameters={"type": "L"},
+                position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
+                position_y=leftmost_operator_position[1],
+            )
+   
+            
             operator = self.operator_controller.create_operator(
                 operator=operator,
                 project_id=project_id,
@@ -421,6 +446,8 @@ class DeploymentController:
                 parameter={"type": "L"},
 
             )
+
+            
 
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
