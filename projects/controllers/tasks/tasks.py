@@ -330,6 +330,28 @@ class TaskController:
         task = self.session.query(models.Task).get(task_id)
 
         return schemas.Task.from_orm(task)
+    
+
+    def get_dataset_task_if_not_exist(self):
+        """
+        Get a dataset  task if the operator has none.
+
+        Returns
+        -------
+        dataset_task.uuid: str
+
+        Raises
+        ------
+        BadRequest
+            When there isn't any dataset task in database.
+        """
+        dataset_task = self.session.query(models.Task).filter_by(category='DATASETS').first()
+
+        if dataset_task is None:
+            raise BadRequest("Database doesn't contains any DATASET task")
+
+        return dataset_task.uuid    
+
 
     def delete_task(self, task_id: str):
         """
