@@ -385,8 +385,8 @@ class DeploymentController:
         leftmost_operator_position = (0, 0)
 
         for stored_operator in stored_operators:
-
-            # In case we have to create a dataset operator, it is interesting that we put it in the leftmost position
+            
+            # If we have to create a dataset operator, it is interesting that we put before the leftmost position
             if stored_operator.position_x < leftmost_operator_position[0]:
                 leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y)
 
@@ -419,16 +419,6 @@ class DeploymentController:
                 "dependencies": stored_operator.dependencies,
             }
 
-        # sets dependencies on new operators
-        for _, value in copies_map.items():
-            operator = schemas.OperatorUpdate(
-                dependencies=[copies_map[d]["copy_uuid"] for d in value["dependencies"]],
-            )
-            self.operator_controller.update_operator(project_id=project_id,
-                                                     deployment_id=deployment_id,
-                                                     operator_id=value["copy_uuid"],
-                                                     operator=operator)
-
         # creates a DATASET type operator if doesn't exist any
         if not some_stored_operators_is_dataset:
 
@@ -446,6 +436,17 @@ class DeploymentController:
                 project_id=project_id,
                 deployment_id=deployment_id
             )
+
+        # sets dependencies on new operators
+        for _, value in copies_map.items():
+            operator = schemas.OperatorUpdate(
+                dependencies=[copies_map[d]["copy_uuid"] for d in value["dependencies"]],
+            )
+            self.operator_controller.update_operator(project_id=project_id,
+                                                     deployment_id=deployment_id,
+                                                     operator_id=value["copy_uuid"],
+                                                     operator=operator)
+
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """

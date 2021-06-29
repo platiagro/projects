@@ -244,8 +244,20 @@ class TestDeployments(TestCase):
         result = rv.json()["deployments"]
         self.assertIsInstance(result, list)
         self.assertIn("operators", result[0])
-        operator = result[0]["operators"][0]
-        self.assertEqual(TASK_ID, operator["taskId"])
+        operators_list = result[0]["operators"]
+        
+        created_operator_contains_experiment_tasks = False 
+        created_operator_contains_dataset_task = False
+
+        for operator in operators_list: 
+            if operator.get('taskId') == TASK_ID:
+                created_operator_contains_experiment_tasks = True
+            
+            if operator.get('name') == 'Fonte de dados':
+                created_operator_contains_dataset_task = True
+        
+        self.assertTrue(created_operator_contains_experiment_tasks)
+        self.assertTrue(created_operator_contains_dataset_task)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
             "templateId": TEMPLATE_ID
@@ -279,8 +291,23 @@ class TestDeployments(TestCase):
         self.assertIsInstance(result, list)
         self.assertEqual(COPY_NAME, result[0]["name"])
         self.assertIn("operators", result[0])
-        operator = result[0]["operators"][0]
-        self.assertEqual(TASK_ID, operator["taskId"])
+        operators_list = result[0]["operators"]
+        
+        created_operator_contains_experiment_tasks = False 
+        created_operator_contains_dataset_task = False
+        for operator in operators_list: 
+           
+            if operator.get('taskId') == TASK_ID:
+                created_operator_contains_experiment_tasks = True
+            
+            if operator.get('name') == 'Fonte de dados':
+                created_operator_contains_dataset_task = True
+        
+        self.assertTrue(created_operator_contains_experiment_tasks)
+        self.assertTrue(created_operator_contains_dataset_task)
+
+           
+
 
     def test_get_deployment(self):
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/{DEPLOYMENT_ID}")
