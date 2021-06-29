@@ -378,19 +378,21 @@ class DeploymentController:
         # This map will be used to build the dependencies using new operator_ids
         copies_map = {}
 
-        # just a simple flag to detect dataset operator         
-        some_stored_operators_contains_dataset = False
+        # just a simple flag to detect the existence of a dataset operator         
+        some_stored_operators_is_dataset = False
 
         # We need it in case we have to create a dataset operator 
         leftmost_operator_position = (0,0)  
 
         for stored_operator in stored_operators:
-            if stored_operator.position_x < leftmost_operator_position:
+
+            # In case we have to create a dataset operator, it is interesting that we put it in the leftmost position
+            if stored_operator.position_x < leftmost_operator_position[0]:
                 leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y) 
 
             if "DATASETS" in stored_operator.task.tags:
                 name = "Fontes de dados"
-                some_stored_operators_contains_dataset = True
+                some_stored_operators_is_dataset = True
             else:
                 name = None
 
@@ -425,13 +427,13 @@ class DeploymentController:
                                                      operator=operator)
 
         # creates a DATASET type operator if doesn't exist any
-        if some_stored_operators_contains_dataset:
+        if not some_stored_operators_is_dataset:
 
-            dataset_task = self.session.query(Task).filter_by(category='DATASET').first()
+            dataset_task = self.session.query(Task).filter_by(category='DATASETS').first()
 
             operator = schemas.OperatorCreate(
                 name= "Fonte de dados",
-                task_id=dataset_task,
+                task_id=dataset_task.uuid,
                 deployment_id=deployment_id,
                 parameters={"type": "L"},
                 position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
