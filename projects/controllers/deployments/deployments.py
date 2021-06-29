@@ -385,7 +385,7 @@ class DeploymentController:
         leftmost_operator_position = (0, 0)
 
         for stored_operator in stored_operators:
-            
+
             # If we have to create a dataset operator, it is interesting that we put before the leftmost position
             if stored_operator.position_x < leftmost_operator_position[0]:
                 leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y)
@@ -445,7 +445,6 @@ class DeploymentController:
                                                      deployment_id=deployment_id,
                                                      operator_id=value["copy_uuid"],
                                                      operator=operator)
-
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """
