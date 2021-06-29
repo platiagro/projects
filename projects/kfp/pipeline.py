@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Kubeflow Pipelines interface."""
 from collections import defaultdict
+from datetime import datetime
 from json import dumps, loads
 from os import getenv
 
 from kfp import compiler, dsl
+from kfp.dsl._resource_op import kubernetes_resource_delete_op
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
@@ -341,33 +343,47 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     sdep_resource = mount_volume_from_experiment(sdep_resource, experiment_id)
 
     # defines a timeout for this workflow step as the
-    # maximum readiness_initial_delay_seconds + 60 seconds
-    timeout = max_initial_delay_seconds + 60
+    # maximum readiness_initial_delay_seconds + 120 seconds
+    timeout = max_initial_delay_seconds + 120
 
     resource_op = dsl.ResourceOp(
         name="deployment",
         k8s_resource=sdep_resource,
         success_condition="status.state == Available",
+        attribute_outputs={
+            "deployment_id": deployment_id,
+            "created_at": datetime.utcnow().isoformat(),
+        },
     ).set_timeout(timeout)
+
+    # attribute_outputs makes this ResourceOp to have a unique cache key
+    # Each op is cached based on a key formed by:
+    # container, inputs, outputs, volumes, initContainers and sidecars
+    # See: https://github.com/kubeflow/pipelines/blob/cc83e1089b573256e781ed2e4ac90f604129e769/backend/src/cache/server/mutation.go#L232-L245
+
+    # If the keys are repeated, then the workflow will not run for a second time.
+    # This caused issues for ResourceOps where the cache keys were the same for all resources.
+    # (only the resource yaml changes; container, inputs, outputs, volumes, initContainers and sidecars were the same).
 
     return resource_op
 
 
-def undeploy_pipeline(resource):
+def undeploy_pipeline(name, kind, namespace):
     """
     Undeploy a deployment pipeline.
 
     Parameters
     ----------
-    resource : dict
-        A k8s resource which will be submitted to the cluster.
+    name : str
+    kind : str
+    namespace : str
     """
     @dsl.pipeline(name="Undeploy")
     def undeploy():
-        dsl.ResourceOp(
-            name="undeploy",
-            k8s_resource=resource,
-            action="delete"
+        kubernetes_resource_delete_op(
+            name=name,
+            kind=kind,
+            namespace=namespace,
         )
 
     kfp_client().create_run_from_pipeline_func(

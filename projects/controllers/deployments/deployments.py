@@ -405,6 +405,7 @@ class DeploymentController:
                 parameters=parameters,
                 position_x=stored_operator.position_x,
                 position_y=stored_operator.position_y,
+                status="Setted up",
             )
 
             operator = self.operator_controller.create_operator(

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """ASGI server."""
 import argparse
+import os
 import sys
 
 import uvicorn
@@ -19,11 +20,12 @@ from projects.api.experiments.runs import datasets, figures, \
     logs as experiment_logs, metrics, results
 from projects.api.experiments.operators import parameters as operator_parameters
 from projects.api.tasks import parameters
-from projects.database import engine, init_db
+from projects.database import init_db
 from projects.exceptions import BadRequest, Forbidden, NotFound, \
     InternalServerError
 from projects.api.monitorings import figures as monitoring_figures
 
+init_db()
 
 app = FastAPI(
     title="PlatIAgro Projects",
@@ -84,20 +86,47 @@ async def handle_errors(request: Request, exception: Exception):
     )
 
 
+def enable_cors():
+    """
+    Enables CORS preflight requests.
+    """
+    @app.options("/{rest_of_path:path}")
+    async def preflight_handler(request: Request, rest_of_path: str) -> Response:
+        """
+        Handles CORS preflight requests.
+        """
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        return response
+
+    @app.middleware("http")
+    async def add_cors_header(request: Request, call_next):
+        """
+        Sets CORS headers.
+        """
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        return response
+
+
+if os.getenv("ENABLE_CORS"):
+    enable_cors()
+
+
 def parse_args(args):
     """Takes argv and parses API options."""
     parser = argparse.ArgumentParser(
-        description="Projects API"
+        description="Projects API",
     )
     parser.add_argument(
-        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
-    )
-    parser.add_argument("--enable-cors", action="count")
-    parser.add_argument(
-        "--debug", action="count", help="Enable debug"
+        "--host", type=str, default="127.0.0.1", help="Host for HTTP server (default: 127.0.0.1)",
     )
     parser.add_argument(
-        "--init-db", action="count", help="Create database and tables before the HTTP server starts"
+        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)",
     )
     return parser.parse_args(args)
 
@@ -105,35 +134,4 @@ def parse_args(args):
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
 
-    # Enable CORS if required
-    if args.enable_cors:
-        @app.options("/{rest_of_path:path}")
-        async def preflight_handler(request: Request, rest_of_path: str) -> Response:
-            """
-            Handles CORS preflight requests.
-            """
-            response = Response()
-            response.headers["Access-Control-Allow-Origin"] = "*"
-            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-            return response
-
-        @app.middleware("http")
-        async def add_cors_header(request: Request, call_next):
-            """
-            Sets CORS headers.
-            """
-            response = await call_next(request)
-            response.headers["Access-Control-Allow-Origin"] = "*"
-            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-            return response
-
-    # Initializes DB if required
-    if args.init_db:
-        init_db()
-
-    if args.debug:
-        engine.echo = True
-
-    uvicorn.run(app, port=args.port, debug=args.debug)
+    uvicorn.run(app, host=args.host, port=args.port)
