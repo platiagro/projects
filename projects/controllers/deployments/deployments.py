@@ -390,17 +390,19 @@ class DeploymentController:
             if stored_operator.position_x < leftmost_operator_position[0]:
                 leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y)
 
-            if "DATASETS" in stored_operator.task.tags:
+            if stored_operator.task.category == "DATASETS":
                 name = "Fontes de dados"
+                parameters = {"type": "L"}
                 some_stored_operators_is_dataset = True
             else:
                 name = None
+                parameters = stored_operator.parameters
 
             operator = schemas.OperatorCreate(
                 name=name,
                 task_id=stored_operator.task_id,
                 deployment_id=deployment_id,
-                parameters=stored_operator.parameters,
+                parameters=parameters,
                 position_x=stored_operator.position_x,
                 position_y=stored_operator.position_y,
             )
