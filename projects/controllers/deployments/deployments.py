@@ -9,12 +9,13 @@ from projects.controllers.experiments import ExperimentController
 from projects.controllers.operators import OperatorController
 from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
+from projects.controllers.tasks import TaskController
 from projects.exceptions import BadRequest, NotFound
 
 NOT_FOUND = NotFound("The specified deployment does not exist")
 
 # Distance on the X axis from the leftmost operator
-DATASET_OPERATOR_DISTANCE = 100
+DATASET_OPERATOR_DISTANCE = 300
 
 
 class DeploymentController:
@@ -431,11 +432,9 @@ class DeploymentController:
         # creates a DATASET type operator if doesn't exist any
         if not some_stored_operators_is_dataset:
 
-            dataset_task = self.session.query(Task).filter_by(category='DATASETS').first()
-
             operator = schemas.OperatorCreate(
                 name="Fonte de dados",
-                task_id=dataset_task.uuid,
+                task_id=TaskController.get_dataset_task_if_not_exist(self),
                 deployment_id=deployment_id,
                 parameters={"type": "L"},
                 position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
