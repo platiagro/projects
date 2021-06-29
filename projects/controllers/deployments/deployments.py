@@ -378,17 +378,17 @@ class DeploymentController:
         # This map will be used to build the dependencies using new operator_ids
         copies_map = {}
 
-        # just a simple flag to detect the existence of a dataset operator         
+        # just a simple flag to detect the existence of a dataset operator
         some_stored_operators_is_dataset = False
 
-        # We need it in case we have to create a dataset operator 
-        leftmost_operator_position = (0,0)  
+        # We need it in case we have to create a dataset operator
+        leftmost_operator_position = (0, 0)
 
         for stored_operator in stored_operators:
 
             # In case we have to create a dataset operator, it is interesting that we put it in the leftmost position
             if stored_operator.position_x < leftmost_operator_position[0]:
-                leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y) 
+                leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y)
 
             if "DATASETS" in stored_operator.task.tags:
                 name = "Fontes de dados"
@@ -433,23 +433,19 @@ class DeploymentController:
             dataset_task = self.session.query(Task).filter_by(category='DATASETS').first()
 
             operator = schemas.OperatorCreate(
-                name= "Fonte de dados",
+                name="Fonte de dados",
                 task_id=dataset_task.uuid,
                 deployment_id=deployment_id,
                 parameters={"type": "L"},
                 position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
                 position_y=leftmost_operator_position[1],
             )
-   
-            
+
             operator = self.operator_controller.create_operator(
                 operator=operator,
                 project_id=project_id,
                 deployment_id=deployment_id
             )
-
-
-
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """
