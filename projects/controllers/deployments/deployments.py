@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Deployments controller."""
-from projects.models.task import Task
 import sys
 from datetime import datetime
 
