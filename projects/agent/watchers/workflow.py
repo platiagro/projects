@@ -16,7 +16,7 @@ GROUP = "argoproj.io"
 VERSION = "v1alpha1"
 PLURAL = "workflows"
 
-RECURRENT_MESSAGES = ["ContainerCreating", ]
+RECURRENT_MESSAGES = ["ContainerCreating", "PodInitializing"]
 
 
 def watch_workflows(api, session):
