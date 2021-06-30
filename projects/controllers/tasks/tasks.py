@@ -331,24 +331,35 @@ class TaskController:
 
         return schemas.Task.from_orm(task)
 
-    def get_dataset_task_if_not_exist(self):
+    def get_or_create_dataset_task_if_not_exist(self):
         """
-        Get a dataset  task if the operator has none.
+        Get or create a dataset  task if the operator has none.
 
         Returns
         -------
         dataset_task.uuid: str
 
-        Raises
-        ------
-        BadRequest
-            When there isn't any dataset task in database.
         """
+
         dataset_task = self.session.query(models.Task).filter_by(category='DATASETS').first()
-
         if dataset_task is None:
-            raise BadRequest("Database doesn't contains any DATASET task")
+            dataset_task_schema = schemas.TaskCreate(
+                name="Upload de arquivo",
+                description="Importa arquivos para utilização em experimentos.",
+                category="DATASETS",
+                tags=["DATASETS"],
+                commands=None,
+                arguments=None,
+                image=TASK_DEFAULT_EXPERIMENT_IMAGE,
+                artifacts=[],
+                cpuLimit=TASK_DEFAULT_CPU_LIMIT,
+                cpuRequest=TASK_DEFAULT_CPU_REQUEST,
+                memoryLimit=TASK_DEFAULT_MEMORY_LIMIT,
+                memoryRequest=TASK_DEFAULT_MEMORY_REQUEST
 
+            )
+
+            dataset_task = self.create_task(self, dataset_task_schema)
         return dataset_task.uuid
 
     def delete_task(self, task_id: str):
