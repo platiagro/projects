@@ -382,7 +382,7 @@ class DeploymentController:
         some_stored_operators_is_dataset = False
 
         # We need it in case we have to create a dataset operator
-        leftmost_operator_position = (0, 0)
+        leftmost_operator_position = (1000, 1000)
 
         for stored_operator in stored_operators:
 
