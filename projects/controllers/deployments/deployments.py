@@ -381,8 +381,8 @@ class DeploymentController:
         # just a simple flag to detect the existence of a dataset operator
         some_stored_operators_is_dataset = False
 
-        # We need it in case we have to create a dataset operator
-        leftmost_operator_position = (1000, 1000)
+        # default position, in case we have to create a dataset operator
+        leftmost_operator_position = (stored_operators[0].position_x, stored_operators[0].position_y)
 
         for stored_operator in stored_operators:
 

@@ -287,7 +287,7 @@ class TestDeployments(TestCase):
             "copyFrom": DEPLOYMENT_ID,
             "name": COPY_NAME,
         })
-        print(rv.json())
+
         result = rv.json()["deployments"]
         #print(result)
         self.assertIsInstance(result, list)
