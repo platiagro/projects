@@ -424,7 +424,7 @@ class DeploymentController:
 
             operator = schemas.OperatorCreate(
                 name="Fonte de dados",
-                task_id=TaskController.get_dataset_task_if_not_exist(self),
+                task_id=TaskController.get_or_create_dataset_task_if_not_exist(self),
                 deployment_id=deployment_id,
                 parameters={"type": "L"},
                 position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
