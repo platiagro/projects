@@ -16,7 +16,7 @@ GROUP = "argoproj.io"
 VERSION = "v1alpha1"
 PLURAL = "workflows"
 
-RECURRENT_MESSAGES = ["ContainerCreating", "PodInitializing"]
+RECURRENT_MESSAGES = ["ContainerCreating", "omitted: depends condition not met", "failed with exit code 1", "pod deleted"]
 
 
 def watch_workflows(api, session):
