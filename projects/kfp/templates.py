@@ -71,6 +71,28 @@ COMPONENT_SPEC = Template("""
                     {
                         "name": "NVIDIA_VISIBLE_DEVICES",
                         "value": "$nvidiaVisibleDevices"
+                    },
+                    {
+                        "name": "MINIO_ENDPOINT",
+                        "value": "minio.platiagro:9000"
+                    },
+                    {
+                        "name": "MINIO_ACCESS_KEY",
+                        "valueFrom": {
+                            "secretKeyRef": {
+                                "name": "minio-secrets",
+                                "key": "MINIO_ACCESS_KEY"
+                            }
+                        }
+                    },
+                    {
+                        "name": "MINIO_SECRET_KEY",
+                        "valueFrom": {
+                            "secretKeyRef": {
+                                "name": "minio-secrets",
+                                "key": "MINIO_SECRET_KEY"
+                            }
+                        }
                     }
                 ],
                 "livenessProbe": {
@@ -171,6 +193,28 @@ MONITORING_SERVICE = Template("""{
                             {
                                 "name": "RUN_ID",
                                 "value": "$runId"
+                            },
+                            {
+                                "name": "MINIO_ENDPOINT",
+                                "value": "minio.platiagro:9000"
+                            },
+                            {
+                                "name": "MINIO_ACCESS_KEY",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "name": "minio-secrets",
+                                        "key": "MINIO_ACCESS_KEY"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "MINIO_SECRET_KEY",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "name": "minio-secrets",
+                                        "key": "MINIO_SECRET_KEY"
+                                    }
+                                }
                             }
                         ],
                         "volumeMounts": [
