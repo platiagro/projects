@@ -17,6 +17,19 @@ VERSION = "v1alpha1"
 PLURAL = "workflows"
 
 RECURRENT_MESSAGES = ["ContainerCreating", "omitted: depends condition not met", "failed with exit code 1", "pod deleted"]
+# List taken from:
+# https://github.com/argoproj/argo-workflows/blob/fa4b32a5347d924079072fe760768462d40f6b3b/pkg/apis/workflow/v1alpha1/workflow_types.go#L44-L60
+WORKFLOW_STATUSES = {
+    "Error": "Failed",
+    "Pending": "Pending",
+    "Running": "Running",
+    "Succeeded": "Succeeded",
+    "Skipped": "Succeeded",
+    "Failed": "Failed",
+    "Error": "Failed",
+    "Omitted": "Failed",
+    "Terminated": "Terminated",
+}
 
 
 def watch_workflows(api, session):
@@ -124,6 +137,9 @@ def update_status(workflow_manifest, session):
             status_message = None
         else:
             status = str(node["phase"])
+
+        # Maps Workflow status to values that are supported by the frontend
+        status = WORKFLOW_STATUSES.get(status, status)
 
         if status_message not in RECURRENT_MESSAGES:
             session.query(models.Operator) \
