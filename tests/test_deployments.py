@@ -192,7 +192,6 @@ class TestDeployments(TestCase):
     def test_list_deployments(self):
         rv = TEST_CLIENT.get(f"/projects/foo/deployments")
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments")
@@ -204,7 +203,6 @@ class TestDeployments(TestCase):
     def test_create_deployment(self):
         rv = TEST_CLIENT.post(f"/projects/foo/deployments", json={})
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
@@ -219,14 +217,12 @@ class TestDeployments(TestCase):
             "copyFrom": "unk",
         })
         result = rv.json()
-        expected = {"message": "source deployment does not exist"}
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
             "experiments": [],
         })
         result = rv.json()
-        expected = {"message": "experiments were not specified"}
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 400)
 
@@ -234,7 +230,6 @@ class TestDeployments(TestCase):
             "experiments": ["unk"],
         })
         result = rv.json()
-        expected = {"message": "some experiments do not exist"}
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 400)
 
@@ -245,17 +240,17 @@ class TestDeployments(TestCase):
         self.assertIsInstance(result, list)
         self.assertIn("operators", result[0])
         operators_list = result[0]["operators"]
-        
-        created_operator_contains_experiment_tasks = False 
+
+        created_operator_contains_experiment_tasks = False
         created_operator_contains_dataset_task = False
 
-        for operator in operators_list: 
+        for operator in operators_list:
             if operator.get('taskId') == TASK_ID:
                 created_operator_contains_experiment_tasks = True
-            
+
             if operator.get('name') == 'Fonte de dados':
                 created_operator_contains_dataset_task = True
-        
+
         self.assertTrue(created_operator_contains_experiment_tasks)
         self.assertTrue(created_operator_contains_dataset_task)
 
@@ -272,7 +267,6 @@ class TestDeployments(TestCase):
             "copyFrom": DEPLOYMENT_ID,
         })
         result = rv.json()
-        expected = {"message": "name is required to duplicate deployment"}
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
@@ -280,7 +274,6 @@ class TestDeployments(TestCase):
             "name": NAME,
         })
         result = rv.json()
-        expected = {"message": "a deployment with that name already exists"}
         self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
@@ -289,37 +282,31 @@ class TestDeployments(TestCase):
         })
 
         result = rv.json()["deployments"]
-        #print(result)
         self.assertIsInstance(result, list)
         self.assertEqual(COPY_NAME, result[0]["name"])
         self.assertIn("operators", result[0])
         operators_list = result[0]["operators"]
-        
-        created_operator_contains_experiment_tasks = False 
+
+        created_operator_contains_experiment_tasks = False
         created_operator_contains_dataset_task = False
-        for operator in operators_list: 
-           
+        for operator in operators_list:
+
             if operator.get('taskId') == TASK_ID:
                 created_operator_contains_experiment_tasks = True
-            
+
             if operator.get('name') == 'Fonte de dados':
                 created_operator_contains_dataset_task = True
-        
+
         self.assertTrue(created_operator_contains_experiment_tasks)
         self.assertTrue(created_operator_contains_dataset_task)
-
-           
-
 
     def test_get_deployment(self):
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/{DEPLOYMENT_ID}")
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/foo-bar")
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}")
