@@ -20,7 +20,6 @@ RECURRENT_MESSAGES = ["ContainerCreating", "omitted: depends condition not met",
 # List taken from:
 # https://github.com/argoproj/argo-workflows/blob/fa4b32a5347d924079072fe760768462d40f6b3b/pkg/apis/workflow/v1alpha1/workflow_types.go#L44-L60
 WORKFLOW_STATUSES = {
-    "Error": "Failed",
     "Pending": "Pending",
     "Running": "Running",
     "Succeeded": "Succeeded",
