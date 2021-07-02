@@ -19,24 +19,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: platiagro
-        ports:
-        - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
-      minio:
-        image: bitnami/minio:latest
-        env:
-          MINIO_ACCESS_KEY: minio
-          MINIO_SECRET_KEY: minio123
-        ports:
-        - 9000:9000
-
     strategy:
       matrix:
         python-version: ["3.7"]
@@ -72,11 +54,13 @@ jobs:
       with:
         path: CODE-REVIEW.md
 
-    - name: start minikube
-      id: minikube
-      uses: medyagh/setup-minikube@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Setup Minikube
+      uses: manusa/actions-setup-minikube@v2.4.2
+      with:
+        minikube version: 'v1.16.0'
+        kubernetes version: 'v1.19.2'
+        start args: --extra-config=apiserver.service-account-signing-key-file=/var/lib/minikube/certs/sa.key --extra-config=apiserver.service-account-issuer=kubernetes/serviceaccount --extra-config=apiserver.service-account-api-audiences=api
+        github token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install Kustomize / Helm
       run: |
@@ -124,34 +108,32 @@ jobs:
 
     - name: Install Istio
       run: |
-        curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.3.5 sh -
-        cd istio-1.3.5
-        for i in install/kubernetes/helm/istio-init/files/crd*yaml; do kubectl apply -f $i; done
-        kubectl apply -f install/kubernetes/istio-demo.yaml
+        # Cert-Manager
+        ./kustomize build "github.com/platiagro/manifests/common/cert-manager/cert-manager-kube-system-resources/base/?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/common/cert-manager/cert-manager-crds/base/?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/common/cert-manager/cert-manager/overlays/self-signed/?ref=$BRANCH" | kubectl apply -f -
 
-        kubectl create namespace kubeflow
+        kubectl -n cert-manager wait --for=condition=Ready pods --all --timeout=300s
 
-        cat <<EOF | kubectl apply -f -
-          apiVersion: networking.istio.io/v1alpha3
-          kind: Gateway
-          metadata:
-            name: kubeflow-gateway
-            namespace: kubeflow
-          spec:
-            selector:
-              istio: ingressgateway # use istio default controller
-            servers:
-            - port:
-                number: 80
-                name: http
-                protocol: HTTP
-              hosts:
-              - "*"
-        EOF
+        # Istio
+        ./kustomize build "github.com/platiagro/manifests/common/istio-1-9-0/istio-crds/base/?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/common/istio-1-9-0/istio-namespace/base/?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/common/istio-1-9-0/istio-install/base/?ref=$BRANCH" | kubectl apply -f -
+
+        kubectl -n istio-system wait --for=condition=Ready pods --all --timeout=300s
+
+        # Kubeflow namespace
+        ./kustomize build "github.com/platiagro/manifests/common/kubeflow-namespace/base/?ref=$BRANCH" | kubectl apply -f -
+        # Kubeflow Roles
+        ./kustomize build "github.com/platiagro/manifests/common/kubeflow-roles/base/?ref=$BRANCH" | kubectl apply -f -
+        # Kubeflow Istio Resources
+        ./kustomize build "github.com/platiagro/manifests/common/istio-1-9-0/kubeflow-istio-resources/base/?ref=$BRANCH" | kubectl apply -f -
+      env:
+        BRANCH: "v0.2.0-kubeflow-v1.3-branch"
 
     - name: Install JupyterLab
       run: |
-        ./kustomize build "github.com/platiagro/manifests/jupyter/notebook-controller/base/?ref=$BRANCH" | kubectl apply -f -
+        ./kustomize build "github.com/platiagro/manifests/apps/jupyter/notebook-controller/upstream/overlays/kubeflow/?ref=$BRANCH" | kubectl apply -f -
         sleep 10
         kubectl -n kubeflow wait --for=condition=Ready pods --all --timeout=120s
 
@@ -190,7 +172,7 @@ jobs:
                   value: notebook
                 - name: OPERATOR_ID
                   value: notebook
-                image: jupyter/base-notebook
+                image: public.ecr.aws/j1r0q0g6/notebooks/notebook-servers/jupyter:master-ebc0c4f0
                 name: server
                 volumeMounts:
                 - mountPath: /home/jovyan/tasks
@@ -201,10 +183,42 @@ jobs:
                   claimName: vol-tasks
         EOF
 
-        sleep 120
-        kubectl -n anonymous wait --for=condition=Ready pods --all --timeout=120s
+        sleep 10
+        kubectl -n anonymous wait --for=condition=Ready pods --all --timeout=240s
       env:
-        BRANCH: "v0.2.0-kubeflow-v1.2-branch"
+        BRANCH: "v0.2.0-kubeflow-v1.3-branch"
+
+    - name: Start MySQL
+      id: mysql
+      run: |
+        docker run -d \
+        --name mysql \
+        --env MYSQL_ALLOW_EMPTY_PASSWORD=yes \
+        --env MYSQL_DATABASE=platiagro \
+        --env MYSQL_ROOT_HOST=% \
+        -p 3306:3306 \
+        mysql/mysql-server:8.0.3
+        sleep 60
+        docker logs mysql
+
+    - name: Start MinIO
+      id: minio
+      run: |
+        docker run -d \
+        --name minio \
+        --env MINIO_ACCESS_KEY=minio \
+        --env MINIO_SECRET_KEY=minio123 \
+        -p 9000:9000 \
+        bitnami/minio:latest
+        sleep 60
+        docker logs minio
+
+    - name: Verify MySQL connection from host
+      if: ${{ always() }}
+      run: |
+        echo "${{ toJson(job) }}"
+        sudo apt-get install -y mysql-client
+        mysql --host 127.0.0.1 --port 3306 -uroot -e "SHOW DATABASES"
 
     - name: Install Seldon Core
       run: |
@@ -252,7 +266,7 @@ jobs:
         MINIO_ENDPOINT: localhost:9000
         MINIO_ACCESS_KEY: minio
         MINIO_SECRET_KEY: minio123
-        MYSQL_DB_HOST: localhost
+        MYSQL_DB_HOST: localhost:3306
         MYSQL_DB_NAME: platiagro
         MYSQL_DB_USER: root
         JUPYTER_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}/notebook/anonymous/server
@@ -266,9 +280,15 @@ jobs:
     - name: Debug workflows
       if: ${{ always() }}
       run: |
+        kubectl get pod -A
+        kubectl -n cert-manager describe pod
+        kubectl -n istio-system describe pod
         kubectl -n kubeflow describe pod
-        kubectl -n kubeflow get workflows
         kubectl -n kubeflow get pod
+        kubectl -n kubeflow logs -l app=notebook-controller --tail 1000
+        kubectl -n anonymous describe pod
+        kubectl -n anonymous get pod
+        kubectl -n kubeflow get workflows
 
     - name: Make disk space available for docker build
       if: ${{ always() }}
@@ -329,4 +349,5 @@ jobs:
           BRANCH=${{ steps.vars.outputs.BRANCH }}
 
     - name: Image digest
+      if: ${{ always() }}
       run: echo ${{ steps.docker_build_agent.outputs.digest }}

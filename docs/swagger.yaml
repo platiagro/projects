@@ -2261,7 +2261,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [Unset, Setted up, Pending, Running, Failed, Succeeded]
+          enum: [Unset, Setted up, Pending, Running, Failed, Succeeded, Terminated]
           example: Setted up
         statusMessage:
           type: string
