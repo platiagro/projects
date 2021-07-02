@@ -73,7 +73,9 @@ class RunController:
         """
         deployment = self.session.query(models.Deployment).get(deployment_id)
         url = get_seldon_deployment_url(deployment_id)
-        deployment.update({"url": url})
+        self.session.query(models.Deployment) \
+            .filter_by(uuid=deployment_id) \
+            .update({"url": url})
         self.session.commit()
 
         return schemas.Deployment.from_orm(deployment)
