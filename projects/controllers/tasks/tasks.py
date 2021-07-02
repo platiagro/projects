@@ -331,7 +331,7 @@ class TaskController:
 
         return schemas.Task.from_orm(task)
 
-    def get_or_create_dataset_task_if_not_exist(self):
+    def get_or_create_dataset_task_if_not_exist(session):
         """
         Get or create a dataset  task if the operator has none.
 
@@ -341,7 +341,7 @@ class TaskController:
 
         """
 
-        dataset_task = self.session.query(models.Task).filter_by(category='DATASETS').first()
+        dataset_task = session.query(models.Task).filter_by(category='DATASETS').first()
         if dataset_task is None:
             dataset_task_schema = schemas.TaskCreate(
                 name="Upload de arquivo",
