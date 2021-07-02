@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi_mail import FastMail, MessageSchema
+from fastapi import BackgroundTasks
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
@@ -331,7 +332,7 @@ class TaskController:
 
         return schemas.Task.from_orm(task)
 
-    def get_or_create_dataset_task_if_not_exist(session, background_tasks):
+    def get_or_create_dataset_task_if_not_exist(session):
         """
         Get or create a dataset  task if the operator has none.
 
@@ -359,7 +360,7 @@ class TaskController:
 
             )
 
-            dataset_task = TaskController(session, background_tasks).create_task(task=dataset_task_schema)
+            dataset_task = TaskController(session, BackgroundTasks).create_task(task=dataset_task_schema)
         return dataset_task.uuid
 
     def delete_task(self, task_id: str):
