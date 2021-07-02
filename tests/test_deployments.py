@@ -289,7 +289,6 @@ class TestDeployments(TestCase):
         })
 
         result = rv.json()["deployments"]
-        #print(result)
         self.assertIsInstance(result, list)
         self.assertEqual(COPY_NAME, result[0]["name"])
         self.assertIn("operators", result[0])

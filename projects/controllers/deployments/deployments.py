@@ -392,11 +392,7 @@ class DeploymentController:
                 leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y)
 
             if stored_operator.task.category == "DATASETS":
-<<<<<<< HEAD
-                name = "Fontes de dados"
-=======
                 name = FONTE_DE_DADOS
->>>>>>> 6a9c338a6820db8f6f97ee88248afcf112d6bb67
                 parameters = {"type": "L"}
                 some_stored_operators_is_dataset = True
             else:
@@ -428,11 +424,7 @@ class DeploymentController:
         if not some_stored_operators_is_dataset:
 
             operator = schemas.OperatorCreate(
-<<<<<<< HEAD
-                name="Fonte de dados",
-=======
                 name=FONTE_DE_DADOS,
->>>>>>> 6a9c338a6820db8f6f97ee88248afcf112d6bb67
                 task_id=TaskController.get_or_create_dataset_task_if_not_exist(self),
                 deployment_id=deployment_id,
                 parameters={"type": "L"},
