@@ -4,6 +4,7 @@ import sys
 from datetime import datetime
 
 from projects import models, schemas
+from projects.controllers.deployments.runs import RunController
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.operators import OperatorController
 from projects.controllers.templates import TemplateController
@@ -18,6 +19,7 @@ class DeploymentController:
         self.session = session
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
+        self.run_controller = RunController(session)
         self.template_controller = TemplateController(session)
         self.background_tasks = background_tasks
 
@@ -114,6 +116,8 @@ class DeploymentController:
 
         self.session.commit()
         for deployment in deployments:
+            self.run_controller.create_run(project_id=project_id,
+                                           deployment_id=deployment.uuid)
             self.session.refresh(deployment)
 
         return schemas.DeploymentList.from_orm(deployments, len(deployments))
