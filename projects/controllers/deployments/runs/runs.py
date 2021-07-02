@@ -4,12 +4,10 @@ from kubernetes import client
 from kubernetes.client.rest import ApiException
 
 from projects import models, schemas
-from projects.controllers.monitorings import MonitoringController
 from projects.exceptions import BadRequest, NotFound
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp import runs as kfp_runs
 from projects.kfp.deployments import get_deployment_runs
-from projects.kfp.monitorings import deploy_monitoring
 from projects.kfp.pipeline import undeploy_pipeline
 from projects.kubernetes.kube_config import load_kube_config
 from projects.kubernetes.seldon import get_seldon_deployment_url
@@ -19,10 +17,8 @@ NOT_FOUND = NotFound("The specified run does not exist")
 
 
 class RunController:
-    def __init__(self, session, background_tasks=None):
+    def __init__(self, session):
         self.session = session
-        self.background_tasks = background_tasks
-        self.monitoring_controller = MonitoringController(session)
 
     def raise_if_run_does_not_exist(self, run_id: str, deployment_id: str):
         """
@@ -43,13 +39,12 @@ class RunController:
         except (ApiException, ValueError):
             raise NOT_FOUND
 
-    def list_runs(self, project_id: str, deployment_id: str):
+    def list_runs(self, deployment_id: str):
         """
         Lists all runs under a deployment.
 
         Parameters
         ----------
-        project_id : str
         deployment_id : str
 
         Returns
@@ -59,13 +54,12 @@ class RunController:
         runs = kfp_runs.list_runs(experiment_id=deployment_id)
         return schemas.RunList.from_orm(runs, len(runs))
 
-    def create_run(self, project_id: str, deployment_id: str):
+    def create_run(self, deployment_id: str):
         """
         Starts a new run in Kubeflow Pipelines.
 
         Parameters
         ----------
-        project_id : str
         deployment_id : str
 
         Returns
@@ -100,38 +94,21 @@ class RunController:
         for operator in deployment.operators:
             self.session.expunge(operator)
 
-        # Deploy monitoring tasks
-        monitorings = self.monitoring_controller.list_monitorings(project_id=project_id,
-                                                                  deployment_id=deployment_id).monitorings
-        if monitorings:
-            for monitoring in monitorings:
-                self.background_tasks.add_task(
-                    deploy_monitoring,
-                    deployment_id=deployment_id,
-                    experiment_id=deployment.experiment_id,
-                    run_id=run["uuid"],
-                    task_id=monitoring.task_id,
-                    monitoring_id=monitoring.uuid
-                )
-
         url = get_seldon_deployment_url(deployment_id)
         self.session.query(models.Deployment) \
             .filter_by(uuid=deployment_id) \
             .update({"url": url})
         self.session.commit()
 
-        run["deploymentId"] = deployment_id
         return run
 
-    def get_run(self, project_id: str, deployment_id: str, run_id: str):
+    def get_run(self, deployment_id: str):
         """
         Details a run in Kubeflow Pipelines.
 
         Parameters
         ----------
-        project_id : str
         deployment_id : str
-        run_id : str
 
         Returns
         -------
