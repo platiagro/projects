@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi_mail import FastMail, MessageSchema
-from fastapi import BackgroundTasks, background
+from fastapi import BackgroundTasks
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
