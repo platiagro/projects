@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Istio functions."""
+import os
 from kubernetes import client
 
 from projects.kubernetes.kube_config import load_kube_config
@@ -7,7 +8,7 @@ from projects.kubernetes.kube_config import load_kube_config
 
 def get_cluster_ip():
     """
-    Retrive the cluster ip.
+    Retrieve the cluster ip.
 
     Returns
     -------
@@ -18,9 +19,16 @@ def get_cluster_ip():
     v1 = client.CoreV1Api()
 
     service = v1.read_namespaced_service(
-        name='istio-ingressgateway', namespace='istio-system')
+        name="istio-ingressgateway", namespace="istio-system")
 
-    return service.status.load_balancer.ingress[0].ip
+    if service.status.load_balancer.ingress is None:
+        cluster_ip = service.spec.cluster_ip
+    else:
+        if service.status.load_balancer.ingress[0].hostname:
+            cluster_ip = service.status.load_balancer.ingress[0].hostname
+        else:
+            cluster_ip = service.status.load_balancer.ingress[0].ip
+    return os.environ.get("INGRESS_HOST_PORT", cluster_ip)
 
 
 def get_protocol():
