@@ -126,10 +126,17 @@ def update_status(workflow_manifest, session):
         # Maps Workflow status to values that are supported by the frontend
         status = WORKFLOW_STATUSES.get(status, status)
 
-        if key == "experiment" and status_message not in RECURRENT_MESSAGES:
-            session.query(models.Operator) \
-                .filter_by(uuid=operator_id) \
-                .update({"status": status, "status_message": status_message})
+        update_values = {}
+
+        if status_message not in RECURRENT_MESSAGES:
+            update_values.update({"status_message": status_message})
+
+        if key == "experiment":
+            update_values.update({"status": status})
+
+        session.query(models.Operator) \
+            .filter_by(uuid=operator_id) \
+            .update(update_values)
 
     session.commit()
 
