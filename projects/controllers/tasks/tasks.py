@@ -331,7 +331,7 @@ class TaskController:
 
         return schemas.Task.from_orm(task)
 
-    def get_or_create_dataset_task_if_not_exist(session):
+    def get_or_create_dataset_task_if_not_exist(session, background_tasks):
         """
         Get or create a dataset  task if the operator has none.
 
@@ -359,7 +359,7 @@ class TaskController:
 
             )
 
-            dataset_task = TaskController.create_task(task=dataset_task_schema)
+            dataset_task = TaskController(session, background_tasks).create_task(task=dataset_task_schema)
         return dataset_task.uuid
 
     def delete_task(self, task_id: str):
