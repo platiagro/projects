@@ -359,7 +359,7 @@ class TaskController:
 
             )
 
-            dataset_task = self.create_task(task=dataset_task_schema)
+            dataset_task = TaskController.create_task(task=dataset_task_schema)
         return dataset_task.uuid
 
     def delete_task(self, task_id: str):
