@@ -116,7 +116,7 @@ class DeploymentController:
 
         self.session.commit()
         for deployment in deployments:
-            self.run_controller.create_run(deployment_id=deployment.uuid)
+            self.run_controller.deploy_run(deployment_id=deployment.uuid)
             self.session.refresh(deployment)
 
         return schemas.DeploymentList.from_orm(deployments, len(deployments))

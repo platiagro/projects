@@ -56,6 +56,30 @@ class RunController:
 
     def create_run(self, deployment_id: str):
         """
+        Update deployment url.
+
+        Parameters
+        ----------
+        deployment_id : str
+
+        Returns
+        -------
+        projects.schemas.deployment.Deployment
+
+        Raises
+        ------
+        NotFound
+            When any of project_id, or deployment_id does not exist.
+        """
+        deployment = self.session.query(models.Deployment).get(deployment_id)
+        url = get_seldon_deployment_url(deployment_id)
+        deployment.update({"url": url})
+        self.session.commit()
+
+        return schemas.Deployment.from_orm(deployment)
+
+    def deploy_run(self, deployment_id: str):
+        """
         Starts a new run in Kubeflow Pipelines.
 
         Parameters
@@ -94,13 +118,7 @@ class RunController:
         for operator in deployment.operators:
             self.session.expunge(operator)
 
-        url = get_seldon_deployment_url(deployment_id)
-        self.session.query(models.Deployment) \
-            .filter_by(uuid=deployment_id) \
-            .update({"url": url})
-        self.session.commit()
-
-        return run
+        return schemas.Run.from_orm(run)
 
     def get_run(self, deployment_id: str):
         """
