@@ -15,6 +15,7 @@ NOT_FOUND = NotFound("The specified deployment does not exist")
 
 # Distance on the X axis from the leftmost operator
 DATASET_OPERATOR_DISTANCE = 300
+FONTE_DE_DADOS = "Fonte de dados"
 
 
 class DeploymentController:
@@ -391,7 +392,7 @@ class DeploymentController:
                 leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y)
 
             if stored_operator.task.category == "DATASETS":
-                name = "Fontes de dados"
+                name = FONTE_DE_DADOS
                 parameters = {"type": "L"}
                 some_stored_operators_is_dataset = True
             else:
@@ -423,7 +424,7 @@ class DeploymentController:
         if not some_stored_operators_is_dataset:
 
             operator = schemas.OperatorCreate(
-                name="Fonte de dados",
+                name=FONTE_DE_DADOS,
                 task_id=TaskController.get_or_create_dataset_task_if_not_exist(self),
                 deployment_id=deployment_id,
                 parameters={"type": "L"},
