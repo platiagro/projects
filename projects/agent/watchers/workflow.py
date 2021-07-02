@@ -121,31 +121,30 @@ def update_status(workflow_manifest, session):
                 created_at_str=workflow_manifest["object"]["status"].get("startedAt"),
                 session=session
             )
+        elif key == "experiment":
+            # Then, we set the status for operators that are listed in object.status.nodes
+            for node in workflow_manifest["object"]["status"].get("nodes", {}).values():
+                try:
+                    operator_id = uuid.UUID(node["displayName"])
+                except ValueError:
+                    continue
 
-    # Then, we set the status for operators that are listed in object.status.nodes
-    for node in workflow_manifest["object"]["status"].get("nodes", {}).values():
-        try:
-            operator_id = uuid.UUID(node["displayName"])
-        except ValueError:
-            continue
+                status_message = str(node.get("message")) if node.get("message") else None
+                # if workflow was interrupted, then status = "Terminated"
+                if str(node.get("message")) == "terminated":
+                    status = "Terminated"
+                    status_message = None
+                else:
+                    status = str(node["phase"])
 
-        status_message = str(node.get("message")) if node.get("message") else None
-        # if workflow was interrupted, then status = "Terminated"
-        if str(node.get("message")) == "terminated":
-            status = "Terminated"
-            status_message = None
-        else:
-            status = str(node["phase"])
+                # Maps Workflow status to values that are supported by the frontend
+                status = WORKFLOW_STATUSES.get(status, status)
 
-        # Maps Workflow status to values that are supported by the frontend
-        status = WORKFLOW_STATUSES.get(status, status)
-
-        if status_message not in RECURRENT_MESSAGES:
-            session.query(models.Operator) \
-                .filter_by(uuid=operator_id) \
-                .update({"status": status, "status_message": status_message})
-
-    session.commit()
+                if status_message not in RECURRENT_MESSAGES:
+                    session.query(models.Operator) \
+                        .filter_by(uuid=operator_id) \
+                        .update({"status": status, "status_message": status_message})
+            session.commit()
 
 
 def update_seldon_deployment(deployment_id, status, created_at_str, session):

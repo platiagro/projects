@@ -308,6 +308,7 @@ class DeploymentController:
                     dependencies=dependencies,
                     position_x=task["position_x"],
                     position_y=task["position_y"],
+                    status="Setted up"
                 )
             ]
             self.session.bulk_save_objects(objects)
