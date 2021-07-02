@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi_mail import FastMail, MessageSchema
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, background
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
@@ -360,7 +360,9 @@ class TaskController:
 
             )
 
-            dataset_task = TaskController(session, BackgroundTasks).create_task(task=dataset_task_schema)
+            background_tasks = BackgroundTasks()
+
+            dataset_task = TaskController(session, background_tasks).create_task(task=dataset_task_schema)
         return dataset_task.uuid
 
     def delete_task(self, task_id: str):
