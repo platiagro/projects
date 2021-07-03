@@ -24,6 +24,7 @@ class DeploymentController:
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
         self.template_controller = TemplateController(session)
+        self.task_controller = TaskController(session, background_tasks)
         self.background_tasks = background_tasks
 
     def raise_if_deployment_does_not_exist(self, deployment_id: str):
@@ -425,7 +426,7 @@ class DeploymentController:
 
             operator = schemas.OperatorCreate(
                 name=FONTE_DE_DADOS,
-                task_id=TaskController.get_or_create_dataset_task_if_not_exist(self),
+                task_id=self.task_controller.get_or_create_dataset_task_if_not_exist(),
                 deployment_id=deployment_id,
                 parameters={"type": "L"},
                 position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
