@@ -27,6 +27,7 @@ class Project(Base):
                                primaryjoin=uuid == Deployment.project_id,
                                lazy="joined",
                                cascade="all, delete-orphan")
+    tenant = Column(String(255), nullable=True)
 
     @hybrid_property
     def has_experiment(self):

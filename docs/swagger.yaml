@@ -10,6 +10,8 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 servers:
   - url: http://localhost:8080
+security:
+  - ApiKeyAuth: []
 tags:
   - name: "Tasks"
     description: >
@@ -1741,6 +1743,11 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: kubeflow-userid
   schemas:
     AnyValue:
       nullable: true

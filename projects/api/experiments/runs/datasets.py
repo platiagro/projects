@@ -23,7 +23,8 @@ async def handle_get_dataset(project_id: str,
                              page: Optional[int] = 1,
                              page_size: Optional[int] = 10,
                              accept: Optional[str] = Header(None),
-                             session: Session = Depends(session_scope)):
+                             session: Session = Depends(session_scope),
+                             kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -34,12 +35,13 @@ async def handle_get_dataset(project_id: str,
     run_id : str
     operator_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     List
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)

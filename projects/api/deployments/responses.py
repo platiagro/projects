@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Deployments Responses API Router."""
-from fastapi import APIRouter, Body, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Body, Depends, Header
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -17,7 +19,8 @@ router = APIRouter(
 async def handle_post_responses(project_id: str,
                                 deployment_id: str,
                                 body: dict = Body(...),
-                                session: Session = Depends(session_scope)):
+                                session: Session = Depends(session_scope),
+                                kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles POST requests to /.
 
@@ -27,12 +30,13 @@ async def handle_post_responses(project_id: str,
     deployment_id : str
     body : fastapi.body
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     fastapi.responses.JSONResponse
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)

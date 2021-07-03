@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Runs API Router."""
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.run
@@ -16,7 +18,8 @@ router = APIRouter(
 @router.get("", response_model=projects.schemas.run.RunList)
 async def handle_list_runs(project_id: str,
                            experiment_id: str,
-                           session: Session = Depends(session_scope)):
+                           session: Session = Depends(session_scope),
+                           kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -25,12 +28,13 @@ async def handle_list_runs(project_id: str,
     project_id : str
     experiment_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.run.RunList
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
@@ -45,7 +49,8 @@ async def handle_list_runs(project_id: str,
 @router.post("", response_model=projects.schemas.run.Run)
 async def handle_post_run(project_id: str,
                           experiment_id: str,
-                          session: Session = Depends(session_scope)):
+                          session: Session = Depends(session_scope),
+                          kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles POST requests to /.
 
@@ -54,12 +59,13 @@ async def handle_post_run(project_id: str,
     project_id : str
     experiment_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.run.Run
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
@@ -75,7 +81,8 @@ async def handle_post_run(project_id: str,
 async def handle_get_run(project_id: str,
                          experiment_id: str,
                          run_id: str,
-                         session: Session = Depends(session_scope)):
+                         session: Session = Depends(session_scope),
+                         kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /<run_id>.
 
@@ -85,12 +92,13 @@ async def handle_get_run(project_id: str,
     experiment_id : str
     run_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.run.Run
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
@@ -107,7 +115,8 @@ async def handle_get_run(project_id: str,
 async def handle_delete_run(project_id: str,
                             experiment_id: str,
                             run_id: str,
-                            session: Session = Depends(session_scope)):
+                            session: Session = Depends(session_scope),
+                            kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles DELETE requests to /<run_id>.
 
@@ -117,12 +126,13 @@ async def handle_delete_run(project_id: str,
     experiment_id : str
     run_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.message.Message
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
@@ -139,7 +149,8 @@ async def handle_delete_run(project_id: str,
 async def handle_post_retry_run(project_id: str,
                                 experiment_id: str,
                                 run_id: str,
-                                session: Session = Depends(session_scope)):
+                                session: Session = Depends(session_scope),
+                                kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles POST requests to /<run_id>/retry.
 
@@ -149,12 +160,13 @@ async def handle_post_retry_run(project_id: str,
     experiment_id : str
     run_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.message.Message
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)

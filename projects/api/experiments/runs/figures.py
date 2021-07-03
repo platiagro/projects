@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Figures API Router."""
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 from projects.controllers import ExperimentController, FigureController, \
@@ -18,7 +20,8 @@ async def handle_list_figures(project_id: str,
                               experiment_id: str,
                               run_id: str,
                               operator_id: str,
-                              session: Session = Depends(session_scope)):
+                              session: Session = Depends(session_scope),
+                              kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -29,12 +32,13 @@ async def handle_list_figures(project_id: str,
     run_id : str
     operator_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     list
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)

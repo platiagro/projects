@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Operators API Router."""
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.operator
@@ -16,7 +18,8 @@ router = APIRouter(
 @router.get("", response_model=projects.schemas.operator.OperatorList)
 async def handle_list_operators(project_id: str,
                                 experiment_id: str,
-                                session: Session = Depends(session_scope)):
+                                session: Session = Depends(session_scope),
+                                kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -25,12 +28,13 @@ async def handle_list_operators(project_id: str,
     project_id : str
     experiment_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.operator.OperatorList
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
@@ -46,7 +50,8 @@ async def handle_list_operators(project_id: str,
 async def handle_post_operator(project_id: str,
                                experiment_id: str,
                                operator: projects.schemas.operator.OperatorCreate,
-                               session: Session = Depends(session_scope)):
+                               session: Session = Depends(session_scope),
+                               kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles POST requests to /.
 
@@ -56,12 +61,13 @@ async def handle_post_operator(project_id: str,
     experiment_id : str
     operator : projects.schemas.operator.OperatorCreate
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.operator.Operator
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
@@ -79,7 +85,8 @@ async def handle_patch_operator(project_id: str,
                                 experiment_id: str,
                                 operator_id: str,
                                 operator: projects.schemas.operator.OperatorUpdate,
-                                session: Session = Depends(session_scope)):
+                                session: Session = Depends(session_scope),
+                                kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles PATCH requests to /<operator_id>.
 
@@ -90,12 +97,13 @@ async def handle_patch_operator(project_id: str,
     operator_id : str
     operator : projects.schemas.operator.OperatorUpdate
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.operator.Operator
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
@@ -112,7 +120,8 @@ async def handle_patch_operator(project_id: str,
 @router.delete("/{operator_id}")
 async def handle_delete_operator(project_id: str,
                                  experiment_id: str, operator_id: str,
-                                 session: Session = Depends(session_scope)):
+                                 session: Session = Depends(session_scope),
+                                 kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles DELETE requests to /<operator_id>.
 
@@ -122,12 +131,13 @@ async def handle_delete_operator(project_id: str,
     experiment_id : str
     operator_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.message.Message
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)

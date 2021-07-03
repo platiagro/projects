@@ -3,7 +3,7 @@
 from json.decoder import JSONDecodeError
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Header, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from projects.controllers import DeploymentController, PredictionController, \
@@ -21,7 +21,8 @@ async def handle_post_prediction(project_id: str,
                                  deployment_id: str,
                                  request: Request,
                                  file: Optional[UploadFile] = File(None),
-                                 session: Session = Depends(session_scope)):
+                                 session: Session = Depends(session_scope),
+                                 kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles POST request to /.
 
@@ -32,12 +33,13 @@ async def handle_post_prediction(project_id: str,
     request : starlette.requests.Request
     file : starlette.datastructures.UploadFile
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     dict
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)

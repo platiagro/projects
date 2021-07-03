@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Deployments API Router."""
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.operator
@@ -16,7 +18,8 @@ router = APIRouter(
 @router.get("", response_model=projects.schemas.operator.OperatorList)
 async def handle_list_operators(project_id: str,
                                 deployment_id: str,
-                                session: Session = Depends(session_scope)):
+                                session: Session = Depends(session_scope),
+                                kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -25,12 +28,13 @@ async def handle_list_operators(project_id: str,
     project_id : str
     deployment_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.operator.OperatorList
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
@@ -47,7 +51,8 @@ async def handle_patch_operator(project_id: str,
                                 deployment_id: str,
                                 operator_id: str,
                                 operator: projects.schemas.operator.OperatorUpdate,
-                                session: Session = Depends(session_scope)):
+                                session: Session = Depends(session_scope),
+                                kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles PATCH requests to /<deployment_id>/operators/<operator_id>.
 
@@ -57,12 +62,13 @@ async def handle_patch_operator(project_id: str,
     deployment_id : str
     operator_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     projects.schemas.operator.Operator
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
