@@ -331,6 +331,34 @@ class TaskController:
 
         return schemas.Task.from_orm(task)
 
+    def get_or_create_dataset_task_if_not_exist(self):
+        """
+        Get or create a dataset  task if the operator has none.
+
+        Returns
+        -------
+        dataset_task.uuid: str
+        """
+
+        dataset_task = self.session.query(models.Task).filter_by(category="DATASETS").first()
+        if dataset_task is None:
+            dataset_task_schema = schemas.TaskCreate(
+                name="Upload de arquivo",
+                description="Importa arquivos para utilização em experimentos.",
+                category="DATASETS",
+                tags=["DATASETS"],
+                commands=None,
+                arguments=None,
+                image=TASK_DEFAULT_EXPERIMENT_IMAGE,
+                cpu_limit=TASK_DEFAULT_CPU_LIMIT,
+                cpu_request=TASK_DEFAULT_CPU_REQUEST,
+                memory_limit=TASK_DEFAULT_MEMORY_LIMIT,
+                memory_request=TASK_DEFAULT_MEMORY_REQUEST,
+            )
+
+            dataset_task = self.create_task(task=dataset_task_schema)
+        return dataset_task.uuid
+
     def delete_task(self, task_id: str):
         """
         Delete a task in our database.
