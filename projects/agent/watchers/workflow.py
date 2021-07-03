@@ -103,7 +103,7 @@ def update_status(workflow_manifest, session):
         if key == "deployment":
             update_seldon_deployment(
                 deployment_id=id_,
-                status=workflow_status,
+                status=workflow_manifest["object"]["status"].get("phase"),
                 created_at_str=workflow_manifest["object"]["status"].get("startedAt"),
                 session=session
             )
@@ -150,6 +150,7 @@ def update_seldon_deployment(deployment_id, status, created_at_str, session):
     deployment_id : str
     status : str
     created_at_str : str
+    session : sqlalchemy.orm.session.Session
     """
     if created_at_str is not None:
         deployed_at = dateutil.parser.isoparse(created_at_str)
