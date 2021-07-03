@@ -8,9 +8,14 @@ from projects.controllers.experiments import ExperimentController
 from projects.controllers.operators import OperatorController
 from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
+from projects.controllers.tasks import TaskController
 from projects.exceptions import BadRequest, NotFound
 
 NOT_FOUND = NotFound("The specified deployment does not exist")
+
+# Distance on the X axis from the leftmost operator
+DATASET_OPERATOR_DISTANCE = 300
+FONTE_DE_DADOS = "Fonte de dados"
 
 
 class DeploymentController:
@@ -19,6 +24,7 @@ class DeploymentController:
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
         self.template_controller = TemplateController(session)
+        self.task_controller = TaskController(session, background_tasks)
         self.background_tasks = background_tasks
 
     def raise_if_deployment_does_not_exist(self, deployment_id: str):
@@ -374,13 +380,31 @@ class DeploymentController:
         # This map will be used to build the dependencies using new operator_ids
         copies_map = {}
 
+        # just a simple flag to detect the existence of a dataset operator
+        some_stored_operators_is_dataset = False
+
+        # default position, in case we have to create a dataset operator
+        leftmost_operator_position = (stored_operators[0].position_x, stored_operators[0].position_y)
+
         for stored_operator in stored_operators:
-            name = "Fonte de dados" if "DATASETS" in stored_operator.task.tags else None
+
+            # If we have to create a dataset operator, it is interesting that we put before the leftmost position
+            if stored_operator.position_x < leftmost_operator_position[0]:
+                leftmost_operator_position = (stored_operator.position_x, stored_operator.position_y)
+
+            if stored_operator.task.category == "DATASETS":
+                name = FONTE_DE_DADOS
+                parameters = {"type": "L"}
+                some_stored_operators_is_dataset = True
+            else:
+                name = None
+                parameters = stored_operator.parameters
+
             operator = schemas.OperatorCreate(
                 name=name,
                 task_id=stored_operator.task_id,
                 deployment_id=deployment_id,
-                parameters=stored_operator.parameters,
+                parameters=parameters,
                 position_x=stored_operator.position_x,
                 position_y=stored_operator.position_y,
                 status="Setted up",
@@ -396,6 +420,24 @@ class DeploymentController:
                 "copy_uuid": operator.uuid,
                 "dependencies": stored_operator.dependencies,
             }
+
+        # creates a DATASET type operator if doesn't exist any
+        if not some_stored_operators_is_dataset:
+
+            operator = schemas.OperatorCreate(
+                name=FONTE_DE_DADOS,
+                task_id=self.task_controller.get_or_create_dataset_task_if_not_exist(),
+                deployment_id=deployment_id,
+                parameters={"type": "L"},
+                position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
+                position_y=leftmost_operator_position[1],
+            )
+
+            operator = self.operator_controller.create_operator(
+                operator=operator,
+                project_id=project_id,
+                deployment_id=deployment_id
+            )
 
         # sets dependencies on new operators
         for _, value in copies_map.items():
