@@ -10,7 +10,6 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi_mail import FastMail, MessageSchema
-from fastapi import BackgroundTasks
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
@@ -339,10 +338,9 @@ class TaskController:
         Returns
         -------
         dataset_task.uuid: str
-
         """
 
-        dataset_task = self.session.query(models.Task).filter_by(category='DATASETS').first()
+        dataset_task = self.session.query(models.Task).filter_by(category="DATASETS").first()
         if dataset_task is None:
             dataset_task_schema = schemas.TaskCreate(
                 name="Upload de arquivo",
@@ -352,17 +350,13 @@ class TaskController:
                 commands=None,
                 arguments=None,
                 image=TASK_DEFAULT_EXPERIMENT_IMAGE,
-                artifacts=[],
-                cpuLimit=TASK_DEFAULT_CPU_LIMIT,
-                cpuRequest=TASK_DEFAULT_CPU_REQUEST,
-                memoryLimit=TASK_DEFAULT_MEMORY_LIMIT,
-                memoryRequest=TASK_DEFAULT_MEMORY_REQUEST
-
+                cpu_limit=TASK_DEFAULT_CPU_LIMIT,
+                cpu_request=TASK_DEFAULT_CPU_REQUEST,
+                memory_limit=TASK_DEFAULT_MEMORY_LIMIT,
+                memory_request=TASK_DEFAULT_MEMORY_REQUEST,
             )
 
-            background_tasks = BackgroundTasks()
-
-            dataset_task = TaskController(self.session, background_tasks).create_task(task=dataset_task_schema)
+            dataset_task = self.create_task(task=dataset_task_schema)
         return dataset_task.uuid
 
     def delete_task(self, task_id: str):
