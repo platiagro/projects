@@ -85,7 +85,7 @@ class MonitoringController:
         deployment = self.session.query(models.Deployment).get(deployment_id)
         run = self.run_controller.get_run(deployment_id)
 
-        self.background_task.add_task(
+        self.background_tasks.add_task(
             deploy_monitoring,
             deployment_id=deployment_id,
             experiment_id=deployment.experiment_id,
