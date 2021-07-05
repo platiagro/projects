@@ -89,7 +89,7 @@ class MonitoringController:
             deploy_monitoring,
             deployment_id=deployment_id,
             experiment_id=deployment.experiment_id,
-            run_id=run.uuid,
+            run_id=run["uuid"],
             task_id=monitoring.task_id,
             monitoring_id=monitoring.uuid
         )
