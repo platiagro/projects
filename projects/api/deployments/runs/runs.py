@@ -40,8 +40,7 @@ async def handle_list_runs(project_id: str,
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     run_controller = RunController(session)
-    runs = run_controller.list_runs(project_id=project_id,
-                                    deployment_id=deployment_id)
+    runs = run_controller.list_runs(deployment_id=deployment_id)
     return runs
 
 
@@ -58,6 +57,7 @@ async def handle_post_runs(project_id: str,
     ----------
     project_id : str
     deployment_id : str
+    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
     kubeflow_userid : fastapi.Header
 
@@ -71,9 +71,8 @@ async def handle_post_runs(project_id: str,
     deployment_controller = DeploymentController(session)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
-    run_controller = RunController(session, background_tasks)
-    run = run_controller.create_run(project_id=project_id,
-                                    deployment_id=deployment_id)
+    run_controller = RunController(session)
+    run = run_controller.create_run(deployment_id=deployment_id)
     return run
 
 
@@ -105,9 +104,7 @@ async def handle_get_run(project_id: str,
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     run_controller = RunController(session)
-    run = run_controller.get_run(project_id=project_id,
-                                 deployment_id=deployment_id,
-                                 run_id=run_id)
+    run = run_controller.get_run(deployment_id=deployment_id)
     return run
 
 

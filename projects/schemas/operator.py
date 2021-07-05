@@ -23,6 +23,7 @@ class OperatorCreate(OperatorBase):
     position_x: int
     position_y: int
     dependencies: Optional[List[str]]
+    status: Optional[str]
 
 
 class OperatorUpdate(OperatorBase):

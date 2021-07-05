@@ -4,6 +4,7 @@ import sys
 from datetime import datetime
 
 from projects import models, schemas
+from projects.controllers.deployments.runs import RunController
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.operators import OperatorController
 from projects.controllers.templates import TemplateController
@@ -23,6 +24,7 @@ class DeploymentController:
         self.session = session
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
+        self.run_controller = RunController(session)
         self.template_controller = TemplateController(session)
         self.task_controller = TaskController(session, background_tasks)
         self.background_tasks = background_tasks
@@ -120,6 +122,7 @@ class DeploymentController:
 
         self.session.commit()
         for deployment in deployments:
+            self.run_controller.deploy_run(deployment_id=deployment.uuid)
             self.session.refresh(deployment)
 
         return schemas.DeploymentList.from_orm(deployments, len(deployments))
@@ -314,6 +317,7 @@ class DeploymentController:
                     dependencies=dependencies,
                     position_x=task["position_x"],
                     position_y=task["position_y"],
+                    status="Setted up"
                 )
             ]
             self.session.bulk_save_objects(objects)
@@ -394,7 +398,7 @@ class DeploymentController:
 
             if stored_operator.task.category == "DATASETS":
                 name = FONTE_DE_DADOS
-                parameters = {"type": "L"}
+                parameters = {"type": "L", "dataset": None}
                 some_stored_operators_is_dataset = True
             else:
                 name = None
@@ -428,7 +432,7 @@ class DeploymentController:
                 name=FONTE_DE_DADOS,
                 task_id=self.task_controller.get_or_create_dataset_task_if_not_exist(),
                 deployment_id=deployment_id,
-                parameters={"type": "L"},
+                parameters={"type": "L", "dataset": None},
                 position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
                 position_y=leftmost_operator_position[1],
             )
