@@ -81,10 +81,14 @@ class MonitoringController:
         self.session.commit()
         self.session.refresh(monitoring)
 
-        # Deploy the new monitoring
         deployment = self.session.query(models.Deployment).get(deployment_id)
         run = self.run_controller.get_run(deployment_id)
 
+        # Uses empty run_id if a deployment does not have a run
+        if not run:
+            run = {"uuid": ""}
+
+        # Deploy the new monitoring
         self.background_tasks.add_task(
             deploy_monitoring,
             deployment_id=deployment_id,
