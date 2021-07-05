@@ -398,7 +398,7 @@ class DeploymentController:
 
             if stored_operator.task.category == "DATASETS":
                 name = FONTE_DE_DADOS
-                parameters = {"type": "L"}
+                parameters = {"type": "L", "dataset": None}
                 some_stored_operators_is_dataset = True
             else:
                 name = None
@@ -432,7 +432,7 @@ class DeploymentController:
                 name=FONTE_DE_DADOS,
                 task_id=self.task_controller.get_or_create_dataset_task_if_not_exist(),
                 deployment_id=deployment_id,
-                parameters={"type": "L"},
+                parameters={"type": "L", "dataset": None},
                 position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
                 position_y=leftmost_operator_position[1],
             )
