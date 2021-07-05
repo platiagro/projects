@@ -38,6 +38,7 @@ async def handle_list_deployments(project_id: str,
 @router.post("", response_model=projects.schemas.deployment.DeploymentList)
 async def handle_post_deployments(project_id: str,
                                   deployment: projects.schemas.deployment.DeploymentCreate,
+                                  background_tasks: BackgroundTasks,
                                   session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
@@ -54,7 +55,7 @@ async def handle_post_deployments(project_id: str,
     project_controller = ProjectController(session)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session)
+    deployment_controller = DeploymentController(session, background_tasks)
     deployments = deployment_controller.create_deployment(project_id=project_id,
                                                           deployment=deployment)
     return deployments

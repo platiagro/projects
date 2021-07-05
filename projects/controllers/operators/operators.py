@@ -112,6 +112,7 @@ class OperatorController:
                                    deployment_id=deployment_id,
                                    task_id=operator.task_id,
                                    dependencies=operator.dependencies,
+                                   status=operator.status,
                                    parameters=operator.parameters,
                                    position_x=operator.position_x,
                                    position_y=operator.position_y)

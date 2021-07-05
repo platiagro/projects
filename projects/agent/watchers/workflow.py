@@ -94,30 +94,16 @@ def update_status(workflow_manifest, session):
     workflow_manifest : dict
     session : sqlalchemy.orm.session.Session
     """
-    # First, we set the status for operators that are unlisted in object.status.nodes.
-    # Obs: the workflow manifest contains only the nodes that are ready to run (whose dependencies succeeded)
-
-    # if the workflow is pending/running, then unlisted_operators_status = "Pending"
-    # if the workflow succeeded/failed, then unlisted_operators_status = "Unset/Setted Up"
-    workflow_status = workflow_manifest["object"]["status"].get("phase")
-    if workflow_status in {"Pending", "Running"}:
-        unlisted_operators_status = "Pending"
-    else:
-        unlisted_operators_status = "Unset"
-
     match = re.search(r"(experiment|deployment)-(.*)-\w+", workflow_manifest["object"]["metadata"]["name"])
     if match:
         key = match.group(1)
         id_ = match.group(2)
-        session.query(models.Operator) \
-            .filter_by(**{f"{key}_id": id_}) \
-            .update({"status": unlisted_operators_status})
 
         # check if this workflow is a deployment
         if key == "deployment":
             update_seldon_deployment(
                 deployment_id=id_,
-                status=workflow_status,
+                status=workflow_manifest["object"]["status"].get("phase"),
                 created_at_str=workflow_manifest["object"]["status"].get("startedAt"),
                 session=session
             )
@@ -140,10 +126,17 @@ def update_status(workflow_manifest, session):
         # Maps Workflow status to values that are supported by the frontend
         status = WORKFLOW_STATUSES.get(status, status)
 
+        update_values = {}
+
         if status_message not in RECURRENT_MESSAGES:
-            session.query(models.Operator) \
-                .filter_by(uuid=operator_id) \
-                .update({"status": status, "status_message": status_message})
+            update_values.update({"status_message": status_message})
+
+        if key == "experiment":
+            update_values.update({"status": status})
+
+        session.query(models.Operator) \
+            .filter_by(uuid=operator_id) \
+            .update(update_values)
 
     session.commit()
 
@@ -157,6 +150,7 @@ def update_seldon_deployment(deployment_id, status, created_at_str, session):
     deployment_id : str
     status : str
     created_at_str : str
+    session : sqlalchemy.orm.session.Session
     """
     if created_at_str is not None:
         deployed_at = dateutil.parser.isoparse(created_at_str)
