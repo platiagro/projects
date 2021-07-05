@@ -179,13 +179,6 @@ class TestDeploymentsRuns(TestCase):
         self.assertEqual(rv.status_code, 404)
         self.assertDictEqual(result, expected)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID_2}/runs", json={})
-        result = rv.json()
-        expected = {"message": "Necessary at least one operator"}
-        self.assertIsInstance(result, dict)
-        self.assertEqual(rv.status_code, 400)
-        self.assertDictEqual(result, expected)
-
         rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs")
         result = rv.json()
         self.assertIsInstance(result, dict)
