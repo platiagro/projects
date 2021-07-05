@@ -80,17 +80,18 @@ class RunController:
 
         run = self.get_run(deployment_id)
 
-        operators = dict((o.uuid, {"deploymentId": deployment_id, "parameters": {}}) for o in deployment.operators)
-
         # Uses empty run if a deployment does not have a run
         if not run:
+            operators = dict((o.uuid, {"taskId": o.task.uuid, "parameters": {}}) for o in deployment.operators)
             run = {
                 "uuid": "",
                 "operators": operators,
                 "createdAt": deployment.created_at,
             }
 
-        return schemas.Run.from_orm(run)
+        run["deploymentId"] = deployment_id
+
+        return run
 
     def deploy_run(self, deployment_id: str):
         """
