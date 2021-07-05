@@ -42,6 +42,7 @@ DOCS = ""
 TAGS_JSON = dumps(["PREDICTOR"])
 DEPLOY_NOTEBOOK_PATH = ""
 EX_NOTEBOOK_PATH = ""
+TENANT = "anonymous"
 
 
 class TestDeploymentsRuns(TestCase):
@@ -71,10 +72,10 @@ class TestDeploymentsRuns(TestCase):
                             EX_NOTEBOOK_PATH, None, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s)"
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "

@@ -40,6 +40,7 @@ TAGS_JSON = dumps(TAGS)
 EXPERIMENT_NOTEBOOK_PATH = ""
 DEPLOYMENT_NOTEBOOK_PATH = ""
 EXPERIMENT_NAME = "Experimento 1"
+TENANT = "anonymous"
 
 
 class TestLogs(TestCase):
@@ -49,10 +50,10 @@ class TestLogs(TestCase):
 
         conn = engine.connect()
         text = (
-            f"INSERT INTO projects (uuid, name, description, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s)"
+            f"INSERT INTO projects (uuid, name, description, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, DESCRIPTION, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID, NAME, DESCRIPTION, CREATED_AT, UPDATED_AT, TENANT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "

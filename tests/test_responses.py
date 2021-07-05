@@ -23,6 +23,7 @@ DESCRIPTION = "Description"
 POSITION = 0
 STATUS = "Pending"
 URL = None
+TENANT = "anonymous"
 
 
 class TestResponses(TestCase):
@@ -40,10 +41,10 @@ class TestResponses(TestCase):
 
         conn = engine.connect()
         text = (
-            f"INSERT INTO projects (uuid, name, description, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s)"
+            f"INSERT INTO projects (uuid, name, description, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, DESCRIPTION, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID, NAME, DESCRIPTION, CREATED_AT, UPDATED_AT, TENANT,))
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "

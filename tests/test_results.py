@@ -34,16 +34,17 @@ CONTENT_TYPE = "application/x-zip-compressed"
 
 MOCK_EXPERIMENT_PATH = "tests/resources/mocked_experiment.yaml"
 MOCK_DESTINATION_PATH = "tests/resources/mocked.yaml"
+TENANT = "anonymous"
 
 
 class TestResults(TestCase):
     def setUp(self):
         conn = engine.connect()
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s)"
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
@@ -137,7 +138,7 @@ class TestResults(TestCase):
             data=buffer,
             length=buffer.getbuffer().nbytes,
         )
-        
+
     def tearDown(self):
         kfp_experiment = kfp_client().get_experiment(experiment_name=EXPERIMENT_ID)
         kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
@@ -275,4 +276,3 @@ class TestResults(TestCase):
             rv.headers.get("Content-Type"),
             CONTENT_TYPE
         )
-        

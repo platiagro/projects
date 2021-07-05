@@ -39,6 +39,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
+TENANT = "anonymous"
 
 
 class TestMetrics(TestCase):
@@ -46,10 +47,10 @@ class TestMetrics(TestCase):
         self.maxDiff = None
         conn = engine.connect()
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s)"
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "

@@ -54,6 +54,7 @@ DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
 EMAILS_TO_SEND = ["fictional.receiver.1661430@protonmail.com"]
+TENANT = "anonymous"
 
 
 class TestTasks(TestCase):
@@ -83,10 +84,10 @@ class TestTasks(TestCase):
                             "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s)"
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
