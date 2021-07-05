@@ -64,7 +64,7 @@ class RunController:
 
         Returns
         -------
-        projects.schemas.deployment.Deployment
+        projects.schemas.run.Run
 
         Raises
         ------
@@ -78,7 +78,19 @@ class RunController:
             .update({"url": url})
         self.session.commit()
 
-        return schemas.Deployment.from_orm(deployment)
+        run = self.get_run(deployment_id)
+
+        operators = dict((o.uuid, {"deploymentId": deployment_id, "parameters": {}}) for o in deployment.operators)
+
+        # Uses empty run if a deployment does not have a run
+        if not run:
+            run = {
+                "uuid": "",
+                "operators": operators,
+                "createdAt": deployment.created_at,
+            }
+
+        return schemas.Run.from_orm(run)
 
     def deploy_run(self, deployment_id: str):
         """
