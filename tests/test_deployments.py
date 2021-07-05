@@ -44,15 +44,17 @@ DATA_IN = ""
 DATA_OUT = ""
 DOCS = ""
 TAGS_JSON = dumps(TAGS)
-TASKS_JSON = dumps([
-    {
-        "uuid": OPERATOR_ID,
-        "position_x": 0.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID,
-        "dependencies": []
-    },
-])
+TASKS_JSON = dumps(
+    [
+        {
+            "uuid": OPERATOR_ID,
+            "position_x": 0.0,
+            "position_y": 0.0,
+            "task_id": TASK_ID,
+            "dependencies": [],
+        },
+    ]
+)
 PARAMETERS_JSON = dumps(PARAMETERS)
 EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
@@ -80,31 +82,89 @@ class TestDeployments(TestCase):
             f"INSERT INTO projects (uuid, name, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                PROJECT_ID,
+                NAME,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                EXPERIMENT_ID,
+                NAME,
+                PROJECT_ID,
+                POSITION,
+                1,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (EXPERIMENT_ID_2, NAME_2, PROJECT_ID, POSITION_2, 1, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                EXPERIMENT_ID_2,
+                NAME_2,
+                PROJECT_ID,
+                POSITION_2,
+                1,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                DEPLOYMENT_ID,
+                NAME,
+                PROJECT_ID,
+                EXPERIMENT_ID,
+                POSITION,
+                1,
+                STATUS,
+                URL,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (DEPLOYMENT_ID_2, NAME_2, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                DEPLOYMENT_ID_2,
+                NAME_2,
+                PROJECT_ID,
+                EXPERIMENT_ID,
+                POSITION,
+                1,
+                STATUS,
+                URL,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
@@ -113,8 +173,33 @@ class TestDeployments(TestCase):
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS,
-                            dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                TASK_ID,
+                NAME,
+                DESCRIPTION,
+                IMAGE,
+                COMMANDS_JSON,
+                ARGUMENTS_JSON,
+                CATEGORY,
+                TAGS_JSON,
+                DATA_IN,
+                DATA_OUT,
+                DOCS,
+                dumps([]),
+                EXPERIMENT_NOTEBOOK_PATH,
+                DEPLOYMENT_NOTEBOOK_PATH,
+                "100m",
+                "100m",
+                "1Gi",
+                "1Gi",
+                300,
+                0,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
@@ -123,8 +208,33 @@ class TestDeployments(TestCase):
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID_2, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                TASK_ID_2,
+                NAME,
+                DESCRIPTION,
+                IMAGE,
+                COMMANDS_JSON,
+                ARGUMENTS_JSON,
+                CATEGORY,
+                TAGS_JSON,
+                DATA_IN,
+                DATA_OUT,
+                DOCS,
+                dumps([]),
+                EXPERIMENT_NOTEBOOK_PATH,
+                DEPLOYMENT_NOTEBOOK_PATH,
+                "100m",
+                "100m",
+                "1Gi",
+                "1Gi",
+                300,
+                0,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
@@ -134,28 +244,93 @@ class TestDeployments(TestCase):
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
 
-        conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TASK_DATASET_TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                TASK_DATASET_ID,
+                NAME,
+                DESCRIPTION,
+                IMAGE,
+                COMMANDS_JSON,
+                ARGUMENTS_JSON,
+                CATEGORY,
+                TASK_DATASET_TAGS_JSON,
+                DATA_IN,
+                DATA_OUT,
+                DOCS,
+                dumps([]),
+                EXPERIMENT_NOTEBOOK_PATH,
+                DEPLOYMENT_NOTEBOOK_PATH,
+                "100m",
+                "100m",
+                "1Gi",
+                "1Gi",
+                300,
+                0,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
-                            POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                OPERATOR_ID,
+                None,
+                "Unset",
+                None,
+                DEPLOYMENT_ID,
+                TASK_ID,
+                PARAMETERS_JSON,
+                POSITION_X,
+                POSITION_Y,
+                DEPENDENCIES_EMPTY_JSON,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
-                            POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                OPERATOR_ID_2,
+                None,
+                "Unset",
+                None,
+                EXPERIMENT_ID_2,
+                TASK_ID,
+                PARAMETERS_JSON,
+                POSITION_X,
+                POSITION_Y,
+                DEPENDENCIES_EMPTY_JSON,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO templates (uuid, name, tasks, deployment_id, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, DEPLOYMENT_ID, CREATED_AT, UPDATED_AT,))
+        conn.execute(
+            text,
+            (
+                TEMPLATE_ID,
+                NAME,
+                TASKS_JSON,
+                DEPLOYMENT_ID,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         conn.close()
 
@@ -165,12 +340,16 @@ class TestDeployments(TestCase):
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
         conn.execute(text)
 
-        text = f"DELETE FROM operators WHERE experiment_id in" \
-               f"(SELECT uuid FROM experiments where project_id = '{PROJECT_ID}')"
+        text = (
+            f"DELETE FROM operators WHERE experiment_id in"
+            f"(SELECT uuid FROM experiments where project_id = '{PROJECT_ID}')"
+        )
         conn.execute(text)
 
-        text = f"DELETE FROM operators WHERE deployment_id in" \
-               f"(SELECT uuid FROM deployments where project_id = '{PROJECT_ID}')"
+        text = (
+            f"DELETE FROM operators WHERE deployment_id in"
+            f"(SELECT uuid FROM deployments where project_id = '{PROJECT_ID}')"
+        )
         conn.execute(text)
 
         text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}', '{TASK_ID_2}')"
@@ -192,7 +371,6 @@ class TestDeployments(TestCase):
     def test_list_deployments(self):
         rv = TEST_CLIENT.get(f"/projects/foo/deployments")
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments")
@@ -204,93 +382,133 @@ class TestDeployments(TestCase):
     def test_create_deployment(self):
         rv = TEST_CLIENT.post(f"/projects/foo/deployments", json={})
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
-            "templateId": "mock",
-        })
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "templateId": "mock",
+            },
+        )
         result = rv.json()
-        expected = {"message": "templateId is not implemented yet"}
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
-            "copyFrom": "unk",
-        })
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "copyFrom": "unk",
+            },
+        )
         result = rv.json()
-        expected = {"message": "source deployment does not exist"}
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
-            "experiments": [],
-        })
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "experiments": [],
+            },
+        )
         result = rv.json()
-        expected = {"message": "experiments were not specified"}
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
-            "experiments": ["unk"],
-        })
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "experiments": ["unk"],
+            },
+        )
         result = rv.json()
-        expected = {"message": "some experiments do not exist"}
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
-            "experiments": [EXPERIMENT_ID_2],
-        })
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "experiments": [EXPERIMENT_ID_2],
+            },
+        )
+        result = rv.json()["deployments"]
+        self.assertIsInstance(result, list)
+        self.assertIn("operators", result[0])
+        operators_list = result[0]["operators"]
+
+        created_operator_contains_experiment_tasks = False
+        created_operator_contains_dataset_task = False
+
+        for operator in operators_list:
+            if operator.get("taskId") == TASK_ID:
+                created_operator_contains_experiment_tasks = True
+
+            if operator.get("name") == "Fonte de dados":
+                created_operator_contains_dataset_task = True
+
+        self.assertTrue(created_operator_contains_experiment_tasks)
+        self.assertTrue(created_operator_contains_dataset_task)
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments", json={"templateId": TEMPLATE_ID}
+        )
         result = rv.json()["deployments"]
         self.assertIsInstance(result, list)
         self.assertIn("operators", result[0])
         operator = result[0]["operators"][0]
         self.assertEqual(TASK_ID, operator["taskId"])
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
-            "templateId": TEMPLATE_ID
-        })
-        result = rv.json()["deployments"]
-        self.assertIsInstance(result, list)
-        self.assertIn("operators", result[0])
-        operator = result[0]["operators"][0]
-        self.assertEqual(TASK_ID, operator["taskId"])
-
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
-            "copyFrom": DEPLOYMENT_ID,
-        })
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "copyFrom": DEPLOYMENT_ID,
+            },
+        )
         result = rv.json()
-        expected = {"message": "name is required to duplicate deployment"}
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
-            "copyFrom": DEPLOYMENT_ID,
-            "name": NAME,
-        })
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "copyFrom": DEPLOYMENT_ID,
+                "name": NAME,
+            },
+        )
         result = rv.json()
-        expected = {"message": "a deployment with that name already exists"}
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments", json={
-            "copyFrom": DEPLOYMENT_ID,
-            "name": COPY_NAME,
-        })
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "copyFrom": DEPLOYMENT_ID,
+                "name": COPY_NAME,
+            },
+        )
+
         result = rv.json()["deployments"]
         self.assertIsInstance(result, list)
         self.assertEqual(COPY_NAME, result[0]["name"])
         self.assertIn("operators", result[0])
-        operator = result[0]["operators"][0]
-        self.assertEqual(TASK_ID, operator["taskId"])
+        operators_list = result[0]["operators"]
+
+        created_operator_contains_experiment_tasks = False
+        created_operator_contains_dataset_task = False
+        for operator in operators_list:
+
+            if operator.get("taskId") == TASK_ID:
+                created_operator_contains_experiment_tasks = True
+
+            if operator.get("name") == "Fonte de dados":
+                created_operator_contains_dataset_task = True
+
+        self.assertTrue(created_operator_contains_experiment_tasks)
+        self.assertTrue(created_operator_contains_dataset_task)
 
     def test_get_deployment(self):
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/{DEPLOYMENT_ID}")
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/foo-bar")
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}")
@@ -328,13 +546,18 @@ class TestDeployments(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID_2}", json={"name": NAME})
+        rv = TEST_CLIENT.patch(
+            f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID_2}", json={"name": NAME}
+        )
         result = rv.json()
         expected = {"message": "a deployment with that name already exists"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}", json={"name": "Foo Bar"})
+        rv = TEST_CLIENT.patch(
+            f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}",
+            json={"name": "Foo Bar"},
+        )
         result = rv.json()
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 200)
