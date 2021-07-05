@@ -86,14 +86,14 @@ class MonitoringController:
 
         # Uses empty run_id if a deployment does not have a run
         if not run:
-            run = {"uuid": ""}
+            run = {"runId": ""}
 
         # Deploy the new monitoring
         self.background_tasks.add_task(
             deploy_monitoring,
             deployment_id=deployment_id,
             experiment_id=deployment.experiment_id,
-            run_id=run["uuid"],
+            run_id=run["runId"],
             task_id=monitoring.task_id,
             monitoring_id=monitoring.uuid
         )
