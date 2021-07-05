@@ -18,7 +18,7 @@ router = APIRouter(
 @router.get("", response_model=projects.schemas.project.ProjectList)
 async def handle_list_projects(request: Request,
                                session: Session = Depends(session_scope),
-                               kubeflow_userid: Optional[str] = Header(None)):
+                               kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 
@@ -53,7 +53,7 @@ async def handle_list_projects(request: Request,
 @router.post("", response_model=projects.schemas.project.Project)
 async def handle_post_projects(project: projects.schemas.project.ProjectCreate,
                                session: Session = Depends(session_scope),
-                               kubeflow_userid: Optional[str] = Header(None)):
+                               kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST requests to /.
 
@@ -75,7 +75,7 @@ async def handle_post_projects(project: projects.schemas.project.ProjectCreate,
 @router.get("/{project_id}", response_model=projects.schemas.project.Project)
 async def handle_get_project(project_id: str,
                              session: Session = Depends(session_scope),
-                             kubeflow_userid: Optional[str] = Header(None)):
+                             kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /<project_id>.
 
@@ -98,7 +98,7 @@ async def handle_get_project(project_id: str,
 async def handle_patch_project(project_id: str,
                                project: projects.schemas.project.ProjectUpdate,
                                session: Session = Depends(session_scope),
-                               kubeflow_userid: Optional[str] = Header(None)):
+                               kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles PATCH requests to /<project_id>.
 
@@ -121,7 +121,7 @@ async def handle_patch_project(project_id: str,
 @router.delete("/{project_id}")
 async def handle_delete_project(project_id: str,
                                 session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header(None)):
+                                kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles DELETE requests to /<project_id>.
 
@@ -143,7 +143,7 @@ async def handle_delete_project(project_id: str,
 @router.post("/deleteprojects")
 async def handle_post_deleteprojects(projects: List[str],
                                      session: Session = Depends(session_scope),
-                                     kubeflow_userid: Optional[str] = Header(None)):
+                                     kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST requests to /deleteprojects.
 

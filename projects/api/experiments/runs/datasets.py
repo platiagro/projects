@@ -24,7 +24,7 @@ async def handle_get_dataset(project_id: str,
                              page_size: Optional[int] = 10,
                              accept: Optional[str] = Header(None),
                              session: Session = Depends(session_scope),
-                             kubeflow_userid: Optional[str] = Header(None)):
+                             kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 

@@ -21,7 +21,7 @@ async def handle_list_figures(project_id: str,
                               run_id: str,
                               operator_id: str,
                               session: Session = Depends(session_scope),
-                              kubeflow_userid: Optional[str] = Header(None)):
+                              kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 

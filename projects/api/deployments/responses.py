@@ -20,7 +20,7 @@ async def handle_post_responses(project_id: str,
                                 deployment_id: str,
                                 body: dict = Body(...),
                                 session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header(None)):
+                                kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST requests to /.
 

@@ -22,7 +22,7 @@ async def handle_post_prediction(project_id: str,
                                  request: Request,
                                  file: Optional[UploadFile] = File(None),
                                  session: Session = Depends(session_scope),
-                                 kubeflow_userid: Optional[str] = Header(None)):
+                                 kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST request to /.
 

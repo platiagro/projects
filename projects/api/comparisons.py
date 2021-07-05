@@ -17,7 +17,7 @@ router = APIRouter(
 @router.get("", response_model=projects.schemas.comparison.ComparisonList)
 async def handle_list_comparisons(project_id: str,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header(None)):
+                                  kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 
@@ -42,7 +42,7 @@ async def handle_list_comparisons(project_id: str,
 @router.post("", response_model=projects.schemas.comparison.Comparison)
 async def handle_post_comparisons(project_id: str,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header(None)):
+                                  kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST requests to /.
 
@@ -69,7 +69,7 @@ async def handle_patch_comparisons(project_id: str,
                                    comparison_id: str,
                                    comparison: projects.schemas.comparison.ComparisonUpdate,
                                    session: Session = Depends(session_scope),
-                                   kubeflow_userid: Optional[str] = Header(None)):
+                                   kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles PATCH requests to /<comparison_id>.
 
@@ -101,7 +101,7 @@ async def handle_patch_comparisons(project_id: str,
 async def handle_delete_comparisons(project_id: str,
                                     comparison_id: str,
                                     session: Session = Depends(session_scope),
-                                    kubeflow_userid: Optional[str] = Header(None)):
+                                    kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles DELETE requests to /<comparison_id>.
 

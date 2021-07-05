@@ -16,7 +16,7 @@ router = APIRouter(
 @router.get("")
 async def handle_list_parameters(task_id: str,
                                  session: Session = Depends(session_scope),
-                                 kubeflow_userid: Optional[str] = Header(None)):
+                                 kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 

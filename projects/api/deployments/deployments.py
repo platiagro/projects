@@ -17,7 +17,7 @@ router = APIRouter(
 @router.get("", response_model=projects.schemas.deployment.DeploymentList)
 async def handle_list_deployments(project_id: str,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header(None)):
+                                  kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 
@@ -44,7 +44,7 @@ async def handle_post_deployments(project_id: str,
                                   deployment: projects.schemas.deployment.DeploymentCreate,
                                   background_tasks: BackgroundTasks,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header(None)):
+                                  kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST requests to /.
 
@@ -71,7 +71,7 @@ async def handle_post_deployments(project_id: str,
 async def handle_get_deployment(project_id: str,
                                 deployment_id: str,
                                 session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header(None)):
+                                kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /<deployment_id>.
 
@@ -100,7 +100,7 @@ async def handle_patch_deployment(project_id: str,
                                   deployment_id: str,
                                   deployment: projects.schemas.deployment.DeploymentUpdate,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header(None)):
+                                  kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles PATCH requests to /<deployment_id>.
 
@@ -130,7 +130,7 @@ async def handle_delete_deployment(project_id: str,
                                    deployment_id: str,
                                    background_tasks: BackgroundTasks,
                                    session: Session = Depends(session_scope),
-                                   kubeflow_userid: Optional[str] = Header(None)):
+                                   kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles DELETE requests to /<deployment_id>.
 

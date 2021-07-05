@@ -19,7 +19,7 @@ router = APIRouter(
 async def handle_list_runs(project_id: str,
                            experiment_id: str,
                            session: Session = Depends(session_scope),
-                           kubeflow_userid: Optional[str] = Header(None)):
+                           kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 
@@ -50,7 +50,7 @@ async def handle_list_runs(project_id: str,
 async def handle_post_run(project_id: str,
                           experiment_id: str,
                           session: Session = Depends(session_scope),
-                          kubeflow_userid: Optional[str] = Header(None)):
+                          kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST requests to /.
 
@@ -82,7 +82,7 @@ async def handle_get_run(project_id: str,
                          experiment_id: str,
                          run_id: str,
                          session: Session = Depends(session_scope),
-                         kubeflow_userid: Optional[str] = Header(None)):
+                         kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /<run_id>.
 
@@ -116,7 +116,7 @@ async def handle_delete_run(project_id: str,
                             experiment_id: str,
                             run_id: str,
                             session: Session = Depends(session_scope),
-                            kubeflow_userid: Optional[str] = Header(None)):
+                            kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles DELETE requests to /<run_id>.
 
@@ -150,7 +150,7 @@ async def handle_post_retry_run(project_id: str,
                                 experiment_id: str,
                                 run_id: str,
                                 session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header(None)):
+                                kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST requests to /<run_id>/retry.
 

@@ -21,7 +21,7 @@ async def handle_get_results(project_id: str,
                              experiment_id: str,
                              run_id: str,
                              session: Session = Depends(session_scope),
-                             kubeflow_userid: Optional[str] = Header(None)):
+                             kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /results.
 
@@ -62,7 +62,7 @@ async def handle_get_operator_results(project_id: str,
                                       run_id: str,
                                       operator_id: str,
                                       session: Session = Depends(session_scope),
-                                      kubeflow_userid: Optional[str] = Header(None)):
+                                      kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /operators/<operator_id>/results.
 

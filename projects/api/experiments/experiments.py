@@ -17,7 +17,7 @@ router = APIRouter(
 @router.get("", response_model=projects.schemas.experiment.ExperimentList)
 async def handle_list_experiments(project_id: str,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header(None)):
+                                  kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 
@@ -43,7 +43,7 @@ async def handle_list_experiments(project_id: str,
 async def handle_post_experiments(project_id: str,
                                   experiment: projects.schemas.experiment.ExperimentCreate,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header(None)):
+                                  kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST requests to /.
 
@@ -71,7 +71,7 @@ async def handle_post_experiments(project_id: str,
 async def handle_get_experiment(project_id: str,
                                 experiment_id: str,
                                 session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header(None)):
+                                kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /<experiment_id>.
 
@@ -100,7 +100,7 @@ async def handle_patch_experiment(project_id: str,
                                   experiment_id: str,
                                   experiment: projects.schemas.experiment.ExperimentUpdate,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header(None)):
+                                  kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles PATCH requests to /<experiment_id>.
 
@@ -130,7 +130,7 @@ async def handle_patch_experiment(project_id: str,
 async def handle_delete_experiment(project_id: str,
                                    experiment_id: str,
                                    session: Session = Depends(session_scope),
-                                   kubeflow_userid: Optional[str] = Header(None)):
+                                   kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles DELETE requests to /<experiment_id>.
 
