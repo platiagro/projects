@@ -34,7 +34,7 @@ async def handle_list_deployments(project_id: str,
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session)
+    deployment_controller = DeploymentController(session, kubeflow_userid=kubeflow_userid)
     deployments = deployment_controller.list_deployments(project_id=project_id)
     return deployments
 
@@ -61,7 +61,7 @@ async def handle_post_deployments(project_id: str,
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session, background_tasks)
+    deployment_controller = DeploymentController(session, background_tasks, kubeflow_userid=kubeflow_userid)
     deployments = deployment_controller.create_deployment(project_id=project_id,
                                                           deployment=deployment)
     return deployments
@@ -89,7 +89,7 @@ async def handle_get_deployment(project_id: str,
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session)
+    deployment_controller = DeploymentController(session, kubeflow_userid=kubeflow_userid)
     deployment = deployment_controller.get_deployment(deployment_id=deployment_id,
                                                       project_id=project_id)
     return deployment
@@ -118,7 +118,7 @@ async def handle_patch_deployment(project_id: str,
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session)
+    deployment_controller = DeploymentController(session, kubeflow_userid=kubeflow_userid)
     deployment = deployment_controller.update_deployment(deployment_id=deployment_id,
                                                          project_id=project_id,
                                                          deployment=deployment)
@@ -148,7 +148,7 @@ async def handle_delete_deployment(project_id: str,
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session, background_tasks)
+    deployment_controller = DeploymentController(session, background_tasks, kubeflow_userid=kubeflow_userid)
     deployment = deployment_controller.delete_deployment(deployment_id=deployment_id,
                                                          project_id=project_id)
     return deployment

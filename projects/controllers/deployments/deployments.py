@@ -20,12 +20,12 @@ FONTE_DE_DADOS = "Fonte de dados"
 
 
 class DeploymentController:
-    def __init__(self, session, background_tasks=None):
+    def __init__(self, session, background_tasks=None, kubeflow_userid=None):
         self.session = session
         self.experiment_controller = ExperimentController(session)
         self.operator_controller = OperatorController(session)
         self.run_controller = RunController(session)
-        self.template_controller = TemplateController(session)
+        self.template_controller = TemplateController(session, kubeflow_userid=kubeflow_userid)
         self.task_controller = TaskController(session, background_tasks)
         self.background_tasks = background_tasks
 
