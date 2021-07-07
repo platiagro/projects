@@ -11,6 +11,7 @@ from projects.kubernetes.kube_config import load_kube_config
 IGNORABLE_MESSAGES_KEYTEXTS = ["ContainerCreating",
                                "is waiting to start:PodInitializing"]
 
+
 def search_for_pod_info(details, operator_id):
     """
     Get operator pod info, such as: name, status and message error (if failed).
@@ -78,7 +79,7 @@ def get_container_logs(pod, container):
 
         if message in IGNORABLE_MESSAGES_KEYTEXTS:
             return None
-            
+
         raise InternalServerError(f"Error while trying to retrive container's log: {message}")
 
 
