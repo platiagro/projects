@@ -1,15 +1,15 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: deployment-f7771351-c8ce-48bc-bfe7-8dde255a3850-
+  generateName: deployment-c643c88b-deaf-4eac-958c-bdbd60ec3346-
   annotations:
-    pipelines.kubeflow.org/pipeline_spec: '{"name": "deployment-f7771351-c8ce-48bc-bfe7-8dde255a3850-"}'
+    pipelines.kubeflow.org/pipeline_spec: '{"name": "deployment-c643c88b-deaf-4eac-958c-bdbd60ec3346-"}'
 spec:
   arguments: {}
-  entrypoint: deployment-f7771351-c8ce-48bc-bfe7-8dde255a3850
+  entrypoint: deployment-c643c88b-deaf-4eac-958c-bdbd60ec3346
   serviceAccountName: pipeline-runner
   templates:
-    - name: deployment-f7771351-c8ce-48bc-bfe7-8dde255a3850
+    - name: deployment-c643c88b-deaf-4eac-958c-bdbd60ec3346
       dag:
         tasks:
           - name: deployment
@@ -41,13 +41,13 @@ spec:
           metadata:
             labels:
               app: seldon
-            name: f7771351-c8ce-48bc-bfe7-8dde255a3850
+            name: c643c88b-deaf-4eac-958c-bdbd60ec3346
           spec:
             annotations:
               deployment_version: v1
               prometheus.io/scrape: 'false'
               seldon.io/executor: 'true'
-            name: f7771351-c8ce-48bc-bfe7-8dde255a3850
+            name: c643c88b-deaf-4eac-958c-bdbd60ec3346
             predictors:
             - annotations:
                 sidecar.istio.io/inject: 'false'
@@ -58,19 +58,19 @@ spec:
                     - name: EXPERIMENT_ID
                       value: e6f52fe2-a4a1-42bc-9aeb-ef0735fa3468
                     - name: OPERATOR_ID
-                      value: f6302be7-57a1-4a72-8652-c55611a6ad32
+                      value: c5c02497-1495-4d08-bc55-1b4364345ad8
                     - name: TASK_NAME
                       value: "foo"
                     - name: LOG_LEVEL
                       value: DEBUG
                     image: seldonio/mock_classifier:1.5.0-dev
-                    name: f6302be7-57a1-4a72-8652-c55611a6ad32
+                    name: c5c02497-1495-4d08-bc55-1b4364345ad8
                     securityContext:
                       allowPrivilegeEscalation: false
                       runAsUser: 0
               graph:
                 children: []
-                name: f6302be7-57a1-4a72-8652-c55611a6ad32
+                name: c5c02497-1495-4d08-bc55-1b4364345ad8
                 type: MODEL
               labels:
                 version: v1
