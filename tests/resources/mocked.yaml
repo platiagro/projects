@@ -1,0 +1,83 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: deployment-b30cbf1c-44d7-4915-ac16-e1dfa214aeda-
+  annotations:
+    pipelines.kubeflow.org/pipeline_spec: '{"name": "deployment-b30cbf1c-44d7-4915-ac16-e1dfa214aeda-"}'
+spec:
+  arguments: {}
+  entrypoint: deployment-b30cbf1c-44d7-4915-ac16-e1dfa214aeda
+  serviceAccountName: pipeline-runner
+  templates:
+    - name: deployment-b30cbf1c-44d7-4915-ac16-e1dfa214aeda
+      dag:
+        tasks:
+          - name: deployment
+            template: deployment
+            dependencies: []
+            arguments: {}
+      metadata:
+        annotations:
+          sidecar.istio.io/inject: "false"
+    - name: deployment
+      activeDeadlineSeconds: 300
+      inputs: {}
+      metadata:
+        annotations:
+          sidecar.istio.io/inject: "false"
+      outputs:
+        parameters:
+        - name: deployment-manifest
+          valueFrom:
+            jsonPath: '{}'
+        - name: deployment-name
+          valueFrom:
+            jsonPath: '{.metadata.name}'
+      resource:
+        action: create
+        manifest: |
+          apiVersion: machinelearning.seldon.io/v1alpha2
+          kind: SeldonDeployment
+          metadata:
+            labels:
+              app: seldon
+            name: b30cbf1c-44d7-4915-ac16-e1dfa214aeda
+          spec:
+            annotations:
+              deployment_version: v1
+              prometheus.io/scrape: 'false'
+              seldon.io/executor: 'true'
+            name: b30cbf1c-44d7-4915-ac16-e1dfa214aeda
+            predictors:
+            - annotations:
+                sidecar.istio.io/inject: 'false'
+              componentSpecs:
+              - spec:
+                  containers:
+                  - env:
+                    - name: EXPERIMENT_ID
+                      value: e6f52fe2-a4a1-42bc-9aeb-ef0735fa3468
+                    - name: OPERATOR_ID
+                      value: baffa8d3-b834-488c-8fe3-6f0033da2db6
+                    - name: TASK_NAME
+                      value: "foo"
+                    - name: LOG_LEVEL
+                      value: DEBUG
+                    image: seldonio/mock_classifier:1.5.0-dev
+                    name: baffa8d3-b834-488c-8fe3-6f0033da2db6
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      runAsUser: 0
+              graph:
+                children: []
+                name: baffa8d3-b834-488c-8fe3-6f0033da2db6
+                type: MODEL
+              labels:
+                version: v1
+              name: model
+              replicas: 1
+              svcOrchSpec:
+                env:
+                - name: SELDON_LOG_LEVEL
+                  value: INFO
+        successCondition: status.state == Available

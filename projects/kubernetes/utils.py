@@ -61,7 +61,6 @@ def get_container_logs(pod, container):
     """
     load_kube_config()
     core_api = client.CoreV1Api()
-
     try:
         logs = core_api.read_namespaced_pod_log(
             name=pod.metadata.name,
@@ -71,14 +70,14 @@ def get_container_logs(pod, container):
             tail_lines=512,
             timestamps=True,
         )
-
         return logs
     except ApiException as e:
         body = literal_eval(e.body)
         message = body["message"]
 
-        if message in IGNORABLE_MESSAGES_KEYTEXTS:
-            return None
+        for ignorable_message in IGNORABLE_MESSAGES_KEYTEXTS:
+            if ignorable_message in message:
+                return None
 
         raise InternalServerError(f"Error while trying to retrive container's log: {message}")
 
