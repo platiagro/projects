@@ -75,8 +75,8 @@ def get_container_logs(pod, container):
         body = literal_eval(e.body)
         message = body["message"]
 
-        for ignorable_message in IGNORABLE_MESSAGES_KEYTEXTS:
-            if ignorable_message in message:
+        for ignorable_messages in IGNORABLE_MESSAGES_KEYTEXTS:
+            if ignorable_messages in message:
                 return None
 
         raise InternalServerError(f"Error while trying to retrive container's log: {message}")

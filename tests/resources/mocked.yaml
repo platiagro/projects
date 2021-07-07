@@ -1,15 +1,15 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: deployment-b30cbf1c-44d7-4915-ac16-e1dfa214aeda-
+  generateName: deployment-f7771351-c8ce-48bc-bfe7-8dde255a3850-
   annotations:
-    pipelines.kubeflow.org/pipeline_spec: '{"name": "deployment-b30cbf1c-44d7-4915-ac16-e1dfa214aeda-"}'
+    pipelines.kubeflow.org/pipeline_spec: '{"name": "deployment-f7771351-c8ce-48bc-bfe7-8dde255a3850-"}'
 spec:
   arguments: {}
-  entrypoint: deployment-b30cbf1c-44d7-4915-ac16-e1dfa214aeda
+  entrypoint: deployment-f7771351-c8ce-48bc-bfe7-8dde255a3850
   serviceAccountName: pipeline-runner
   templates:
-    - name: deployment-b30cbf1c-44d7-4915-ac16-e1dfa214aeda
+    - name: deployment-f7771351-c8ce-48bc-bfe7-8dde255a3850
       dag:
         tasks:
           - name: deployment
@@ -41,13 +41,13 @@ spec:
           metadata:
             labels:
               app: seldon
-            name: b30cbf1c-44d7-4915-ac16-e1dfa214aeda
+            name: f7771351-c8ce-48bc-bfe7-8dde255a3850
           spec:
             annotations:
               deployment_version: v1
               prometheus.io/scrape: 'false'
               seldon.io/executor: 'true'
-            name: b30cbf1c-44d7-4915-ac16-e1dfa214aeda
+            name: f7771351-c8ce-48bc-bfe7-8dde255a3850
             predictors:
             - annotations:
                 sidecar.istio.io/inject: 'false'
@@ -58,19 +58,19 @@ spec:
                     - name: EXPERIMENT_ID
                       value: e6f52fe2-a4a1-42bc-9aeb-ef0735fa3468
                     - name: OPERATOR_ID
-                      value: baffa8d3-b834-488c-8fe3-6f0033da2db6
+                      value: f6302be7-57a1-4a72-8652-c55611a6ad32
                     - name: TASK_NAME
                       value: "foo"
                     - name: LOG_LEVEL
                       value: DEBUG
                     image: seldonio/mock_classifier:1.5.0-dev
-                    name: baffa8d3-b834-488c-8fe3-6f0033da2db6
+                    name: f6302be7-57a1-4a72-8652-c55611a6ad32
                     securityContext:
                       allowPrivilegeEscalation: false
                       runAsUser: 0
               graph:
                 children: []
-                name: baffa8d3-b834-488c-8fe3-6f0033da2db6
+                name: f6302be7-57a1-4a72-8652-c55611a6ad32
                 type: MODEL
               labels:
                 version: v1
