@@ -8,7 +8,7 @@ from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.kube_config import load_kube_config
 
-IGNORABLE_MESSAGES_KEYWORDS = ["ContainerCreating",
+IGNORABLE_MESSAGES_KEYTEXTS = ["ContainerCreating",
                                "is waiting to start:PodInitializing"]
 
 def search_for_pod_info(details, operator_id):
@@ -37,12 +37,6 @@ def search_for_pod_info(details, operator_id):
         pass
 
     return info
-
-def is_ignorable_message(message, keywords):
-    if message in keywords:
-        return True
-    else:
-        return False
 
 
 def get_container_logs(pod, container):
@@ -82,7 +76,7 @@ def get_container_logs(pod, container):
         body = literal_eval(e.body)
         message = body["message"]
 
-        if is_ignorable_message(message, IGNORABLE_MESSAGES_KEYWORDS):
+        if message in IGNORABLE_MESSAGES_KEYTEXTS:
             return None
             
         raise InternalServerError(f"Error while trying to retrive container's log: {message}")
