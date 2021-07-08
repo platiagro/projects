@@ -81,6 +81,7 @@ DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
 DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
+TENANT = "anonymous"
 
 
 class TestExperiments(TestCase):
@@ -125,10 +126,10 @@ class TestExperiments(TestCase):
                             EXPERIMENT_NOTEBOOK_PATH_2, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s)"
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
@@ -190,10 +191,10 @@ class TestExperiments(TestCase):
                      PARAMETERS_JSON, POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO templates (uuid, name, tasks, experiment_id, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO templates (uuid, name, tasks, experiment_id, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, EXPERIMENT_ID, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, EXPERIMENT_ID, CREATED_AT, UPDATED_AT, TENANT,))
         conn.close()
 
     def tearDown(self):

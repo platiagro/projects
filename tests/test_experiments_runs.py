@@ -47,6 +47,7 @@ DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
 TASK_DATASET_ID = str(uuid_alpha())
 TASK_DATASET_TAGS = ["DATASETS"]
 TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
+TENANT = "anonymous"
 
 
 class TestExperimentsRuns(TestCase):
@@ -55,10 +56,10 @@ class TestExperimentsRuns(TestCase):
 
         conn = engine.connect()
         text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s)"
+            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT,))
+        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "

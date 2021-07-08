@@ -16,9 +16,10 @@ NOT_FOUND = NotFound("The specified project does not exist")
 
 
 class ProjectController:
-    def __init__(self, session):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
         self.experiment_controller = ExperimentController(session)
+        self.kubeflow_userid = kubeflow_userid
 
     def raise_if_project_does_not_exist(self, project_id: str):
         """
@@ -34,6 +35,7 @@ class ProjectController:
         """
         exists = self.session.query(models.Project.uuid) \
             .filter_by(uuid=project_id) \
+            .filter_by(tenant=self.kubeflow_userid) \
             .scalar() is not None
 
         if not exists:
@@ -66,8 +68,8 @@ class ProjectController:
         BadRequest
             When order_by is invalid.
         """
-        query = self.session.query(models.Project)
-        query_total = self.session.query(func.count(models.Project.uuid))
+        query = self.session.query(models.Project).filter_by(tenant=self.kubeflow_userid)
+        query_total = self.session.query(func.count(models.Project.uuid)).filter_by(tenant=self.kubeflow_userid)
 
         for column, value in filters.items():
             query = query.filter(getattr(models.Project, column).ilike(f"%{value}%").collate("utf8mb4_bin"))
@@ -117,11 +119,17 @@ class ProjectController:
         """
         store_project = self.session.query(models.Project) \
             .filter_by(name=project.name) \
+            .filter_by(tenant=self.kubeflow_userid) \
             .first()
         if store_project:
             raise BadRequest("a project with that name already exists")
 
-        project = models.Project(uuid=uuid_alpha(), name=project.name, description=project.description)
+        project = models.Project(
+            uuid=uuid_alpha(),
+            name=project.name,
+            description=project.description,
+            tenant=self.kubeflow_userid,
+        )
         self.session.add(project)
         self.session.flush()
 
@@ -150,7 +158,10 @@ class ProjectController:
         NotFound
             When project_id does not exist.
         """
-        project = self.session.query(models.Project).get(project_id)
+        project = self.session.query(models.Project) \
+            .filter_by(uuid=project_id) \
+            .filter_by(tenant=self.kubeflow_userid) \
+            .first()
 
         if project is None:
             raise NOT_FOUND
@@ -181,6 +192,7 @@ class ProjectController:
 
         stored_project = self.session.query(models.Project) \
             .filter_by(name=project.name) \
+            .filter_by(tenant=self.kubeflow_userid) \
             .first()
         if stored_project and stored_project.uuid != project_id:
             raise BadRequest("a project with that name already exists")
@@ -188,10 +200,16 @@ class ProjectController:
         update_data = project.dict(exclude_unset=True)
         update_data.update({"updated_at": datetime.utcnow()})
 
-        self.session.query(models.Project).filter_by(uuid=project_id).update(update_data)
+        self.session.query(models.Project) \
+            .filter_by(uuid=project_id) \
+            .filter_by(tenant=self.kubeflow_userid) \
+            .update(update_data)
         self.session.commit()
 
-        project = self.session.query(models.Project).get(project_id)
+        project = self.session.query(models.Project) \
+            .filter_by(uuid=project_id) \
+            .filter_by(tenant=self.kubeflow_userid) \
+            .first()
 
         return schemas.Project.from_orm(project)
 
@@ -212,7 +230,10 @@ class ProjectController:
         NotFound
             When project_id does not exist.
         """
-        project = self.session.query(models.Project).get(project_id)
+        project = self.session.query(models.Project) \
+            .filter_by(uuid=project_id) \
+            .filter_by(tenant=self.kubeflow_userid) \
+            .first()
 
         if project is None:
             raise NOT_FOUND
@@ -253,6 +274,7 @@ class ProjectController:
 
         projects = self.session.query(models.Project) \
             .filter(models.Project.uuid.in_(project_ids)) \
+            .filter_by(tenant=self.kubeflow_userid) \
             .all()
 
         for project in projects:

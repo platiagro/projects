@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Experiment Results API Router."""
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -18,7 +20,8 @@ router = APIRouter(
 async def handle_get_results(project_id: str,
                              experiment_id: str,
                              run_id: str,
-                             session: Session = Depends(session_scope)):
+                             session: Session = Depends(session_scope),
+                             kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /results.
 
@@ -28,13 +31,14 @@ async def handle_get_results(project_id: str,
     experiment_id : str
     run_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     starlette.responses.StreamingResponse
         ZipFile of the run results
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
@@ -57,7 +61,8 @@ async def handle_get_operator_results(project_id: str,
                                       experiment_id: str,
                                       run_id: str,
                                       operator_id: str,
-                                      session: Session = Depends(session_scope)):
+                                      session: Session = Depends(session_scope),
+                                      kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /operators/<operator_id>/results.
 
@@ -68,13 +73,14 @@ async def handle_get_operator_results(project_id: str,
     run_id: str
     operator_id: str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     starlette.responses.StreamingResponse]
         ZipFile of the operator_results
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)

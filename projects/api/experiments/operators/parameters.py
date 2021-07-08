@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Operators blueprint."""
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.operator
@@ -19,7 +21,8 @@ async def handle_patch_parameter(project_id: str,
                                  operator_id: str,
                                  name: str,
                                  parameter: projects.schemas.operator.ParameterUpdate,
-                                 session: Session = Depends(session_scope)):
+                                 session: Session = Depends(session_scope),
+                                 kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles PATCH requests to /{name}.
 
@@ -31,12 +34,13 @@ async def handle_patch_parameter(project_id: str,
     name : str
     parameter : projects.schemas.Operator.ParameterUpdate
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     returns the updated value.
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)

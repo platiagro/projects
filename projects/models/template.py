@@ -16,3 +16,4 @@ class Template(Base):
     deployment_id = Column(String(255), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    tenant = Column(String(255), nullable=True)

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Monitorings API Router."""
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 from projects.controllers import DeploymentController, MonitoringController, \
@@ -16,7 +18,8 @@ router = APIRouter(
 async def handle_list_figures_monitorings(project_id: str,
                                           deployment_id: str,
                                           monitoring_id: str,
-                                          session: Session = Depends(session_scope)):
+                                          session: Session = Depends(session_scope),
+                                          kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 
@@ -26,12 +29,13 @@ async def handle_list_figures_monitorings(project_id: str,
     deployment_id : str
     monitoring_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     list
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)

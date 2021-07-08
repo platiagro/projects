@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Runs API Router."""
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, BackgroundTasks, Depends, Header
 from sqlalchemy.orm import Session
 
 from projects.controllers import DeploymentController, ProjectController
@@ -15,7 +17,8 @@ router = APIRouter(
 @router.get("")
 async def handle_list_runs(project_id: str,
                            deployment_id: str,
-                           session: Session = Depends(session_scope)):
+                           session: Session = Depends(session_scope),
+                           kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /.
 
@@ -24,12 +27,13 @@ async def handle_list_runs(project_id: str,
     project_id : str
     deployment_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     str
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
@@ -43,7 +47,9 @@ async def handle_list_runs(project_id: str,
 @router.post("")
 async def handle_post_runs(project_id: str,
                            deployment_id: str,
-                           session: Session = Depends(session_scope)):
+                           background_tasks: BackgroundTasks,
+                           session: Session = Depends(session_scope),
+                           kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles POST requests to /.
 
@@ -51,13 +57,15 @@ async def handle_post_runs(project_id: str,
     ----------
     project_id : str
     deployment_id : str
+    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     str
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
@@ -72,7 +80,8 @@ async def handle_post_runs(project_id: str,
 async def handle_get_run(project_id: str,
                          deployment_id: str,
                          run_id: str,
-                         session: Session = Depends(session_scope)):
+                         session: Session = Depends(session_scope),
+                         kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles GET requests to /<run_id>.
 
@@ -82,12 +91,13 @@ async def handle_get_run(project_id: str,
     deployment_id : str
     run_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     str
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
@@ -102,7 +112,8 @@ async def handle_get_run(project_id: str,
 async def handle_delete_runs(project_id: str,
                              deployment_id: str,
                              run_id: str,
-                             session: Session = Depends(session_scope)):
+                             session: Session = Depends(session_scope),
+                             kubeflow_userid: Optional[str] = Header("anonymous")):
     """
     Handles DELETE requests to /<run_id>.
 
@@ -112,12 +123,13 @@ async def handle_delete_runs(project_id: str,
     deployment_id : str
     run_id : str
     session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
 
     Returns
     -------
     str
     """
-    project_controller = ProjectController(session)
+    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session)
