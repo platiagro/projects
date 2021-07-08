@@ -8,6 +8,9 @@ from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.kube_config import load_kube_config
 
+IGNORABLE_MESSAGES_KEYTEXTS = ["ContainerCreating",
+                               "PodInitializing"]
+
 
 def search_for_pod_info(details, operator_id):
     """
@@ -58,7 +61,6 @@ def get_container_logs(pod, container):
     """
     load_kube_config()
     core_api = client.CoreV1Api()
-
     try:
         logs = core_api.read_namespaced_pod_log(
             name=pod.metadata.name,
@@ -68,14 +70,15 @@ def get_container_logs(pod, container):
             tail_lines=512,
             timestamps=True,
         )
-
         return logs
     except ApiException as e:
         body = literal_eval(e.body)
         message = body["message"]
 
-        if "ContainerCreating" in message:
-            return None
+        for ignorable_messages in IGNORABLE_MESSAGES_KEYTEXTS:
+            if ignorable_messages in message:
+                return None
+
         raise InternalServerError(f"Error while trying to retrive container's log: {message}")
 
 

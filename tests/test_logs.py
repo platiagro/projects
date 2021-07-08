@@ -42,6 +42,9 @@ DEPLOYMENT_NOTEBOOK_PATH = ""
 EXPERIMENT_NAME = "Experimento 1"
 TENANT = "anonymous"
 
+# wait time(seconds) for pipeline run and complete
+TIMEOUT = 120
+
 
 class TestLogs(TestCase):
 
@@ -101,13 +104,11 @@ class TestLogs(TestCase):
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
         kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
-        run = kfp_client().run_pipeline(
+        kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=f"experiment-{EXPERIMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
-        # Awaits 120 seconds (for the pipeline to run and complete)
-        kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
 
         with open("tests/resources/mocked_deployment.yaml", "r") as file:
             content = file.read()
@@ -117,13 +118,11 @@ class TestLogs(TestCase):
         with open("tests/resources/mocked.yaml", "w") as file:
             file.write(content)
         kfp_experiment = kfp_client().create_experiment(name=DEPLOYMENT_ID)
-        run = kfp_client().run_pipeline(
+        kfp_client().run_pipeline(
             experiment_id=kfp_experiment.id,
             job_name=f"deployment-{DEPLOYMENT_ID}",
             pipeline_package_path="tests/resources/mocked.yaml",
         )
-        # Awaits 120 seconds (for the pipeline to run and complete)
-        kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
 
     def tearDown(self):
         kfp_experiment = kfp_client().get_experiment(experiment_name=EXPERIMENT_ID)
@@ -150,22 +149,47 @@ class TestLogs(TestCase):
         conn.close()
 
     def test_list_logs(self):
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/logs")
-        result = rv.json()
-        result_logs = result.get("logs")
-        expected = {
-            "level": "INFO",
-            "title": NAME,
-            "message": "hello\nhello",
-        }
-        # title and created_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["createdAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result_logs[0])
-            del result_logs[0][attr]
-        self.assertDictEqual(expected, result_logs[0])
-        self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
-        self.assertEqual(rv.status_code, 200)
+        was_expected_log_found = False
+        for _ in range(TIMEOUT):
+            rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest/logs")
+
+            #  If not 200, let's make sure it's because the pipeline hasn't even started
+            if rv.status_code != 200:
+                self.assertEqual(rv.status_code, 500)
+                self.assertRaises(TypeError)
+
+                tolerable_error_keytext = "the server could not find the requested resource"
+                result = rv.json().get('message')
+                self.assertIn(tolerable_error_keytext, result)
+                continue
+
+            result = rv.json()
+            result_logs = result.get("logs")
+            expected = {
+                "level": "INFO",
+                "title": NAME,
+                "message": "hello\nhello",
+            }
+            log = result_logs[0]
+
+            # the keys 'title' and 'created_at' from json are machine-generated
+            # we assert they exist, but we don't assert their values
+            # to compare the log with result we have to eliminate this key
+            machine_generated = ["createdAt"]
+            for attr in machine_generated:
+                self.assertIn(attr, log)
+                del log[attr]
+
+            if log == expected:
+                was_expected_log_found = True
+                break
+
+            # code logic must handle exception regarding container creation, returning 200
+            rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest/logs")
+            self.assertEqual(rv.status_code, 200)
+
+            time.sleep(1)
+
+        # making sure we found expected log before timeout
+        self.assertTrue(was_expected_log_found)
