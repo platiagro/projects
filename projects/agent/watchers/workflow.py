@@ -61,6 +61,7 @@ def watch_workflows(api, session):
             plural=PLURAL,
             resource_version=resource_version,
             timeout_seconds=60,
+            _request_timeout=60,
         )
 
         try:
