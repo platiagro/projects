@@ -71,6 +71,7 @@ def watch_workflows(api, session):
 
                 update_status(workflow_manifest, session)
         except ApiException as e:
+            logging.exception("kubernetes.client.rest.ApiException")
             # When the requested watch operations fail because the historical version
             # of that resource is not available, clients must handle the case by
             # recognizing the status code 410 Gone, clearing their local cache,
