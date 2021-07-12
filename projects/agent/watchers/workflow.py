@@ -114,7 +114,7 @@ def update_status(workflow_manifest, session):
     # Then, we set the status for operators that are listed in object.status.nodes
     for node in workflow_manifest["object"]["status"].get("nodes", {}).values():
         try:
-            operator_id = uuid.UUID(node["displayName"])
+            operator_id = str(uuid.UUID(node["displayName"]))
         except ValueError:
             continue
 
