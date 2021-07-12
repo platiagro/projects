@@ -83,6 +83,8 @@ def watch_workflows(api, session):
                     namespace=KF_PIPELINES_NAMESPACE,
                     plural=PLURAL,
                 )
+            else:
+                raise e
 
 
 def update_status(workflow_manifest, session):

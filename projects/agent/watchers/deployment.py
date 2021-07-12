@@ -66,6 +66,8 @@ def watch_seldon_deployments(api, session):
                     namespace=KF_PIPELINES_NAMESPACE,
                     plural=PLURAL,
                 )
+            else:
+                raise e
 
 
 def update_seldon_deployment(seldon_deployment_manifest, session):
