@@ -23,8 +23,6 @@ def watch_seldon_deployments(api, session):
     api : kubernetes.client.apis.custom_objects_api.CustomObjectsApi
     session : sqlalchemy.orm.session.Session
     """
-    w = watch.Watch()
-
     # When retrieving a collection of resources the response from the server
     # will contain a resourceVersion value that can be used to initiate a watch
     # against the server.
@@ -36,7 +34,9 @@ def watch_seldon_deployments(api, session):
     )
 
     while os.environ["STOP_THREADS"] == "0":
-        stream = w.stream(
+        logging.info("Watching deployments stream...")
+
+        stream = watch.Watch().stream(
             api.list_namespaced_custom_object,
             group=GROUP,
             version=VERSION,
