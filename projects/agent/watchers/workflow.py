@@ -40,8 +40,6 @@ def watch_workflows(api, session):
     api : kubernetes.client.apis.custom_objects_api.CustomObjectsApi
     session : sqlalchemy.orm.session.Session
     """
-    w = watch.Watch()
-
     # When retrieving a collection of resources the response from the server
     # will contain a resourceVersion value that can be used to initiate a watch
     # against the server.
@@ -53,14 +51,16 @@ def watch_workflows(api, session):
     )
 
     while os.environ["STOP_THREADS"] == "0":
-        stream = w.stream(
+        logging.info(f"Watching workflows stream. resource_version = {resource_version}")
+
+        stream = watch.Watch().stream(
             api.list_namespaced_custom_object,
             group=GROUP,
             version=VERSION,
             namespace=KF_PIPELINES_NAMESPACE,
             plural=PLURAL,
             resource_version=resource_version,
-            timeout_seconds=60,
+            timeout_seconds=5,
         )
 
         try:
@@ -69,7 +69,10 @@ def watch_workflows(api, session):
                              workflow_manifest["object"]["metadata"]["name"]))
 
                 update_status(workflow_manifest, session)
+
+                resource_version = workflow_manifest["object"]["metadata"]["resourceVersion"]
         except ApiException as e:
+            logging.exception("kubernetes.client.rest.ApiException")
             # When the requested watch operations fail because the historical version
             # of that resource is not available, clients must handle the case by
             # recognizing the status code 410 Gone, clearing their local cache,
@@ -82,6 +85,8 @@ def watch_workflows(api, session):
                     namespace=KF_PIPELINES_NAMESPACE,
                     plural=PLURAL,
                 )
+            else:
+                raise e
 
 
 def update_status(workflow_manifest, session):
@@ -111,7 +116,7 @@ def update_status(workflow_manifest, session):
     # Then, we set the status for operators that are listed in object.status.nodes
     for node in workflow_manifest["object"]["status"].get("nodes", {}).values():
         try:
-            operator_id = uuid.UUID(node["displayName"])
+            operator_id = str(uuid.UUID(node["displayName"]))
         except ValueError:
             continue
 

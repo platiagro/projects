@@ -23,8 +23,6 @@ def watch_seldon_deployments(api, session):
     api : kubernetes.client.apis.custom_objects_api.CustomObjectsApi
     session : sqlalchemy.orm.session.Session
     """
-    w = watch.Watch()
-
     # When retrieving a collection of resources the response from the server
     # will contain a resourceVersion value that can be used to initiate a watch
     # against the server.
@@ -36,14 +34,16 @@ def watch_seldon_deployments(api, session):
     )
 
     while os.environ["STOP_THREADS"] == "0":
-        stream = w.stream(
+        logging.info(f"Watching deployments stream. resource_version = {resource_version}")
+
+        stream = watch.Watch().stream(
             api.list_namespaced_custom_object,
             group=GROUP,
             version=VERSION,
             namespace=KF_PIPELINES_NAMESPACE,
             plural=PLURAL,
             resource_version=resource_version,
-            timeout_seconds=60,
+            timeout_seconds=5,
         )
 
         try:
@@ -52,7 +52,10 @@ def watch_seldon_deployments(api, session):
                              sdep_manifest["object"]["metadata"]["name"]))
 
                 update_seldon_deployment(sdep_manifest, session)
+
+                resource_version = sdep_manifest["object"]["metadata"]["resourceVersion"]
         except ApiException as e:
+            logging.exception("kubernetes.client.rest.ApiException")
             # When the requested watch operations fail because the historical version
             # of that resource is not available, clients must handle the case by
             # recognizing the status code 410 Gone, clearing their local cache,
@@ -65,6 +68,8 @@ def watch_seldon_deployments(api, session):
                     namespace=KF_PIPELINES_NAMESPACE,
                     plural=PLURAL,
                 )
+            else:
+                raise e
 
 
 def update_seldon_deployment(seldon_deployment_manifest, session):
