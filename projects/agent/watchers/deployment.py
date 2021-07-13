@@ -34,7 +34,7 @@ def watch_seldon_deployments(api, session):
     )
 
     while os.environ["STOP_THREADS"] == "0":
-        logging.info("Watching deployments stream...")
+        logging.info(f"Watching deployments stream. resource_version = {resource_version}")
 
         stream = watch.Watch().stream(
             api.list_namespaced_custom_object,
@@ -53,7 +53,7 @@ def watch_seldon_deployments(api, session):
 
                 update_seldon_deployment(sdep_manifest, session)
 
-            raise Exception("deployments stream ended.")
+                resource_version = sdep_manifest["object"]["metadata"]["resourceVersion"]
         except ApiException as e:
             logging.exception("kubernetes.client.rest.ApiException")
             # When the requested watch operations fail because the historical version

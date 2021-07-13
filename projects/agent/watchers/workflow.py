@@ -51,7 +51,7 @@ def watch_workflows(api, session):
     )
 
     while os.environ["STOP_THREADS"] == "0":
-        logging.info("Watching workflows stream...")
+        logging.info(f"Watching workflows stream. resource_version = {resource_version}")
 
         stream = watch.Watch().stream(
             api.list_namespaced_custom_object,
@@ -70,7 +70,7 @@ def watch_workflows(api, session):
 
                 update_status(workflow_manifest, session)
 
-            raise Exception("workflows stream ended.")
+                resource_version = workflow_manifest["object"]["metadata"]["resourceVersion"]
         except ApiException as e:
             logging.exception("kubernetes.client.rest.ApiException")
             # When the requested watch operations fail because the historical version
