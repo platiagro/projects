@@ -53,6 +53,8 @@ def watch_seldon_deployments(api, session):
                              sdep_manifest["object"]["metadata"]["name"]))
 
                 update_seldon_deployment(sdep_manifest, session)
+
+            raise Exception("deployments stream ended.")
         except ApiException as e:
             logging.exception("kubernetes.client.rest.ApiException")
             # When the requested watch operations fail because the historical version

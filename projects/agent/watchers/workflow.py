@@ -70,6 +70,8 @@ def watch_workflows(api, session):
                              workflow_manifest["object"]["metadata"]["name"]))
 
                 update_status(workflow_manifest, session)
+
+            raise Exception("workflows stream ended.")
         except ApiException as e:
             logging.exception("kubernetes.client.rest.ApiException")
             # When the requested watch operations fail because the historical version
