@@ -60,7 +60,7 @@ def watch_workflows(api, session):
             namespace=KF_PIPELINES_NAMESPACE,
             plural=PLURAL,
             resource_version=resource_version,
-            timeout_seconds=60,
+            timeout_seconds=5,
         )
 
         try:
