@@ -195,13 +195,12 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     while container_stream.is_open():
         container_stream.update(timeout=10)
         if container_stream.peek_stdout():
-            zip_file_content = container_stream.read_stdout()
-            print(zip_file_content)
+            zip_file_content += container_stream.read_stdout()
     container_stream.close()
 
     api_instance.delete_namespaced_pod(name=pod_name,
                                        namespace=namespace)
-
+ 
     # the stdout string contains \n character, we must remove
     clean_zip_file_content = zip_file_content.replace("\n", "")
     return clean_zip_file_content
