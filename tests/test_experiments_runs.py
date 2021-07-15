@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
 from json import dumps
 from unittest import TestCase
 
