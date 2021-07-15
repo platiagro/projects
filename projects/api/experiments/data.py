@@ -2,7 +2,6 @@
 """Experiment Data API Router."""
 import base64
 import io
-import zipfile
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header
@@ -17,6 +16,7 @@ from projects.kubernetes.utils import get_volume_from_pod
 router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/data",
 )
+
 
 @router.get("")
 async def handle_get_data(project_id: str,
@@ -50,10 +50,9 @@ async def handle_get_data(project_id: str,
     # decoding as byte
     base64_bytes = file_as_b64.encode('ascii')
     file_as_bytes = base64.b64decode(base64_bytes)
-    
+
     zip_file = io.BytesIO(file_as_bytes)
 
     response = StreamingResponse(zip_file, media_type="application/x-zip-compressed")
     response.headers["Content-Disposition"] = "attachment; filename=results.zip"
     return response
-    

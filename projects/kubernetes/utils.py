@@ -168,7 +168,6 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
             message = body["message"]
             raise InternalServerError(message)
 
-
     while True:
         resp = api_instance.read_namespaced_pod(name=pod_name,
                                                 namespace=namespace)
@@ -202,7 +201,7 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
 
     api_instance.delete_namespaced_pod(name=pod_name,
                                        namespace=namespace)
- 
+
     # the stdout string contains \n character, we must remove
     clean_zip_file_content = zip_file_content.replace("\n", "")
     return clean_zip_file_content
