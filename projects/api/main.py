@@ -14,8 +14,8 @@ from projects.api import comparisons, deployments, experiments, monitorings, \
 from projects.api.deployments import operators as deployment_operators, \
     runs as deployment_runs, responses
 from projects.api.deployments.runs import logs as deployment_logs
-from projects.api.experiments import operators as experiment_operators, \
-    runs as experiment_runs
+from projects.api.experiments import data as experiment_data, \
+    operators as experiment_operators, runs as experiment_runs
 from projects.api.experiments.runs import datasets, figures, \
     logs as experiment_logs, metrics, results
 from projects.api.experiments.operators import parameters as operator_parameters
@@ -35,6 +35,7 @@ app = FastAPI(
 app.include_router(projects.router)
 app.include_router(comparisons.router)
 app.include_router(experiments.router)
+app.include_router(experiment_data.router)
 app.include_router(experiment_operators.router)
 app.include_router(experiment_runs.router)
 app.include_router(datasets.router)

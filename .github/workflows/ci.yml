@@ -260,7 +260,7 @@ jobs:
         pip install pytest pytest-cov
         platiagro-init-db
         coverage erase
-        coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_results.py tests/test_projects.py tests/test_tasks.py tests/test_templates.py tests/test_watchers.py
+        coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_data.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_results.py tests/test_projects.py tests/test_tasks.py tests/test_templates.py tests/test_watchers.py
         coverage xml -i
       env:
         MINIO_ENDPOINT: localhost:9000
