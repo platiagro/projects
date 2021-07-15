@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: experiment-ee449647-9180-40c0-9d30-57753ba723fd-
+  annotations:
+    pipelines.kubeflow.org/pipeline_spec: '{"name": "experiment-ee449647-9180-40c0-9d30-57753ba723fd-"}'
+spec:
+  arguments: {}
+  entrypoint: experiment-ee449647-9180-40c0-9d30-57753ba723fd
+  serviceAccountName: pipeline-runner
+  templates:
+    - name: experiment-ee449647-9180-40c0-9d30-57753ba723fd
+      dag:
+        tasks:
+          - name: d704b8c5-b664-4ffd-9960-8fa78300ec09
+            template: d704b8c5-b664-4ffd-9960-8fa78300ec09
+            dependencies: []
+            arguments: {}
+    - name: d704b8c5-b664-4ffd-9960-8fa78300ec09
+      container:
+        args:
+          - echo
+          - -e
+          - "hello\nhello"
+        env:
+          - name: EXPERIMENT_ID
+            value: b281185b-6104-4c8c-8185-31eb53bef8de
+          - name: OPERATOR_ID
+            value: d704b8c5-b664-4ffd-9960-8fa78300ec09
+          - name: RUN_ID
+            value: "{{workflow.uid}}"
+          - name: TASK_NAME
+            value: foo
+        image: busybox
+      inputs: {}
+      metadata:
+        labels:
+          experiment: ee449647-9180-40c0-9d30-57753ba723fd
+        annotations:
+          name: foo
