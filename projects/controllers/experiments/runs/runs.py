@@ -140,8 +140,18 @@ class RunController:
             When any of project_id, experiment_id, or run_id does not exist.
         """
         try:
+            # Prevents a bug: if a run was deleted before kfp creates
+            # resources on the cluster, operators would be stuck in status 'Pending'
+            update_data = {"status": "Terminated", "status_message": None}
+            self.session.query(models.Operator) \
+                .filter_by(experiment_id=experiment_id) \
+                .filter(models.Operator.status.in_(["Running", "Pending"])) \
+                .update(update_data)
+            self.session.commit()
+
             run = kfp_runs.terminate_run(experiment_id=experiment_id,
                                          run_id=run_id)
+
         except ApiException:
             raise NOT_FOUND
 
