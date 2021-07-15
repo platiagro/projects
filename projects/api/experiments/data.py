@@ -23,6 +23,20 @@ async def handle_get_data(project_id: str,
                           experiment_id: str,
                           session: Session = Depends(session_scope),
                           kubeflow_userid: Optional[str] = Header("anonymous")):
+    """
+    Handles GET requests to /.
+
+    Parameters
+    ----------
+    project_id : str
+    experiment_id : str
+    session : sqlalchemy.orm.session.Session
+    kubeflow_userid : fastapi.Header
+
+    Returns
+    -------
+    starlette.responses.StreamingResponse
+    """
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 

@@ -123,7 +123,7 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     Returns
     -------
     str
-        Volume content.
+        Volume content in base64.
     """
     load_kube_config()
     api_instance = client.CoreV1Api()
