@@ -5,7 +5,7 @@ import time
 from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
-from kubernetes.stream import stream
+from kubernetes import stream
 
 from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
@@ -164,7 +164,9 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     except ApiException as e:
         # status 409: AlreadyExists
         if e.status != 409:
-            raise e
+            body = literal_eval(e.body)
+            message = body["message"]
+            raise InternalServerError(message)
 
 
     while True:
@@ -177,7 +179,7 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     exec_command = ["/bin/sh", "-c",
                     "apk add zip -q && zip -q -r - /tmp/data | base64"]
 
-    container_stream = stream(
+    container_stream = stream.stream(
         api_instance.connect_get_namespaced_pod_exec,
         name=pod_name,
         namespace=namespace,

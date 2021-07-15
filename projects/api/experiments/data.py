@@ -18,7 +18,7 @@ router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/data",
 )
 
-@router.get("/")
+@router.get("")
 async def handle_get_data(project_id: str,
                           experiment_id: str,
                           session: Session = Depends(session_scope),
