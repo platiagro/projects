@@ -173,7 +173,6 @@ async def handle_post_retry_run(project_id: str,
     experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
 
     run_controller = RunController(session)
-    run = run_controller.retry_run(project_id=project_id,
-                                   experiment_id=experiment_id,
+    run = run_controller.retry_run(experiment_id=experiment_id,
                                    run_id=run_id)
     return run

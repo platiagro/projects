@@ -1,22 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: experiment-dd186644-c461-4905-9355-71a882bac04e-
+  generateName: experiment-beea2aa3-8d22-4eab-8259-ee02ad6bec18-
   annotations:
-    pipelines.kubeflow.org/pipeline_spec: '{"name": "experiment-dd186644-c461-4905-9355-71a882bac04e-"}'
+    pipelines.kubeflow.org/pipeline_spec: '{"name": "experiment-beea2aa3-8d22-4eab-8259-ee02ad6bec18-"}'
 spec:
   arguments: {}
-  entrypoint: experiment-dd186644-c461-4905-9355-71a882bac04e
+  entrypoint: experiment-beea2aa3-8d22-4eab-8259-ee02ad6bec18
   serviceAccountName: pipeline-runner
   templates:
-    - name: experiment-dd186644-c461-4905-9355-71a882bac04e
+    - name: experiment-beea2aa3-8d22-4eab-8259-ee02ad6bec18
       dag:
         tasks:
-          - name: bd86be3e-1de3-4a20-9fba-ecb9a2fde63f
-            template: bd86be3e-1de3-4a20-9fba-ecb9a2fde63f
+          - name: a811441c-a33f-4795-919a-0930a2c593c8
+            template: a811441c-a33f-4795-919a-0930a2c593c8
             dependencies: []
             arguments: {}
-    - name: bd86be3e-1de3-4a20-9fba-ecb9a2fde63f
+    - name: a811441c-a33f-4795-919a-0930a2c593c8
       container:
         args:
           - echo
@@ -26,7 +26,7 @@ spec:
           - name: EXPERIMENT_ID
             value: b281185b-6104-4c8c-8185-31eb53bef8de
           - name: OPERATOR_ID
-            value: bd86be3e-1de3-4a20-9fba-ecb9a2fde63f
+            value: a811441c-a33f-4795-919a-0930a2c593c8
           - name: RUN_ID
             value: "{{workflow.uid}}"
           - name: TASK_NAME
@@ -35,6 +35,6 @@ spec:
       inputs: {}
       metadata:
         labels:
-          experiment: dd186644-c461-4905-9355-71a882bac04e
+          experiment: beea2aa3-8d22-4eab-8259-ee02ad6bec18
         annotations:
           name: foo
