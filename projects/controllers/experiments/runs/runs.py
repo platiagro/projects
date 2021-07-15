@@ -119,13 +119,12 @@ class RunController:
 
         return schemas.Run.from_orm(run)
 
-    def terminate_run(self, project_id: str, experiment_id: str, run_id: str):
+    def terminate_run(self, experiment_id: str, run_id: str):
         """
         Terminates a run in Kubeflow Pipelines.
 
         Parameters
         ----------
-        project_id : str
         experiment_id : str
         run_id : str
 
@@ -137,7 +136,7 @@ class RunController:
         Raises
         ------
         NotFound
-            When any of project_id, experiment_id, or run_id does not exist.
+            When any of experiment_id, or run_id does not exist.
         """
         try:
             # Prevents a bug: if a run was deleted before kfp creates
@@ -146,7 +145,7 @@ class RunController:
             self.session.query(models.Operator) \
                 .filter_by(experiment_id=experiment_id) \
                 .filter(models.Operator.status.in_(["Running", "Pending"])) \
-                .update(update_data)
+                .update(update_data, synchronize_session='fetch')
             self.session.commit()
 
             run = kfp_runs.terminate_run(experiment_id=experiment_id,
