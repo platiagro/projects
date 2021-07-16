@@ -136,7 +136,7 @@ class RunController:
         Raises
         ------
         NotFound
-            When any of experiment_id, or run_id does not exist.
+            When any of experiment_id or run_id does not exist.
         """
         try:
             # Prevents a bug: if a run was deleted before kfp creates
