@@ -369,9 +369,25 @@ class DeploymentController:
 
         return [deployment]
     
-    def set_dependency_on_generated_dataset_operator():
-        pass
-
+    def make_independent_operators_depend_on_generated_dataset(self,
+                                                               dependencies_map,
+                                                               generated_dataset_operator_uuid,
+                                                               deployment_id, project_id):
+        
+        dependencies_as_tuple_list =  list(dependencies_map.items())
+        for tuple_element in dependencies_as_tuple_list:
+            dependencies_dict = tuple_element[1]
+            if dependencies_dict.get('dependencies') is None:
+                independent_operator_uuid = tuple_element[0]
+                operator = schemas.OperatorUpdate(
+                    dependencies = [generated_dataset_operator_uuid]
+                )
+         
+                self.operator_controller.update_operator(project_id=project_id,
+                                                         deployment_id=deployment_id,
+                                                         operator_id=independent_operator_uuid,
+                                                         operator=operator) 
+                
     def set_dependencies_on_new_operators(self,dependencies_map, deployment_id, project_id):
         for _, value in dependencies_map.items():
             operator = schemas.OperatorUpdate(
@@ -456,7 +472,7 @@ class DeploymentController:
                 deployment_id=deployment_id
             )
 
-
+        self.set_dependencies_on_new_operators(dependencies_map, deployment_id, project_id)
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """
