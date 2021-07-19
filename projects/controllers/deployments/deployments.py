@@ -368,6 +368,19 @@ class DeploymentController:
                            new_position=sys.maxsize)  # will add to end of list
 
         return [deployment]
+    
+    def set_dependency_on_generated_dataset_operator():
+        pass
+
+    def set_dependencies_on_new_operators(self,dependencies_map, deployment_id, project_id):
+        for _, value in dependencies_map.items():
+            operator = schemas.OperatorUpdate(
+                dependencies=[dependencies_map[d]["copy_uuid"] for d in value["dependencies"]],
+            )
+            self.operator_controller.update_operator(project_id=project_id,
+                                                     deployment_id=deployment_id,
+                                                     operator_id=value["copy_uuid"],
+                                                     operator=operator)
 
     def copy_operators(self, project_id: str, deployment_id: str, stored_operators: schemas.OperatorList):
         """
@@ -382,7 +395,7 @@ class DeploymentController:
         """
         # Creates a dict to map source operator_id to its copy operator_id.
         # This map will be used to build the dependencies using new operator_ids
-        copies_map = {}
+        dependencies_map = {}
 
         # just a simple flag to detect the existence of a dataset operator
         some_stored_operators_is_dataset = False
@@ -420,7 +433,7 @@ class DeploymentController:
                 deployment_id=deployment_id
             )
 
-            copies_map[stored_operator.uuid] = {
+            dependencies_map[stored_operator.uuid] = {
                 "copy_uuid": operator.uuid,
                 "dependencies": stored_operator.dependencies,
             }
@@ -443,15 +456,7 @@ class DeploymentController:
                 deployment_id=deployment_id
             )
 
-        # sets dependencies on new operators
-        for _, value in copies_map.items():
-            operator = schemas.OperatorUpdate(
-                dependencies=[copies_map[d]["copy_uuid"] for d in value["dependencies"]],
-            )
-            self.operator_controller.update_operator(project_id=project_id,
-                                                     deployment_id=deployment_id,
-                                                     operator_id=value["copy_uuid"],
-                                                     operator=operator)
+
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """
