@@ -471,7 +471,13 @@ class DeploymentController:
                 project_id=project_id,
                 deployment_id=deployment_id
             )
-
+            
+            self.make_independent_operators_depend_on_generated_dataset(
+                self,
+                dependencies_map,
+                operator.uuid,
+                deployment_id, project_id)
+        
         self.set_dependencies_on_new_operators(dependencies_map, deployment_id, project_id)
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
