@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Kubeflow notebook server utility functions."""
 import asyncio
+import http
 import json
 import os
 import tarfile
@@ -584,18 +585,26 @@ def copy_file_to_pod(filepath, destination_path):
         # Attempts to write the entire tarfile caused connection errors for large files
         # The loop below reads/writes small chunks to prevent these errors
         data = tar_buffer.read(1000000)
-        while container_stream.is_open():
-            container_stream.update(timeout=10)
-            if container_stream.peek_stdout():
-                warnings.warn("STDOUT: %s" % container_stream.read_stdout())
-            if container_stream.peek_stderr():
-                warnings.warn("STDERR: %s" % container_stream.read_stderr())
-            if data:
-                container_stream.write_stdin(data)
-                data = tar_buffer.read(1000000)
-            else:
+        while True:
+            try:
+                while container_stream.is_open():
+                    container_stream.update(timeout=10)
+                    if container_stream.peek_stdout():
+                        warnings.warn("STDOUT: %s" % container_stream.read_stdout())
+                    if container_stream.peek_stderr():
+                        warnings.warn("STDERR: %s" % container_stream.read_stderr())
+                    if data:
+                        container_stream.write_stdin(data)
+                        data = tar_buffer.read(1000000)
+                    else:
+                        break
+                container_stream.close()
+
                 break
-        container_stream.close()
+            except ApiException as e:
+                if e.status == http.HTTPStatus.INTERNAL_SERVER_ERROR:
+                    continue
+                warnings.warn("Kubernetes API Error: %s" % e.reason)
 
     warnings.warn(f"Copied '{filepath}' to '{destination_path}'!")
 
