@@ -585,7 +585,8 @@ def copy_file_to_pod(filepath, destination_path):
         # Attempts to write the entire tarfile caused connection errors for large files
         # The loop below reads/writes small chunks to prevent these errors
         data = tar_buffer.read(1000000)
-        while True:
+        retry_count = 0
+        while retry_count < 5:
             try:
                 while container_stream.is_open():
                     container_stream.update(timeout=10)
@@ -599,10 +600,10 @@ def copy_file_to_pod(filepath, destination_path):
                     else:
                         break
                 container_stream.close()
-
                 break
             except ApiException as e:
                 if e.status == http.HTTPStatus.INTERNAL_SERVER_ERROR:
+                    retry_count += 1
                     continue
                 warnings.warn("Kubernetes API Error: %s" % e.reason)
 
