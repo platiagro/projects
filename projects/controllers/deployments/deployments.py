@@ -372,7 +372,8 @@ class DeploymentController:
     def make_independent_operators_depend_on_generated_dataset(self,
                                                                dependencies_map,
                                                                generated_dataset_operator_uuid,
-                                                               deployment_id, project_id):
+                                                               deployment_id,
+                                                               project_id):
         
         dependencies_as_tuple_list =  list(dependencies_map.items())
         for tuple_element in dependencies_as_tuple_list:
@@ -473,10 +474,10 @@ class DeploymentController:
             )
             
             self.make_independent_operators_depend_on_generated_dataset(
-                self,
                 dependencies_map,
                 operator.uuid,
-                deployment_id, project_id)
+                deployment_id,
+                project_id)
         
         self.set_dependencies_on_new_operators(dependencies_map, deployment_id, project_id)
 

@@ -384,6 +384,8 @@ class TestDeployments(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_create_deployment(self):
+        # consider that the source experiment has only one non-dataset operator !!
+        
         rv = TEST_CLIENT.post(f"/projects/foo/deployments", json={})
         result = rv.json()
         self.assertEqual(rv.status_code, 404)
@@ -488,21 +490,31 @@ class TestDeployments(TestCase):
         )
 
         result = rv.json()["deployments"]
+        
         self.assertIsInstance(result, list)
         self.assertEqual(COPY_NAME, result[0]["name"])
         self.assertIn("operators", result[0])
+        self.assertEqual(rv.status_code, 200) 
+
         operators_list = result[0]["operators"]
 
         created_operator_contains_experiment_tasks = False
         created_operator_contains_dataset_task = False
+         
+        dependencies_map = {}
         for operator in operators_list:
 
             if operator.get("taskId") == TASK_ID:
                 created_operator_contains_experiment_tasks = True
+                dependencies_map.update({
+                    operator.get('uuid'): operator.get('dependencies'),
+                    })
 
             if operator.get("name") == "Fonte de dados":
                 created_operator_contains_dataset_task = True
-
+                dataset_operator_uuid = operator.get("uuid")
+        
+        self.assertIn(dataset_operator_uuid, dependencies_map.values())
         self.assertTrue(created_operator_contains_experiment_tasks)
         self.assertTrue(created_operator_contains_dataset_task)
 
