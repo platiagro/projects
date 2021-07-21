@@ -29,6 +29,8 @@ NOTEBOOK_POD_NAME = "server-0"
 NOTEBOOK_CONTAINER_NAME = "server"
 NOTEBOOK_WAITING_MSG = "Waiting for notebook server to be ready..."
 
+MAX_RETRY = 5
+
 
 class ApiClientForJsonPatch(client.ApiClient):
     def call_api(self, resource_path, method,
@@ -586,7 +588,7 @@ def copy_file_to_pod(filepath, destination_path):
         # The loop below reads/writes small chunks to prevent these errors
         data = tar_buffer.read(1000000)
         retry_count = 0
-        while retry_count < 5:
+        while retry_count < MAX_RETRY:
             try:
                 while container_stream.is_open():
                     container_stream.update(timeout=10)
@@ -639,13 +641,22 @@ def copy_files_in_pod(source_path, destination_path):
         _preload_content=False,
     )
 
-    while container_stream.is_open():
-        container_stream.update(timeout=10)
-        if container_stream.peek_stdout():
-            warnings.warn("STDOUT: %s" % container_stream.read_stdout())
-        if container_stream.peek_stderr():
-            warnings.warn("STDERR: %s" % container_stream.read_stderr())
-    container_stream.close()
+    retry_count = 0
+    while retry_count < MAX_RETRY:
+        try:
+            while container_stream.is_open():
+                container_stream.update(timeout=10)
+                if container_stream.peek_stdout():
+                    warnings.warn("STDOUT: %s" % container_stream.read_stdout())
+                if container_stream.peek_stderr():
+                    warnings.warn("STDERR: %s" % container_stream.read_stderr())
+            container_stream.close()
+            break
+        except ApiException as e:
+            if e.status == http.HTTPStatus.INTERNAL_SERVER_ERROR:
+                retry_count += 1
+                continue
+            warnings.warn("Kubernetes API Error: %s" % e.reason)
 
     warnings.warn(f"Copied '{source_path}' to '{destination_path}'!")
 
