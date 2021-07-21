@@ -630,8 +630,8 @@ def copy_file_to_pod(filepath, destination_path):
         # Rewinds to beggining of tarfile
         tar_buffer.seek(0)
 
-        handle_container_stream(container_stream=container_stream, 
-                              buffer=tar_buffer)
+        handle_container_stream(container_stream=container_stream,
+                                buffer=tar_buffer)
 
     warnings.warn(f"Copied '{filepath}' to '{destination_path}'!")
 
