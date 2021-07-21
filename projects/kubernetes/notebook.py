@@ -544,6 +544,53 @@ def get_files_from_task(task_name):
     return clean_zip_file_content
 
 
+def log_stdout_stderr(container_stream):
+    """
+    Catch and log container stdout and stderr.
+
+    Parameters
+    ----------
+    container_stream: kubernetes.stream.ws_client.WSClient
+    """
+    if container_stream.peek_stdout():
+        warnings.warn("STDOUT: %s" % container_stream.read_stdout())
+    if container_stream.peek_stderr():
+        warnings.warn("STDERR: %s" % container_stream.read_stderr())
+
+
+def handle_container_stream(container_stream, buffer=None):
+    """
+    Read container stream stdout and stderr and write the buffer, if given.
+
+    Parameters
+    ----------
+    container_stream: kubernetes.stream.ws_client.WSClient
+    tar_buffer: file-like
+    """
+    # WARNING:
+    # Attempts to write the entire tarfile caused connection errors for large files
+    # The loop below reads/writes small chunks to prevent these errors
+    retry_count = 0
+    while retry_count < MAX_RETRY:
+        try:
+            while container_stream.is_open():
+                container_stream.update(timeout=10)
+                log_stdout_stderr(container_stream)
+                if buffer is not None:
+                    data = buffer.read(1000000)
+                    if data:
+                        container_stream.write_stdin(data)
+                        continue
+                    break
+            container_stream.close()
+            break
+        except ApiException as e:
+            if e.status == http.HTTPStatus.INTERNAL_SERVER_ERROR:
+                retry_count += 1
+                continue
+            warnings.warn("Kubernetes API Error: %s" % e.reason)
+
+
 def copy_file_to_pod(filepath, destination_path):
     """
     Copies a local file to a pod in notebook server.
@@ -583,31 +630,8 @@ def copy_file_to_pod(filepath, destination_path):
         # Rewinds to beggining of tarfile
         tar_buffer.seek(0)
 
-        # WARNING:
-        # Attempts to write the entire tarfile caused connection errors for large files
-        # The loop below reads/writes small chunks to prevent these errors
-        data = tar_buffer.read(1000000)
-        retry_count = 0
-        while retry_count < MAX_RETRY:
-            try:
-                while container_stream.is_open():
-                    container_stream.update(timeout=10)
-                    if container_stream.peek_stdout():
-                        warnings.warn("STDOUT: %s" % container_stream.read_stdout())
-                    if container_stream.peek_stderr():
-                        warnings.warn("STDERR: %s" % container_stream.read_stderr())
-                    if data:
-                        container_stream.write_stdin(data)
-                        data = tar_buffer.read(1000000)
-                    else:
-                        break
-                container_stream.close()
-                break
-            except ApiException as e:
-                if e.status == http.HTTPStatus.INTERNAL_SERVER_ERROR:
-                    retry_count += 1
-                    continue
-                warnings.warn("Kubernetes API Error: %s" % e.reason)
+        handle_container_stream(container_stream=container_stream, 
+                              buffer=tar_buffer)
 
     warnings.warn(f"Copied '{filepath}' to '{destination_path}'!")
 
@@ -641,22 +665,7 @@ def copy_files_in_pod(source_path, destination_path):
         _preload_content=False,
     )
 
-    retry_count = 0
-    while retry_count < MAX_RETRY:
-        try:
-            while container_stream.is_open():
-                container_stream.update(timeout=10)
-                if container_stream.peek_stdout():
-                    warnings.warn("STDOUT: %s" % container_stream.read_stdout())
-                if container_stream.peek_stderr():
-                    warnings.warn("STDERR: %s" % container_stream.read_stderr())
-            container_stream.close()
-            break
-        except ApiException as e:
-            if e.status == http.HTTPStatus.INTERNAL_SERVER_ERROR:
-                retry_count += 1
-                continue
-            warnings.warn("Kubernetes API Error: %s" % e.reason)
+    handle_container_stream(container_stream=container_stream)
 
     warnings.warn(f"Copied '{source_path}' to '{destination_path}'!")
 
@@ -711,12 +720,6 @@ async def set_notebook_metadata(notebook_path, task_id, experiment_id, operator_
         _preload_content=False,
     )
 
-    while container_stream.is_open():
-        container_stream.update(timeout=10)
-        if container_stream.peek_stdout():
-            warnings.warn("STDOUT: %s" % container_stream.read_stdout())
-        if container_stream.peek_stderr():
-            warnings.warn("STDERR: %s" % container_stream.read_stderr())
-    container_stream.close()
+    handle_container_stream(container_stream=container_stream)
 
     warnings.warn(f"Setting metadata in {notebook_path}...")
