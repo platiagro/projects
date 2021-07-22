@@ -39,5 +39,4 @@ class Project(Base):
 
     @hybrid_property
     def has_deployment(self):
-        seldon_deployments = list_project_seldon_deployments(self.uuid)
-        return len(seldon_deployments) > 0
+        return any(d.status == "Succeeded" and d.url is not None for d in self.deployments)
