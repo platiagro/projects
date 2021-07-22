@@ -9,7 +9,6 @@ from sqlalchemy.orm import relationship
 from projects.database import Base
 from projects.models.deployment import Deployment
 from projects.models.experiment import Experiment
-from projects.kubernetes.seldon import list_project_seldon_deployments
 
 
 class Project(Base):
