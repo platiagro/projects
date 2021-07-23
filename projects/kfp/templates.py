@@ -171,7 +171,7 @@ MONITORING_SERVICE = Template("""{
             "spec": {
                 "containers": [
                     {
-                        "image": "platiagro/platiagro-monitoring-image:0.2.0",
+                        "image": "platiagro/platiagro-monitoring-image:0.3.0",
                         "ports": [
                             {
                                 "containerPort": 5000

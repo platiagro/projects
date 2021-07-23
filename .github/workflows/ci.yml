@@ -129,7 +129,7 @@ jobs:
         # Kubeflow Istio Resources
         ./kustomize build "github.com/platiagro/manifests/common/istio-1-9-0/kubeflow-istio-resources/base/?ref=$BRANCH" | kubectl apply -f -
       env:
-        BRANCH: "v0.2.0-kubeflow-v1.3-branch"
+        BRANCH: "v0.3.0-kubeflow-v1.3-branch"
 
     - name: Install JupyterLab
       run: |
@@ -186,7 +186,7 @@ jobs:
         sleep 10
         kubectl -n anonymous wait --for=condition=Ready pods --all --timeout=240s
       env:
-        BRANCH: "v0.2.0-kubeflow-v1.3-branch"
+        BRANCH: "v0.3.0-kubeflow-v1.3-branch"
 
     - name: Start MySQL
       id: mysql

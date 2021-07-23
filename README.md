@@ -25,7 +25,7 @@ Make sure you have all requirements installed on your computer. Then, you may st
 Build a docker image that launches the API server:
 
 ```bash
-docker build -t platiagro/projects:0.2.0 .
+docker build -t platiagro/projects:0.3.0 .
 ```
 
 Finally, start the API server:
@@ -43,7 +43,7 @@ docker run -it -p 8080:8080 \
   --env "JUPYTER_ENDPOINT=$JUPYTER_ENDPOINT" \
   --env "KF_PIPELINES_ENDPOINT=$KF_PIPELINES_ENDPOINT" \
   --env "INGRESS_HOST_PORT=$INGRESS_HOST_PORT" \
-  platiagro/projects:0.2.0
+  platiagro/projects:0.3.0
 ```
 
 ### Run Local:
