@@ -9,7 +9,6 @@ from sqlalchemy.orm import relationship
 from projects.database import Base
 from projects.models.deployment import Deployment
 from projects.models.experiment import Experiment
-from projects.kubernetes.seldon import list_project_seldon_deployments
 
 
 class Project(Base):
@@ -39,5 +38,4 @@ class Project(Base):
 
     @hybrid_property
     def has_deployment(self):
-        seldon_deployments = list_project_seldon_deployments(self.uuid)
-        return len(seldon_deployments) > 0
+        return any(d.status == "Succeeded" and d.url is not None for d in self.deployments)
