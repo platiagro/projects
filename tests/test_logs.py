@@ -182,8 +182,8 @@ class TestLogs(TestCase):
                 del log[attr]
 
             # due particular purposes , we don't want log level as 'WARN'!!
-            self.assertNotEqual('WARN',log.get('level'))
-            
+            self.assertNotEqual('WARN', log.get('level'))
+
             if log == expected:
                 was_expected_log_found = True
                 break
