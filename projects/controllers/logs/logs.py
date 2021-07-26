@@ -56,13 +56,18 @@ class LogController:
             pods.extend(
                 list_workflow_pods(run_id=run_id),
             )
-
+        
         # Retrieves logs from all containers in all pods (that were not deleted)
         logs = self.pods_to_logs(pods)
+        
+        # for now, we don't want log level as 'WARN' so we will change to 'DEBUG'
+        for log in logs:
+            if log.level == 'WARN':
+                log.level = 'INFO'
 
         # Sorts logs by creation date DESC
         logs = sorted(logs, key=lambda l: l.created_at, reverse=True)
-
+      
         return LogList(
             logs=logs,
             total=len(logs),
