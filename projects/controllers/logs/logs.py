@@ -63,7 +63,7 @@ class LogController:
         # for now, we don't want log level as 'WARN' so we will change to 'DEBUG'
         for log in logs:
             if log.level == 'WARN':
-                log.level = 'INFO'
+                log.level = 'DEBUG'
 
         # Sorts logs by creation date DESC
         logs = sorted(logs, key=lambda l: l.created_at, reverse=True)
