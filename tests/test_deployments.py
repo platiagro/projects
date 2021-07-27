@@ -498,9 +498,9 @@ class TestDeployments(TestCase):
 
         operators_list = result[0]["operators"]
 
-        @ setting default values 
+        # setting default values to boolean variables 
         created_operator_contains_experiment_tasks = False
-        created_operator_contains_dataset_task = False
+        created_operator_contains_dataset_task = True
         some_operator_depends_on_the_dataset = False
          
         dependencies_map = {}
@@ -515,25 +515,25 @@ class TestDeployments(TestCase):
                 created_operator_contains_dataset_task = True
                 dataset_operator_uuid = operator.get("uuid")
             elif operator_task_id in source_tasks:
-                created_operator_contains_experiment_tasks = True
                 dependencies_map.update({
                     operator.get('uuid'): operator_dependencies,
                     })
-        print(dependencies_map)  
-        # ensuring that at least one operator depends on dataset
+            else:
+                created_operator_contains_experiment_tasks = True
+                       
         
-        #for key in dependencies_map:
         for dependencie_list in dependencies_map.values():
             non_dataset_operators_have_dependencies = True if dependencie_list else False
-
+            if dataset_operator_uuid in dependencie_list:
+                some_operator_depends_on_the_dataset = True
+     
+        # ensuring that all operators except dataset has dependency
         self.assertTrue(non_dataset_operators_have_dependencies)
         
-        # ensuring that all operators except dataset has dependency
-        #for value in dependencies_map.values():
+        # ensuring at least one operator depends on the dataset 
+        self.assertTrue(some_operator_depends_on_the_dataset)
 
-
-
-
+     
         self.assertTrue(created_operator_contains_experiment_tasks)
         self.assertTrue(created_operator_contains_dataset_task)
 
