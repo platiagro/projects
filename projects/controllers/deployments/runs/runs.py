@@ -93,13 +93,13 @@ class RunController:
 
         return run
 
-    def deploy_run(self, deployment_id: str):
+    def deploy_run(self, deployment):
         """
         Starts a new run in Kubeflow Pipelines.
 
         Parameters
         ----------
-        deployment_id : str
+        deployment : projects.models.deployment.Deployment
 
         Returns
         -------
@@ -110,8 +110,7 @@ class RunController:
         NotFound
             When any of project_id, or deployment_id does not exist.
         """
-        deployment = self.session.query(models.Deployment).get(deployment_id)
-
+        print(type(deployment))
         if deployment is None:
             raise NotFound("The specified deployment does not exist")
 
@@ -123,7 +122,7 @@ class RunController:
             run = kfp_runs.start_run(operators=operators,
                                      project_id=deployment.project_id,
                                      experiment_id=deployment.experiment_id,
-                                     deployment_id=deployment_id,
+                                     deployment_id=deployment.uuid,
                                      deployment_name=deployment.name)
         except ValueError as e:
             raise BadRequest(str(e))

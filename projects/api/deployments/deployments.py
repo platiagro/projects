@@ -90,8 +90,7 @@ async def handle_get_deployment(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     deployment_controller = DeploymentController(session, kubeflow_userid=kubeflow_userid)
-    deployment = deployment_controller.get_deployment(deployment_id=deployment_id,
-                                                      project_id=project_id)
+    deployment = deployment_controller.get_deployment(deployment_id=deployment_id)
     return deployment
 
 
