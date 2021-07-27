@@ -5,8 +5,6 @@ from datetime import datetime
 
 from projects import models, schemas
 from projects.controllers.deployments.runs import RunController
-from projects.controllers.experiments import ExperimentController
-from projects.controllers.operators import OperatorController
 from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
 from projects.controllers.tasks import TaskController
@@ -22,8 +20,6 @@ FONTE_DE_DADOS = "Fonte de dados"
 class DeploymentController:
     def __init__(self, session, background_tasks=None, kubeflow_userid=None):
         self.session = session
-        self.experiment_controller = ExperimentController(session)
-        self.operator_controller = OperatorController(session)
         self.run_controller = RunController(session)
         self.template_controller = TemplateController(session, kubeflow_userid=kubeflow_userid)
         self.task_controller = TaskController(session, background_tasks)
@@ -120,20 +116,28 @@ class DeploymentController:
                 project_id=project_id
             )
 
-        self.session.commit()
+        self.session.flush()
+
         for deployment in deployments:
-            self.run_controller.deploy_run(deployment_id=deployment.uuid)
+            if len(deployment.operators) == 0:
+                raise BadRequest("Necessary at least one operator.")
+            elif len(deployment.operators) == 1 and "DATASETS" in deployment.operators[0].task.tags:
+                raise BadRequest("Necessary at least one operator that is not a data source.")
+
+        for deployment in deployments:
+            self.run_controller.deploy_run(deployment)
             self.session.refresh(deployment)
+
+        self.session.commit()
 
         return schemas.DeploymentList.from_orm(deployments, len(deployments))
 
-    def get_deployment(self, project_id: str, deployment_id: str):
+    def get_deployment(self, deployment_id: str):
         """
         Details a deployment from our database.
 
         Parameters
         ----------
-        project_id : str
         deployment_id : str
 
         Returns
@@ -267,8 +271,7 @@ class DeploymentController:
 
             deployments.append(deployment)
 
-            self.copy_operators(project_id=project_id,
-                                deployment_id=deployment.uuid,
+            self.copy_operators(deployment_id=deployment.uuid,
                                 stored_operators=experiment.operators)
 
             self.fix_positions(project_id=project_id,
@@ -359,8 +362,7 @@ class DeploymentController:
         self.session.add(deployment)
         self.session.flush()
 
-        self.copy_operators(project_id=project_id,
-                            deployment_id=deployment.uuid,
+        self.copy_operators(deployment_id=deployment.uuid,
                             stored_operators=stored_deployment.operators)
 
         self.fix_positions(project_id=project_id,
@@ -369,17 +371,19 @@ class DeploymentController:
 
         return [deployment]
 
-    def copy_operators(self, project_id: str, deployment_id: str, stored_operators: schemas.OperatorList):
+    def copy_operators(self, deployment_id: str, stored_operators: schemas.OperatorList):
         """
         Copies the operators to a deployment.
         Creates new uuids and don't keep the experiment_id/deployment_id relationship.
 
         Parameters
         ----------
-        project_id : str
         stored_operators : projects.schemas.operator.OperatorsList
         deployment_id : str
         """
+        if len(stored_operators) == 0:
+            raise BadRequest("Necessary at least one operator.")
+
         # Creates a dict to map source operator_id to its copy operator_id.
         # This map will be used to build the dependencies using new operator_ids
         copies_map = {}
@@ -404,54 +408,44 @@ class DeploymentController:
                 name = None
                 parameters = stored_operator.parameters
 
-            operator = schemas.OperatorCreate(
-                name=name,
-                task_id=stored_operator.task_id,
-                deployment_id=deployment_id,
-                parameters=parameters,
-                position_x=stored_operator.position_x,
-                position_y=stored_operator.position_y,
-                status="Setted up",
-            )
+            operator_id = uuid_alpha()
 
-            operator = self.operator_controller.create_operator(
-                operator=operator,
-                project_id=project_id,
-                deployment_id=deployment_id
-            )
+            operator = models.Operator(uuid=operator_id,
+                                       name=name,
+                                       deployment_id=deployment_id,
+                                       task_id=stored_operator.task_id,
+                                       dependencies=[],
+                                       status="Setted up",
+                                       parameters=parameters,
+                                       position_x=stored_operator.position_x,
+                                       position_y=stored_operator.position_y)
+
+            self.session.add(operator)
 
             copies_map[stored_operator.uuid] = {
-                "copy_uuid": operator.uuid,
+                "copy_uuid": operator_id,
                 "dependencies": stored_operator.dependencies,
             }
 
         # creates a DATASET type operator if doesn't exist any
         if not some_stored_operators_is_dataset:
+            operator = models.Operator(uuid=uuid_alpha(),
+                                       name=FONTE_DE_DADOS,
+                                       deployment_id=deployment_id,
+                                       task_id=self.task_controller.get_or_create_dataset_task_if_not_exist(),
+                                       dependencies=[],
+                                       parameters={"type": "L", "dataset": None},
+                                       position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
+                                       position_y=leftmost_operator_position[1])
 
-            operator = schemas.OperatorCreate(
-                name=FONTE_DE_DADOS,
-                task_id=self.task_controller.get_or_create_dataset_task_if_not_exist(),
-                deployment_id=deployment_id,
-                parameters={"type": "L", "dataset": None},
-                position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
-                position_y=leftmost_operator_position[1],
-            )
-
-            operator = self.operator_controller.create_operator(
-                operator=operator,
-                project_id=project_id,
-                deployment_id=deployment_id
-            )
+            self.session.add(operator)
 
         # sets dependencies on new operators
         for _, value in copies_map.items():
-            operator = schemas.OperatorUpdate(
-                dependencies=[copies_map[d]["copy_uuid"] for d in value["dependencies"]],
-            )
-            self.operator_controller.update_operator(project_id=project_id,
-                                                     deployment_id=deployment_id,
-                                                     operator_id=value["copy_uuid"],
-                                                     operator=operator)
+            update_data = {"dependencies": [copies_map[d]["copy_uuid"] for d in value["dependencies"]]}
+            update_data.update({"updated_at": datetime.utcnow()})
+
+            self.session.query(models.Operator).filter_by(uuid=value["copy_uuid"]).update(update_data)
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """
