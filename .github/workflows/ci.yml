@@ -110,8 +110,8 @@ jobs:
       run: |
         # Cert-Manager
         ./kustomize build "github.com/platiagro/manifests/common/cert-manager/cert-manager/base/?ref=$BRANCH" | kubectl apply -f -
+        kubectl -n cert-manager wait --for=condition=Ready pods --all --timeout=300s
         ./kustomize build "github.com/platiagro/manifests/common/cert-manager/kubeflow-issuer/base/?ref=$BRANCH" | kubectl apply -f -
-
         kubectl -n cert-manager wait --for=condition=Ready pods --all --timeout=300s
 
         # Istio
