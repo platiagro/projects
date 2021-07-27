@@ -374,30 +374,34 @@ class DeploymentController:
                                                                generated_dataset_operator_uuid,
                                                                deployment_id,
                                                                project_id):
-        
+      
         dependencies_as_tuple_list =  list(dependencies_map.items())
         for tuple_element in dependencies_as_tuple_list:
             dependencies_dict = tuple_element[1]
-            if dependencies_dict.get('dependencies') is None:
-                independent_operator_uuid = tuple_element[0]
+            print(dependencies_dict)
+            if not dependencies_dict.get('dependencies'):
+                independent_operator_uuid = dependencies_dict.get('copy_uuid')
                 operator = schemas.OperatorUpdate(
                     dependencies = [generated_dataset_operator_uuid]
                 )
-         
+                print("Entering inside for")
                 self.operator_controller.update_operator(project_id=project_id,
                                                          deployment_id=deployment_id,
                                                          operator_id=independent_operator_uuid,
-                                                         operator=operator) 
+                                                         operator=operator)
+               
+               
                 
     def set_dependencies_on_new_operators(self,dependencies_map, deployment_id, project_id):
         for _, value in dependencies_map.items():
-            operator = schemas.OperatorUpdate(
-                dependencies=[dependencies_map[d]["copy_uuid"] for d in value["dependencies"]],
-            )
-            self.operator_controller.update_operator(project_id=project_id,
-                                                     deployment_id=deployment_id,
-                                                     operator_id=value["copy_uuid"],
-                                                     operator=operator)
+            if value.get('dependencies'):
+                operator = schemas.OperatorUpdate(
+                    dependencies=[dependencies_map[d]["copy_uuid"] for d in value["dependencies"] if d],
+                )
+                self.operator_controller.update_operator(project_id=project_id,
+                                                        deployment_id=deployment_id,
+                                                        operator_id=value["copy_uuid"],
+                                                        operator=operator)
 
     def copy_operators(self, project_id: str, deployment_id: str, stored_operators: schemas.OperatorList):
         """
@@ -419,7 +423,10 @@ class DeploymentController:
 
         # default position, in case we have to create a dataset operator
         leftmost_operator_position = (stored_operators[0].position_x, stored_operators[0].position_y)
-
+ 
+        for stored_operator in stored_operators:
+            print(stored_operator)
+        
         for stored_operator in stored_operators:
 
             # If we have to create a dataset operator, it is interesting that we put before the leftmost position

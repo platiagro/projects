@@ -498,23 +498,42 @@ class TestDeployments(TestCase):
 
         operators_list = result[0]["operators"]
 
+        @ setting default values 
         created_operator_contains_experiment_tasks = False
         created_operator_contains_dataset_task = False
+        some_operator_depends_on_the_dataset = False
          
         dependencies_map = {}
         for operator in operators_list:
+            source_tasks = [TASK_ID,]
+        
+            operator_name = operator.get("name")
+            operator_dependencies = operator.get('dependencies')
+            operator_task_id = operator.get("taskId") 
 
-            if operator.get("taskId") == TASK_ID:
-                created_operator_contains_experiment_tasks = True
-                dependencies_map.update({
-                    operator.get('uuid'): operator.get('dependencies'),
-                    })
-
-            if operator.get("name") == "Fonte de dados":
+            if operator_name == "Fonte de dados":
                 created_operator_contains_dataset_task = True
                 dataset_operator_uuid = operator.get("uuid")
+            elif operator_task_id in source_tasks:
+                created_operator_contains_experiment_tasks = True
+                dependencies_map.update({
+                    operator.get('uuid'): operator_dependencies,
+                    })
+        print(dependencies_map)  
+        # ensuring that at least one operator depends on dataset
         
-        self.assertIn(dataset_operator_uuid, dependencies_map.values())
+        #for key in dependencies_map:
+        for dependencie_list in dependencies_map.values():
+            non_dataset_operators_have_dependencies = True if dependencie_list else False
+
+        self.assertTrue(non_dataset_operators_have_dependencies)
+        
+        # ensuring that all operators except dataset has dependency
+        #for value in dependencies_map.values():
+
+
+
+
         self.assertTrue(created_operator_contains_experiment_tasks)
         self.assertTrue(created_operator_contains_dataset_task)
 
