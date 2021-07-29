@@ -384,8 +384,6 @@ class TestDeployments(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_create_deployment(self):
-        # consider that the source experiment has only one non-dataset operator !!
-        
         rv = TEST_CLIENT.post(f"/projects/foo/deployments", json={})
         result = rv.json()
         self.assertEqual(rv.status_code, 404)
@@ -490,27 +488,27 @@ class TestDeployments(TestCase):
         )
 
         result = rv.json()["deployments"]
-        
+
         self.assertIsInstance(result, list)
         self.assertEqual(COPY_NAME, result[0]["name"])
         self.assertIn("operators", result[0])
-        self.assertEqual(rv.status_code, 200) 
+        self.assertEqual(rv.status_code, 200)
 
         operators_list = result[0]["operators"]
 
-        # setting default values to boolean variables 
+        # setting default values to boolean variables
         created_operator_contains_dataset_task = False
         some_operator_depends_on_the_dataset = False
-         
+
         dependencies_map = {}
         deployment_tasks = []
-     
+
         for operator in operators_list:
-            source_tasks = [TASK_ID,]
-        
+            source_tasks = [TASK_ID, ]
+
             operator_name = operator.get("name")
             operator_dependencies = operator.get('dependencies')
-            operator_task_id = operator.get("taskId") 
+            operator_task_id = operator.get("taskId")
 
             if operator_name == "Fonte de dados":
                 created_operator_contains_dataset_task = True
@@ -527,11 +525,11 @@ class TestDeployments(TestCase):
             non_dataset_operators_have_dependencies = True if dependencie_list else False
             if dataset_operator_uuid in dependencie_list:
                 some_operator_depends_on_the_dataset = True
-      
+
         # ensuring that all operators except dataset has dependency
         self.assertTrue(non_dataset_operators_have_dependencies)
-        
-        # ensuring at least one operator depends on the dataset 
+
+        # ensuring at least one operator depends on the dataset
         self.assertTrue(some_operator_depends_on_the_dataset)
 
         # ensuring that deployment has a dataset operator
