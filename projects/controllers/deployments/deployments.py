@@ -375,6 +375,14 @@ class DeploymentController:
     def set_dependents_for_generated_dataset_operator(self,
                                                       copies_map,
                                                       generated_dataset_operator_uuid):
+        """
+        Checks operators without dependency and make them depends on generated dataset operator
+
+        Parameters
+        ----------
+        copies_map : dict
+        generated_dataset_operator_uuid: str
+        """
 
         dependencies_as_tuple_list = list(copies_map.items())
         for tuple_element in dependencies_as_tuple_list:
@@ -386,6 +394,13 @@ class DeploymentController:
                 self.session.query(models.Operator).filter_by(uuid=independent_operator_uuid).update(update_data)
 
     def set_dependencies_on_new_operators(self, copies_map):
+        """
+        Sets dependency for new operators
+
+        Parameters
+        ----------
+        copies_map : dict
+        """
         for _, value in copies_map.items():
             if value.get('dependencies'):
                 update_data = {"dependencies": [copies_map[d]["copy_uuid"] for d in value["dependencies"]]}
