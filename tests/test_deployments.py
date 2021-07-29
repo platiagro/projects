@@ -384,6 +384,8 @@ class TestDeployments(TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_create_deployment(self):
+        # consider that the source experiment has only one non-dataset operator !!
+        
         rv = TEST_CLIENT.post(f"/projects/foo/deployments", json={})
         result = rv.json()
         self.assertEqual(rv.status_code, 404)
@@ -488,23 +490,56 @@ class TestDeployments(TestCase):
         )
 
         result = rv.json()["deployments"]
+        
         self.assertIsInstance(result, list)
         self.assertEqual(COPY_NAME, result[0]["name"])
         self.assertIn("operators", result[0])
+        self.assertEqual(rv.status_code, 200) 
+
         operators_list = result[0]["operators"]
 
-        created_operator_contains_experiment_tasks = False
+        # setting default values to boolean variables 
         created_operator_contains_dataset_task = False
+        some_operator_depends_on_the_dataset = False
+         
+        dependencies_map = {}
+        deployment_tasks = []
+     
         for operator in operators_list:
+            source_tasks = [TASK_ID,]
+        
+            operator_name = operator.get("name")
+            operator_dependencies = operator.get('dependencies')
+            operator_task_id = operator.get("taskId") 
 
-            if operator.get("taskId") == TASK_ID:
-                created_operator_contains_experiment_tasks = True
-
-            if operator.get("name") == "Fonte de dados":
+            if operator_name == "Fonte de dados":
                 created_operator_contains_dataset_task = True
+                dataset_operator_uuid = operator.get("uuid")
+            elif operator_task_id in source_tasks:
+                dependencies_map.update({
+                    operator.get('uuid'): operator_dependencies,
+                    })
+                deployment_tasks.append(operator_task_id)
+            else:
+                raise Exception("Non-datasource task in the deployment that is not contained in the experiment")
 
-        self.assertTrue(created_operator_contains_experiment_tasks)
+        for dependencie_list in dependencies_map.values():
+            non_dataset_operators_have_dependencies = True if dependencie_list else False
+            if dataset_operator_uuid in dependencie_list:
+                some_operator_depends_on_the_dataset = True
+      
+        # ensuring that all operators except dataset has dependency
+        self.assertTrue(non_dataset_operators_have_dependencies)
+        
+        # ensuring at least one operator depends on the dataset 
+        self.assertTrue(some_operator_depends_on_the_dataset)
+
+        # ensuring that deployment has a dataset operator
         self.assertTrue(created_operator_contains_dataset_task)
+
+        # ensuring that deployment and experiment has the same tasks*
+        # *except in some cases by the data source task
+        self.assertListEqual(source_tasks, deployment_tasks)
 
     def test_get_deployment(self):
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/{DEPLOYMENT_ID}")
