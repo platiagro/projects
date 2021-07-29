@@ -187,7 +187,7 @@ class TestLogs(TestCase):
                 self.assertIn(attr, log)
                 del log[attr]
 
-            self.assertIn(log.get('level').lower(), LOG_LEVELS.keys()) 
+            self.assertIn(log.get('level').lower(), LOG_LEVELS.keys())
             if log == expected:
                 was_expected_log_found = True
                 break
