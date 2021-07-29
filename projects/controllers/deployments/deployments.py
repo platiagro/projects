@@ -370,13 +370,13 @@ class DeploymentController:
                            new_position=sys.maxsize)  # will add to end of list
 
         return [deployment]
-    
+
     # That will make independents operators depends on generated dataset
     def set_dependents_for_generated_dataset_operator(self,
                                                       copies_map,
                                                       generated_dataset_operator_uuid):
-      
-        dependencies_as_tuple_list =  list(copies_map.items())
+
+        dependencies_as_tuple_list = list(copies_map.items())
         for tuple_element in dependencies_as_tuple_list:
             dependencies_dict = tuple_element[1]
             if not dependencies_dict.get('dependencies'):
@@ -384,15 +384,13 @@ class DeploymentController:
                 update_data = {"dependencies": [generated_dataset_operator_uuid]}
                 update_data.update({"updated_at": datetime.utcnow()})
                 self.session.query(models.Operator).filter_by(uuid=independent_operator_uuid).update(update_data)
-    
+
     def set_dependencies_on_new_operators(self, copies_map):
         for _, value in copies_map.items():
             if value.get('dependencies'):
                 update_data = {"dependencies": [copies_map[d]["copy_uuid"] for d in value["dependencies"]]}
                 update_data.update({"updated_at": datetime.utcnow()})
                 self.session.query(models.Operator).filter_by(uuid=value["copy_uuid"]).update(update_data)
-
-    
 
     def copy_operators(self, deployment_id: str, stored_operators: schemas.OperatorList):
         """
@@ -462,13 +460,13 @@ class DeploymentController:
                                        parameters={"type": "L", "dataset": None},
                                        position_x=leftmost_operator_position[0] - DATASET_OPERATOR_DISTANCE,
                                        position_y=leftmost_operator_position[1])
-              
+
             self.session.add(operator)
             self.session.commit()
             self.set_dependents_for_generated_dataset_operator(copies_map, generated_dataset_operator_uuid)
 
         self.set_dependencies_on_new_operators(copies_map)
-    
+
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """
         Reorders the deployments in a project when a deployment is updated/deleted.
