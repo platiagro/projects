@@ -457,7 +457,7 @@ class DeploymentController:
                                        position_y=stored_operator.position_y)
 
             self.session.add(operator)
-            self.session.commit()
+            self.session.flush()
 
             copies_map[stored_operator.uuid] = {
                 "copy_uuid": operator_id,
@@ -477,7 +477,7 @@ class DeploymentController:
                                        position_y=leftmost_operator_position[1])
 
             self.session.add(operator)
-            self.session.commit()
+            self.session.flush()
             self.set_dependents_for_generated_dataset_operator(copies_map, generated_dataset_operator_uuid)
 
         self.set_dependencies_on_new_operators(copies_map)
