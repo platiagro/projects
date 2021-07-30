@@ -532,13 +532,9 @@ class TestDeployments(TestCase):
         dependencies_map = {}
         deployment_tasks = []
         source_tasks = [TASK_ID, ]
-<<<<<<< HEAD
 
         for operator in operators_list:
 
-=======
-        for operator in operators_list:
->>>>>>> 6a322896d4a2f5355ea6e72ef700e96c837182ea
             operator_name = operator.get("name")
             operator_dependencies = operator.get('dependencies')
             operator_task_id = operator.get("taskId")
@@ -568,11 +564,7 @@ class TestDeployments(TestCase):
         # ensuring that deployment has a dataset operator
         self.assertTrue(created_operator_contains_dataset_task)
 
-<<<<<<< HEAD
         # ensuring that deployment and experiment has the same non-datasource tasks
-=======
-        # ensuring that deployment and experiment has the same non-datasource tasks*
->>>>>>> 6a322896d4a2f5355ea6e72ef700e96c837182ea
         self.assertListEqual(source_tasks, deployment_tasks)
 
     def test_get_deployment(self):
