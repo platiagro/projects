@@ -502,10 +502,8 @@ class TestDeployments(TestCase):
 
         dependencies_map = {}
         deployment_tasks = []
-
+        source_tasks = [TASK_ID, ]
         for operator in operators_list:
-            source_tasks = [TASK_ID, ]
-
             operator_name = operator.get("name")
             operator_dependencies = operator.get('dependencies')
             operator_task_id = operator.get("taskId")
