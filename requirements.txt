@@ -4,7 +4,7 @@ uvicorn==0.13.3
 # Streaming multipart parser
 python-multipart==0.0.5
 # PlatIAgro SDK
-platiagro @ git+https://github.com/platiagro/sdk.git@master
+platiagro @ git+https://github.com/platiagro/sdk.git@v0.2.0-branch
 # ORM
 SQLAlchemy==1.3.22
 # MySQL driver

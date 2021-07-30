@@ -41,6 +41,12 @@ EXPERIMENT_NOTEBOOK_PATH = ""
 DEPLOYMENT_NOTEBOOK_PATH = ""
 EXPERIMENT_NAME = "Experimento 1"
 TENANT = "anonymous"
+LOG_LEVELS = {
+    'info': 'INFO',
+    'debug': 'DEBUG',
+    'error': 'ERROR',
+    'warn': 'ERROR',
+}
 
 # wait time(seconds) for pipeline run and complete
 TIMEOUT = 120
@@ -181,6 +187,7 @@ class TestLogs(TestCase):
                 self.assertIn(attr, log)
                 del log[attr]
 
+            self.assertIn(log.get('level').lower(), LOG_LEVELS.keys())
             if log == expected:
                 was_expected_log_found = True
                 break
