@@ -14,6 +14,12 @@ from projects.schemas.log import Log, LogList
 
 EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
 LOG_PATTERN = re.compile(r"(.*?)\s(INFO|WARN|WARNING|ERROR|DEBUG)\s*(.*)")
+LOG_LEVELS = {
+    'info': 'INFO',
+    'debug': 'DEBUG',
+    'error': 'ERROR',
+    'warn': 'ERROR',
+}
 
 
 class LogController:
@@ -59,6 +65,10 @@ class LogController:
 
         # Retrieves logs from all containers in all pods (that were not deleted)
         logs = self.pods_to_logs(pods)
+
+        # for now, we don't want log level as 'WARN' so we will change to 'DEBUG'
+        for log in logs:
+            log.level = LOG_LEVELS.get(log.level.lower(), 'INFO')
 
         # Sorts logs by creation date DESC
         logs = sorted(logs, key=lambda l: l.created_at, reverse=True)
