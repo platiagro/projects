@@ -533,8 +533,7 @@ class TestDeployments(TestCase):
         # ensuring that deployment has a dataset operator
         self.assertTrue(created_operator_contains_dataset_task)
 
-        # ensuring that deployment and experiment has the same tasks*
-        # *except in some cases by the data source task
+        # ensuring that deployment and experiment has the same non-datasource tasks*
         self.assertListEqual(source_tasks, deployment_tasks)
 
     def test_get_deployment(self):
