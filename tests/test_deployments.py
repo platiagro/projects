@@ -463,9 +463,9 @@ class TestDeployments(TestCase):
             else:
                 raise Exception("Non-datasource task in the deployment that is not contained in the experiment")
 
-        for dependencie_list in dependencies_map.values():
-            non_dataset_operators_have_dependencies = True if dependencie_list else False
-            if dataset_operator_uuid in dependencie_list:
+        for dependencies_list in dependencies_map.values():
+            non_dataset_operators_have_dependencies = True if dependencies_list else False
+            if dataset_operator_uuid in dependencies_list:
                 some_operator_depends_on_the_dataset = True
 
         # ensuring that all operators except dataset has dependency
