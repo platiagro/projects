@@ -46,7 +46,7 @@ ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 CATEGORY = "DEFAULT"
-CATEGORY_2 = "DATASETS"
+CATEGORY_DATASET = "DATASETS"
 DATA_IN = ""
 DATA_OUT = ""
 DOCS = ""
@@ -296,7 +296,7 @@ class TestDeployments(TestCase):
                 IMAGE,
                 COMMANDS_JSON,
                 ARGUMENTS_JSON,
-                CATEGORY,
+                CATEGORY_DATASET,
                 TASK_DATASET_TAGS_JSON,
                 DATA_IN,
                 DATA_OUT,
@@ -371,8 +371,8 @@ class TestDeployments(TestCase):
                 None,
                 "Unset",
                 None,
-                EXPERIMENT_ID_3,
-                TASK_ID,
+                EXPERIMENT_ID_4,
+                TASK_DATASET_ID,
                 PARAMETERS_JSON,
                 POSITION_X,
                 POSITION_Y,
@@ -490,7 +490,7 @@ class TestDeployments(TestCase):
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 400)
 
-        # no operator in experiment case  
+        # experiment with no operator at all!  
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
@@ -500,7 +500,7 @@ class TestDeployments(TestCase):
         result = rv.json()
         expected = {"message": "Necessary at least one operator."}
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 400)
 
         # experiment with only datasource operator  
         rv = TEST_CLIENT.post(
@@ -510,9 +510,9 @@ class TestDeployments(TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "Necessary at least one operator."}
+        expected = {"message": "Necessary at least one operator that is not a data source."}
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 400)
 
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
