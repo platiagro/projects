@@ -121,7 +121,7 @@ class DeploymentController:
         for deployment in deployments:
             if len(deployment.operators) == 0:
                 raise BadRequest("Necessary at least one operator.")
-            elif len(deployment.operators) == 1 and "DATASETS" in deployment.operators[0].task.tags:
+            elif len(deployment.operators) == 1 and deployment.operators[0].task.category == "DATASETS":
                 raise BadRequest("Necessary at least one operator that is not a data source.")
 
         for deployment in deployments:

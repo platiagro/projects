@@ -12,9 +12,11 @@ TEST_CLIENT = TestClient(app)
 
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
+OPERATOR_ID_3 = str(uuid_alpha())
 NAME = "foo"
 NAME_2 = "bar"
 NAME_3 = "bar"
+NAME_4 = "bar"
 COPY_NAME = "foobar"
 DEPLOYMENT_MOCK_NAME = "Foo Deployment"
 DESCRIPTION = "long foo"
@@ -22,6 +24,7 @@ PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_ID_2 = str(uuid_alpha())
 EXPERIMENT_ID_3 = str(uuid_alpha())
+EXPERIMENT_ID_4 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
@@ -43,6 +46,7 @@ ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 TAGS = ["PREDICTOR"]
 CATEGORY = "DEFAULT"
+CATEGORY_2 = "DATASETS"
 DATA_IN = ""
 DATA_OUT = ""
 DOCS = ""
@@ -140,6 +144,22 @@ class TestDeployments(TestCase):
             text,
             (
                 EXPERIMENT_ID_3,
+                NAME_3,
+                PROJECT_ID,
+                POSITION_3,
+                1,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(
+            text,
+            (
+                EXPERIMENT_ID_4,
                 NAME_3,
                 PROJECT_ID,
                 POSITION_3,
@@ -329,6 +349,29 @@ class TestDeployments(TestCase):
                 "Unset",
                 None,
                 EXPERIMENT_ID_2,
+                TASK_ID,
+                PARAMETERS_JSON,
+                POSITION_X,
+                POSITION_Y,
+                DEPENDENCIES_EMPTY_JSON,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
+
+
+        text = (
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(
+            text,
+            (
+                OPERATOR_ID_3,
+                None,
+                "Unset",
+                None,
+                EXPERIMENT_ID_3,
                 TASK_ID,
                 PARAMETERS_JSON,
                 POSITION_X,
