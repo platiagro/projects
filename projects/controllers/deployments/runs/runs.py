@@ -110,7 +110,6 @@ class RunController:
         NotFound
             When any of project_id, or deployment_id does not exist.
         """
-        print(type(deployment))
         if deployment is None:
             raise NotFound("The specified deployment does not exist")
 
