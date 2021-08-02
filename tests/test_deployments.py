@@ -14,12 +14,14 @@ OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 NAME = "foo"
 NAME_2 = "bar"
+NAME_3 = "bar"
 COPY_NAME = "foobar"
 DEPLOYMENT_MOCK_NAME = "Foo Deployment"
 DESCRIPTION = "long foo"
 PROJECT_ID = str(uuid_alpha())
 EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_ID_2 = str(uuid_alpha())
+EXPERIMENT_ID_3 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
@@ -29,6 +31,7 @@ RUN_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1, "dataset": "dataset_name.csv"}
 POSITION = 0
 POSITION_2 = 1
+POSITION_3 = 2
 POSITION_X = 0.3
 POSITION_Y = 0.5
 STATUS = "Pending"
@@ -123,6 +126,23 @@ class TestDeployments(TestCase):
                 NAME_2,
                 PROJECT_ID,
                 POSITION_2,
+                1,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
+
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(
+            text,
+            (
+                EXPERIMENT_ID_3,
+                NAME_3,
+                PROJECT_ID,
+                POSITION_3,
                 1,
                 CREATED_AT,
                 UPDATED_AT,
@@ -426,6 +446,30 @@ class TestDeployments(TestCase):
         result = rv.json()
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 400)
+
+        # no operator in experiment case  
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "experiments": [EXPERIMENT_ID_3],
+            },
+        )
+        result = rv.json()
+        expected = {"message": "Necessary at least one operator."}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
+        # experiment with only datasource operator  
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "experiments": [EXPERIMENT_ID_4],
+            },
+        )
+        result = rv.json()
+        expected = {"message": "Necessary at least one operator."}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
 
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
