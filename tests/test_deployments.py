@@ -28,8 +28,12 @@ EXPERIMENT_ID_4 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
+TEMPLATE_ID_2 = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
 TASK_ID_2 = str(uuid_alpha())
+TASK_DATASET_ID = str(uuid_alpha())
+TASK_DATASET_TAGS = ["DATASETS"]
+TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
 RUN_ID = str(uuid_alpha())
 PARAMETERS = {"coef": 0.1, "dataset": "dataset_name.csv"}
 POSITION = 0
@@ -63,6 +67,24 @@ TASKS_JSON = dumps(
     ]
 )
 
+TASKS_JSON_2 = dumps(
+    [{
+            "uuid": OPERATOR_ID,
+            "position_x": 0.0,
+            "position_y": 0.0,
+            "task_id": TASK_DATASET_ID,
+            "dependencies": [],
+        },
+        {
+            "uuid": OPERATOR_ID_2,
+            "position_x": 0.0,
+            "position_y": 0.0,
+            "task_id": TASK_ID_2,
+            "dependencies": [OPERATOR_ID],
+        },
+    ]
+)
+
 PARAMETERS_JSON = dumps(PARAMETERS)
 EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
@@ -75,10 +97,6 @@ DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
 DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
-
-TASK_DATASET_ID = str(uuid_alpha())
-TASK_DATASET_TAGS = ["DATASETS"]
-TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
 TENANT = "anonymous"
 
 
@@ -398,12 +416,34 @@ class TestDeployments(TestCase):
             ),
         )
 
+
+        text = (
+            f"INSERT INTO templates (uuid, name, tasks, deployment_id, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(
+            text,
+            (
+                TEMPLATE_ID_2,
+                NAME,
+                TASKS_JSON_2,
+                DEPLOYMENT_ID,
+                CREATED_AT,
+                UPDATED_AT,
+                TENANT,
+            ),
+        )
+
         conn.close()
 
     def tearDown(self):
         conn = engine.connect()
 
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
+        conn.execute(text)
+
+
+        text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID_2}'"
         conn.execute(text)
 
         text = (
@@ -566,15 +606,23 @@ class TestDeployments(TestCase):
         # ensuring that deployment and experiment has the same non-datasource tasks
         self.assertListEqual(source_tasks, deployment_tasks)
 
+        # deployments from template
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments", json={"templateId": TEMPLATE_ID}
         )
         result = rv.json()["deployments"]
         self.assertIsInstance(result, list)
-        self.assertIn("operators", result[0])
-        operator = result[0]["operators"][0]
-        self.assertEqual(TASK_ID, operator["taskId"])
+        self.assertEqual(rv.status_code, 200)
+        self.assertIn(TASK_ID, operator["taskId"])
 
+        # With templates that have operators with dependencies
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments", json={"templateId": TEMPLATE_ID_2}
+        )
+        result = rv.json()["deployments"]
+        self.assertIsInstance(result, list)
+        self.assertIn("operators", result[0])
+      
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
