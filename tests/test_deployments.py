@@ -359,7 +359,6 @@ class TestDeployments(TestCase):
             ),
         )
 
-
         text = (
             f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -490,7 +489,7 @@ class TestDeployments(TestCase):
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 400)
 
-        # experiment with no operator at all!  
+        # experiment with no operator at all!
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
@@ -502,7 +501,7 @@ class TestDeployments(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        # experiment with only datasource operator  
+        # experiment with only datasource operator
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
