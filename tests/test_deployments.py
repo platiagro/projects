@@ -612,7 +612,6 @@ class TestDeployments(TestCase):
         result = rv.json()["deployments"]
         self.assertIsInstance(result, list)
         self.assertEqual(rv.status_code, 200)
-        self.assertIn(TASK_ID, operator["taskId"])
 
         # With templates that have operators with dependencies
         rv = TEST_CLIENT.post(
