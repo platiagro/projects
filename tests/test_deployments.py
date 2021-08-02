@@ -68,7 +68,8 @@ TASKS_JSON = dumps(
 )
 
 TASKS_JSON_2 = dumps(
-    [{
+    [
+        {
             "uuid": OPERATOR_ID,
             "position_x": 0.0,
             "position_y": 0.0,
@@ -416,7 +417,6 @@ class TestDeployments(TestCase):
             ),
         )
 
-
         text = (
             f"INSERT INTO templates (uuid, name, tasks, deployment_id, created_at, updated_at, tenant) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
@@ -441,7 +441,6 @@ class TestDeployments(TestCase):
 
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
         conn.execute(text)
-
 
         text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID_2}'"
         conn.execute(text)
@@ -622,7 +621,7 @@ class TestDeployments(TestCase):
         result = rv.json()["deployments"]
         self.assertIsInstance(result, list)
         self.assertIn("operators", result[0])
-      
+
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
