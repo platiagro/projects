@@ -702,7 +702,6 @@ class TestDeployments(TestCase):
     def test_get_deployment(self):
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/{DEPLOYMENT_ID}")
         result = rv.json()
-        print(result)
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/foo-bar")
