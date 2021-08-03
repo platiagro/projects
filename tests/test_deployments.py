@@ -707,6 +707,8 @@ class TestDeployments(TestCase):
 
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/foo-bar")
         result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}")
