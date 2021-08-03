@@ -13,6 +13,8 @@ TEST_CLIENT = TestClient(app)
 OPERATOR_ID = str(uuid_alpha())
 OPERATOR_ID_2 = str(uuid_alpha())
 OPERATOR_ID_3 = str(uuid_alpha())
+OPERATOR_ID_4 = str(uuid_alpha())
+OPERATOR_ID_5 = str(uuid_alpha())
 NAME = "foo"
 NAME_2 = "bar"
 NAME_3 = "bar"
@@ -25,6 +27,7 @@ EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_ID_2 = str(uuid_alpha())
 EXPERIMENT_ID_3 = str(uuid_alpha())
 EXPERIMENT_ID_4 = str(uuid_alpha())
+EXPERIMENT_ID_5 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
 DEPLOYMENT_ID_3 = str(uuid_alpha())
@@ -179,6 +182,23 @@ class TestDeployments(TestCase):
             text,
             (
                 EXPERIMENT_ID_4,
+                NAME_3,
+                PROJECT_ID,
+                POSITION_3,
+                1,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
+
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(
+            text,
+            (
+                EXPERIMENT_ID_5,
                 NAME_3,
                 PROJECT_ID,
                 POSITION_3,
@@ -419,6 +439,49 @@ class TestDeployments(TestCase):
                 UPDATED_AT,
             ),
         )
+        text = (
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(
+            text,
+            (
+                OPERATOR_ID_4,
+                None,
+                "Unset",
+                None,
+                EXPERIMENT_ID_5,
+                TASK_DATASET_ID,
+                PARAMETERS_JSON,
+                POSITION_X,
+                POSITION_Y,
+                DEPENDENCIES_EMPTY_JSON,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
+
+        text = (
+            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(
+            text,
+            (
+                OPERATOR_ID_5,
+                None,
+                "Unset",
+                None,
+                EXPERIMENT_ID_5,
+                TASK_ID,
+                PARAMETERS_JSON,
+                POSITION_X,
+                POSITION_Y,
+                DEPENDENCIES_EMPTY_JSON,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
 
         text = (
             f"INSERT INTO templates (uuid, name, tasks, deployment_id, created_at, updated_at, tenant) "
@@ -572,6 +635,49 @@ class TestDeployments(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
+        # experiment that already have dataset
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "experiments": [EXPERIMENT_ID_5],
+            },
+        )
+        result = rv.json()["deployments"]
+        self.assertIsInstance(result, list)
+        self.assertIn("operators", result[0])
+        operators_list = result[0]["operators"]
+
+        # setting default values to boolean variables
+        created_operator_contains_dataset_task = False
+        some_operator_depends_on_the_dataset = False
+
+        dependencies_map = {}
+        deployment_tasks = []
+        source_tasks = [TASK_ID, ]
+
+        for operator in operators_list:
+
+            operator_name = operator.get("name")
+            operator_dependencies = operator.get('dependencies')
+            operator_task_id = operator.get("taskId")
+
+            if operator_name == "Fonte de dados":
+                created_operator_contains_dataset_task = True
+                dataset_operator_uuid = operator.get("uuid")
+            elif operator_task_id in source_tasks:
+                dependencies_map.update({
+                    operator.get('uuid'): operator_dependencies,
+                    })
+                deployment_tasks.append(operator_task_id)
+            else:
+                raise Exception("Non-datasource task in the deployment that is not contained in the experiment")
+
+        # ensuring that deployment has a dataset operator
+        self.assertTrue(created_operator_contains_dataset_task)
+
+        # ensuring that deployment and experiment has the same non-datasource tasks
+        self.assertListEqual(source_tasks, deployment_tasks)
+
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
@@ -621,18 +727,6 @@ class TestDeployments(TestCase):
 
         # ensuring that deployment has a dataset operator
         self.assertTrue(created_operator_contains_dataset_task)
-
-        # ensuring that deployment and experiment has the same non-datasource tasks
-        self.assertListEqual(source_tasks, deployment_tasks)
-
-        positions = [(operator['name'], operator['positionX']) for operator in operators_list]
-
-        # min function combined with lambda returning tuple (name, position) with the minimum position
-        lefmost_operator = min(positions, key=lambda x: x[1])
-
-        # considering that dataset will be generated in this case
-        # ensuring generated dataset are in the leftmost position
-        self.assertEqual('Fonte de dados', lefmost_operator[0])
 
         # deployments from template
         rv = TEST_CLIENT.post(
