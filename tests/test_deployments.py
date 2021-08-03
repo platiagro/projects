@@ -708,6 +708,15 @@ class TestDeployments(TestCase):
         # ensuring that deployment and experiment has the same non-datasource tasks
         self.assertListEqual(source_tasks, deployment_tasks)
 
+        positions = [(operator['name'], operator['positionX']) for operator in operators_list]
+
+        # min function combined with lambda returning tuple (name, position) with the minimum position
+        lefmost_operator = min(positions, key=lambda x: x[1])
+
+        # considering that dataset will be generated in this case
+        # ensuring generated dataset are in the leftmost position
+        self.assertEqual('Fonte de dados', lefmost_operator[0])
+
     def test_get_deployment(self):
         rv = TEST_CLIENT.get(f"/projects/foo/deployments/{DEPLOYMENT_ID}")
         result = rv.json()
