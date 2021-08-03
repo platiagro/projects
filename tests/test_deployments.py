@@ -711,6 +711,13 @@ class TestDeployments(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
+        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/foo")
+        result = rv.json()
+        expected = {"message": "The specified deployment does not exist"}
+        self.assertIsInstance(result, dict)
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}")
         result = rv.json()
         self.assertIsInstance(result, dict)
