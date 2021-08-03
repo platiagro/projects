@@ -652,6 +652,18 @@ class TestDeployments(TestCase):
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
+                "copyFrom": "Foo",
+                "name": COPY_NAME,
+            },
+        )
+        result = rv.json()
+        expected = {'message': 'source deployment does not exist'}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
                 "copyFrom": DEPLOYMENT_ID,
                 "name": COPY_NAME,
             },
