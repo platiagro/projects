@@ -576,7 +576,7 @@ class TestDeployments(TestCase):
             operator_name = operator.get("name")
             operator_dependencies = operator.get('dependencies')
             operator_task_id = operator.get("taskId")
-
+           
             if operator_name == "Fonte de dados":
                 created_operator_contains_dataset_task = True
                 dataset_operator_uuid = operator.get("uuid")
@@ -604,6 +604,15 @@ class TestDeployments(TestCase):
 
         # ensuring that deployment and experiment has the same non-datasource tasks
         self.assertListEqual(source_tasks, deployment_tasks)
+      
+        positions = [(operator['name'], operator['positionX']) for operator in operators_list]
+        
+        # min function combined with lambda returning tuple (name, position) with the minimum position
+        lefmost_operator = min(positions, key=lambda x:x[1])    
+        
+        # considering that dataset will be generated in this case
+        # ensuring generated dataset are in the leftmost position
+        self.assertEqual('Fonte de dados', lefmost_operator[0])
 
         # deployments from template
         rv = TEST_CLIENT.post(
