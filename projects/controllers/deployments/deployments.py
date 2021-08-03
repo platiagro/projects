@@ -121,7 +121,7 @@ class DeploymentController:
         for deployment in deployments:
             if len(deployment.operators) == 0:
                 raise BadRequest("Necessary at least one operator.")
-            elif len(deployment.operators) == 1 and "DATASETS" in deployment.operators[0].task.tags:
+            elif len(deployment.operators) == 1 and deployment.operators[0].task.category == "DATASETS":
                 raise BadRequest("Necessary at least one operator that is not a data source.")
 
         for deployment in deployments:
@@ -371,6 +371,42 @@ class DeploymentController:
 
         return [deployment]
 
+    # That will make independents operators depends on generated dataset
+    def set_dependents_for_generated_dataset_operator(self,
+                                                      copies_map,
+                                                      generated_dataset_operator_uuid):
+        """
+        Checks operators without dependency and make them depends on generated dataset operator
+
+        Parameters
+        ----------
+        copies_map : dict
+        generated_dataset_operator_uuid: str
+        """
+
+        dependencies_as_tuple_list = list(copies_map.items())
+        for tuple_element in dependencies_as_tuple_list:
+            dependencies_dict = tuple_element[1]
+            if not dependencies_dict.get('dependencies'):
+                independent_operator_uuid = dependencies_dict.get('copy_uuid')
+                update_data = {"dependencies": [generated_dataset_operator_uuid]}
+                update_data.update({"updated_at": datetime.utcnow()})
+                self.session.query(models.Operator).filter_by(uuid=independent_operator_uuid).update(update_data)
+
+    def set_dependencies_on_new_operators(self, copies_map):
+        """
+        Sets dependency for new operators
+
+        Parameters
+        ----------
+        copies_map : dict
+        """
+        for _, value in copies_map.items():
+            if value.get('dependencies'):
+                update_data = {"dependencies": [copies_map[d]["copy_uuid"] for d in value["dependencies"]]}
+                update_data.update({"updated_at": datetime.utcnow()})
+                self.session.query(models.Operator).filter_by(uuid=value["copy_uuid"]).update(update_data)
+
     def copy_operators(self, deployment_id: str, stored_operators: schemas.OperatorList):
         """
         Copies the operators to a deployment.
@@ -421,6 +457,7 @@ class DeploymentController:
                                        position_y=stored_operator.position_y)
 
             self.session.add(operator)
+            self.session.flush()
 
             copies_map[stored_operator.uuid] = {
                 "copy_uuid": operator_id,
@@ -429,7 +466,8 @@ class DeploymentController:
 
         # creates a DATASET type operator if doesn't exist any
         if not some_stored_operators_is_dataset:
-            operator = models.Operator(uuid=uuid_alpha(),
+            generated_dataset_operator_uuid = uuid_alpha()
+            operator = models.Operator(uuid=generated_dataset_operator_uuid,
                                        name=FONTE_DE_DADOS,
                                        deployment_id=deployment_id,
                                        task_id=self.task_controller.get_or_create_dataset_task_if_not_exist(),
@@ -439,13 +477,10 @@ class DeploymentController:
                                        position_y=leftmost_operator_position[1])
 
             self.session.add(operator)
+            self.session.flush()
+            self.set_dependents_for_generated_dataset_operator(copies_map, generated_dataset_operator_uuid)
 
-        # sets dependencies on new operators
-        for _, value in copies_map.items():
-            update_data = {"dependencies": [copies_map[d]["copy_uuid"] for d in value["dependencies"]]}
-            update_data.update({"updated_at": datetime.utcnow()})
-
-            self.session.query(models.Operator).filter_by(uuid=value["copy_uuid"]).update(update_data)
+        self.set_dependencies_on_new_operators(copies_map)
 
     def fix_positions(self, project_id: str, deployment_id=None, new_position=None):
         """
