@@ -27,6 +27,7 @@ EXPERIMENT_ID_3 = str(uuid_alpha())
 EXPERIMENT_ID_4 = str(uuid_alpha())
 DEPLOYMENT_ID = str(uuid_alpha())
 DEPLOYMENT_ID_2 = str(uuid_alpha())
+DEPLOYMENT_ID_3 = str(uuid_alpha())
 TEMPLATE_ID = str(uuid_alpha())
 TEMPLATE_ID_2 = str(uuid_alpha())
 TASK_ID = str(uuid_alpha())
@@ -85,7 +86,6 @@ TASKS_JSON_2 = dumps(
         },
     ]
 )
-
 PARAMETERS_JSON = dumps(PARAMETERS)
 EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
@@ -219,6 +219,26 @@ class TestDeployments(TestCase):
                 NAME_2,
                 PROJECT_ID,
                 EXPERIMENT_ID,
+                POSITION,
+                1,
+                STATUS,
+                URL,
+                CREATED_AT,
+                UPDATED_AT,
+            ),
+        )
+
+        text = (
+            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(
+            text,
+            (
+                DEPLOYMENT_ID_3,
+                NAME_2,
+                PROJECT_ID,
+                EXPERIMENT_ID_3,
                 POSITION,
                 1,
                 STATUS,
@@ -630,6 +650,7 @@ class TestDeployments(TestCase):
         self.assertIsInstance(result, list)
         self.assertIn("operators", result[0])
 
+        # deployment from another deployment but without name in request body
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
@@ -639,6 +660,7 @@ class TestDeployments(TestCase):
         result = rv.json()
         self.assertEqual(rv.status_code, 400)
 
+        # deployment from another deployment but with an existing name
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
@@ -649,6 +671,20 @@ class TestDeployments(TestCase):
         result = rv.json()
         self.assertEqual(rv.status_code, 400)
 
+        # deployment from another deployment but with no operator at all
+        rv = TEST_CLIENT.post(
+            f"/projects/{PROJECT_ID}/deployments",
+            json={
+                "copyFrom": DEPLOYMENT_ID_3,
+                "name": COPY_NAME,
+            },
+        )
+        result = rv.json()
+        expected = {'message': 'Necessary at least one operator.'}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+        # Deployment does not exist
         rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments",
             json={
