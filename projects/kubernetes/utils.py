@@ -13,6 +13,8 @@ from projects.kubernetes.kube_config import load_kube_config
 
 IGNORABLE_MESSAGES_KEYTEXTS = ["ContainerCreating",
                                "PodInitializing"]
+IGNORABLE_STATUSES_REASONS = ["Evicted", ]
+                               
 
 
 def search_for_pod_info(details, operator_id):
@@ -77,6 +79,9 @@ def get_container_logs(pod, container):
     except ApiException as e:
         body = literal_eval(e.body)
         message = body["message"]
+
+        if pod.status.reason in IGNORABLE_STATUSES_REASONS:
+            return None
 
         for ignorable_messages in IGNORABLE_MESSAGES_KEYTEXTS:
             if ignorable_messages in message:
