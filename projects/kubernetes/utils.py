@@ -14,7 +14,6 @@ from projects.kubernetes.kube_config import load_kube_config
 IGNORABLE_MESSAGES_KEYTEXTS = ["ContainerCreating",
                                "PodInitializing"]
 IGNORABLE_STATUSES_REASONS = ["Evicted", ]
-                               
 
 
 def search_for_pod_info(details, operator_id):
