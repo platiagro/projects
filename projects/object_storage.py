@@ -3,7 +3,7 @@
 from os import getenv
 
 from minio import Minio
-from minio.error import BucketAlreadyOwnedByYou
+#from minio.error import BucketAlreadyOwnedByYou
 
 BUCKET_NAME = "anonymous"
 
