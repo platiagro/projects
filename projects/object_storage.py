@@ -28,11 +28,12 @@ def make_bucket(name):
     ----------
     name : str
         The bucket name.
-    """
-    try:
-        MINIO_CLIENT.make_bucket(name)
-    except BucketAlreadyOwnedByYou:
-        pass
+    # """
+    # try:
+    #     MINIO_CLIENT.make_bucket(name)
+    # except BucketAlreadyOwnedByYou:
+    #     pass
+    MINIO_CLIENT.make_bucket(name)
 
 
 def list_objects(prefix):
