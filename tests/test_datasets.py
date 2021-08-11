@@ -4,7 +4,7 @@ from json import dumps
 from unittest import TestCase
 
 from fastapi.testclient import TestClient
-from minio.error import BucketAlreadyOwnedByYou
+#from minio.error import BucketAlreadyOwnedByYou
 from platiagro import CATEGORICAL, DATETIME, NUMERICAL
 
 from projects.api.main import app
@@ -106,10 +106,10 @@ class TestDatasets(TestCase):
         conn.close()
 
         # uploads mock dataset
-        try:
-            MINIO_CLIENT.make_bucket(BUCKET_NAME)
-        except BucketAlreadyOwnedByYou:
-            pass
+        # try:
+        MINIO_CLIENT.make_bucket(BUCKET_NAME)
+        # except BucketAlreadyOwnedByYou:
+        #     pass
 
         file = BytesIO((
             b'col0,col1,col2,col3,col4,col5\n'

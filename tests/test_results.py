@@ -6,7 +6,7 @@ from tests.test_datasets import TASK_ID
 from unittest import TestCase
 
 from fastapi.testclient import TestClient
-from minio.error import BucketAlreadyOwnedByYou
+#from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
@@ -111,10 +111,10 @@ class TestResults(TestCase):
         )
         self.run_id_empty = run.id
 
-        try:
-            MINIO_CLIENT.make_bucket(BUCKET_NAME)
-        except BucketAlreadyOwnedByYou:
-            pass
+        # try:
+        MINIO_CLIENT.make_bucket(BUCKET_NAME)
+        # except BucketAlreadyOwnedByYou:
+        #     pass
 
         buffer = BytesIO()
 
