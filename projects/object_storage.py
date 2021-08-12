@@ -3,7 +3,7 @@
 from os import getenv
 
 from minio import Minio
-from minio.error import BucketAlreadyOwnedByYou
+from minio.error import S3Error
 
 BUCKET_NAME = "anonymous"
 
@@ -30,9 +30,12 @@ def make_bucket(name):
         The bucket name.
     """
     try:
-        MINIO_CLIENT.make_bucket(name)
-    except BucketAlreadyOwnedByYou:
-        pass
+        MINIO_CLIENT.make_bucket(BUCKET_NAME)
+    except S3Error as err:
+        if err.code == "BucketAlreadyOwnedByYou":
+            pass
+        else:
+            raise
 
 
 def list_objects(prefix):

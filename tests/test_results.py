@@ -6,7 +6,7 @@ from tests.test_datasets import TASK_ID
 from unittest import TestCase
 
 from fastapi.testclient import TestClient
-from minio.error import BucketAlreadyOwnedByYou
+from minio.error import S3Error
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
@@ -113,9 +113,12 @@ class TestResults(TestCase):
 
         try:
             MINIO_CLIENT.make_bucket(BUCKET_NAME)
-        except BucketAlreadyOwnedByYou:
-            pass
-
+        except S3Error as err:
+            if err.code == "BucketAlreadyOwnedByYou":
+                pass
+            else:
+                raise
+            
         buffer = BytesIO()
 
         MINIO_CLIENT.put_object(

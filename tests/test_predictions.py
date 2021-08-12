@@ -6,7 +6,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from minio.error import BucketAlreadyOwnedByYou
+from minio.error import S3Error
 from platiagro import CATEGORICAL, DATETIME, NUMERICAL
 from requests import Response
 
@@ -66,8 +66,11 @@ class TestPredictions(TestCase):
 
         try:
             MINIO_CLIENT.make_bucket(BUCKET_NAME)
-        except BucketAlreadyOwnedByYou:
-            pass
+        except S3Error as err:
+            if err.code == "BucketAlreadyOwnedByYou":
+                pass
+            else:
+                raise
 
         # uploads mock dataset
         file = BytesIO((
