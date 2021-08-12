@@ -4,7 +4,6 @@ from unittest import TestCase
 
 import requests
 from fastapi.testclient import TestClient
-from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
