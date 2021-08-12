@@ -6,7 +6,6 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from minio.error import S3Error
 from platiagro import CATEGORICAL, DATETIME, NUMERICAL
 from requests import Response
 
@@ -193,7 +192,7 @@ class TestPredictions(TestCase):
 
         rv = TEST_CLIENT.post(
            f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
-            json={"dataset": IMAGE_DATASET}
+           json={"dataset": IMAGE_DATASET}
         )
         result = rv.json()
         self.assertIsInstance(result, dict)

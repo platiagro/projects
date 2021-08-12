@@ -2,11 +2,9 @@
 from io import BytesIO
 from json import dumps
 from re import S
-from tests.test_datasets import TASK_ID
 from unittest import TestCase
 
 from fastapi.testclient import TestClient
-from minio.error import S3Error
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha

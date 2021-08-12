@@ -4,7 +4,6 @@ from json import dumps
 from unittest import TestCase
 
 from fastapi.testclient import TestClient
-from minio.error import S3Error
 from platiagro import CATEGORICAL, DATETIME, NUMERICAL
 
 from projects.api.main import app
