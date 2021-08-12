@@ -12,7 +12,7 @@ from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
 from projects.kfp import kfp_client
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from projects.object_storage import BUCKET_NAME, MINIO_CLIENT, make_bucket
 
 TEST_CLIENT = TestClient(app)
 
@@ -111,16 +111,8 @@ class TestResults(TestCase):
         )
         self.run_id_empty = run.id
 
-        try:
-            MINIO_CLIENT.make_bucket(BUCKET_NAME)
-        except S3Error as err:
-            if err.code == "BucketAlreadyOwnedByYou":
-                pass
-            else:
-                raise
-            
+        make_bucket(BUCKET_NAME)
         buffer = BytesIO()
-
         MINIO_CLIENT.put_object(
             bucket_name=BUCKET_NAME,
             object_name=f"experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/{self.run_id}/figure-000101000000000000.png",
