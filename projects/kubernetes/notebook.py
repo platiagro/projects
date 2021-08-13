@@ -3,6 +3,7 @@
 import asyncio
 import http
 import json
+import logging
 import os
 import tarfile
 import time
@@ -30,6 +31,8 @@ NOTEBOOK_CONTAINER_NAME = "server"
 NOTEBOOK_WAITING_MSG = "Waiting for notebook server to be ready..."
 
 MAX_RETRY = 5
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class ApiClientForJsonPatch(client.ApiClient):

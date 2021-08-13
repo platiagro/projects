@@ -1,4 +1,4 @@
-FROM python:3.7-buster
+FROM tiangolo/uvicorn-gunicorn:python3.8
 
 LABEL maintainer="fabiol@cpqd.com.br"
 
@@ -23,5 +23,5 @@ WORKDIR /app/
 
 EXPOSE 8080
 
-ENTRYPOINT ["uvicorn", "projects.api.main:app"]
-CMD ["--host", "0.0.0.0", "--port", "8080", "--workers", "4"]
+ENTRYPOINT ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-c", "/gunicorn_conf.py", "projects.api.main:app"]
+CMD []

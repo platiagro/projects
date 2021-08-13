@@ -50,9 +50,9 @@ async def handle_list_tasks(request: Request,
 
 
 @router.post("", response_model=projects.schemas.task.Task)
-async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
-                            background_tasks: BackgroundTasks,
-                            session: Session = Depends(session_scope)):
+def handle_post_tasks(task: projects.schemas.task.TaskCreate,
+                      background_tasks: BackgroundTasks,
+                      session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
 
@@ -72,8 +72,8 @@ async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
 
 
 @router.get("/{task_id}", response_model=projects.schemas.task.Task)
-async def handle_get_task(task_id: str,
-                          session: Session = Depends(session_scope)):
+def handle_get_task(task_id: str,
+                    session: Session = Depends(session_scope)):
     """
     Handles GET requests to /<task_id>.
 
@@ -92,10 +92,10 @@ async def handle_get_task(task_id: str,
 
 
 @router.patch("/{task_id}", response_model=projects.schemas.task.Task)
-async def handle_patch_task(task_id: str,
-                            task: projects.schemas.task.TaskUpdate,
-                            background_tasks: BackgroundTasks,
-                            session: Session = Depends(session_scope)):
+def handle_patch_task(task_id: str,
+                      task: projects.schemas.task.TaskUpdate,
+                      background_tasks: BackgroundTasks,
+                      session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<task_id>.
 
@@ -116,9 +116,9 @@ async def handle_patch_task(task_id: str,
 
 
 @router.delete("/{task_id}")
-async def handle_delete_task(task_id: str,
-                             background_tasks: BackgroundTasks,
-                             session: Session = Depends(session_scope)):
+def handle_delete_task(task_id: str,
+                       background_tasks: BackgroundTasks,
+                       session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<task_id>.
 

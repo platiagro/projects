@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tasks controller."""
 import base64
+import concurrent.futures
 import json
 import os
 import pkgutil
@@ -212,14 +213,15 @@ class TaskController:
 
         task_id = str(uuid_alpha())
 
-        self.background_tasks.add_task(
-            handle_task_creation,
-            task=task,
-            task_id=task_id,
-            experiment_notebook_path=experiment_notebook_path,
-            deployment_notebook_path=deployment_notebook_path,
-            copy_name=stored_task_name,
-        )
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.submit(
+                handle_task_creation,
+                task=task,
+                task_id=task_id,
+                experiment_notebook_path=experiment_notebook_path,
+                deployment_notebook_path=deployment_notebook_path,
+                copy_name=stored_task_name,
+            )
 
         task_dict = task.dict(exclude_unset=True)
         task_dict.pop("copy_from", None)
