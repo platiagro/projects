@@ -157,9 +157,6 @@ class TaskController:
         """
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
-        if not isinstance(task.name, str):
-            task.name = self.generate_name_task("Tarefa em branco")
-
         if task.copy_from and has_notebook:
             raise BadRequest("Either provide notebooks or a task to copy from")
 
@@ -174,6 +171,7 @@ class TaskController:
         self.raise_if_invalid_docker_image(task.image)
 
         check_comp_name = self.session.query(models.Task).filter_by(name=task.name).first()
+        print(check_comp_name)
         if check_comp_name:
             raise BadRequest("a task with that name already exists")
 
@@ -209,6 +207,11 @@ class TaskController:
                 deployment_notebook_path = "Deployment.ipynb"
                 task.experiment_notebook = EXPERIMENT_NOTEBOOK
                 task.deployment_notebook = DEPLOYMENT_NOTEBOOK
+
+        if not isinstance(task.name, str):
+            task.name = self.generate_name_task("Tarefa em branco")
+        else:
+            task.name = self.generate_name_task(stored_task.name)
 
         task_id = str(uuid_alpha())
 
