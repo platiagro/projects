@@ -208,10 +208,12 @@ class TaskController:
                 task.experiment_notebook = EXPERIMENT_NOTEBOOK
                 task.deployment_notebook = DEPLOYMENT_NOTEBOOK
 
-        if not isinstance(task.name, str):
-            task.name = self.generate_name_task("Tarefa em branco")
+        # Adding the task name if it is a copy.
+        if task.copy_from:
+            task.name = self.generate_name_task(stored_task.name + " - Cópia")
         else:
-            task.name = self.generate_name_task(stored_task.name)
+            if not isinstance(task.name, str):
+                task.name = self.generate_name_task("Tarefa em branco")
 
         task_id = str(uuid_alpha())
 
