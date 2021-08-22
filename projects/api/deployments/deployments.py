@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """Deployments API Router."""
 from typing import Optional
-
-from fastapi import APIRouter, BackgroundTasks, Depends, Header
+from sse_starlette.sse import EventSourceResponse
+from fastapi import APIRouter, BackgroundTasks, Request, Depends, Header 
 from sqlalchemy.orm import Session
 
 import projects.schemas.deployment
 from projects.controllers import DeploymentController, ProjectController
 from projects.database import session_scope
+from projects.kubernetes.seldon import list_deployment_pods
+from projects.kubernetes.utils import log_stream
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments",
@@ -151,3 +153,29 @@ async def handle_delete_deployment(project_id: str,
     deployment = deployment_controller.delete_deployment(deployment_id=deployment_id,
                                                          project_id=project_id)
     return deployment
+
+
+@router.get("/{deployment_id}/logs/eventsource")
+async def handle_log_deployment(deployment_id: str,
+                                req: Request):
+    """
+    Handles log event source requests to /<deployment_id>/logs/eventsource.
+
+    Parameters
+    ----------
+    deployment_id : str
+    req : fastapi.Request
+
+    Returns
+    -------
+    EventSourceResponse
+    """
+    pods = list_deployment_pods(deployment_id)
+    if len(pods) == 1:
+        pod=pods[0].metadata.name
+        namespace=pods[0].metadata.namespace
+        container=pods[0].spec.containers[0].name
+        stream = log_stream(req,pod,namespace,container)
+        return EventSourceResponse(stream)
+    elif len(pods) == 0:
+        return "unable to create log stream"
