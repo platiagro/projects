@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """Utility functions."""
 import time
+import asyncio
+import logging
 
 from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes import stream
+from kubernetes.watch import Watch
+
+from urllib3.exceptions import ReadTimeoutError
 
 from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
@@ -205,3 +210,50 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     # the stdout string contains \n character, we must remove
     clean_zip_file_content = zip_file_content.replace("\n", "")
     return clean_zip_file_content
+
+
+async def log_stream(req, pod, namespace, container):
+    """
+    Generates log stream of given pod's container.
+
+    Parameters
+    ----------
+        req: fastapi.Request
+        pod: str
+        namespace: str
+        container: str
+
+    """
+    load_kube_config()
+    v1 = client.CoreV1Api()
+    w = Watch()
+    while(True):
+        if await req.is_disconnected():
+            logging.info("client disconnected!!!")
+            break
+        try:
+            for streamline in w.stream(
+                    v1.read_namespaced_pod_log, 
+                    name=pod, 
+                    namespace=namespace,
+                    container=container,
+                    pretty="true",
+                    tail_lines=0,
+                    timestamps=True,
+                    _request_timeout=30
+                ):
+                yield(streamline)
+        except RuntimeError as e:
+            logging.exception(e)
+        except asyncio.CancelledError as e:
+            logging.exception(e)
+        except ApiException as e:
+            logging.exception(e)
+        except ReadTimeoutError as e:
+            """
+            Expected behavior if given container does not have any new log on log stream.
+            Timeout is needed because if there's no new log, the application blocks in the for loop and doesn't handle client disconnection.
+            """
+            pass
+        finally:
+            pass
