@@ -1,4 +1,4 @@
-FROM python:3.8-buster
+FROM python:3.7-buster
 
 LABEL maintainer="fabiol@cpqd.com.br"
 
@@ -19,5 +19,5 @@ COPY ./setup.py /app/setup.py
 
 WORKDIR /app/
 
-ENTRYPOINT ["python", "-m", "projects.agent.main"]
+ENTRYPOINT ["python", "-m", "projects.init_task.main"]
 CMD []
