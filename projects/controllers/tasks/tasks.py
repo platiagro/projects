@@ -179,8 +179,6 @@ class TaskController:
         stored_task_name = None
         if task.copy_from:
             stored_task = self.session.query(models.Task).get(task.copy_from)
-            # Adding the task name if it is a copy.
-            task.name = self.generate_name_task(f"{stored_task.name} - Cópia")
             if stored_task is None:
                 raise BadRequest("source task does not exist")
 
@@ -195,6 +193,8 @@ class TaskController:
             task.cpu_request = stored_task.cpu_request
             task.memory_limit = stored_task.memory_limit
             task.memory_request = stored_task.memory_request
+            # Adding the task name if it is a copy.
+            task.name = self.generate_name_task(f"{stored_task.name} - Cópia")
 
         else:
             if not isinstance(task.name, str):
