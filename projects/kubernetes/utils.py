@@ -158,7 +158,7 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
                     "mountPath": "/tmp/data",
                     "name": "vol-tmp-data"
                 }]
-              }],
+            }],
             "volumes": [{
                 "name": "vol-tmp-data",
                 "persistentVolumeClaim": {
@@ -237,15 +237,15 @@ async def log_stream(req, pod, namespace, container):
             break
         try:
             for streamline in w.stream(
-                    v1.read_namespaced_pod_log, 
-                    name=pod, 
-                    namespace=namespace,
-                    container=container,
-                    pretty="true",
-                    tail_lines=0,
-                    timestamps=True,
-                    _request_timeout=30
-                ):
+                v1.read_namespaced_pod_log,
+                name=pod,
+                namespace=namespace,
+                container=container,
+                pretty="true",
+                tail_lines=0,
+                timestamps=True,
+                _request_timeout=30
+            ):
                 yield(streamline)
         except RuntimeError as e:
             logging.exception(e)
