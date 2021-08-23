@@ -171,7 +171,6 @@ class TaskController:
         self.raise_if_invalid_docker_image(task.image)
 
         check_comp_name = self.session.query(models.Task).filter_by(name=task.name).first()
-        print(check_comp_name)
         if check_comp_name:
             raise BadRequest("a task with that name already exists")
 
@@ -210,7 +209,7 @@ class TaskController:
 
         # Adding the task name if it is a copy.
         if task.copy_from:
-            task.name = self.generate_name_task(stored_task.name + " - Cópia")
+            task.name = self.generate_name_task(f"{stored_task.name} - Cópia")
         else:
             if not isinstance(task.name, str):
                 task.name = self.generate_name_task("Tarefa em branco")
