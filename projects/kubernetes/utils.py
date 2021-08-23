@@ -259,5 +259,3 @@ async def log_stream(req, pod, namespace, container):
             Timeout is needed because if there's no new log, the application blocks in the for loop and doesn't handle client disconnection.
             """
             pass
-        finally:
-            pass
