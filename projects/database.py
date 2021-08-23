@@ -22,7 +22,7 @@ def init_db():
     # import all modules here that might define models so that
     # they will be registered properly on the metadata. Otherwise
     # you will have to import them first before calling init_db()
-    import projects.models
+    import projects.models  # noqa: F401
 
     db_url = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}/mysql"
     tmp_engine = create_engine(db_url, convert_unicode=True)
