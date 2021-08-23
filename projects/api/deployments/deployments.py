@@ -2,7 +2,7 @@
 """Deployments API Router."""
 from typing import Optional
 from sse_starlette.sse import EventSourceResponse
-from fastapi import APIRouter, BackgroundTasks, Request, Depends, Header 
+from fastapi import APIRouter, BackgroundTasks, Request, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.deployment
@@ -172,10 +172,10 @@ async def handle_log_deployment(deployment_id: str,
     """
     pods = list_deployment_pods(deployment_id)
     if len(pods) == 1:
-        pod=pods[0].metadata.name
-        namespace=pods[0].metadata.namespace
-        container=pods[0].spec.containers[0].name
-        stream = log_stream(req,pod,namespace,container)
+        pod = pods[0].metadata.name
+        namespace = pods[0].metadata.namespace
+        container = pods[0].spec.containers[0].name
+        stream = log_stream(req, pod, namespace, container)
         return EventSourceResponse(stream)
     elif len(pods) == 0:
         return "unable to create log stream"

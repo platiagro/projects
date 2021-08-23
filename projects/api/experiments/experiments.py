@@ -183,14 +183,12 @@ async def handle_log_deployment(experiment_id: str,
         for pod in pods:
             if pod.metadata.annotations["name"] == task_name:
                 stream = log_stream(
-                    req, 
-                    pod.metadata.name, 
+                    req,
+                    pod.metadata.name,
                     pod.metadata.namespace,
                     pod.spec.containers[0].name
-                    )
+                )
                 return EventSourceResponse(stream)
         return "Could not find task with given name"
     elif len(pods) == 0:
         return "Unable to create log stream"
-    
-    
