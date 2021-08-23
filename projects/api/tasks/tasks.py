@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tasks API Router."""
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 import projects.schemas.message
@@ -51,7 +51,6 @@ async def handle_list_tasks(request: Request,
 
 @router.post("", response_model=projects.schemas.task.Task)
 async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
-                            background_tasks: BackgroundTasks,
                             session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
@@ -59,14 +58,13 @@ async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
     Parameters
     ----------
     task : projects.schemas.task.TaskCreate
-    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     projects.schemas.task.Task
     """
-    task_controller = TaskController(session, background_tasks)
+    task_controller = TaskController(session)
     task = task_controller.create_task(task=task)
     return task
 
@@ -94,7 +92,6 @@ async def handle_get_task(task_id: str,
 @router.patch("/{task_id}", response_model=projects.schemas.task.Task)
 async def handle_patch_task(task_id: str,
                             task: projects.schemas.task.TaskUpdate,
-                            background_tasks: BackgroundTasks,
                             session: Session = Depends(session_scope)):
     """
     Handles PATCH requests to /<task_id>.
@@ -103,21 +100,19 @@ async def handle_patch_task(task_id: str,
     ----------
     task_id : str
     task : projects.schemas.task.TaskUpdate
-    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     projects.schemas.task.Task
     """
-    task_controller = TaskController(session, background_tasks)
+    task_controller = TaskController(session)
     task = task_controller.update_task(task_id=task_id, task=task)
     return task
 
 
 @router.delete("/{task_id}")
 async def handle_delete_task(task_id: str,
-                             background_tasks: BackgroundTasks,
                              session: Session = Depends(session_scope)):
     """
     Handles DELETE requests to /<task_id>.
@@ -125,14 +120,13 @@ async def handle_delete_task(task_id: str,
     Parameters
     ----------
     task_id : str
-    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     projects.schemas.message.Message
     """
-    task_controller = TaskController(session, background_tasks)
+    task_controller = TaskController(session)
     result = task_controller.delete_task(task_id=task_id)
     return result
 
@@ -140,7 +134,6 @@ async def handle_delete_task(task_id: str,
 @router.post("/{task_id}/emails", status_code=200)
 async def handle_task_email_sender(task_id: str,
                                    email_schema: EmailSchema,
-                                   background_tasks: BackgroundTasks,
                                    session: Session = Depends(session_scope)):
     """
     Handles request to /{task_id}/email
@@ -148,17 +141,14 @@ async def handle_task_email_sender(task_id: str,
     Parameters
     ----------
     task_id : str
-    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
     email: projects.schema.mailing.EmailSchema
 
     Returns
     -------
     message: str
-
     """
-
-    task_controller = TaskController(session, background_tasks)
+    task_controller = TaskController(session)
     result = task_controller.send_emails(email_schema, task_id=task_id)
 
     return result

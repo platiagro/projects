@@ -2,7 +2,7 @@
 """Runs API Router."""
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 from projects.controllers import DeploymentController, ProjectController
@@ -47,7 +47,6 @@ async def handle_list_runs(project_id: str,
 @router.post("")
 async def handle_post_runs(project_id: str,
                            deployment_id: str,
-                           background_tasks: BackgroundTasks,
                            session: Session = Depends(session_scope),
                            kubeflow_userid: Optional[str] = Header("anonymous")):
     """
@@ -57,7 +56,6 @@ async def handle_post_runs(project_id: str,
     ----------
     project_id : str
     deployment_id : str
-    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
     kubeflow_userid : fastapi.Header
 
