@@ -179,6 +179,8 @@ class TaskController:
         stored_task_name = None
         if task.copy_from:
             stored_task = self.session.query(models.Task).get(task.copy_from)
+            # Adding the task name if it is a copy.
+            task.name = self.generate_name_task(f"{stored_task.name} - Cópia")
             if stored_task is None:
                 raise BadRequest("source task does not exist")
 
@@ -195,6 +197,9 @@ class TaskController:
             task.memory_request = stored_task.memory_request
 
         else:
+            if not isinstance(task.name, str):
+                task.name = self.generate_name_task("Tarefa em branco")
+ 
             if task.image is not None:
                 experiment_notebook_path = None
                 deployment_notebook_path = None
@@ -206,13 +211,6 @@ class TaskController:
                 deployment_notebook_path = "Deployment.ipynb"
                 task.experiment_notebook = EXPERIMENT_NOTEBOOK
                 task.deployment_notebook = DEPLOYMENT_NOTEBOOK
-
-        # Adding the task name if it is a copy.
-        if task.copy_from:
-            task.name = self.generate_name_task(f"{stored_task.name} - Cópia")
-        else:
-            if not isinstance(task.name, str):
-                task.name = self.generate_name_task("Tarefa em branco")
 
         task_id = str(uuid_alpha())
 
