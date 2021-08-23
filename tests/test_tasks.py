@@ -2,15 +2,11 @@
 from json import dumps, loads
 from unittest import TestCase
 
-import requests
 from fastapi.testclient import TestClient
-from minio.error import BucketAlreadyOwnedByYou
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.jupyter import COOKIES, HEADERS, JUPYTER_ENDPOINT
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 TEST_CLIENT = TestClient(app)
 
@@ -715,7 +711,7 @@ class TestTasks(TestCase):
 
         # string is not an email
         rv = TEST_CLIENT.post(f"/tasks/{TASK_ID}/emails", json={
-             "emails":["notEmailString",]
+             "emails": ["notEmailString", ]
          })
         result = rv.json()
         self.assertEqual(rv.status_code, 422)

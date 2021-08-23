@@ -6,14 +6,13 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from minio.error import BucketAlreadyOwnedByYou
 from platiagro import CATEGORICAL, DATETIME, NUMERICAL
 from requests import Response
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
 from projects.database import engine
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from projects.object_storage import BUCKET_NAME, MINIO_CLIENT, make_bucket
 
 TEST_CLIENT = TestClient(app)
 
@@ -64,12 +63,8 @@ class TestPredictions(TestCase):
 
         conn.close()
 
-        try:
-            MINIO_CLIENT.make_bucket(BUCKET_NAME)
-        except BucketAlreadyOwnedByYou:
-            pass
-
         # uploads mock dataset
+        make_bucket(BUCKET_NAME)
         file = BytesIO((
             b'col0,col1,col2,col3,col4,col5\n'
             b'01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
@@ -197,7 +192,7 @@ class TestPredictions(TestCase):
 
         rv = TEST_CLIENT.post(
            f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
-            json={"dataset": IMAGE_DATASET}
+           json={"dataset": IMAGE_DATASET}
         )
         result = rv.json()
         self.assertIsInstance(result, dict)
