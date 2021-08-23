@@ -33,7 +33,10 @@ setup(
     url="https://github.com/platiagro/projects",
     packages=find_packages(),
     package_data={
-        "projects": ["config/*.ipynb", "config/*.html" ],
+        "projects": [
+            "config/*.ipynb",
+            "config/*.html",
+        ],
     },
     install_requires=requirements,
     extras_require=extras,
@@ -50,6 +53,9 @@ setup(
     entry_points={
         "console_scripts": [
             "platiagro-init-db = projects.database:init_db",
+            "persistence-agent = projects.agent.main:main",
+            "init-task = projects.init_task.main:main",
+            "share-task = projects.share_task.main:main",
         ]
     },
 )
