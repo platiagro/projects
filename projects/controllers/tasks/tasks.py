@@ -1,56 +1,29 @@
 # -*- coding: utf-8 -*-
 """Tasks controller."""
-import base64
 import json
-import os
 import pkgutil
 import re
-import tempfile
 from datetime import datetime
 from typing import Optional
 
-from fastapi_mail import FastMail, MessageSchema
-from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
-from projects import __version__, models, schemas
+from projects import kfp, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
-from projects.kubernetes.notebook import (copy_file_to_pod,
-                                          get_files_from_task,
-                                          handle_task_creation,
-                                          remove_persistent_volume_claim,
-                                          update_persistent_volume_claim,
-                                          update_task_config_map)
 
 PREFIX = "tasks"
 VALID_CATEGORIES = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
                     "PREDICTOR", "COMPUTER_VISION", "NLP", "MONITORING"]
-DEPLOYMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Deployment.ipynb"))
-EXPERIMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Experiment.ipynb"))
-
-TASK_DEFAULT_EXPERIMENT_IMAGE = os.getenv(
-    "TASK_DEFAULT_EXPERIMENT_IMAGE",
-    f"platiagro/platiagro-experiment-image:{__version__}",
-)
-TASK_DEFAULT_CPU_LIMIT = os.getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
-TASK_DEFAULT_CPU_REQUEST = os.getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
-TASK_DEFAULT_MEMORY_LIMIT = os.getenv("TASK_DEFAULT_MEMORY_LIMIT", "10Gi")
-TASK_DEFAULT_MEMORY_REQUEST = os.getenv("TASK_DEFAULT_MEMORY_REQUEST", "2Gi")
-TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(os.getenv(
-    "TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS",
-    "60",
-))
-
-EMAIL_MESSAGE_TEMPLATE = pkgutil.get_data("projects", "config/email-template.html")
+DEPLOYMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Deployment.ipynb").decode())
+EXPERIMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Experiment.ipynb").decode())
 
 NOT_FOUND = NotFound("The specified task does not exist")
 
 
 class TaskController:
-    def __init__(self, session, background_tasks=None):
+    def __init__(self, session):
         self.session = session
-        self.background_tasks = background_tasks
 
     def raise_if_task_does_not_exist(self, task_id: str):
         """
@@ -179,7 +152,7 @@ class TaskController:
 
         # creates a task with specified name,
         # but copies notebooks from a source task
-        stored_task_name = None
+        stored_task = None
         if task.copy_from:
             stored_task = self.session.query(models.Task).get(task.copy_from)
             if stored_task is None:
@@ -189,7 +162,6 @@ class TaskController:
             task.commands = stored_task.commands
             task.arguments = stored_task.arguments
             task.parameters = stored_task.parameters
-            stored_task_name = stored_task.name
             experiment_notebook_path = stored_task.experiment_notebook_path
             deployment_notebook_path = stored_task.deployment_notebook_path
             task.cpu_limit = stored_task.cpu_limit
@@ -216,15 +188,6 @@ class TaskController:
 
         task_id = str(uuid_alpha())
 
-        self.background_tasks.add_task(
-            handle_task_creation,
-            task=task,
-            task_id=task_id,
-            experiment_notebook_path=experiment_notebook_path,
-            deployment_notebook_path=deployment_notebook_path,
-            copy_name=stored_task_name,
-        )
-
         task_dict = task.dict(exclude_unset=True)
         task_dict.pop("copy_from", None)
         task_dict.pop("experiment_notebook", None)
@@ -239,6 +202,15 @@ class TaskController:
         self.session.add(task)
         self.session.commit()
         self.session.refresh(task)
+
+        all_tasks = self.session.query(models.Task).all()
+
+        kfp.create_task(
+            task=task,
+            namespace=kfp.KF_PIPELINES_NAMESPACE,
+            all_tasks=all_tasks,
+            copy_from=stored_task,
+        )
 
         return schemas.Task.from_orm(task)
 
@@ -300,38 +272,36 @@ class TaskController:
 
         stored_task = self.session.query(models.Task).get(task_id)
 
-        # If the contents of experiment/deployment notebook were sent,
-        # saves them to the notebook server pod
-        self.copy_notebooks_to_pod(task, stored_task)
-
-        # checks whether task.name has changed
-        if stored_task.name != task.name and task.name:
-            # update the volume for the task in the notebook server
-            self.background_tasks.add_task(
-                update_persistent_volume_claim,
-                name=f"vol-task-{task_id}",
-                mount_path=f"/home/jovyan/tasks/{task.name}"
-            )
-
-        # update ConfigMap for monitoring tasks
-        if ((task.parameters and "MONITORING" in stored_task.tags) or
-                ("MONITORING" in task.tags if task.tags else False)):
-            self.background_tasks.add_task(
-                update_task_config_map,
-                task_name=stored_task.name,
-                task_id=task_id,
-                experiment_notebook_path=stored_task.experiment_notebook_path,
-            )
+        # checks whether any changes that start a pipeline occured.
+        # when the name of a task has changed, JupyterLab must reflect this change.
+        name_has_changed = stored_task.name != task.name and task.name
+        # if the contents of a notebook are sent, the files on JupyterLab must be updated
+        experiment_notebook = task.experiment_notebook
+        deployment_notebook = task.deployment_notebook
+        notebooks_have_changed = experiment_notebook or deployment_notebook
 
         update_data = task.dict(exclude_unset=True)
         update_data.pop("experiment_notebook", None)
         update_data.pop("deployment_notebook", None)
         update_data.update({"updated_at": datetime.utcnow()})
 
-        self.session.query(models.Task).filter_by(uuid=task_id).update(update_data)
+        self.session.query(models.Task) \
+            .filter_by(uuid=task_id) \
+            .update(update_data)
         self.session.commit()
 
         task = self.session.query(models.Task).get(task_id)
+
+        if name_has_changed or notebooks_have_changed:
+            all_tasks = self.session.query(models.Task).all()
+
+            kfp.update_task(
+                task=task,
+                all_tasks=all_tasks,
+                namespace=kfp.KF_PIPELINES_NAMESPACE,
+                experiment_notebook=experiment_notebook,
+                deployment_notebook=deployment_notebook,
+            )
 
         return schemas.Task.from_orm(task)
 
@@ -353,13 +323,16 @@ class TaskController:
                 tags=["DATASETS"],
                 commands=None,
                 arguments=None,
-                image=TASK_DEFAULT_EXPERIMENT_IMAGE,
-                cpu_limit=TASK_DEFAULT_CPU_LIMIT,
-                cpu_request=TASK_DEFAULT_CPU_REQUEST,
-                memory_limit=TASK_DEFAULT_MEMORY_LIMIT,
-                memory_request=TASK_DEFAULT_MEMORY_REQUEST,
+                image=models.task.TASK_DEFAULT_EXPERIMENT_IMAGE,
+                cpu_limit=models.task.TASK_DEFAULT_CPU_LIMIT,
+                cpu_request=models.task.TASK_DEFAULT_CPU_REQUEST,
+                memory_limit=models.task.TASK_DEFAULT_MEMORY_LIMIT,
+                memory_request=models.task.TASK_DEFAULT_MEMORY_REQUEST,
             )
 
+            # BUG
+            # This call performs a session.commit(), but current transaction
+            # is not over yet. We should refactor this code.
             dataset_task = self.create_task(task=dataset_task_schema)
         return dataset_task.uuid
 
@@ -388,15 +361,17 @@ class TaskController:
         if task.operator:
             raise Forbidden("Task related to an operator")
 
-        # remove the volume for the task in the notebook server
-        self.background_tasks.add_task(
-            remove_persistent_volume_claim,
-            name=f"vol-task-{task_id}",
-            mount_path=f"/home/jovyan/tasks/{task.name}",
-        )
-
         self.session.delete(task)
         self.session.commit()
+
+        # remove the volume for the task in the notebook server
+        all_tasks = self.session.query(models.Task).all()
+        kfp.delete_task(
+            task=task,
+            all_tasks=all_tasks,
+            namespace=kfp.KF_PIPELINES_NAMESPACE,
+        )
+
         return schemas.Message(message="Task deleted")
 
     def raise_if_invalid_docker_image(self, image):
@@ -420,67 +395,6 @@ class TaskController:
         if image and pattern.match(image) is None:
             raise BadRequest("invalid docker image name")
 
-    def copy_notebooks_to_pod(self, task, stored_task):
-        """
-        Copies the notebook contents to the pod (if it was sent on TaskUpdate).
-
-        Parameters
-        ----------
-        task : projects.schemas.task.TaskUpdate
-        stored_task : projects.models.task.Task
-        """
-        if task.experiment_notebook:
-            with tempfile.NamedTemporaryFile("w", delete=False) as f:
-                json.dump(task.experiment_notebook, f)
-
-            task.experiment_notebook_path = stored_task.experiment_notebook_path
-
-            if task.experiment_notebook_path is None:
-                task.experiment_notebook_path = "Experiment.ipynb"
-
-            filepath = f.name
-            destination_path = f"{stored_task.name}/{task.experiment_notebook_path}"
-            copy_file_to_pod(filepath, destination_path)
-            os.remove(filepath)
-
-        if task.deployment_notebook:
-            with tempfile.NamedTemporaryFile("w", delete=False) as f:
-                json.dump(task.deployment_notebook, f)
-
-            task.deployment_notebook_path = stored_task.deployment_notebook_path
-
-            if task.deployment_notebook_path is None:
-                task.deployment_notebook_path = "Deployment.ipynb"
-
-            filepath = f.name
-            destination_path = f"{stored_task.name}/{task.deployment_notebook_path}"
-            copy_file_to_pod(filepath, destination_path)
-            os.remove(filepath)
-
-    def make_email_message(self, html_file_content, task_name):
-        """
-        Build an email body message for a specific task
-
-        Parameters
-        ----------
-        html_file_content: bytes
-        task_name : str
-
-        Returns
-        -------
-        template: str
-
-        """
-
-        # byte to string
-        html_string = str(html_file_content, 'utf-8')
-
-        # body message html string to Jinja2 template
-        jinja2_like_template = Template(html_string)
-
-        template = jinja2_like_template.render(task_name=task_name)
-        return template
-
     def send_emails(self, email_schema, task_id):
         """
         Handles mailing of contents of task
@@ -488,41 +402,16 @@ class TaskController:
         Parameters
         ----------
         task_id : str
-        email_schema: projects.schemas.mailing.EmailSchema
 
         Returns
         -------
         message: str
-
         """
 
         task = self.session.query(models.Task).get(task_id)
         if task is None:
             raise NOT_FOUND
 
-        # getting file content, which is by the way in base64
-        file_as_b64 = get_files_from_task(task.name)
+        kfp.send_email(task=task, namespace=kfp.KF_PIPELINES_NAMESPACE)
 
-        # decoding as byte
-        base64_bytes = file_as_b64.encode('ascii')
-        file_as_bytes = base64.b64decode(base64_bytes)
-
-        # using bytes to build the zipfile
-        with tempfile.NamedTemporaryFile("wb", delete=False,
-                                         dir=os.path.dirname(__file__),
-                                         suffix='.zip') as f:
-            f.write(file_as_bytes)
-
-        message = MessageSchema(
-            subject=f"Arquivos da tarefa '{task.name}'",
-            recipients=email_schema.dict().get("emails"),  # List of recipients, as many as you can pass
-            body=self.make_email_message(EMAIL_MESSAGE_TEMPLATE, task.name),
-            attachments=[f.name],
-            subtype="html"
-            )
-        fm = FastMail(email_schema.conf)
-        self.background_tasks.add_task(fm.send_message, message)
-
-        # removing file after send email
-        os.remove(f.name)
         return {"message": "email has been sent"}

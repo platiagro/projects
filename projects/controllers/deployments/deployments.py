@@ -3,7 +3,9 @@
 import sys
 from datetime import datetime
 
-from projects import models, schemas
+from sqlalchemy import event
+
+from projects import kfp, models, schemas
 from projects.controllers.deployments.runs import RunController
 from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
@@ -18,12 +20,24 @@ FONTE_DE_DADOS = "Fonte de dados"
 
 
 class DeploymentController:
-    def __init__(self, session, background_tasks=None, kubeflow_userid=None):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
         self.run_controller = RunController(session)
         self.template_controller = TemplateController(session, kubeflow_userid=kubeflow_userid)
-        self.task_controller = TaskController(session, background_tasks)
-        self.background_tasks = background_tasks
+        self.task_controller = TaskController(session)
+
+    @event.listens_for(models.Deployment, "after_delete")
+    def after_delete(self, _mapper, connection, target):
+        """
+        Starts a pipeline that deletes K8s resources associated with target deployment.
+
+        Parameters
+        ----------
+        _mapper : sqlalchemy.orm.Mapper
+        connection : sqlalchemy.engine.Connection
+        target : models.Deployment
+        """
+        kfp.delete_deployment(deployment=target, namespace=kfp.KF_PIPELINES_NAMESPACE)
 
     def raise_if_deployment_does_not_exist(self, deployment_id: str):
         """

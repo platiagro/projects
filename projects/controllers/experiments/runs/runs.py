@@ -2,9 +2,8 @@
 """Experiments Runs controller."""
 from kfp_server_api.rest import ApiException
 
-from projects import models, schemas
+from projects import kfp, models, schemas
 from projects.exceptions import NotFound
-from projects.kfp import runs as kfp_runs
 
 NOT_FOUND = NotFound("The specified run does not exist")
 
@@ -27,8 +26,8 @@ class RunController:
         NotFound
         """
         try:
-            kfp_runs.get_run(experiment_id=experiment_id,
-                             run_id=run_id)
+            kfp.get_run(experiment_id=experiment_id,
+                        run_id=run_id)
         except (ApiException, ValueError):
             raise NOT_FOUND
 
@@ -51,7 +50,7 @@ class RunController:
         NotFound
             When experiment_id does not exist.
         """
-        runs = kfp_runs.list_runs(experiment_id=experiment_id)
+        runs = kfp.list_runs(experiment_id=experiment_id)
         return schemas.RunList.from_orm(runs, len(runs))
 
     def create_run(self, project_id: str, experiment_id: str):
@@ -78,10 +77,7 @@ class RunController:
         if experiment is None:
             raise NotFound("The specified experiment does not exist")
 
-        run = kfp_runs.start_run(project_id=project_id,
-                                 experiment_id=experiment_id,
-                                 operators=experiment.operators)
-        run["experimentId"] = experiment_id
+        run = kfp.run_experiment(experiment=experiment)
 
         update_data = {"status": "Pending", "status_message": None}
         self.session.query(models.Operator) \
@@ -112,8 +108,8 @@ class RunController:
             When any of project_id, experiment_id, or run_id does not exist.
         """
         try:
-            run = kfp_runs.get_run(experiment_id=experiment_id,
-                                   run_id=run_id)
+            run = kfp.get_run(experiment_id=experiment_id,
+                              run_id=run_id)
         except (ApiException, ValueError):
             raise NOT_FOUND
 
@@ -148,8 +144,8 @@ class RunController:
                 .update(update_data, synchronize_session='fetch')
             self.session.commit()
 
-            run = kfp_runs.terminate_run(experiment_id=experiment_id,
-                                         run_id=run_id)
+            run = kfp.terminate_run(experiment_id=experiment_id,
+                                    run_id=run_id)
 
         except ApiException:
             raise NOT_FOUND
@@ -177,8 +173,8 @@ class RunController:
             When any of project_id, experiment_id, or run_id does not exist.
         """
         try:
-            run = kfp_runs.retry_run(experiment_id=experiment_id,
-                                     run_id=run_id)
+            run = kfp.retry_run(experiment_id=experiment_id,
+                                run_id=run_id)
         except ApiException:
             raise NOT_FOUND
 

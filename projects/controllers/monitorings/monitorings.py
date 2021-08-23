@@ -1,22 +1,35 @@
 # -*- coding: utf-8 -*-
 """Monitorings controller."""
-from projects import models, schemas
+from sqlalchemy import event
+
+from projects import kfp, models, schemas
 from projects.controllers.deployments.runs.runs import RunController
 from projects.controllers.tasks import TaskController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import NotFound
-from projects.kfp.monitorings import deploy_monitoring
 
 
 NOT_FOUND = NotFound("The specified monitoring does not exist")
 
 
 class MonitoringController:
-    def __init__(self, session, background_tasks=None):
+    def __init__(self, session):
         self.session = session
-        self.background_tasks = background_tasks
         self.run_controller = RunController(session)
         self.task_controller = TaskController(session)
+
+    @event.listens_for(models.Monitoring, "after_delete")
+    def after_delete(self, _mapper, _connection, target):
+        """
+        Starts a pipeline that deletes K8s resources associated with target monitoring.
+
+        Parameters
+        ----------
+        _mapper : sqlalchemy.orm.Mapper
+        connection : sqlalchemy.engine.Connection
+        target : models.Monitoring
+        """
+        kfp.delete_monitoring(monitoring=target, namespace=kfp.KF_PIPELINES_NAMESPACE)
 
     def raise_if_monitoring_does_not_exist(self, monitoring_id: str):
         """
@@ -81,22 +94,8 @@ class MonitoringController:
         self.session.commit()
         self.session.refresh(monitoring)
 
-        deployment = self.session.query(models.Deployment).get(deployment_id)
-        run = self.run_controller.get_run(deployment_id)
-
-        # Uses empty run_id if a deployment does not have a run
-        if not run:
-            run = {"runId": ""}
-
         # Deploy the new monitoring
-        self.background_tasks.add_task(
-            deploy_monitoring,
-            deployment_id=deployment_id,
-            experiment_id=deployment.experiment_id,
-            run_id=run["runId"],
-            task_id=monitoring.task_id,
-            monitoring_id=monitoring.uuid
-        )
+        kfp.create_monitoring(monitoring=monitoring, namespace=kfp.KF_PIPELINES_NAMESPACE)
 
         return schemas.Monitoring.from_orm(monitoring)
 
