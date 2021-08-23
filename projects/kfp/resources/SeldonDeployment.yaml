@@ -1,0 +1,26 @@
+apiVersion": "machinelearning.seldon.io/v1"
+kind: "SeldonDeployment"
+metadata:
+  labels:
+    app: "seldon"
+    projectId: "{{ project_id }}"
+  name: "{{ deployment_id }}"
+  namespace: "{{ namespace }}"
+spec:
+  annotations:
+    deployment_version: "v1"
+    prometheus.io/scrape: "false"
+    seldon.io/rest-timeout: "{{ rest_timeout }}"
+    seldon.io/executor: "true"
+  name: "{{ deployment_id }}"
+  predictors:
+  - componentSpecs: {{ component_specs | tojson() }}
+    graph: {{ graph }}
+    labels:
+      version: "v1"
+    name: "model"
+    replicas: 1,
+    svcOrchSpec:
+      env:
+        name: "SELDON_LOG_LEVEL"
+        value: "INFO"

@@ -1,0 +1,16 @@
+apiVersion: eventing.knative.dev/v1alpha1
+kind: Trigger
+metadata:
+  name: "{{ name }} "
+  namespace: "{{ namespace }}"
+spec:
+  broker: default
+  filter:
+    attributes:
+      type: deployment.{{ deployment_id }}
+  subscriber:
+    ref:
+      apiVersion: serving.knative.dev/v1alpha1
+      kind: Service
+      name: "{{ service }}"
+    uri: "/api/v1.0/predictions"

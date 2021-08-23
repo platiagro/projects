@@ -1,34 +1,33 @@
 # -*- coding: utf-8 -*-
-"""Kubeflow Pipelines Runs interface."""
+"""
+Utility functions to access pipeline details.
+"""
 import json
-import os
-from datetime import datetime
+from typing import Optional
 
 from projects.exceptions import BadRequest
 from projects.kfp import kfp_client
-from projects.kfp.pipeline import compile_pipeline
 
 
-def list_runs(experiment_id):
+def list_runs(experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
     """
-    Lists all runs of an experiment.
+    Lists all runs of an experiment or deployment.
 
     Parameters
     ----------
-    experiment_id : str
+    experiment_id : str or None
+    deployment_id : str or None
 
     Returns
     -------
     list
         A list of all runs.
     """
-    # In order to list_runs, we need to find KFP experiment id.
-    # KFP experiment id is different from PlatIAgro's experiment_id,
+    # In order to list_runs, we need first to find KFP experiment id.
+    # KFP experiment id is different from PlatIAgro's experiment_id, and
+    # KFP.experiment_name holds PlatIAgro's experiment_id / deployment_id.
     # so calling kfp_client().get_experiment(experiment_name='..') is required first.
-    try:
-        kfp_experiment = kfp_client().get_experiment(experiment_name=experiment_id)
-    except ValueError:
-        return []
+    kfp_experiment = get_kfp_experiment(experiment_id, deployment_id)
 
     # Now, lists runs
     kfp_runs = kfp_client().list_runs(
@@ -47,67 +46,15 @@ def list_runs(experiment_id):
     return runs
 
 
-def start_run(operators, project_id, experiment_id, deployment_id=None, deployment_name=None):
-    """
-    Start a new run in Kubeflow Pipelines.
-
-    Parameters
-    ----------
-    operators : list
-    project_id : str
-    experiment_id : str
-    deployment_id : str or None
-    deployment_name : str or None
-
-    Returns
-    -------
-    dict
-        The run attributes.
-    """
-    if len(operators) == 0:
-        raise ValueError("Necessary at least one operator")
-
-    if deployment_id is None:
-        name = f"experiment-{experiment_id}"
-    else:
-        name = f"deployment-{deployment_id}"
-
-    if not deployment_name:
-        deployment_name = deployment_id
-
-    compile_pipeline(name=name,
-                     operators=operators,
-                     project_id=project_id,
-                     experiment_id=experiment_id,
-                     deployment_id=deployment_id,
-                     deployment_name=deployment_name)
-
-    if deployment_id is not None:
-        kfp_experiment = kfp_client().create_experiment(name=deployment_id)
-    else:
-        kfp_experiment = kfp_client().create_experiment(name=experiment_id)
-
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-
-    job_name = f"{name}-{tag}"
-    pipeline_package_path = f"{name}.yaml"
-    run = kfp_client().run_pipeline(
-        experiment_id=kfp_experiment.id,
-        job_name=job_name,
-        pipeline_package_path=pipeline_package_path,
-    )
-    os.remove(pipeline_package_path)
-    return get_run(run.id, experiment_id)
-
-
-def get_run(run_id, experiment_id):
+def get_run(run_id, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
     """
     Details a run in Kubeflow Pipelines.
 
     Parameters
     ----------
     run_id : str
-    experiment_id : str
+    experiment_id : str or None
+    deployment_id : str or None
 
     Returns
     -------
@@ -120,7 +67,7 @@ def get_run(run_id, experiment_id):
     ValueError
     """
     if run_id == "latest":
-        run_id = get_latest_run_id(experiment_id)
+        run_id = get_latest_run_id(experiment_id, experiment_id)
 
     kfp_run = kfp_client().get_run(
         run_id=run_id,
@@ -163,7 +110,27 @@ def get_run(run_id, experiment_id):
     }
 
 
-def get_latest_run_id(experiment_id):
+def get_kfp_experiment(experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
+    """
+    Returns a Kubeflow Pipelines experiment for a given experiment/deployment.
+
+    Parameters
+    ----------
+    experiment_id : str
+    deployment_id : str
+
+    Returns
+    -------
+    str
+    """
+    experiment_name = experiment_id or deployment_id
+    try:
+        return kfp_client().get_experiment(experiment_name=experiment_name)
+    except ValueError:
+        return None
+
+
+def get_latest_run_id(experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
     """
     Get the latest run id for an experiment.
 
@@ -175,12 +142,8 @@ def get_latest_run_id(experiment_id):
     -------
     str
     """
-    try:
-        kfp_experiment = kfp_client().get_experiment(experiment_name=experiment_id)
-    except ValueError:
-        return None
+    kfp_experiment = get_kfp_experiment(experiment_id, deployment_id)
 
-    # lists runs for trainings and deployments of an experiment
     kfp_runs = kfp_client().list_runs(
         page_size="1",
         sort_by="created_at desc",

@@ -1,0 +1,43 @@
+apiVersion: serving.knative.dev/v1alpha1
+kind: Service
+metadata:
+  name: "{{ name }}"
+  namespace: "{{ namespace }}"
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+    spec:
+      containers:
+      - image: platiagro/platiagro-monitoring-image:0.3.0
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MONITORING_ID
+          value: "{{ monitoring_id }}"
+        - name: EXPERIMENT_ID
+          value: "{{ experiment_id }}"
+        - name: DEPLOYMENT_ID
+          value: "{{ deployment_id }}"
+        - name: RUN_ID
+          value: "{{ run_id }}"
+        - name: MINIO_ENDPOINT
+          value: minio.platiagro:9000
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: MINIO_SECRET_KEY
+        volumeMounts:
+        - name: configmap
+          mountPath: "/task"
+      volumes:
+      - name: configmap
+        configmap:
+          name: "{{ configmap }}"

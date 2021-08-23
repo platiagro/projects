@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  Experiment.ipynb: |
+    {{ content }}
+kind: ConfigMap
+metadata:
+  name: "{{ name }}"
+  namespace: "{{ namespace }}"

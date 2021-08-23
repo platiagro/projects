@@ -1,188 +1,194 @@
 # -*- coding: utf-8 -*-
-"""Utility functions to handle monitorings."""
-import warnings
+"""
+Utility functions that start monitoring pipelines.
+"""
+import pkgutil
+
 from datetime import datetime
-from json import loads
 
+import yaml
+from jinja2 import Template
 from kfp import dsl
-from kubernetes import client
-from kubernetes.client.rest import ApiException
+from kfp.dsl._resource_op import kubernetes_resource_delete_op
 
-from projects.exceptions import NotFound
-from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
-from projects.kfp.pipeline import undeploy_pipeline
-from projects.kfp.templates import MONITORING_SERVICE, MONITORING_TRIGGER
-from projects.kubernetes.kube_config import load_kube_config
+from projects import models
+from projects.kfp import kfp_client
+
+TASK_VOLUME_MOUNT_PATH = "/home/jovyan"
+MONITORING_SERVICE = Template(pkgutil.get_data("projects", "kfp/resources/MonitoringService.yaml").decode())
+MONITORING_TRIGGER = Template(pkgutil.get_data("projects", "kfp/resources/MonitoringTrigger.yaml").decode())
 
 
-def create_monitoring_task_config_map(task_id, experiment_notebook_content):
+def create_monitoring(monitoring: models.Monitoring, namespace: str):
     """
-    Create a ConfigMap with the notebook of the given task.
+    Runs a Kubeflow Pipeline that creates K8s resources necessary for monitoring.
+
+    Creates:
+    - A KNative Service that runs a task using historical data.
+    - A KNative Trigger that subscribes to responses that a seldondeployment produces
+    and forwards them to the service.
 
     Parameters
     ----------
-    task_id : str
-    experiment_notebook_content : str
+    monitoring : models.Monitoring
+    namespace : str
     """
-    config_map_name = f"configmap-{task_id}"
 
-    load_kube_config()
-    v1 = client.CoreV1Api()
+    @dsl.pipeline(
+        name="Create Monitoring",
+        description="A pipeline that creates all resources necessary for a new monitoring.",
+    )
+    def pipeline_func():
+        monitoring_op = create_monitoring_op(monitoring=monitoring, namespace=namespace)
+        create_trigger_op(monitoring=monitoring, namespace=namespace).after(monitoring_op)
 
-    body = {
-        "metadata": {
-            "name": config_map_name,
-        },
-        "data": {
-            "Experiment.ipynb": experiment_notebook_content
-        }
-    }
+    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
+    run_name = f"{monitoring.task.name}-{tag}"
 
-    v1.create_namespaced_config_map(
-        namespace=KF_PIPELINES_NAMESPACE,
-        body=body,
+    kfp_client().create_run_from_pipeline_func(
+        pipeline_func=pipeline_func,
+        arguments={},
+        run_name=run_name,
+        experiment_name=monitoring.uuid,
+        namespace=namespace,
     )
 
-    warnings.warn(f"ConfigMap of task {task_id} created!")
 
-
-def delete_monitoring_task_config_map(task_id):
+def delete_monitoring(monitoring: models.Monitoring, namespace: str):
     """
-    Delete ConfigMap of the given task_id.
+    Runs a Kubeflow Pipeline that deletes the knative service and trigger of a monitoring.
 
     Parameters
     ----------
-    task_id : str
+    monitoring : models.Monitoring
+    namespace : str
     """
-    config_map_name = f"configmap-{task_id}"
 
-    load_kube_config()
-    v1 = client.CoreV1Api()
-    try:
-        v1.delete_namespaced_config_map(
-            name=config_map_name,
-            namespace=KF_PIPELINES_NAMESPACE
-        )
+    @dsl.pipeline(
+        name="Delete Monitoring",
+        description="A pipeline that deletes K8s resources associated with a given monitoring.",
+    )
+    def pipeline_func():
+        trigger_op = delete_trigger_op(monitoring=monitoring, namespace=namespace)
+        delete_monitoring_op(monitoring=monitoring, namespace=namespace).after(trigger_op)
 
-        warnings.warn(f"ConfigMap of task {task_id} deleted!")
-    except ApiException:
-        warnings.warn(f"ConfigMap of task {task_id} not found, creating a new one.")
+    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
+    run_name = f"{monitoring.task.name}-{tag}"
+
+    kfp_client().create_run_from_pipeline_func(
+        pipeline_func=pipeline_func,
+        arguments={},
+        run_name=run_name,
+        experiment_name=monitoring.uuid,
+    )
 
 
-def deploy_monitoring(deployment_id,
-                      experiment_id,
-                      run_id,
-                      task_id,
-                      monitoring_id):
+def create_monitoring_op(monitoring: models.Monitoring, namespace: str):
     """
-    Deploy a service and trigger for monitoring.
+    Creates a kfp.ResourceOp that creates a knative service for monitoring.
 
     Parameters
     ----------
-    deployment_id : str
-    experiment_id : str
-    run_id : str
-    task_id : str
-    monitoring_id : str
+    monitoring : models.Monitoring
+    namespace : str
 
     Returns
     -------
-    dict
-        The run attributes.
+    kfp.dsl.ResourceOp
     """
-    @dsl.pipeline(name="Monitoring")
-    def monitoring():
-        service_name = f"service-{monitoring_id}"
-        service = MONITORING_SERVICE.substitute({
-            "name": service_name,
-            "namespace": KF_PIPELINES_NAMESPACE,
-            "monitoringId": monitoring_id,
-            "experimentId": experiment_id,
-            "deploymentId": deployment_id,
-            "runId": run_id,
-            "configMap": f"configmap-{task_id}"
-        })
-        service_resource = loads(service)
-        monitoring_service = dsl.ResourceOp(
-            name=service_name,
-            k8s_resource=service_resource,
-            success_condition="status.conditions.1.status == True",
-            attribute_outputs={
-                "monitoring_id": monitoring_id,
-                "created_at": datetime.utcnow().isoformat(),
-            },  # makes this ResourceOp to have a unique cache key
-        )
+    k8s_resource = MONITORING_SERVICE.render(
+        name=f"service-{monitoring.uuid}",
+        namespace=namespace,
+        monitoring_id=monitoring.uuid,
+        experiment_id=monitoring.deployment.experiment_id,
+        deployment_id=monitoring.deployment_id,
+        run_id="TODO",
+        configmap=f"configmap-{monitoring.task_id}",
+    )
+    k8s_resource = yaml.load(k8s_resource)
 
-        trigger_name = f"trigger-{monitoring_id}"
-        trigger = MONITORING_TRIGGER.substitute({
-            "name": trigger_name,
-            "namespace": KF_PIPELINES_NAMESPACE,
-            "deploymentId": deployment_id,
-            "service": service_name,
-        })
-        trigger_resource = loads(trigger)
-        dsl.ResourceOp(
-            name="monitoring_trigger",
-            k8s_resource=trigger_resource,
-            success_condition="status.conditions.2.status == True",
-            attribute_outputs={
-                "monitoring_id": monitoring_id,
-                "created_at": datetime.utcnow().isoformat(),
-            },  # makes this ResourceOp to have a unique cache key
-        ).after(monitoring_service)
-
-    kfp_client().create_run_from_pipeline_func(
-        monitoring,
-        {},
-        run_name="monitoring",
+    return dsl.ResourceOp(
+        name=monitoring.task.name,
+        k8s_resource=k8s_resource,
+        action="create",
+        success_condition="status.phase == Running",
+        attribute_outputs={
+            "name": "{.metadata.name}",
+            "created_at": datetime.utcnow().isoformat(),
+        },  # makes this ResourceOp to have a unique cache key
     )
 
 
-def undeploy_monitoring(monitoring_id):
+def delete_monitoring_op(monitoring: models.Monitoring, namespace: str):
     """
-    Undeploy the service and trigger of a given monitoring_id.
+    Creates a kfp.dsl.ContainerOp that deletes a knative service.
 
     Parameters
     ----------
-    monitoring_id : str
+    monitoring : models.Monitoring
+    namespace : str
 
-    Raises
-    ------
-    NotFound
-        When monitoring resources do not exist.
+    Returns
+    -------
+    kfp.dsl.ContainerOp
     """
-    load_kube_config()
-    api = client.CustomObjectsApi()
+    kind = "services.serving.knative.dev"
+    return kubernetes_resource_delete_op(
+        name=monitoring.task.name,
+        kind=kind,
+        namespace=namespace,
+    )
 
-    try:
-        # Undeploy service
-        service_name = f"service-{monitoring_id}"
-        service_custom_object = api.get_namespaced_custom_object(
-            group="serving.knative.dev",
-            version="v1alpha1",
-            namespace=KF_PIPELINES_NAMESPACE,
-            plural="services",
-            name=service_name
-        )
-        undeploy_pipeline(
-            name=service_custom_object["metadata"]["name"],
-            kind=service_custom_object["kind"],
-            namespace=service_custom_object["metadata"]["namespace"],
-        )
 
-        # Undeploy trigger
-        trigger_name = f"trigger-{monitoring_id}"
-        trigger_custom_object = api.get_namespaced_custom_object(
-            group="eventing.knative.dev",
-            version="v1alpha1",
-            namespace=KF_PIPELINES_NAMESPACE,
-            plural="triggers",
-            name=trigger_name
-        )
-        undeploy_pipeline(
-            name=trigger_custom_object["metadata"]["name"],
-            kind=trigger_custom_object["kind"],
-            namespace=trigger_custom_object["metadata"]["namespace"],
-        )
-    except ApiException:
-        raise NotFound("Monitoring resources do not exist.")
+def create_trigger_op(monitoring: models.Monitoring, namespace: str):
+    """
+    Creates a kfp.ResourceOp that creates a knative eventing trigger for monitoring.
+
+    Parameters
+    ----------
+    monitoring : models.Monitoring
+    namespace : str
+
+    Returns
+    -------
+    kfp.dsl.ResourceOp
+    """
+    k8s_resource = MONITORING_SERVICE.render(
+        name=f"trigger-{monitoring.uuid}",
+        namespace=namespace,
+        deployment_id=monitoring.deployment_id,
+        service=f"service-{monitoring.uuid}",
+    )
+    k8s_resource = yaml.load(k8s_resource)
+
+    return dsl.ResourceOp(
+        name=monitoring.task.name,
+        k8s_resource=k8s_resource,
+        action="create",
+        success_condition="status.phase == Running",
+        attribute_outputs={
+            "name": "{.metadata.name}",
+            "created_at": datetime.utcnow().isoformat(),
+        },  # makes this ResourceOp to have a unique cache key
+    )
+
+
+def delete_trigger_op(monitoring: models.Monitoring, namespace: str):
+    """
+    Creates a kfp.dsl.ContainerOp that deletes a knative eventing trigger.
+
+    Parameters
+    ----------
+    monitoring : models.Monitoring
+    namespace : str
+
+    Returns
+    -------
+    kfp.dsl.ContainerOp
+    """
+    kind = "triggers.eventing.knative.dev"
+    return kubernetes_resource_delete_op(
+        name=monitoring.task.name,
+        kind=kind,
+        namespace=namespace,
+    )

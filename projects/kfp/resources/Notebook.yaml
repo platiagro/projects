@@ -1,0 +1,57 @@
+apiVersion: kubeflow.org/v1
+kind: Notebook
+metadata:
+  labels:
+    app: server
+    add-nvidia-visible-devices: "true"
+  name: server
+  namespace: "{{ namespace }}"
+spec:
+  template:
+    spec:
+      containers:
+      - image: "{{ container_image }}"
+        env:
+        - name: EXPERIMENT_ID
+          value: notebook
+        - name: OPERATOR_ID
+          value: notebook
+        - name: MINIO_ENDPOINT
+          value: "minio.platiagro:9000"
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: MINIO_SECRET_KEY
+        name: server
+        resources:
+          requests:
+            cpu: "{{ cpu_requests }}"
+            memory: "{{ memory_requests }}"
+          limits:
+            cpu: "{{ cpu_limits }}"
+            memory: "{{ memory_limits }}"
+        volumeMounts:
+        - mountPath: /home/jovyan/tasks
+          name: vol-tasks
+        - mountPath: /home/jovyan/experiments
+          name: vol-experiments
+        - mountPath: /tmp/data
+          name: vol-datasets
+      serviceAccountName: default-editor
+      ttlSecondsAfterFinished: 300
+      volumes:
+      - name: vol-tasks
+        persistentVolumeClaim:
+          claimName: vol-tasks
+      - name: vol-experiments
+        persistentVolumeClaim:
+          claimName: vol-experiments
+      - name: vol-datasets
+        persistentVolumeClaim:
+          claimName: vol-datasets
