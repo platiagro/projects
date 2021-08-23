@@ -179,7 +179,7 @@ async def handle_log_deployment(experiment_id: str,
     task_name = urllib.parse.unquote_plus(task_name)
     run_id = get_latest_run_id(experiment_id)
     pods = list_workflow_pods(run_id)
-    if len(pods) > 0:
+    if pods:
         for pod in pods:
             if pod.metadata.annotations["name"] == task_name:
                 stream = log_stream(
@@ -190,5 +190,5 @@ async def handle_log_deployment(experiment_id: str,
                 )
                 return EventSourceResponse(stream)
         return "Could not find task with given name"
-    elif len(pods) == 0:
+    else:
         return "Unable to create log stream"
