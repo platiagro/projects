@@ -79,6 +79,9 @@ class RunController:
 
         run = kfp.run_experiment(experiment=experiment)
 
+        run = kfp.get_run(experiment_id=experiment_id,
+                          run_id=run.run_id)
+
         update_data = {"status": "Pending", "status_message": None}
         self.session.query(models.Operator) \
             .filter_by(experiment_id=experiment_id) \

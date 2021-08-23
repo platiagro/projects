@@ -42,7 +42,10 @@ class LogController:
             A dict of logs from a run.
         """
         if run_id == "latest":
-            run_id = get_latest_run_id(experiment_id or deployment_id)
+            run_id = get_latest_run_id(
+                experiment_id=experiment_id,
+                deployment_id=deployment_id,
+            )
 
         pods = []
 

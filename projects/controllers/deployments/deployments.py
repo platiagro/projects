@@ -26,8 +26,9 @@ class DeploymentController:
         self.template_controller = TemplateController(session, kubeflow_userid=kubeflow_userid)
         self.task_controller = TaskController(session)
 
+    @staticmethod
     @event.listens_for(models.Deployment, "after_delete")
-    def after_delete(self, _mapper, connection, target):
+    def after_delete(_mapper, connection, target):
         """
         Starts a pipeline that deletes K8s resources associated with target deployment.
 
@@ -139,7 +140,7 @@ class DeploymentController:
                 raise BadRequest("Necessary at least one operator that is not a data source.")
 
         for deployment in deployments:
-            self.run_controller.deploy_run(deployment)
+            self.run_controller.deploy_run(deployment=deployment)
             self.session.refresh(deployment)
 
         self.session.commit()

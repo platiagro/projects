@@ -108,12 +108,10 @@ class RunController:
         if deployment is None:
             raise NotFound("The specified deployment does not exist")
 
-        run = kfp.run_deployment(deployment)
+        run = kfp.run_deployment(deployment=deployment, namespace=kfp.KF_PIPELINES_NAMESPACE)
 
-        # Remove the object from the operator session in order not to update the database,
-        # Just need to remove the dependencies for the runs.
-        for operator in deployment.operators:
-            self.session.expunge(operator)
+        run = kfp.get_run(deployment_id=deployment.uuid,
+                          run_id=run.run_id)
 
         return schemas.Run.from_orm(run)
 

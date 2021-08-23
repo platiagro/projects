@@ -18,8 +18,9 @@ class MonitoringController:
         self.run_controller = RunController(session)
         self.task_controller = TaskController(session)
 
+    @staticmethod
     @event.listens_for(models.Monitoring, "after_delete")
-    def after_delete(self, _mapper, _connection, target):
+    def after_delete(_mapper, _connection, target):
         """
         Starts a pipeline that deletes K8s resources associated with target monitoring.
 

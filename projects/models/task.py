@@ -19,6 +19,10 @@ TASK_DEFAULT_CPU_LIMIT = os.getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
 TASK_DEFAULT_CPU_REQUEST = os.getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
 TASK_DEFAULT_MEMORY_LIMIT = os.getenv("TASK_DEFAULT_MEMORY_LIMIT", "10Gi")
 TASK_DEFAULT_MEMORY_REQUEST = os.getenv("TASK_DEFAULT_MEMORY_REQUEST", "2Gi")
+TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(os.getenv(
+    "TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS",
+    "60",
+))
 
 
 class Task(Base):
@@ -41,6 +45,9 @@ class Task(Base):
     cpu_request = Column(String(255), nullable=False, default=TASK_DEFAULT_CPU_REQUEST)
     memory_limit = Column(String(255), nullable=False, default=TASK_DEFAULT_MEMORY_LIMIT)
     memory_request = Column(String(255), nullable=False, default=TASK_DEFAULT_MEMORY_REQUEST)
+    readiness_probe_initial_delay_seconds = Column(Integer,
+                                                   nullable=False,
+                                                   default=TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS)
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)

@@ -46,7 +46,7 @@ class DatasetController:
             When any of project_id, experiment_id, run_id, or operator_id does not exist.
         """
         if run_id == "latest":
-            run_id = get_latest_run_id(experiment_id)
+            run_id = get_latest_run_id(experiment_id=experiment_id)
 
         name = self.get_dataset_name(operator_id, experiment_id)
 

@@ -4,6 +4,7 @@ from json import dumps
 from unittest import TestCase
 
 from fastapi.testclient import TestClient
+from minio.commonconfig import CopySource
 from platiagro import CATEGORICAL, DATETIME, NUMERICAL
 
 from projects.api.main import app
@@ -36,6 +37,7 @@ COMMANDS_JSON = dumps(COMMANDS)
 ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 IMAGE = "platiagro/platiagro-experiment-image-test:0.3.0"
+CATEGORY = "DEFAULT"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
@@ -77,12 +79,12 @@ class TestDatasets(TestCase):
         conn.execute(text, (EXPERIMENT_ID_3, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, parameters, "
             f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, dumps([]),
                             EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -162,12 +164,12 @@ class TestDatasets(TestCase):
         MINIO_CLIENT.copy_object(
             bucket_name=BUCKET_NAME,
             object_name=f"datasets/{DATASET}/runs/{RUN_ID}/operators/{OPERATOR_ID}/{DATASET}/{DATASET}",
-            object_source=f"/{BUCKET_NAME}/datasets/{DATASET}/{DATASET}",
+            source=CopySource(BUCKET_NAME, f"datasets/{DATASET}/{DATASET}"),
         )
         MINIO_CLIENT.copy_object(
             bucket_name=BUCKET_NAME,
             object_name=f"datasets/{DATASET}/runs/{RUN_ID}/operators/{OPERATOR_ID}/{DATASET}/{DATASET}.metadata",
-            object_source=f"/{BUCKET_NAME}/datasets/{DATASET}/{DATASET}.metadata",
+            source=CopySource(BUCKET_NAME, f"datasets/{DATASET}/{DATASET}.metadata"),
         )
 
     def tearDown(self):
@@ -237,7 +239,7 @@ class TestDatasets(TestCase):
 
         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_2}/runs/1/operators/{OPERATOR_ID_2}/datasets")
         result = rv.json()
-        expected = {"message": "The specified run does not contain dataset"}
+        expected = {"message": "The specified run does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

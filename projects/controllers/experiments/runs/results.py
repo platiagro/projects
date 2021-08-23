@@ -36,7 +36,7 @@ class ResultController:
             The specified operator has no results.
         """
         if run_id == "latest":
-            run_id = get_latest_run_id(experiment_id)
+            run_id = get_latest_run_id(experiment_id=experiment_id)
 
         if operator_id:
             objects_path = f"experiments/{experiment_id}/operators/{operator_id}"
