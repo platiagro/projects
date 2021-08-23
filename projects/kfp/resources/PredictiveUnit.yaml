@@ -2,4 +2,5 @@ name: "{{ name }}"
 type: "MODEL"
 endpoint:
   type: "REST"
-children: {{ children }}
+children:
+  {{ children }}

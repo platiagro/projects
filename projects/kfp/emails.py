@@ -28,6 +28,10 @@ def send_email(task: models.Task, namespace: str):
     ----------
     task : models.Task
     namespace : str
+
+    Returns
+    -------
+    RunPipelineResult
     """
 
     @dsl.pipeline(
@@ -66,7 +70,7 @@ def send_email(task: models.Task, namespace: str):
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
     run_name = f"{task.name}-{tag}"
 
-    kfp_client().create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,

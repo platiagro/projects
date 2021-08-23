@@ -41,6 +41,10 @@ def create_task(task: models.Task, all_tasks: List[models.Task], namespace: str,
     all_tasks : List[models.Task]
     namespace : str
     copy_from : models.Task or None
+
+    Returns
+    -------
+    RunPipelineResult
     """
 
     @dsl.pipeline(
@@ -56,6 +60,7 @@ def create_task(task: models.Task, all_tasks: List[models.Task], namespace: str,
         # or some empty notebooks are copied into the volume
         container_op = create_init_task_container_op(task=task, copy_from=copy_from)
         container_op.add_pvolumes({DESTINATION_TASK_VOLUME_MOUNT_PATH: volume_op_task.volume})
+        container_op.set_timeout(DEFAULT_TIMEOUT_IN_SECONDS)
 
         if copy_from:
             # If task is a copy, also adds a volume mount to the source task volume
@@ -76,7 +81,7 @@ def create_task(task: models.Task, all_tasks: List[models.Task], namespace: str,
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
     run_name = f"{task.name}-{tag}"
 
-    kfp_client().create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -102,6 +107,10 @@ def update_task(
     namespace : str
     experiment_notebook : Dict or None
     deployment_notebook : Dict or None
+
+    Returns
+    -------
+    RunPipelineResult
     """
 
     @dsl.pipeline(
@@ -125,7 +134,7 @@ def update_task(
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
     run_name = f"{task.name}-{tag}"
 
-    kfp_client().create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -143,6 +152,10 @@ def delete_task(task: models.Task, all_tasks: List[models.Task], namespace: str)
     task : models.Task
     all_tasks : List[models.Task]
     namespace : str
+
+    Returns
+    -------
+    RunPipelineResult
     """
 
     @dsl.pipeline(
@@ -158,7 +171,7 @@ def delete_task(task: models.Task, all_tasks: List[models.Task], namespace: str)
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
     run_name = f"{task.name}-{tag}"
 
-    kfp_client().create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -222,7 +235,7 @@ def create_init_task_container_op(
     }
     text = json.dumps(component)
     func = load_component_from_text(text)
-    return func().set_timeout(DEFAULT_TIMEOUT_IN_SECONDS)
+    return func()
 
 
 def patch_notebook_volume_mounts_op(tasks: List[models.Task], namespace: str):

@@ -67,7 +67,10 @@ def get_run(run_id, experiment_id: Optional[str] = None, deployment_id: Optional
     ValueError
     """
     if run_id == "latest":
-        run_id = get_latest_run_id(experiment_id, experiment_id)
+        run_id = get_latest_run_id(
+            experiment_id=experiment_id,
+            deployment_id=deployment_id,
+        )
 
     kfp_run = kfp_client().get_run(
         run_id=run_id,
@@ -178,7 +181,8 @@ def terminate_run(run_id, experiment_id):
     ApiException
     """
     if run_id == "latest":
-        run_id = get_latest_run_id(experiment_id)
+        run_id = get_latest_run_id(experiment_id=experiment_id)
+
     kfp_client().runs.terminate_run(run_id=run_id)
 
     return {"message": "Run terminated"}
@@ -204,7 +208,7 @@ def retry_run(run_id, experiment_id):
     BadRequest
     """
     if run_id == "latest":
-        run_id = get_latest_run_id(experiment_id)
+        run_id = get_latest_run_id(experiment_id=experiment_id)
 
     kfp_run = kfp_client().get_run(
         run_id=run_id,

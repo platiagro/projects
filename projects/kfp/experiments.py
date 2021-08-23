@@ -15,8 +15,6 @@ from projects.kfp.volume import create_volume_op
 DATA_VOLUME_MOUNT_PATH = "/tmp/data"
 TASK_VOLUME_MOUNT_PATH = "/home/jovyan"
 
-DEFAULT_TIMEOUT_IN_SECONDS = 120
-
 
 def run_experiment(experiment: models.Experiment, namespace: str):
     """
@@ -26,6 +24,10 @@ def run_experiment(experiment: models.Experiment, namespace: str):
     ----------
     experiment : model.Experiment
     namespace : str
+
+    Returns
+    -------
+    RunPipelineResult
     """
 
     @dsl.pipeline(
@@ -60,7 +62,7 @@ def run_experiment(experiment: models.Experiment, namespace: str):
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
     run_name = f"{experiment.name}-{tag}"
 
-    kfp_client().create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -82,7 +84,7 @@ def create_container_op_from_operator(operator: models.Operator):
     kfp.dsl.ContainerOp
     """
     name = operator.name
-    image = operator.image
+    image = operator.task.image
     command = operator.task.commands
     args = operator.task.arguments
     component = {
@@ -104,4 +106,4 @@ def create_container_op_from_operator(operator: models.Operator):
     }
     text = json.dumps(component)
     func = load_component_from_text(text)
-    return func().set_timeout(DEFAULT_TIMEOUT_IN_SECONDS)
+    return func()

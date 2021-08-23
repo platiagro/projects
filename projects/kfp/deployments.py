@@ -8,6 +8,7 @@ import pkgutil
 from collections import defaultdict
 from datetime import datetime
 
+import yaml
 from jinja2 import Template
 from kfp import dsl
 from kfp.components import load_component_from_text
@@ -19,7 +20,7 @@ from projects.kfp.volume import create_volume_op
 
 DATA_VOLUME_MOUNT_PATH = "/tmp/data"
 TASK_VOLUME_MOUNT_PATH = "/home/jovyan"
-DEFAULT_TIMEOUT_IN_SECONDS = 120
+DEFAULT_TIMEOUT_IN_SECONDS = int(os.getenv("DEFAULT_TIMEOUT_IN_SECONDS", "600"))
 
 DEPLOYMENT_CONTAINER_IMAGE = os.getenv(
     "DEPLOYMENT_CONTAINER_IMAGE",
@@ -46,6 +47,10 @@ def run_deployment(deployment: models.Deployment, namespace: str):
     ----------
     deployment : model.Deployment
     namespace : str
+
+    Returns
+    -------
+    RunPipelineResult
     """
 
     @dsl.pipeline(
@@ -54,7 +59,7 @@ def run_deployment(deployment: models.Deployment, namespace: str):
     )
     def pipeline_func():
         # Creates a volume shared amongst all containers in this pipeline
-        volume_op_tmp_data = create_volume_op(name=f"tmp-data-{deployment.uuid}")
+        volume_op_tmp_data = create_volume_op(name=f"tmp-data-{deployment.uuid}", namespace=namespace)
 
         # Uses a dict to map operator.uuid -> (ContainerOp, Operator)
         kfp_ops = {}
@@ -67,7 +72,7 @@ def run_deployment(deployment: models.Deployment, namespace: str):
             container_op.add_pvolumes({DATA_VOLUME_MOUNT_PATH: volume_op_tmp_data.volume})
 
             # adds task volume to the container
-            volume_op_home_jovyan = create_volume_op(name=f"task-{operator.task_id}")
+            volume_op_home_jovyan = create_volume_op(name=f"task-{operator.task_id}", namespace=namespace)
             container_op.add_pvolumes({TASK_VOLUME_MOUNT_PATH: volume_op_home_jovyan.volume})
 
             kfp_ops[operator.uuid] = (operator, container_op)
@@ -85,7 +90,7 @@ def run_deployment(deployment: models.Deployment, namespace: str):
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
     run_name = f"{deployment.name}-{tag}"
 
-    kfp_client().create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -102,6 +107,10 @@ def delete_deployment(deployment: models.Deployment, namespace: str):
     ----------
     deployment : models.Deployment
     namespace : str
+
+    Returns
+    -------
+    RunPipelineResult
     """
 
     @dsl.pipeline(
@@ -114,7 +123,7 @@ def delete_deployment(deployment: models.Deployment, namespace: str):
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
     run_name = f"{deployment.name}-{tag}"
 
-    kfp_client().create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -135,7 +144,7 @@ def create_container_op_from_operator(operator: models.Operator):
     kfp.dsl.ContainerOp
     """
     name = operator.name
-    image = operator.image
+    image = operator.task.image
     command = operator.task.commands
     args = operator.task.arguments
     component = {
@@ -157,7 +166,7 @@ def create_container_op_from_operator(operator: models.Operator):
     }
     text = json.dumps(component)
     func = load_component_from_text(text)
-    return func().set_timeout(DEFAULT_TIMEOUT_IN_SECONDS)
+    return func()
 
 
 def create_seldon_deployment_op(deployment: models.Deployment, namespace: str):
@@ -213,7 +222,7 @@ def create_seldon_deployment_op(deployment: models.Deployment, namespace: str):
             child_operator_id, children = next(iter(children[0].items()))
             children = build_graph(child_operator_id, children)
         else:
-            children = ""
+            children = "[]"
 
         return PREDICTIVE_UNIT.render(
             name=operator_id,
@@ -221,7 +230,7 @@ def create_seldon_deployment_op(deployment: models.Deployment, namespace: str):
         )
 
     graph = build_graph(operator_id=first, children=graph[first])
-    graph = json.loads(graph)
+    graph = yaml.load(graph)
 
     url = f"{SELDON_LOGGER_ENDPOINT}/projects/{deployment.project_id}/deployments/{deployment.uuid}/responses"
     graph["logger"] = {
@@ -238,7 +247,7 @@ def create_seldon_deployment_op(deployment: models.Deployment, namespace: str):
         rest_timeout=SELDON_REST_TIMEOUT,
     )
 
-    sdep_resource = json.loads(seldon_deployment)
+    sdep_resource = yaml.load(seldon_deployment)
 
     # mounts the "/tmp/data" volume from experiment (if exists)
     # TODO sdep_resource = mount_volume_from_experiment(sdep_resource, experiment_id)

@@ -32,6 +32,10 @@ def create_monitoring(monitoring: models.Monitoring, namespace: str):
     ----------
     monitoring : models.Monitoring
     namespace : str
+
+    Returns
+    -------
+    RunPipelineResult
     """
 
     @dsl.pipeline(
@@ -45,7 +49,7 @@ def create_monitoring(monitoring: models.Monitoring, namespace: str):
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
     run_name = f"{monitoring.task.name}-{tag}"
 
-    kfp_client().create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -62,6 +66,10 @@ def delete_monitoring(monitoring: models.Monitoring, namespace: str):
     ----------
     monitoring : models.Monitoring
     namespace : str
+
+    Returns
+    -------
+    RunPipelineResult
     """
 
     @dsl.pipeline(
@@ -75,7 +83,7 @@ def delete_monitoring(monitoring: models.Monitoring, namespace: str):
     tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
     run_name = f"{monitoring.task.name}-{tag}"
 
-    kfp_client().create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -102,10 +110,9 @@ def create_monitoring_op(monitoring: models.Monitoring, namespace: str):
         monitoring_id=monitoring.uuid,
         experiment_id=monitoring.deployment.experiment_id,
         deployment_id=monitoring.deployment_id,
-        run_id="TODO",
         configmap=f"configmap-{monitoring.task_id}",
     )
-    k8s_resource = yaml.load(k8s_resource)
+    k8s_resource = yaml.safe_load(k8s_resource)
 
     return dsl.ResourceOp(
         name=monitoring.task.name,
@@ -159,7 +166,7 @@ def create_trigger_op(monitoring: models.Monitoring, namespace: str):
         deployment_id=monitoring.deployment_id,
         service=f"service-{monitoring.uuid}",
     )
-    k8s_resource = yaml.load(k8s_resource)
+    k8s_resource = yaml.safe_load(k8s_resource)
 
     return dsl.ResourceOp(
         name=monitoring.task.name,
