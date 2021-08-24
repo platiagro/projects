@@ -215,7 +215,7 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     return clean_zip_file_content
 
 
-async def log_stream(req, pod_name, namespace, container):
+async def log_stream(req, pod_name, namespace, container=None):
     """
     Generates log stream of given pod's container.
 
@@ -233,22 +233,54 @@ async def log_stream(req, pod_name, namespace, container):
     load_kube_config()
     v1 = client.CoreV1Api()
     w = Watch()
+    # yield
+    # print(dir(v1.read_namespaced_pod_log(
+    #                 name=pod_name,
+    #                 namespace=namespace,
+    #                 container=container,
+    #                 pretty="true",
+    #                 tail_lines=0,
+    #                 timestamps=True,
+    #                 # _request_timeout=30
+    #             ).data))
+    # yield v1.read_namespaced_pod_log(
+    #                 name=pod_name,
+    #                 namespace=namespace,
+    #                 container=container,
+    #                 pretty="true",
+    #                 tail_lines=0,
+    #                 timestamps=True,
+    #                 # _request_timeout=30,
+    #                 follow=True
+    #             ).data
     while(True):
         if await req.is_disconnected():
             logging.info("client disconnected!!!")
             break
         try:
-            for streamline in w.stream(
-                v1.read_namespaced_pod_log,
-                name=pod_name,
-                namespace=namespace,
-                container=container,
-                pretty="true",
-                tail_lines=0,
-                timestamps=True,
-                _request_timeout=30
-            ):
-                yield(streamline)
+            if container:
+                for streamline in w.stream(
+                    v1.read_namespaced_pod_log,
+                    name=pod_name,
+                    namespace=namespace,
+                    container=container,
+                    pretty="true",
+                    tail_lines=0,
+                    timestamps=True,
+                    _request_timeout=30
+                ):
+                    yield(streamline)
+            if not container:
+                for streamline in w.stream(
+                    v1.read_namespaced_pod_log,
+                    name=pod_name,
+                    namespace=namespace,
+                    pretty="true",
+                    tail_lines=0,
+                    timestamps=True,
+                    _request_timeout=30
+                ):
+                    yield(streamline)
         except RuntimeError as e:
             logging.exception(e)
         except asyncio.CancelledError as e:
