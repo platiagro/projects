@@ -197,7 +197,8 @@ class TaskController:
             task.name = self.generate_name_task(f"{stored_task.name} - Cópia")
 
         else:
-            task.name = self.generate_name_task("Tarefa em branco")
+            if not isinstance(task.name, str):
+                task.name = self.generate_name_task("Tarefa em branco")
             if task.image is not None:
                 experiment_notebook_path = None
                 deployment_notebook_path = None
