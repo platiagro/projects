@@ -3,14 +3,13 @@
 import time
 import asyncio
 import logging
+from urllib3.exceptions import ReadTimeoutError
 
 from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes import stream
 from kubernetes.watch import Watch
-
-from urllib3.exceptions import ReadTimeoutError
 
 from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
@@ -216,17 +215,20 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     return clean_zip_file_content
 
 
-async def log_stream(req, pod, namespace, container):
+async def log_stream(req, pod_name, namespace, container):
     """
     Generates log stream of given pod's container.
 
     Parameters
     ----------
         req: fastapi.Request
-        pod: str
+        pod_name: str
         namespace: str
         container: str
-
+    
+    Yields
+    ------
+        str
     """
     load_kube_config()
     v1 = client.CoreV1Api()
@@ -238,7 +240,7 @@ async def log_stream(req, pod, namespace, container):
         try:
             for streamline in w.stream(
                 v1.read_namespaced_pod_log,
-                name=pod,
+                name=pod_name,
                 namespace=namespace,
                 container=container,
                 pretty="true",
@@ -253,7 +255,7 @@ async def log_stream(req, pod, namespace, container):
             logging.exception(e)
         except ApiException as e:
             logging.exception(e)
-        except ReadTimeoutError as e:
+        except ReadTimeoutError:
             """
             Expected behavior if given container does not have any new log on log stream.
             Timeout is needed because if there's no new log, the application blocks in the for loop and doesn't handle client disconnection.
