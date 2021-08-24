@@ -3,7 +3,6 @@
 Utility functions that start experiment pipelines.
 """
 import json
-from datetime import datetime
 
 from kfp import dsl
 from kfp.components import load_component_from_text
@@ -59,8 +58,7 @@ def run_experiment(experiment: models.Experiment, namespace: str):
             dependencies = [kfp_ops[dependency_id][1] for dependency_id in operator.dependencies]
             container_op.after(*dependencies)
 
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-    run_name = f"{experiment.name}-{tag}"
+    run_name = f"Run Experiment - {experiment.name}"
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,

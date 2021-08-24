@@ -87,8 +87,7 @@ def run_deployment(deployment: models.Deployment, namespace: str):
 
             seldon_deployment_op.after(container_op)
 
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-    run_name = f"{deployment.name}-{tag}"
+    run_name = f"Create Deployment - {deployment.name}"
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
@@ -120,8 +119,7 @@ def delete_deployment(deployment: models.Deployment, namespace: str):
     def pipeline_func():
         delete_seldon_deployment_op(deployment=deployment, namespace=namespace)
 
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-    run_name = f"{deployment.name}-{tag}"
+    run_name = f"Delete Deployment - {deployment.name}"
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,

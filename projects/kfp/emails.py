@@ -4,7 +4,6 @@ Utility functions that start email pipelines.
 """
 import json
 import os
-from datetime import datetime
 
 from kfp import dsl
 from kfp.components import load_component_from_text
@@ -67,8 +66,7 @@ def send_email(task: models.Task, namespace: str):
         container_op = func()
         container_op.add_pvolumes({TASK_VOLUME_MOUNT_PATH: volume_op_task.volume})
 
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-    run_name = f"{task.name}-{tag}"
+    run_name = f"Share Task - {task.name}"
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,

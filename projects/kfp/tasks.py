@@ -78,8 +78,7 @@ def create_task(task: models.Task, all_tasks: List[models.Task], namespace: str,
         # Patches JupyterLab to mount new task volume
         patch_notebook_volume_mounts_op(tasks=all_tasks, namespace=namespace).after(container_op)
 
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-    run_name = f"{task.name}-{tag}"
+    run_name = f"Create Task - {task.name}"
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
@@ -131,8 +130,7 @@ def update_task(
             # TODO add real task content
             create_configmap_op(task=task, namespace=namespace, content="")
 
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-    run_name = f"{task.name}-{tag}"
+    run_name = f"Update Task - {task.name}"
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
@@ -168,8 +166,7 @@ def delete_task(task: models.Task, all_tasks: List[models.Task], namespace: str)
 
         delete_volume_op(name=f"task-{task.uuid}", namespace=namespace).after(resource_op)
 
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-    run_name = f"{task.name}-{tag}"
+    run_name = f"Delete Task - {task.name}"
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,

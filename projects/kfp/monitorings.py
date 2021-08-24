@@ -46,8 +46,7 @@ def create_monitoring(monitoring: models.Monitoring, namespace: str):
         monitoring_op = create_monitoring_op(monitoring=monitoring, namespace=namespace)
         create_trigger_op(monitoring=monitoring, namespace=namespace).after(monitoring_op)
 
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-    run_name = f"{monitoring.task.name}-{tag}"
+    run_name = f"Create Monitoring - {monitoring.task.name}"
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
@@ -80,8 +79,7 @@ def delete_monitoring(monitoring: models.Monitoring, namespace: str):
         trigger_op = delete_trigger_op(monitoring=monitoring, namespace=namespace)
         delete_monitoring_op(monitoring=monitoring, namespace=namespace).after(trigger_op)
 
-    tag = datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S")
-    run_name = f"{monitoring.task.name}-{tag}"
+    run_name = f"Delete Monitoring - {monitoring.task.name}"
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
