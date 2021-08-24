@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Experiments API Router."""
-from pathlib import PureWindowsPath
+
 from typing import Optional
 import urllib.parse
+
 from fastapi import APIRouter, Depends, Header, Request
 from sse_starlette.sse import EventSourceResponse
 from sqlalchemy.orm import Session
-import urllib.parse
 
 import projects.schemas.experiment
 from projects.controllers import ExperimentController, ProjectController
