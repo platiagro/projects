@@ -137,6 +137,11 @@ class TaskController:
         if check_comp_name:
             return self.generate_name_task(name, attempt + 1)
         return name_task
+      
+    def task_category(self, task_cat):
+        if task_cat.category is not None and task_cat.category not in VALID_CATEGORIES:
+            valid_str = ",".join(VALID_CATEGORIES)
+            raise BadRequest(f"Invalid category. Choose any of {valid_str}")
 
     def create_task(self, task: schemas.TaskCreate):
         """
@@ -162,10 +167,8 @@ class TaskController:
 
         if not task.tags:
             task.tags = ["DEFAULT"]
-
-        if task.category is not None and task.category not in VALID_CATEGORIES:
-            valid_str = ",".join(VALID_CATEGORIES)
-            raise BadRequest(f"Invalid category. Choose any of {valid_str}")
+        
+        self.task_category(task)
 
         # check if image is a valid docker image
         self.raise_if_invalid_docker_image(task.image)
