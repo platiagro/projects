@@ -168,10 +168,6 @@ async def handle_log_deployment(deployment_id: str,
     -------
     EventSourceResponse
     """
-    print(deployment_id)
     controller = LogController()
     stream = controller.event_logs(req, deployment_id)
-    if stream:
-        return EventSourceResponse(stream)
-    else:
-        return "unable to create log stream"
+    return EventSourceResponse(stream)
