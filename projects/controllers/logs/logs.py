@@ -12,6 +12,8 @@ from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_container_logs
 from projects.kubernetes.utils import log_stream
 from projects.schemas.log import Log, LogList
+from projects.exceptions import BadRequest
+
 
 EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
 LOG_PATTERN = re.compile(r"(.*?)\s(INFO|WARN|WARNING|ERROR|DEBUG)\s*(.*)")
@@ -197,24 +199,27 @@ class LogController:
 
         return logs
 
-    def event_logs(self, req,deployment_id):
+    def event_logs(self, req, deployment_id):
         pods = list()
+        containers = list()
 
         # if deployment_id:
         pods = list_deployment_pods(deployment_id)
         # else:
-            # run_id = get_latest_run_id(experiment_id)
-            # pods = list_workflow_pods(run_id)
+        # run_id = get_latest_run_id(experiment_id)
+        # pods = list_workflow_pods(run_id)
         if len(pods) == 1:
             pod_name = pods[0].metadata.name
             print(pod_name)
             namespace = pods[0].metadata.namespace
             for container in pods[0].spec.containers:
                 if container.name not in EXCLUDE_CONTAINERS:
-                    container_name = container.name
-                    break
-            if container_name:
-                stream = log_stream(req, pod_name, namespace, container_name)
+                    containers.append(container.name)
+            if len(containers) == 1:
+                stream = log_stream(req, pod_name, namespace, containers[0])
+            elif len(containers) > 1:
+                "Not yet implemented"
+                pass
             else:
                 stream = log_stream(req, pod_name, namespace)
             return stream
@@ -229,4 +234,4 @@ class LogController:
         #             )
         #             return EventSourceResponse(stream)
         else:
-            return
+            raise BadRequest("Unable to create log stream. No active pod available.")
