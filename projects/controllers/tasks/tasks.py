@@ -137,6 +137,11 @@ class TaskController:
         if check_comp_name:
             return self.generate_name_task(name, attempt + 1)
         return name_task
+      
+    def task_category_is_not_none(self, task_cat):
+        if task_cat.category is not None and task_cat.category not in VALID_CATEGORIES:
+            valid_str = ",".join(VALID_CATEGORIES)
+            raise BadRequest(f"Invalid category. Choose any of {valid_str}")
 
     def create_task(self, task: schemas.TaskCreate):
         """
@@ -157,18 +162,13 @@ class TaskController:
         """
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
-        if not isinstance(task.name, str):
-            task.name = self.generate_name_task("Tarefa em branco")
-
         if task.copy_from and has_notebook:
             raise BadRequest("Either provide notebooks or a task to copy from")
 
         if not task.tags:
             task.tags = ["DEFAULT"]
-
-        if task.category is not None and task.category not in VALID_CATEGORIES:
-            valid_str = ",".join(VALID_CATEGORIES)
-            raise BadRequest(f"Invalid category. Choose any of {valid_str}")
+        
+        self.task_category_is_not_none(task)
 
         # check if image is a valid docker image
         self.raise_if_invalid_docker_image(task.image)
@@ -196,8 +196,12 @@ class TaskController:
             task.cpu_request = stored_task.cpu_request
             task.memory_limit = stored_task.memory_limit
             task.memory_request = stored_task.memory_request
+            # Adding the task name if it is a copy.
+            task.name = self.generate_name_task(f"{stored_task.name} - Cópia")
 
         else:
+            if not isinstance(task.name, str):
+                task.name = self.generate_name_task("Tarefa em branco")
             if task.image is not None:
                 experiment_notebook_path = None
                 deployment_notebook_path = None

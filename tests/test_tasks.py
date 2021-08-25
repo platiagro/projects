@@ -317,7 +317,7 @@ class TestTasks(TestCase):
         })
         result = rv.json()
         expected = {
-            "name": "test copy",
+            "name": "name foo - Cópia - 2",
             "description": "long test",
             "category": CATEGORY,
             "cpuLimit": "100m",
