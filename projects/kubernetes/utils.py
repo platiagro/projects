@@ -225,7 +225,7 @@ async def log_stream(req, pod_name, namespace, container=None):
         pod_name: str
         namespace: str
         container: str
-    
+
     Yields
     ------
         str
@@ -283,10 +283,13 @@ async def log_stream(req, pod_name, namespace, container=None):
                     yield(streamline)
         except RuntimeError as e:
             logging.exception(e)
+            
         except asyncio.CancelledError as e:
             logging.exception(e)
+
         except ApiException as e:
             logging.exception(e)
+            
         except ReadTimeoutError:
             """
             Expected behavior if given container does not have any new log on log stream.
