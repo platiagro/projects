@@ -2,18 +2,16 @@
 """Experiments API Router."""
 
 from typing import Optional
-import urllib.parse
+
 
 from fastapi import APIRouter, Depends, Header, Request
 from sse_starlette.sse import EventSourceResponse
 from sqlalchemy.orm import Session
 
 import projects.schemas.experiment
-from projects.controllers import ExperimentController, ProjectController
+from projects.controllers import ExperimentController, ProjectController, LogController
 from projects.database import session_scope
-from projects.kubernetes.argo import list_workflow_pods
-from projects.kfp.runs import get_latest_run_id
-from projects.kubernetes.utils import log_stream
+
 router = APIRouter(
     prefix="/projects/{project_id}/experiments",
 )
@@ -159,36 +157,19 @@ async def handle_delete_experiment(project_id: str,
     return experiment
 
 
-@router.get("/{experiment_id}/{task_name}/logs/eventsource")
-async def handle_log_deployment(experiment_id: str,
-                                req: Request,
-                                task_name: str):
+@router.get("/{experiment_id}/logs/eventsource")
+async def handle_log_deployment(experiment_id: str):
     """
-    Handles log event source requests to /<experiment_id>/<task_name>/logs/eventsource.
+    Handles log event source requests to /<experiment_id>/logs/eventsource.
 
     Parameters
     ----------
     experiment_id : str
-    req : fastapi.Request
-    task_name: str
-
+    
     Returns
     -------
     EventSourceResponse
     """
-    task_name = urllib.parse.unquote_plus(task_name)
-    run_id = get_latest_run_id(experiment_id)
-    pods = list_workflow_pods(run_id)
-    if pods:
-        for pod in pods:
-            if pod.metadata.annotations["name"] == task_name:
-                stream = log_stream(
-                    req,
-                    pod.metadata.name,
-                    pod.metadata.namespace,
-                    pod.spec.containers[0].name
-                )
-                return EventSourceResponse(stream)
-        return "Could not find task with given name"
-    else:
-        return "Unable to create log stream"
+    controller = LogController()
+    stream = controller.event_logs(experiment_id=experiment_id)
+    return EventSourceResponse(stream)
