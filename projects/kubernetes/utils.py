@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 """Utility functions."""
 import time
-import asyncio
-import logging
-from urllib3.exceptions import ReadTimeoutError
+
+from queue import Queue
+from threading import Thread
+
 
 from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes import stream
-from kubernetes.watch import Watch
 
+from projects.kubernetes.kube_config import load_kube_config
 from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
-from projects.kubernetes.kube_config import load_kube_config
+
 
 IGNORABLE_MESSAGES_KEYTEXTS = ["ContainerCreating",
                                "PodInitializing"]
@@ -215,84 +216,25 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     return clean_zip_file_content
 
 
-async def log_stream(req, pod_name, namespace, container=None):
-    """
-    Generates log stream of given pod's container.
+def consume(q, s):
+    for i in s:
+        q.put(i)
 
-    Parameters
-    ----------
-        req: fastapi.Request
-        pod_name: str
-        namespace: str
-        container: str
 
-    Yields
-    ------
-        str
-    """
-    load_kube_config()
-    v1 = client.CoreV1Api()
-    w = Watch()
-    # yield
-    # print(dir(v1.read_namespaced_pod_log(
-    #                 name=pod_name,
-    #                 namespace=namespace,
-    #                 container=container,
-    #                 pretty="true",
-    #                 tail_lines=0,
-    #                 timestamps=True,
-    #                 # _request_timeout=30
-    #             ).data))
-    # yield v1.read_namespaced_pod_log(
-    #                 name=pod_name,
-    #                 namespace=namespace,
-    #                 container=container,
-    #                 pretty="true",
-    #                 tail_lines=0,
-    #                 timestamps=True,
-    #                 # _request_timeout=30,
-    #                 follow=True
-    #             ).data
-    while(True):
-        if await req.is_disconnected():
-            logging.info("client disconnected!!!")
-            break
-        try:
-            if container:
-                for streamline in w.stream(
-                    v1.read_namespaced_pod_log,
-                    name=pod_name,
-                    namespace=namespace,
-                    container=container,
-                    pretty="true",
-                    tail_lines=0,
-                    timestamps=True,
-                    _request_timeout=30
-                ):
-                    yield(streamline)
-            if not container:
-                for streamline in w.stream(
-                    v1.read_namespaced_pod_log,
-                    name=pod_name,
-                    namespace=namespace,
-                    pretty="true",
-                    tail_lines=0,
-                    timestamps=True,
-                    _request_timeout=30
-                ):
-                    yield(streamline)
-        except RuntimeError as e:
-            logging.exception(e)
-            
-        except asyncio.CancelledError as e:
-            logging.exception(e)
+def merge(iters):
+    q = Queue()
+    for it in iters:
+        t = Thread(target=consume, args=(q, it))
+        t.start()
 
-        except ApiException as e:
-            logging.exception(e)
-            
-        except ReadTimeoutError:
-            """
-            Expected behavior if given container does not have any new log on log stream.
-            Timeout is needed because if there's no new log, the application blocks in the for loop and doesn't handle client disconnection.
-            """
-            pass
+    done = 0
+    while True:
+        out = q.get()
+        if out == '':
+            # End of the stream.
+            done += 1
+            if done == len(iters):
+                # When all iters are done, break out.
+                return
+        else:
+            yield out
