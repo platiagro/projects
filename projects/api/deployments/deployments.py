@@ -154,20 +154,18 @@ async def handle_delete_deployment(project_id: str,
 
 
 @router.get("/{deployment_id}/logs/eventsource")
-async def handle_log_deployment(deployment_id: str,
-                                req: Request):
+async def handle_log_deployment(deployment_id: str):
     """
     Handles log event source requests to /<deployment_id>/logs/eventsource.
 
     Parameters
     ----------
     deployment_id : str
-    req : fastapi.Request
 
     Returns
     -------
     EventSourceResponse
     """
     controller = LogController()
-    stream = controller.event_logs(req, deployment_id)
+    stream = controller.event_logs(deployment_id=deployment_id)
     return EventSourceResponse(stream)
