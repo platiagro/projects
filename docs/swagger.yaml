@@ -1266,32 +1266,32 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/deployments/{deploymentId}/logs/eventsource:
-    get:
-        summary: "Server sent events of log stream of pods used in the given deployment."
-        tags:
-          - "Deployments"
-        parameters:
-          - in: path
-            name: projectId
-            required: true
-            schema:
-              type: string
-              format: uuid
-          - in: path
-            name: deploymentId
-            required: true
-            schema:
-              type: string
-              format: uuid
-        responses:
-          "200":
-            description: "Returns log stream"
-          "400":
-            $ref: "#/components/responses/BadRequest"
-          "500":
-            $ref: "#/components/responses/InternalServerError"
-          "503":
-            $ref: "#/components/responses/ServiceUnavailable"
+   get:
+       summary: "Server sent events of log stream of pods used in the given deployment."
+       tags:
+         - "Deployments"
+       parameters:
+         - in: path
+           name: projectId
+           required: true
+           schema:
+             type: string
+             format: uuid
+         - in: path
+           name: deploymentId
+           required: true
+           schema:
+             type: string
+             format: uuid
+       responses:
+         "200":
+           description: "Returns log stream"
+         "400":
+           $ref: "#/components/responses/BadRequest"
+         "500":
+           $ref: "#/components/responses/InternalServerError"
+         "503":
+           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/deployments/{deploymentId}/operators:
     get:
       summary: "List all operators, unsorted."
