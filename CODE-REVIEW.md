@@ -22,7 +22,7 @@ ex: adiciona action que salva parametros no backend; exibe rótulo no componente
 ### Build Github actions COM SUCESSO
 
 ### Python
-- Usar Python>=3.7
+- Usar Python>=3.8
 - Remover `print`.
 - Não deixar código-fonte comentado.
 - f-string `f'text-{variable}'` é melhor que `'text-{}'.format(variable)` e `'text-' + variable`
