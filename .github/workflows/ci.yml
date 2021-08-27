@@ -37,14 +37,16 @@ jobs:
         VERSION=$(python -c "import projects; print(projects.__version__)")
         if [ ${{ github.ref }} = "refs/heads/master" ]; then
           echo ::set-output name=TAG::${VERSION}-SNAPSHOT
+          echo ::set-output name=COMMIT::${{ github.sha }}
         elif [[ ${{ github.ref }} =~ ^refs/heads/v.*-branch$ ]]; then
           echo ::set-output name=TAG::${VERSION}
+          echo ::set-output name=COMMIT::${{ github.sha }}
         else
-          echo ::set-output name=TAG::${VERSION}-${{ github.sha }}
+          echo ::set-output name=TAG::${VERSION}-${{ github.event.pull_request.head.sha }}
+          echo ::set-output name=COMMIT::${{ github.event.pull_request.head.sha }}
         fi
 
         echo ::set-output name=BRANCH::${{ github.ref }}
-        echo ::set-output name=COMMIT::${{ github.sha }}
 
     - name: Code review tips
       uses: machine-learning-apps/pr-comment@master
