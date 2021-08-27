@@ -239,9 +239,7 @@ class LogController:
                 container=container_name,
                 pretty="true",
                 tail_lines=0,
-                timestamps=True,
-                # _request_timeout=30
-                # follow=True
+                timestamps=True
             ):
                 for message in self.split_messages(streamline, task_name, created_at):
                     yield(message.json())
@@ -288,7 +286,6 @@ class LogController:
             )
 
         iterators = list()
-        watchers = 0
 
         if not pods:
             raise BadRequest("Unable to create log stream. No active pod available.")
@@ -297,7 +294,6 @@ class LogController:
             for container in pod.spec.containers:
 
                 if container.name not in EXCLUDE_CONTAINERS:
-                    watchers += 1
                     iterators.append(self.log_stream(pod, container))
 
         return merge(iterators)
