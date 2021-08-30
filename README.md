@@ -10,7 +10,7 @@ You may start the server locally or using a docker container, the requirements f
 
 ### Local
 
-- [Python 3.7](https://www.python.org/downloads/)
+- [Python 3.8](https://www.python.org/downloads/)
 
 ### Docker
 
