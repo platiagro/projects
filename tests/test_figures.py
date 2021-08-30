@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 from json import dumps
 from unittest import TestCase
 
@@ -28,6 +29,7 @@ COMMANDS_JSON = dumps(COMMANDS)
 ARGUMENTS = ["ARG"]
 ARGUMENTS_JSON = dumps(ARGUMENTS)
 IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
+CATEGORY = "DEFAULT"
 TAGS = ["PREDICTOR"]
 TAGS_JSON = dumps(TAGS)
 PARAMETERS_JSON = dumps(PARAMETERS)
@@ -56,12 +58,12 @@ class TestFigures(TestCase):
         conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
 
         text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
+            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, parameters, "
             f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
             f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
+        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, dumps([]),
                             EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
 
         text = (
@@ -71,12 +73,12 @@ class TestFigures(TestCase):
         conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
 
-        fig = open(MOCKED_IMAGE_PATH, "rb").read()
+        fig = base64.b64encode(open(MOCKED_IMAGE_PATH, "rb").read()).decode("utf-8")
         platiagro.save_figure(experiment_id=EXPERIMENT_ID,
                               operator_id=OPERATOR_ID,
                               run_id=RUN_ID,
-                              figure=fig)
-
+                              figure=fig,
+                              extension="jpg")
     def tearDown(self):
         prefix = "Experiments/{EXPERIMENT_ID}"
         for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
