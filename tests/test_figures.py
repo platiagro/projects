@@ -2,11 +2,9 @@
 from json import dumps
 from unittest import TestCase
 
+import platiagro
 from fastapi.testclient import TestClient
 
-import matplotlib.pyplot as plt
-import numpy as np
-import platiagro
 
 from projects.api.main import app
 from projects.controllers.utils import uuid_alpha
@@ -38,6 +36,7 @@ DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 TENANT = "anonymous"
+MOCKED_IMAGE_PATH = "tests/resources/mocked_dataset_base64.jpeg"
 
 
 class TestFigures(TestCase):
@@ -72,11 +71,7 @@ class TestFigures(TestCase):
         conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, CREATED_AT, UPDATED_AT,))
         conn.close()
 
-        t = np.arange(0.0, 2.0, 0.01)
-        s = 1 + np.sin(2 * np.pi * t)
-        fig, ax = plt.subplots()
-        ax.plot(t, s)
-
+        fig = open(MOCKED_IMAGE_PATH, "rb").read()
         platiagro.save_figure(experiment_id=EXPERIMENT_ID,
                               operator_id=OPERATOR_ID,
                               run_id=RUN_ID,
