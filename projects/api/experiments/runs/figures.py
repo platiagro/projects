@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from projects.controllers import ExperimentController, FigureController, \
     ProjectController
-from projects.controllers.experiments.runs import RunController
 from projects.database import session_scope
 
 router = APIRouter(
@@ -43,9 +42,6 @@ async def handle_list_figures(project_id: str,
 
     experiment_controller = ExperimentController(session)
     experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
-
-    run_controller = RunController(session)
-    run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
 
     figure_controller = FigureController(session)
     figures = figure_controller.list_figures(project_id=project_id,
