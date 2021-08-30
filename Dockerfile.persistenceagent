@@ -1,4 +1,5 @@
-FROM python:3.8-buster
+ARG BASE_CONTAINER=platiagro/projects:0.3.0-SNAPSHOT
+FROM $BASE_CONTAINER
 
 LABEL maintainer="fabiol@cpqd.com.br"
 
@@ -9,15 +10,6 @@ LABEL branch=${BRANCH}
 LABEL commit=${COMMIT}
 ENV COMMIT=${COMMIT}
 ENV BRANCH=${BRANCH}
-
-COPY ./requirements.txt /app/requirements.txt
-
-RUN pip install -r /app/requirements.txt
-
-COPY ./projects /app/projects
-COPY ./setup.py /app/setup.py
-
-WORKDIR /app/
 
 ENTRYPOINT ["python", "-m", "projects.agent.main"]
 CMD []

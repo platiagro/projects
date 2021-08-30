@@ -351,6 +351,7 @@ jobs:
         build-args: |
           COMMIT=${{ steps.vars.outputs.COMMIT }}
           BRANCH=${{ steps.vars.outputs.BRANCH }}
+          BASE_CONTAINER=docker.io/platiagro/projects:${{ steps.vars.outputs.TAG }}
 
     - name: Build and push docker image (INIT TASK) 📦
       if: ${{ always() }}
@@ -363,6 +364,7 @@ jobs:
         build-args: |
           COMMIT=${{ steps.vars.outputs.COMMIT }}
           BRANCH=${{ steps.vars.outputs.BRANCH }}
+          BASE_CONTAINER=docker.io/platiagro/projects:${{ steps.vars.outputs.TAG }}
 
     - name: Image digest
       if: ${{ always() }}
@@ -379,6 +381,7 @@ jobs:
         build-args: |
           COMMIT=${{ steps.vars.outputs.COMMIT }}
           BRANCH=${{ steps.vars.outputs.BRANCH }}
+          BASE_CONTAINER=docker.io/platiagro/projects:${{ steps.vars.outputs.TAG }}
 
     - name: Image digest
       if: ${{ always() }}
