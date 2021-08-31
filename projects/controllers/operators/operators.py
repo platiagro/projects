@@ -2,11 +2,23 @@
 """Operator controller."""
 from datetime import datetime
 from typing import Dict, List, Optional
+import logging
+import asyncio
+import time
 
 from projects import models, schemas
 from projects.controllers.tasks import TaskController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
+from projects.kubernetes.kube_config import load_kube_config
+from projects.agent.utils import list_resource_version
+from projects.kfp import KF_PIPELINES_NAMESPACE
+from projects.kfp.runs import get_latest_run_id
+
+from kubernetes import client
+from kubernetes.watch import Watch
+from kubernetes.client.rest import ApiException
+
 
 NOT_FOUND = NotFound("The specified operator does not exist")
 PARAMETERS_EXCEPTION_MSG = "The specified parameters are not valid"
@@ -384,3 +396,47 @@ class OperatorController:
 
         recursion_stack[operator_id] = False
         return False
+
+    def watch_operator(self, deployment_id: Optional[str] = None, experiment_id: Optional[str] = None):
+        GROUP = "argoproj.io"
+        VERSION = "v1alpha1"
+        PLURAL = "workflows"
+        load_kube_config()
+        api = client.CustomObjectsApi()
+        while True:
+            run_id = get_latest_run_id(experiment_id or deployment_id)
+            if not run_id:
+                yield "operator not running"
+                time.sleep(5)
+            else:
+                try:
+                    resource_version = list_resource_version(
+                        group=GROUP,
+                        version=VERSION,
+                        namespace=KF_PIPELINES_NAMESPACE,
+                        plural=PLURAL,
+                    )
+                    w = Watch()
+                    stream = w.stream(
+                        api.list_namespaced_custom_object,
+                        group=GROUP,
+                        version=VERSION,
+                        namespace=KF_PIPELINES_NAMESPACE,
+                        plural=PLURAL,
+                        resource_version=resource_version,
+                        label_selector=f"pipeline/runid={run_id}",
+                        pretty="true",
+                    )
+                    for streamline in stream:
+                        yield f"Event: {streamline['type']} {streamline['object']['metadata']['name']}"
+                except RuntimeError as e:
+                    logging.exception(e)
+                    return
+
+                except asyncio.CancelledError as e:
+                    logging.exception(e)
+                    return
+
+                except ApiException as e:
+                    logging.exception(e)
+                    return
