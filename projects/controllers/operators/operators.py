@@ -409,34 +409,22 @@ class OperatorController:
                 yield "operator not running"
                 time.sleep(5)
             else:
-                try:
-                    resource_version = list_resource_version(
-                        group=GROUP,
-                        version=VERSION,
-                        namespace=KF_PIPELINES_NAMESPACE,
-                        plural=PLURAL,
-                    )
-                    w = Watch()
-                    stream = w.stream(
-                        api.list_namespaced_custom_object,
-                        group=GROUP,
-                        version=VERSION,
-                        namespace=KF_PIPELINES_NAMESPACE,
-                        plural=PLURAL,
-                        resource_version=resource_version,
-                        label_selector=f"pipeline/runid={run_id}",
-                        pretty="true",
-                    )
-                    for streamline in stream:
-                        yield f"Event: {streamline['type']} {streamline['object']['metadata']['name']}"
-                except RuntimeError as e:
-                    logging.exception(e)
-                    return
-
-                except asyncio.CancelledError as e:
-                    logging.exception(e)
-                    return
-
-                except ApiException as e:
-                    logging.exception(e)
-                    return
+                resource_version = list_resource_version(
+                    group=GROUP,
+                    version=VERSION,
+                    namespace=KF_PIPELINES_NAMESPACE,
+                    plural=PLURAL,
+                )
+                w = Watch()
+                stream = w.stream(
+                    api.list_namespaced_custom_object,
+                    group=GROUP,
+                    version=VERSION,
+                    namespace=KF_PIPELINES_NAMESPACE,
+                    plural=PLURAL,
+                    resource_version=resource_version,
+                    label_selector=f"pipeline/runid={run_id}",
+                    pretty="true",
+                )
+                for streamline in stream:
+                    yield f"Event: {streamline['type']} {streamline['object']['metadata']['name']}"
