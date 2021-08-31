@@ -4,13 +4,24 @@ import datetime
 import io
 import re
 import dateutil.parser
+import logging
+import asyncio
 from typing import List, Optional
 
 from projects.kfp.runs import get_latest_run_id
 from projects.kubernetes.argo import list_workflow_pods
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_container_logs
+from projects.kubernetes.utils import merge
 from projects.schemas.log import Log, LogList
+from projects.exceptions import BadRequest
+from projects.kubernetes.kube_config import load_kube_config
+
+from kubernetes import client
+from kubernetes.watch import Watch
+from kubernetes.client.rest import ApiException
+from urllib3.exceptions import ReadTimeoutError
+
 
 EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
 LOG_PATTERN = re.compile(r"(.*?)\s(INFO|WARN|WARNING|ERROR|DEBUG)\s*(.*)")
@@ -195,3 +206,94 @@ class LogController:
             )
 
         return logs
+
+    def log_stream(self, pod, container):
+        """
+        Generates log stream of given pod's container.
+
+        Parameters
+        ----------
+            pod: str
+            container: str
+
+        Yields
+        ------
+            str
+        """
+        load_kube_config()
+        v1 = client.CoreV1Api()
+        w = Watch()
+        pod_name = pod.metadata.name
+        namespace = pod.metadata.namespace
+        container_name = container.name
+        if container.env is None:
+            task_name = pod.metadata.name
+        else:
+            task_name = next((e.value for e in container.env if e.name == "TASK_NAME"), pod.metadata.name)
+        created_at = pod.metadata.creation_timestamp
+        try:
+            for streamline in w.stream(
+                v1.read_namespaced_pod_log,
+                name=pod_name,
+                namespace=namespace,
+                container=container_name,
+                pretty="true",
+                tail_lines=0,
+                timestamps=True
+            ):
+                for message in self.split_messages(streamline, task_name, created_at):
+                    yield(message.json())
+
+        except RuntimeError as e:
+            logging.exception(e)
+            return
+
+        except asyncio.CancelledError as e:
+            logging.exception(e)
+            return
+
+        except ApiException as e:
+            logging.exception(e)
+            return
+
+        except ReadTimeoutError:
+            """
+            Expected behavior if given container does not have any new log on log stream.
+            Timeout is needed because if there's no new log, the application blocks in the loop and doesn't handle client disconnection.
+            """
+            yield("Log request timed out.", container, pod_name, namespace)
+            logging("Log request timed out.", container, pod_name, namespace)
+            return
+
+    def event_logs(self, deployment_id: Optional[str] = None, experiment_id: Optional[str] = None):
+        pods = list()
+        run_id = get_latest_run_id(experiment_id or deployment_id)
+        if deployment_id is not None:
+            # Tries to retrieve any pods associated to a seldondeployment
+            pods.extend(
+                list_deployment_pods(deployment_id=deployment_id),
+            )
+
+        if len(pods) == 0:
+            # BUG: workflows and pods are deleted after 1 day due to a
+            # "Garbage Collector" feature of Argo workflows/Kubeflow Pipelines.
+            # The link below provide useful information on how to configure log
+            # persistence and where to set the Time-to-live (TTL) for workflows:
+            # https://github.com/kubeflow/pipelines/issues/844#issuecomment-559841627
+            # We can make use of these configurations and fix this bug later.
+            pods.extend(
+                list_workflow_pods(run_id=run_id),
+            )
+
+        iterators = list()
+
+        if not pods:
+            raise BadRequest("Unable to create log stream. No active pod available.")
+
+        for pod in pods:
+            for container in pod.spec.containers:
+
+                if container.name not in EXCLUDE_CONTAINERS:
+                    iterators.append(self.log_stream(pod, container))
+
+        return merge(iterators)

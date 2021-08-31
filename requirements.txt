@@ -21,3 +21,5 @@ requests==2.25.1
 urllib3==1.26.5
 # FastAPI mailing library
 fastapi-mail==0.3.7
+# EventSource Api
+sse-starlette==0.6.2

@@ -2,14 +2,19 @@
 """Utility functions."""
 import time
 
+from queue import Queue
+from threading import Thread
+
+
 from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes import stream
 
+from projects.kubernetes.kube_config import load_kube_config
 from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
-from projects.kubernetes.kube_config import load_kube_config
+
 
 IGNORABLE_MESSAGES_KEYTEXTS = ["ContainerCreating",
                                "PodInitializing"]
@@ -153,7 +158,7 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
                     "mountPath": "/tmp/data",
                     "name": "vol-tmp-data"
                 }]
-              }],
+            }],
             "volumes": [{
                 "name": "vol-tmp-data",
                 "persistentVolumeClaim": {
@@ -209,3 +214,27 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     # the stdout string contains \n character, we must remove
     clean_zip_file_content = zip_file_content.replace("\n", "")
     return clean_zip_file_content
+
+
+def consume(q, s):
+    for i in s:
+        q.put(i)
+
+
+def merge(iters):
+    q = Queue()
+    for it in iters:
+        t = Thread(target=consume, args=(q, it))
+        t.start()
+
+    done = 0
+    while True:
+        out = q.get()
+        if out == '':
+            # End of the stream.
+            done += 1
+            if done == len(iters):
+                # When all iters are done, break out.
+                return
+        else:
+            yield out
