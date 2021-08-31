@@ -57,6 +57,7 @@ app.include_router(templates.router)
 app.include_router(responses.router)
 app.include_router(healthcheck.router)
 
+
 @app.get("/", response_class=PlainTextResponse)
 async def ping():
     """

@@ -2,9 +2,8 @@
 """Healthcheck API Router."""
 
 import sqlalchemy
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import select
 from sqlalchemy.exc import OperationalError
 
 from projects.exceptions import ServiceUnavailable
