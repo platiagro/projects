@@ -65,6 +65,14 @@ tags:
     description: >
       Monitorings allow to ensure that models are maintaining a predetermined desired level of performance.
 paths:
+  /healthcheck:
+    get:
+      summary: "Check the connection with the database."
+      responses:
+        "200":
+          description: "Successfully connected to database"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /tasks:
     get:
       summary: "List tasks. Supports pagination, and sorting."
