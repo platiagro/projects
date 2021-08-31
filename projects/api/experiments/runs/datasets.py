@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from projects.controllers import DatasetController, ExperimentController, \
     OperatorController, ProjectController
-from projects.controllers.experiments.runs import RunController
 from projects.database import session_scope
 
 router = APIRouter(
@@ -49,9 +48,6 @@ async def handle_get_dataset(project_id: str,
 
     operator_controller = OperatorController(session)
     operator_controller.raise_if_operator_does_not_exist(operator_id)
-
-    run_controller = RunController(session, kubeflow_userid=kubeflow_userid)
-    run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
 
     dataset_controller = DatasetController(session, kubeflow_userid=kubeflow_userid)
     datasets = dataset_controller.get_dataset(project_id=project_id,
