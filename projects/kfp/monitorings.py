@@ -48,7 +48,7 @@ def create_monitoring(monitoring: models.Monitoring, namespace: str):
 
     run_name = f"Create Monitoring - {monitoring.task.name}"
 
-    return kfp_client().create_run_from_pipeline_func(
+    return kfp_client(namespace).create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -81,7 +81,7 @@ def delete_monitoring(monitoring: models.Monitoring, namespace: str):
 
     run_name = f"Delete Monitoring - {monitoring.task.name}"
 
-    return kfp_client().create_run_from_pipeline_func(
+    return kfp_client(namespace).create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,

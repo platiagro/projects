@@ -9,8 +9,9 @@ NOT_FOUND = NotFound("The specified run does not exist")
 
 
 class RunController:
-    def __init__(self, session):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
+        self.kubeflow_userid = kubeflow_userid
 
     def raise_if_run_does_not_exist(self, run_id: str, experiment_id: str):
         """
@@ -27,7 +28,8 @@ class RunController:
         """
         try:
             kfp.get_run(experiment_id=experiment_id,
-                        run_id=run_id)
+                        run_id=run_id,
+                        namespace=self.kubeflow_userid)
         except (ApiException, ValueError):
             raise NOT_FOUND
 
@@ -80,7 +82,8 @@ class RunController:
         run = kfp.run_experiment(experiment=experiment)
 
         run = kfp.get_run(experiment_id=experiment_id,
-                          run_id=run.run_id)
+                          run_id=run.run_id,
+                          namespace=self.kubeflow_userid)
 
         update_data = {"status": "Pending", "status_message": None}
         self.session.query(models.Operator) \
@@ -112,7 +115,8 @@ class RunController:
         """
         try:
             run = kfp.get_run(experiment_id=experiment_id,
-                              run_id=run_id)
+                              run_id=run_id,
+                              namespace=self.kubeflow_userid)
         except (ApiException, ValueError):
             raise NOT_FOUND
 
@@ -148,7 +152,8 @@ class RunController:
             self.session.commit()
 
             run = kfp.terminate_run(experiment_id=experiment_id,
-                                    run_id=run_id)
+                                    run_id=run_id,
+                                    namespace=self.kubeflow_userid)
 
         except ApiException:
             raise NOT_FOUND
@@ -177,7 +182,8 @@ class RunController:
         """
         try:
             run = kfp.retry_run(experiment_id=experiment_id,
-                                run_id=run_id)
+                                run_id=run_id,
+                                namespace=self.kubeflow_userid)
         except ApiException:
             raise NOT_FOUND
 

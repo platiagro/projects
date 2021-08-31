@@ -23,7 +23,7 @@ DESCRIPTION = "Description"
 POSITION = 0
 STATUS = "Pending"
 URL = None
-TENANT = "anonymous"
+TENANT = None
 
 
 class TestResponses(TestCase):

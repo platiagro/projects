@@ -19,7 +19,7 @@ router = APIRouter(
 async def handle_list_operators(project_id: str,
                                 deployment_id: str,
                                 session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header("anonymous")):
+                                kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -52,7 +52,7 @@ async def handle_patch_operator(project_id: str,
                                 operator_id: str,
                                 operator: projects.schemas.operator.OperatorUpdate,
                                 session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header("anonymous")):
+                                kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles PATCH requests to /<deployment_id>/operators/<operator_id>.
 

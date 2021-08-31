@@ -68,7 +68,7 @@ def send_email(task: models.Task, namespace: str):
 
     run_name = f"Share Task - {task.name}"
 
-    return kfp_client().create_run_from_pipeline_func(
+    return kfp_client(namespace).create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,

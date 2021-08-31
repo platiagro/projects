@@ -74,7 +74,7 @@ UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
 DEPENDENCIES_EMPTY = []
 DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
-TENANT = "anonymous"
+TENANT = None
 
 
 class TestTemplates(TestCase):

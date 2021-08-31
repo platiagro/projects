@@ -40,7 +40,7 @@ UPDATED_AT = "2000-01-01 00:00:00"
 EXPERIMENT_ID = str(uuid_alpha())
 OPERATOR_ID = str(uuid_alpha())
 RUN_ID = str(uuid_alpha())
-TENANT = "anonymous"
+TENANT = None
 
 
 class TestMetrics(TestCase):

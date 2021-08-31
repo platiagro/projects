@@ -10,8 +10,9 @@ NOT_FOUND = NotFound("The specified run does not exist")
 
 
 class RunController:
-    def __init__(self, session):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
+        self.kubeflow_userid = kubeflow_userid
 
     def raise_if_run_does_not_exist(self, run_id: str, deployment_id: str):
         """
@@ -28,7 +29,8 @@ class RunController:
         """
         try:
             kfp.get_run(deployment_id=deployment_id,
-                        run_id=run_id)
+                        run_id=run_id,
+                        namespace=self.kubeflow_userid)
         except (ApiException, ValueError):
             raise NOT_FOUND
 
@@ -66,7 +68,7 @@ class RunController:
         """
         deployment = self.session.query(models.Deployment).get(deployment_id)
 
-        url = get_seldon_deployment_url(deployment_id)
+        url = get_seldon_deployment_url(deployment_id, namespace=self.kubeflow_userid)
 
         self.session.query(models.Deployment) \
             .filter_by(uuid=deployment_id) \
@@ -108,10 +110,11 @@ class RunController:
         if deployment is None:
             raise NotFound("The specified deployment does not exist")
 
-        run = kfp.run_deployment(deployment=deployment, namespace=kfp.KF_PIPELINES_NAMESPACE)
+        run = kfp.run_deployment(deployment=deployment, namespace=self.kubeflow_userid)
 
         run = kfp.get_run(deployment_id=deployment.uuid,
-                          run_id=run.run_id)
+                          run_id=run.run_id,
+                          namespace=self.kubeflow_userid)
 
         return schemas.Run.from_orm(run)
 
@@ -134,7 +137,8 @@ class RunController:
         """
         try:
             run = kfp.get_run(deployment_id=deployment_id,
-                              run_id="latest")
+                              run_id="latest",
+                              namespace=self.kubeflow_userid)
         except (ApiException, ValueError):
             raise NOT_FOUND
 
@@ -160,6 +164,6 @@ class RunController:
         deployment = self.session.query(models.Deployment) \
             .get(deployment_id)
 
-        kfp.delete_deployment(deployment=deployment, namespace=kfp.KF_PIPELINES_NAMESPACE)
+        kfp.delete_deployment(deployment=deployment, namespace=self.kubeflow_userid)
 
         return schemas.Message(message="Deployment deleted")

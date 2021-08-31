@@ -46,7 +46,7 @@ DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
 TASK_DATASET_ID = str(uuid_alpha())
 TASK_DATASET_TAGS = ["DATASETS"]
 TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
-TENANT = "anonymous"
+TENANT = None
 
 
 class TestExperimentsRuns(TestCase):

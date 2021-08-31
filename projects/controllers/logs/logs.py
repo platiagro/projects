@@ -24,6 +24,9 @@ LOG_LEVELS = {
 
 class LogController:
 
+    def __init__(self, kubeflow_userid):
+        self.kubeflow_userid = kubeflow_userid
+
     def list_logs(self, project_id: str, run_id: str, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
         """
         Lists logs from a run.
@@ -33,8 +36,8 @@ class LogController:
         project_id : str
         run_id : str
             The run_id. If `run_id=latest`, then returns logs from the latest run_id.
-        experiment_id : str or None
-        deployment_id : str or None
+        experiment_id : str, optional
+        deployment_id : str, optional
 
         Returns
         -------
@@ -45,6 +48,7 @@ class LogController:
             run_id = get_latest_run_id(
                 experiment_id=experiment_id,
                 deployment_id=deployment_id,
+                namespace=self.kubeflow_userid,
             )
 
         pods = []
@@ -52,7 +56,7 @@ class LogController:
         if deployment_id is not None:
             # Tries to retrieve any pods associated to a seldondeployment
             pods.extend(
-                list_deployment_pods(deployment_id=deployment_id),
+                list_deployment_pods(deployment_id=deployment_id, namespace=self.kubeflow_userid),
             )
 
         if len(pods) == 0:
@@ -63,7 +67,7 @@ class LogController:
             # https://github.com/kubeflow/pipelines/issues/844#issuecomment-559841627
             # We can make use of these configurations and fix this bug later.
             pods.extend(
-                list_workflow_pods(run_id=run_id),
+                list_workflow_pods(run_id=run_id, namespace=self.kubeflow_userid),
             )
 
         # Retrieves logs from all containers in all pods (that were not deleted)
@@ -99,7 +103,7 @@ class LogController:
         for pod in pods:
             for container in pod.spec.containers:
                 if container.name not in EXCLUDE_CONTAINERS:
-                    raw_logs = get_container_logs(pod, container)
+                    raw_logs = get_container_logs(pod, container, self.kubeflow_userid)
 
                     if container.env is None:
                         task_name = pod.metadata.name

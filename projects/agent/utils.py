@@ -21,7 +21,7 @@ def list_resource_version(group, version, namespace, plural):
     load_kube_config()
     api = client.CustomObjectsApi()
 
-    r = api.list_namespaced_custom_object(
+    r = api.list_custom_object_for_all_namespaces(
         group=group,
         version=version,
         namespace=namespace,

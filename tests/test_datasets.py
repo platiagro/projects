@@ -47,7 +47,7 @@ EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
 DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
 CREATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
-TENANT = "anonymous"
+TENANT = None
 
 
 class TestDatasets(TestCase):

@@ -50,7 +50,7 @@ DEPENDENCIES_OP_ID = [OPERATOR_ID]
 DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
 
 EMAILS_TO_SEND = ["fictional.receiver.1661430@protonmail.com"]
-TENANT = "anonymous"
+TENANT = None
 
 
 class TestTasks(TestCase):

@@ -16,7 +16,7 @@ EXPERIMENT_ID = str(uuid_alpha())
 NAME = "foo"
 CREATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
-TENANT = "anonymous"
+TENANT = None
 
 CONTENT_DISPOSITION = "attachment; filename=results.zip"
 CONTENT_TYPE = "application/x-zip-compressed"

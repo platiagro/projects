@@ -19,7 +19,7 @@ async def handle_list_logs(project_id: str,
                            experiment_id: str,
                            run_id: str,
                            session: Session = Depends(session_scope),
-                           kubeflow_userid: Optional[str] = Header("anonymous")):
+                           kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -41,7 +41,7 @@ async def handle_list_logs(project_id: str,
     experiment_controller = ExperimentController(session)
     experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
 
-    log_controller = LogController()
+    log_controller = LogController(kubeflow_userid=kubeflow_userid)
     logs = log_controller.list_logs(project_id=project_id,
                                     experiment_id=experiment_id,
                                     run_id=run_id)

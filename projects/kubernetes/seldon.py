@@ -1,24 +1,32 @@
 # -*- coding: utf-8 -*-
 """Seldon utility functions."""
+from typing import Optional
+
 from kubernetes import client
 
-from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.istio import get_cluster_ip, get_protocol
 from projects.kubernetes.kube_config import load_kube_config
 
 
-def get_seldon_deployment_url(deployment_id, ip=None, protocol=None, external_url=True):
+def get_seldon_deployment_url(
+    deployment_id: str,
+    namespace: str,
+    ip: Optional[str] = None,
+    protocol: Optional[str] = None,
+    external_url: Optional[bool] = True,
+):
     """
     Get seldon deployment url.
 
     Parameters
     ----------
     deployment_id: str
-    ip : str
+    namespace : str
+    ip : str, optional
         The cluster ip. Default value is None.
-    protocol : str
+    protocol : str, optional
         Either http or https. Default value is None.
-    external_url : bool
+    external_url : bool, optional
         Whether to return the external url (Loadbalancer) or internal url.
 
     Returns
@@ -37,18 +45,19 @@ def get_seldon_deployment_url(deployment_id, ip=None, protocol=None, external_ur
         if not protocol:
             protocol = get_protocol()
 
-        return f'{protocol}://{ip}/seldon/{KF_PIPELINES_NAMESPACE}/{deployment_id}/api/v1.0/predictions'
+        return f"{protocol}://{ip}/seldon/{namespace}/{deployment_id}/api/v1.0/predictions"
     else:
-        return f"http://{deployment_id}-model.{KF_PIPELINES_NAMESPACE}:8000/api/v1.0/predictions"
+        return f"http://{deployment_id}-model.{namespace}:8000/api/v1.0/predictions"
 
 
-def list_deployment_pods(deployment_id):
+def list_deployment_pods(deployment_id: str, namespace: Optional[str]):
     """
     List pods under a Deployment.
 
     Parameters
     ----------
     deployment_id : str
+    namespace : str, optional
 
     Returns
     -------
@@ -57,40 +66,13 @@ def list_deployment_pods(deployment_id):
 
     Notes
     ----
-    Equivalent to `kubectl -n KF_PIPELINES_NAMESPACE get pods -l seldon-deployment-id=deployment_id`.
+    Equivalent to `kubectl -n namespace get pods -l seldon-deployment-id=deployment_id`.
     """
     load_kube_config()
     core_api = client.CoreV1Api()
     pod_list = core_api.list_namespaced_pod(
-        namespace=KF_PIPELINES_NAMESPACE,
+        namespace=namespace,
         label_selector=f'seldon-deployment-id={deployment_id}',
     ).items
 
     return pod_list
-
-
-def list_project_seldon_deployments(project_id):
-    """
-    List deployments under a project.
-
-    Parameters
-    ----------
-    project_id : str
-
-    Returns
-    -------
-    list
-        A list of deployment's pod.
-    """
-    load_kube_config()
-    custom_api = client.CustomObjectsApi()
-
-    deployments = custom_api.list_namespaced_custom_object(
-            group='machinelearning.seldon.io',
-            version='v1',
-            namespace=KF_PIPELINES_NAMESPACE,
-            plural='seldondeployments',
-            label_selector=f'projectId={project_id}',
-    )["items"]
-
-    return deployments

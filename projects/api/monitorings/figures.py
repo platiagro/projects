@@ -19,7 +19,7 @@ async def handle_list_figures_monitorings(project_id: str,
                                           deployment_id: str,
                                           monitoring_id: str,
                                           session: Session = Depends(session_scope),
-                                          kubeflow_userid: Optional[str] = Header("anonymous")):
+                                          kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -38,10 +38,10 @@ async def handle_list_figures_monitorings(project_id: str,
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session)
+    deployment_controller = DeploymentController(session, kubeflow_userid=kubeflow_userid)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
-    monitoring_controller = MonitoringController(session)
+    monitoring_controller = MonitoringController(session, kubeflow_userid=kubeflow_userid)
     monitoring_controller.raise_if_monitoring_does_not_exist(monitoring_id)
 
     monitoring_figure_controller = MonitoringFigureController(session)

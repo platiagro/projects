@@ -2,15 +2,13 @@
 """
 Kubeflow Pipelines interface.
 """
-from os import getenv, makedirs, path
-from pathlib import Path
+import os
+import pathlib
 
 from kfp import Client
 
-KF_PIPELINES_NAMESPACE = getenv("KF_PIPELINES_NAMESPACE", "anonymous")
 
-
-def kfp_client(namespace=KF_PIPELINES_NAMESPACE):
+def kfp_client(namespace=None):
     """
     Singleton that returns a kfp.Client object.
     It was changed from constant to a function because the client instance
@@ -19,16 +17,16 @@ def kfp_client(namespace=KF_PIPELINES_NAMESPACE):
 
     Parameters
     ----------
-    namespace : str
+    namespace : str, optional
 
     Returns
     -------
     kfp.Client
     """
-    host = getenv("KF_PIPELINES_ENDPOINT", "http://ml-pipeline.kubeflow:8888")
+    host = os.getenv("KF_PIPELINES_ENDPOINT", "http://ml-pipeline.kubeflow:8888")
     client = Client(host=host)
-    if namespace != "kubeflow":
+    if namespace is not None and namespace != "kubeflow":
         # user namespace is stored in a configuration file at $HOME/.config/kfp/context.json
-        makedirs(path.join(str(Path.home()), ".config", "kfp"), exist_ok=True)
+        os.makedirs(os.path.join(str(pathlib.Path.home()), ".config", "kfp"), exist_ok=True)
         client.set_user_namespace(namespace=namespace)
     return client

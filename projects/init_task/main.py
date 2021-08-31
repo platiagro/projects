@@ -34,8 +34,8 @@ def run(
     task_id : str
     source : str
     destination : str
-    experiment_notebook: str or None
-    deployment_notebook: str or None
+    experiment_notebook: str, optional
+    deployment_notebook: str, optional
     """
     logging.info("Initializing Task.")
     logging.info(f"task_id = {task_id}")

@@ -22,7 +22,8 @@ FONTE_DE_DADOS = "Fonte de dados"
 class DeploymentController:
     def __init__(self, session, kubeflow_userid=None):
         self.session = session
-        self.run_controller = RunController(session)
+        self.kubeflow_userid = kubeflow_userid
+        self.run_controller = RunController(session, kubeflow_userid=kubeflow_userid)
         self.template_controller = TemplateController(session, kubeflow_userid=kubeflow_userid)
         self.task_controller = TaskController(session)
 
@@ -38,7 +39,7 @@ class DeploymentController:
         connection : sqlalchemy.engine.Connection
         target : models.Deployment
         """
-        kfp.delete_deployment(deployment=target, namespace=kfp.KF_PIPELINES_NAMESPACE)
+        kfp.delete_deployment(deployment=target, namespace=target.project.tenant)
 
     def raise_if_deployment_does_not_exist(self, deployment_id: str):
         """

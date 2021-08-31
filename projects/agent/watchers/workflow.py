@@ -10,7 +10,6 @@ from kubernetes.client.rest import ApiException
 
 from projects import models
 from projects.agent.utils import list_resource_version
-from projects.kfp import KF_PIPELINES_NAMESPACE
 
 GROUP = "argoproj.io"
 VERSION = "v1alpha1"
@@ -31,7 +30,7 @@ WORKFLOW_STATUSES = {
 }
 
 
-def watch_workflows(api, session):
+def watch_workflows(api, session, namespace):
     """
     Watch workflows events and save data in database.
 
@@ -39,6 +38,7 @@ def watch_workflows(api, session):
     ----------
     api : kubernetes.client.apis.custom_objects_api.CustomObjectsApi
     session : sqlalchemy.orm.session.Session
+    namespace : str
     """
     # When retrieving a collection of resources the response from the server
     # will contain a resourceVersion value that can be used to initiate a watch
@@ -46,7 +46,7 @@ def watch_workflows(api, session):
     resource_version = list_resource_version(
         group=GROUP,
         version=VERSION,
-        namespace=KF_PIPELINES_NAMESPACE,
+        namespace=namespace,
         plural=PLURAL,
     )
 
@@ -57,7 +57,7 @@ def watch_workflows(api, session):
             api.list_namespaced_custom_object,
             group=GROUP,
             version=VERSION,
-            namespace=KF_PIPELINES_NAMESPACE,
+            namespace=namespace,
             plural=PLURAL,
             resource_version=resource_version,
             timeout_seconds=5,
@@ -82,7 +82,7 @@ def watch_workflows(api, session):
                 resource_version = list_resource_version(
                     group=GROUP,
                     version=VERSION,
-                    namespace=KF_PIPELINES_NAMESPACE,
+                    namespace=namespace,
                     plural=PLURAL,
                 )
             else:

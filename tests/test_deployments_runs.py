@@ -42,7 +42,7 @@ DOCS = ""
 TAGS_JSON = dumps(["PREDICTOR"])
 DEPLOY_NOTEBOOK_PATH = ""
 EX_NOTEBOOK_PATH = ""
-TENANT = "anonymous"
+TENANT = None
 
 
 class TestDeploymentsRuns(TestCase):

@@ -19,7 +19,7 @@ router = APIRouter(
 async def handle_list_monitorings(project_id: str,
                                   deployment_id: str,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header("anonymous")):
+                                  kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -37,10 +37,10 @@ async def handle_list_monitorings(project_id: str,
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session)
+    deployment_controller = DeploymentController(session, kubeflow_userid=kubeflow_userid)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
-    monitoring_controller = MonitoringController(session)
+    monitoring_controller = MonitoringController(session, kubeflow_userid=kubeflow_userid)
     monitorings = monitoring_controller.list_monitorings(deployment_id=deployment_id)
     return monitorings
 
@@ -50,7 +50,7 @@ async def handle_post_monitorings(project_id: str,
                                   deployment_id: str,
                                   monitoring: projects.schemas.monitoring.MonitoringCreate,
                                   session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header("anonymous")):
+                                  kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles POST requests to /.
 
@@ -69,10 +69,10 @@ async def handle_post_monitorings(project_id: str,
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session)
+    deployment_controller = DeploymentController(session, kubeflow_userid=kubeflow_userid)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
-    monitoring_controller = MonitoringController(session)
+    monitoring_controller = MonitoringController(session, kubeflow_userid=kubeflow_userid)
     monitoring = monitoring_controller.create_monitoring(deployment_id=deployment_id,
                                                          monitoring=monitoring)
     return monitoring
@@ -83,7 +83,7 @@ async def handle_delete_monitorings(project_id: str,
                                     deployment_id: str,
                                     monitoring_id: str,
                                     session: Session = Depends(session_scope),
-                                    kubeflow_userid: Optional[str] = Header("anonymous")):
+                                    kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles DELETE requests to /<monitoring_id>.
 
@@ -102,9 +102,9 @@ async def handle_delete_monitorings(project_id: str,
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
 
-    deployment_controller = DeploymentController(session)
+    deployment_controller = DeploymentController(session, kubeflow_userid=kubeflow_userid)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
-    monitoring_controller = MonitoringController(session)
+    monitoring_controller = MonitoringController(session, kubeflow_userid=kubeflow_userid)
     response = monitoring_controller.delete_monitoring(uuid=monitoring_id)
     return response

@@ -62,7 +62,7 @@ DEPENDENCIES_OP_ID_2_JSON = dumps(DEPENDENCIES_OP_ID_2)
 TASK_DATASET_ID = str(uuid_alpha())
 TASK_DATASET_TAGS = ["DATASETS"]
 TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
-TENANT = "anonymous"
+TENANT = None
 
 
 class TestOperators(TestCase):

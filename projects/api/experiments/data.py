@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from projects.controllers import ExperimentController, ProjectController
 from projects.database import session_scope
-from projects.kfp.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.utils import get_volume_from_pod
 
 router = APIRouter(
@@ -22,7 +21,7 @@ router = APIRouter(
 async def handle_get_data(project_id: str,
                           experiment_id: str,
                           session: Session = Depends(session_scope),
-                          kubeflow_userid: Optional[str] = Header("anonymous")):
+                          kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /.
 
@@ -43,8 +42,9 @@ async def handle_get_data(project_id: str,
     experiment_controller = ExperimentController(session)
     experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
 
+    # TODO move function to a controller
     file_as_b64 = get_volume_from_pod(volume_name=f"vol-tmp-data-{experiment_id}",
-                                      namespace=KF_PIPELINES_NAMESPACE,
+                                      namespace=kubeflow_userid,
                                       experiment_id=experiment_id)
 
     # decoding as byte

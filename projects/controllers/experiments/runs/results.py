@@ -10,8 +10,9 @@ from projects.object_storage import list_objects, get_object
 
 
 class ResultController:
-    def __init__(self, session):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
+        self.kubeflow_userid = kubeflow_userid
 
     def get_results(self, experiment_id: str, run_id: str, operator_id: str = None):
         """
@@ -36,7 +37,7 @@ class ResultController:
             The specified operator has no results.
         """
         if run_id == "latest":
-            run_id = get_latest_run_id(experiment_id=experiment_id)
+            run_id = get_latest_run_id(experiment_id=experiment_id, namespace=self.kubeflow_userid)
 
         if operator_id:
             objects_path = f"experiments/{experiment_id}/operators/{operator_id}"

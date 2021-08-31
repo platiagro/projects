@@ -40,7 +40,7 @@ def create_task(task: models.Task, all_tasks: List[models.Task], namespace: str,
     task : models.Task
     all_tasks : List[models.Task]
     namespace : str
-    copy_from : models.Task or None
+    copy_from : models.Task, optional
 
     Returns
     -------
@@ -80,7 +80,7 @@ def create_task(task: models.Task, all_tasks: List[models.Task], namespace: str,
 
     run_name = f"Create Task - {task.name}"
 
-    return kfp_client().create_run_from_pipeline_func(
+    return kfp_client(namespace).create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -104,8 +104,8 @@ def update_task(
     task : models.Task
     all_tasks : List[models.Task]
     namespace : str
-    experiment_notebook : Dict or None
-    deployment_notebook : Dict or None
+    experiment_notebook : Dict, optional
+    deployment_notebook : Dict, optional
 
     Returns
     -------
@@ -132,7 +132,7 @@ def update_task(
 
     run_name = f"Update Task - {task.name}"
 
-    return kfp_client().create_run_from_pipeline_func(
+    return kfp_client(namespace).create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -168,7 +168,7 @@ def delete_task(task: models.Task, all_tasks: List[models.Task], namespace: str)
 
     run_name = f"Delete Task - {task.name}"
 
-    return kfp_client().create_run_from_pipeline_func(
+    return kfp_client(namespace).create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
@@ -190,9 +190,9 @@ def create_init_task_container_op(
     Parameters
     ----------
     task : model.Task
-    copy_from : model.Task or None
-    experiment_notebook : Dict or None
-    deployment_notebook : Dict or None
+    copy_from : model.Task, optional
+    experiment_notebook : Dict, optional
+    deployment_notebook : Dict, optional
 
     Returns
     -------

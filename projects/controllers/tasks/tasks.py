@@ -22,8 +22,9 @@ NOT_FOUND = NotFound("The specified task does not exist")
 
 
 class TaskController:
-    def __init__(self, session):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
+        self.kubeflow_userid = kubeflow_userid
 
     def raise_if_task_does_not_exist(self, task_id: str):
         """
@@ -110,7 +111,7 @@ class TaskController:
         if check_comp_name:
             return self.generate_name_task(name, attempt + 1)
         return name_task
-      
+
     def task_category_is_not_none(self, task_cat):
         if task_cat.category is not None and task_cat.category not in VALID_CATEGORIES:
             valid_str = ",".join(VALID_CATEGORIES)
@@ -140,7 +141,7 @@ class TaskController:
 
         if not task.tags:
             task.tags = ["DEFAULT"]
-        
+
         self.task_category_is_not_none(task)
 
         # check if image is a valid docker image
@@ -207,7 +208,7 @@ class TaskController:
 
         kfp.create_task(
             task=task,
-            namespace=kfp.KF_PIPELINES_NAMESPACE,
+            namespace=self.kubeflow_userid,
             all_tasks=all_tasks,
             copy_from=stored_task,
         )
@@ -298,7 +299,7 @@ class TaskController:
             kfp.update_task(
                 task=task,
                 all_tasks=all_tasks,
-                namespace=kfp.KF_PIPELINES_NAMESPACE,
+                namespace=self.kubeflow_userid,
                 experiment_notebook=experiment_notebook,
                 deployment_notebook=deployment_notebook,
             )
@@ -369,7 +370,7 @@ class TaskController:
         kfp.delete_task(
             task=task,
             all_tasks=all_tasks,
-            namespace=kfp.KF_PIPELINES_NAMESPACE,
+            namespace=self.kubeflow_userid,
         )
 
         return schemas.Message(message="Task deleted")
@@ -382,7 +383,7 @@ class TaskController:
 
         Parameters
         ----------
-        image : str or None
+        image : str, optional
             The image name.
 
         Raises
@@ -412,6 +413,6 @@ class TaskController:
         if task is None:
             raise NOT_FOUND
 
-        kfp.send_email(task=task, namespace=kfp.KF_PIPELINES_NAMESPACE)
+        kfp.send_email(task=task, namespace=self.kubeflow_userid)
 
         return {"message": "email has been sent"}

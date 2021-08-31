@@ -13,8 +13,9 @@ from projects.kubernetes.seldon import get_seldon_deployment_url
 
 
 class PredictionController:
-    def __init__(self, session):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
+        self.kubeflow_userid = kubeflow_userid
 
     def create_prediction(self, project_id: str, deployment_id: str, upload_file: Optional[bytes] = None, dataset: Optional[str] = None):
         """
@@ -50,7 +51,11 @@ class PredictionController:
         else:
             raise BadRequest("either dataset name or file is required")
 
-        url = get_seldon_deployment_url(deployment_id=deployment_id, external_url=False)
+        url = get_seldon_deployment_url(
+            deployment_id=deployment_id,
+            external_url=False,
+            namespace=self.kubeflow_userid,
+        )
         response = requests.post(url, json=request)
 
         try:

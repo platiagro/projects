@@ -32,7 +32,7 @@ CONTENT_TYPE = "application/x-zip-compressed"
 
 MOCK_EXPERIMENT_PATH = "tests/resources/mocked_experiment.yaml"
 MOCK_DESTINATION_PATH = "tests/resources/mocked.yaml"
-TENANT = "anonymous"
+TENANT = None
 
 
 class TestResults(TestCase):

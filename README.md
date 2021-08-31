@@ -51,7 +51,6 @@ environment variables:
   MYSQL_DB_USER                 username to access the database specified by the MYSQL_DB_NAME variable (default: root).
   MYSQL_DB_PASSWORD             password to access the database specified by the MYSQL_DB_NAME variable (default: platiagro).
   KF_PIPELINES_ENDPOINT         hostname to use to talk to Kubeflow Pipelines (default: the in-cluster service DNS name will be used).
-  KF_PIPELINES_NAMESPACE        namespace where the kubeflow pipeline system is run (default: anonymous).
   INGRESS_HOST_PORT             istio ingress host and post (default: the in-cluster host or ip will be used)
   MAIL_SERVER                   hostname of a smtp service (default: ).
   MAIL_USERNAME                 username of a smtp service (default: ).

@@ -60,7 +60,7 @@ def run_experiment(experiment: models.Experiment, namespace: str):
 
     run_name = f"Run Experiment - {experiment.name}"
 
-    return kfp_client().create_run_from_pipeline_func(
+    return kfp_client(namespace).create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,

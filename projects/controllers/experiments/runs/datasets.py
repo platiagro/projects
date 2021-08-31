@@ -13,8 +13,9 @@ from projects.kfp.runs import get_latest_run_id
 
 
 class DatasetController:
-    def __init__(self, session):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
+        self.kubeflow_userid = kubeflow_userid
 
     def get_dataset(self, project_id: str, experiment_id: str, run_id: str, operator_id: str,
                     page: Optional[int] = 1, page_size: Optional[int] = 10, accept: Optional[str] = None):
@@ -46,7 +47,7 @@ class DatasetController:
             When any of project_id, experiment_id, run_id, or operator_id does not exist.
         """
         if run_id == "latest":
-            run_id = get_latest_run_id(experiment_id=experiment_id)
+            run_id = get_latest_run_id(experiment_id=experiment_id, namespace=self.kubeflow_userid)
 
         name = self.get_dataset_name(operator_id, experiment_id)
 

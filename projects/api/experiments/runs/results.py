@@ -21,7 +21,7 @@ async def handle_get_results(project_id: str,
                              experiment_id: str,
                              run_id: str,
                              session: Session = Depends(session_scope),
-                             kubeflow_userid: Optional[str] = Header("anonymous")):
+                             kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /results.
 
@@ -44,10 +44,10 @@ async def handle_get_results(project_id: str,
     experiment_controller = ExperimentController(session)
     experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
 
-    run_controller = RunController(session)
+    run_controller = RunController(session, kubeflow_userid=kubeflow_userid)
     run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
 
-    result_controller = ResultController(session)
+    result_controller = ResultController(session, kubeflow_userid=kubeflow_userid)
     results = result_controller.get_results(experiment_id=experiment_id,
                                             run_id=run_id)
 
@@ -62,7 +62,7 @@ async def handle_get_operator_results(project_id: str,
                                       run_id: str,
                                       operator_id: str,
                                       session: Session = Depends(session_scope),
-                                      kubeflow_userid: Optional[str] = Header("anonymous")):
+                                      kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles GET requests to /operators/<operator_id>/results.
 
@@ -89,10 +89,10 @@ async def handle_get_operator_results(project_id: str,
     operator_controller = OperatorController(session)
     operator_controller.raise_if_operator_does_not_exist(operator_id)
 
-    run_controller = RunController(session)
+    run_controller = RunController(session, kubeflow_userid=kubeflow_userid)
     run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
 
-    result_controller = ResultController(session)
+    result_controller = ResultController(session, kubeflow_userid=kubeflow_userid)
     results = result_controller.get_results(experiment_id=experiment_id,
                                             run_id=run_id,
                                             operator_id=operator_id)

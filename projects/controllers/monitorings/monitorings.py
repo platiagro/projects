@@ -13,8 +13,9 @@ NOT_FOUND = NotFound("The specified monitoring does not exist")
 
 
 class MonitoringController:
-    def __init__(self, session):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
+        self.kubeflow_userid = kubeflow_userid
         self.run_controller = RunController(session)
         self.task_controller = TaskController(session)
 
@@ -30,7 +31,7 @@ class MonitoringController:
         connection : sqlalchemy.engine.Connection
         target : models.Monitoring
         """
-        kfp.delete_monitoring(monitoring=target, namespace=kfp.KF_PIPELINES_NAMESPACE)
+        kfp.delete_monitoring(monitoring=target, namespace=target.project.tenant)
 
     def raise_if_monitoring_does_not_exist(self, monitoring_id: str):
         """
@@ -96,7 +97,7 @@ class MonitoringController:
         self.session.refresh(monitoring)
 
         # Deploy the new monitoring
-        kfp.create_monitoring(monitoring=monitoring, namespace=kfp.KF_PIPELINES_NAMESPACE)
+        kfp.create_monitoring(monitoring=monitoring, namespace=self.kubeflow_userid)
 
         return schemas.Monitoring.from_orm(monitoring)
 

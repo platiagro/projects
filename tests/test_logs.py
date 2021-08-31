@@ -40,7 +40,7 @@ TAGS_JSON = dumps(TAGS)
 EXPERIMENT_NOTEBOOK_PATH = ""
 DEPLOYMENT_NOTEBOOK_PATH = ""
 EXPERIMENT_NAME = "Experimento 1"
-TENANT = "anonymous"
+TENANT = None
 LOG_LEVELS = {
     'info': 'INFO',
     'debug': 'DEBUG',

@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 """Argo Workflows utility functions."""
+from typing import Optional
+
 from kubernetes import client
 
-from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.kube_config import load_kube_config
 
 
-def list_workflows(run_id):
+def list_workflows(run_id: str, namespace: Optional[str]):
     """
     List workflow given a run_id.
 
     Parameters
     ----------
     run_id : str
+    namespace : str, optional
 
     Returns
     -------
@@ -21,7 +23,7 @@ def list_workflows(run_id):
 
     Notes
     ----
-    Equivalent to `kubectl -n KF_PIPELINES_NAMESPACE get workflow -l workflows.argoproj.io/workflow=type_-id_`.
+    Equivalent to `kubectl -n namespace get workflow -l workflows.argoproj.io/workflow=type_-id_`.
     """
     load_kube_config()
     custom_api = client.CustomObjectsApi()
@@ -29,7 +31,7 @@ def list_workflows(run_id):
     workflows = custom_api.list_namespaced_custom_object(
             group="argoproj.io",
             version="v1alpha1",
-            namespace=KF_PIPELINES_NAMESPACE,
+            namespace=namespace,
             plural="workflows",
             label_selector=f"pipeline/runid={run_id}",
     )["items"]
@@ -37,20 +39,21 @@ def list_workflows(run_id):
     return workflows
 
 
-def list_workflow_pods(run_id: str):
+def list_workflow_pods(run_id: str, namespace: Optional[str]):
     """
     Lists pods from a workflow. Returns only pods that ran a platiagro task.
 
     Parameters
     ----------
     run_id : str
+    namespace : str, optional
 
     Returns
     -------
     list
         A list of all logs from a run.
     """
-    workflows = list_workflows(run_id)
+    workflows = list_workflows(run_id, namespace)
     if len(workflows) == 0:
         return []
 
@@ -60,7 +63,7 @@ def list_workflow_pods(run_id: str):
     core_api = client.CoreV1Api()
 
     pod_list = core_api.list_namespaced_pod(
-        namespace=KF_PIPELINES_NAMESPACE,
+        namespace=namespace,
         label_selector=f"workflows.argoproj.io/workflow={workflow_name}",
     ).items
 

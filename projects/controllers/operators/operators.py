@@ -43,8 +43,8 @@ class OperatorController:
         Parameters
         ----------
         project_id : str
-        experiment_id : str or None
-        deployment_id : str or None
+        experiment_id : str, optional
+        deployment_id : str, optional
 
         Returns
         -------
@@ -69,8 +69,8 @@ class OperatorController:
         ----------
         operator: projects.schemas.operator.OperatorCreate
         project_id : str
-        experiment_id : str or None
-        deployment_id : str or None
+        experiment_id : str, optional
+        deployment_id : str, optional
 
         Returns
         -------
@@ -135,9 +135,9 @@ class OperatorController:
         ----------
         operator: projects.schemas.operator.OperatorUpdate
         project_id  :str
-        experiment_id : str or None
-        deployment_id : str or None
         operator_id : str
+        experiment_id : str, optional
+        deployment_id : str, optional
 
         Returns
         -------
@@ -191,9 +191,9 @@ class OperatorController:
         Parameters
         ----------
         project_id : str
-        experiment_id : str or None
-        deployment_id : str or None
         operator_id : str
+        experiment_id : str, optional
+        deployment_id : str, optional
 
         Returns
         -------
@@ -272,9 +272,9 @@ class OperatorController:
         ----------
         project_id : str
         dependencies : list
-        experiment_id : str or None
-        deployment_id : str or None
-        operator_id : str or None
+        experiment_id : str, optional
+        deployment_id : str, optional
+        operator_id : str, optional
 
         Raises
         ------
@@ -318,9 +318,9 @@ class OperatorController:
         ----------
         project_id : str
         operator_id : str
-        dependencies : list or None
-        experiment_id : str or None
-        deployment_id : str or None
+        dependencies : list
+        experiment_id : str, optional
+        deployment_id : str, optional
 
         Raises
         ------

@@ -9,14 +9,19 @@ from projects.exceptions import BadRequest
 from projects.kfp import kfp_client
 
 
-def list_runs(experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
+def list_runs(
+    experiment_id: Optional[str] = None,
+    deployment_id: Optional[str] = None,
+    namespace: Optional[str] = None,
+):
     """
     Lists all runs of an experiment or deployment.
 
     Parameters
     ----------
-    experiment_id : str or None
-    deployment_id : str or None
+    experiment_id : str, optional
+    deployment_id : str, optional
+    namespace : str, optional
 
     Returns
     -------
@@ -26,11 +31,11 @@ def list_runs(experiment_id: Optional[str] = None, deployment_id: Optional[str] 
     # In order to list_runs, we need first to find KFP experiment id.
     # KFP experiment id is different from PlatIAgro's experiment_id, and
     # KFP.experiment_name holds PlatIAgro's experiment_id / deployment_id.
-    # so calling kfp_client().get_experiment(experiment_name='..') is required first.
-    kfp_experiment = get_kfp_experiment(experiment_id, deployment_id)
+    # so calling kfp_client(namespace).get_experiment(experiment_name='..') is required first.
+    kfp_experiment = get_kfp_experiment(experiment_id, deployment_id, namespace)
 
     # Now, lists runs
-    kfp_runs = kfp_client().list_runs(
+    kfp_runs = kfp_client(namespace).list_runs(
         page_size="10",
         sort_by="created_at desc",
         experiment_id=kfp_experiment.id,
@@ -46,15 +51,21 @@ def list_runs(experiment_id: Optional[str] = None, deployment_id: Optional[str] 
     return runs
 
 
-def get_run(run_id, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
+def get_run(
+    run_id: str,
+    experiment_id: Optional[str] = None,
+    deployment_id: Optional[str] = None,
+    namespace: Optional[str] = None,
+):
     """
     Details a run in Kubeflow Pipelines.
 
     Parameters
     ----------
     run_id : str
-    experiment_id : str or None
-    deployment_id : str or None
+    experiment_id : str, optional
+    deployment_id : str, optional
+    namespace : str, optional
 
     Returns
     -------
@@ -70,9 +81,10 @@ def get_run(run_id, experiment_id: Optional[str] = None, deployment_id: Optional
         run_id = get_latest_run_id(
             experiment_id=experiment_id,
             deployment_id=deployment_id,
+            namespace=namespace,
         )
 
-    kfp_run = kfp_client().get_run(
+    kfp_run = kfp_client(namespace).get_run(
         run_id=run_id,
     )
 
@@ -113,14 +125,19 @@ def get_run(run_id, experiment_id: Optional[str] = None, deployment_id: Optional
     }
 
 
-def get_kfp_experiment(experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
+def get_kfp_experiment(
+    experiment_id: Optional[str] = None,
+    deployment_id: Optional[str] = None,
+    namespace: Optional[str] = None,
+):
     """
     Returns a Kubeflow Pipelines experiment for a given experiment/deployment.
 
     Parameters
     ----------
-    experiment_id : str
-    deployment_id : str
+    experiment_id : str, optional
+    deployment_id : str, optional
+    namespace : str, optional
 
     Returns
     -------
@@ -128,26 +145,32 @@ def get_kfp_experiment(experiment_id: Optional[str] = None, deployment_id: Optio
     """
     experiment_name = experiment_id or deployment_id
     try:
-        return kfp_client().get_experiment(experiment_name=experiment_name)
+        return kfp_client(namespace).get_experiment(experiment_name=experiment_name)
     except ValueError:
         return None
 
 
-def get_latest_run_id(experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
+def get_latest_run_id(
+    experiment_id: Optional[str] = None,
+    deployment_id: Optional[str] = None,
+    namespace: Optional[str] = None,
+):
     """
     Get the latest run id for an experiment.
 
     Parameters
     ----------
-    experiment_id : str
+    experiment_id : str, optional
+    deployment_id : str, optional
+    namespace : str, optional
 
     Returns
     -------
     str
     """
-    kfp_experiment = get_kfp_experiment(experiment_id, deployment_id)
+    kfp_experiment = get_kfp_experiment(experiment_id, deployment_id, namespace)
 
-    kfp_runs = kfp_client().list_runs(
+    kfp_runs = kfp_client(namespace).list_runs(
         page_size="1",
         sort_by="created_at desc",
         experiment_id=kfp_experiment.id,
@@ -162,7 +185,7 @@ def get_latest_run_id(experiment_id: Optional[str] = None, deployment_id: Option
     return latest_run_id
 
 
-def terminate_run(run_id, experiment_id):
+def terminate_run(run_id: str, experiment_id: str, namespace: str):
     """
     Terminates a run in Kubeflow Pipelines.
 
@@ -170,6 +193,7 @@ def terminate_run(run_id, experiment_id):
     ----------
     run_id : str
     experiment_id : str
+    namespace : str
 
     Returns
     -------
@@ -181,14 +205,14 @@ def terminate_run(run_id, experiment_id):
     ApiException
     """
     if run_id == "latest":
-        run_id = get_latest_run_id(experiment_id=experiment_id)
+        run_id = get_latest_run_id(experiment_id=experiment_id, namespace=namespace)
 
-    kfp_client().runs.terminate_run(run_id=run_id)
+    kfp_client(namespace).runs.terminate_run(run_id=run_id)
 
     return {"message": "Run terminated"}
 
 
-def retry_run(run_id, experiment_id):
+def retry_run(run_id: str, experiment_id: str, namespace: str):
     """
     Retry a run in Kubeflow Pipelines.
 
@@ -196,6 +220,7 @@ def retry_run(run_id, experiment_id):
     ----------
     run_id : str
     experiment_id : str
+    namespace : str
 
     Returns
     -------
@@ -208,14 +233,14 @@ def retry_run(run_id, experiment_id):
     BadRequest
     """
     if run_id == "latest":
-        run_id = get_latest_run_id(experiment_id=experiment_id)
+        run_id = get_latest_run_id(experiment_id=experiment_id, namespace=namespace)
 
-    kfp_run = kfp_client().get_run(
+    kfp_run = kfp_client(namespace).get_run(
         run_id=run_id,
     )
 
     if kfp_run.run.status == "Failed":
-        kfp_client().runs.retry_run(run_id=kfp_run.run.id)
+        kfp_client(namespace).runs.retry_run(run_id=kfp_run.run.id)
     else:
         raise BadRequest("Not a failed run")
 

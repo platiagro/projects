@@ -22,7 +22,7 @@ async def handle_patch_parameter(project_id: str,
                                  name: str,
                                  parameter: projects.schemas.operator.ParameterUpdate,
                                  session: Session = Depends(session_scope),
-                                 kubeflow_userid: Optional[str] = Header("anonymous")):
+                                 kubeflow_userid: Optional[str] = Header(None)):
     """
     Handles PATCH requests to /{name}.
 

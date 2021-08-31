@@ -8,7 +8,6 @@ from kubernetes.client.rest import ApiException
 from kubernetes import stream
 
 from projects.exceptions import InternalServerError
-from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.kube_config import load_kube_config
 
 IGNORABLE_MESSAGES_KEYTEXTS = ["ContainerCreating",
@@ -50,8 +49,8 @@ def get_container_logs(pod, container):
 
     Parameters
     ----------
-    pod : str
-    container : str
+    pod : V1PodSpec
+    container : V1Container
 
     Returns
     -------
@@ -68,7 +67,7 @@ def get_container_logs(pod, container):
     try:
         logs = core_api.read_namespaced_pod_log(
             name=pod.metadata.name,
-            namespace=KF_PIPELINES_NAMESPACE,
+            namespace=pod.metadata.namespace,
             container=container.name,
             pretty="true",
             tail_lines=512,

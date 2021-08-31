@@ -31,7 +31,7 @@ session = scoped_session(sessionmaker(autocommit=False,
                                       bind=engine))
 
 
-def run(log_level):
+def run(namespace, log_level):
     """
     Watches kubernetes events and saves relevant data.
     """
@@ -51,7 +51,7 @@ def run(log_level):
     # with Python threading library, with this change, we are able to catch
     # exceptions in any of the watchers and immediatly terminate all threads.
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(watcher, api, session) for watcher in watchers]
+        futures = [executor.submit(watcher, api, session, namespace) for watcher in watchers]
 
         for future in concurrent.futures.as_completed(futures):
             try:
@@ -68,9 +68,11 @@ def parse_args(args):
         description="Persistence Agent"
     )
     parser.add_argument(
+        "--namespace", help="Namespace"
+    )
+    parser.add_argument(
         "--debug", action="count", help="Enable debug"
     )
-
     parser.add_argument(
         "--log-level",
         nargs="?",
@@ -86,9 +88,7 @@ def parse_args(args):
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
 
-    log_level = args.log_level
-
     if args.debug:
         engine.echo = True
 
-    run(log_level=log_level)
+    run(namespace=args.namespace, log_level=args.log_level)
