@@ -126,7 +126,8 @@ class TestDeploymentsRuns(TestCase):
             pipeline_package_path="tests/resources/mocked.yaml",
         )
         # Awaits 120 seconds (for the pipeline to run and complete)
-        kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
+        # TODO remove?
+        # kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
 
     def tearDown(self):
         kfp_experiment = kfp_client().get_experiment(experiment_name=DEPLOYMENT_ID)
