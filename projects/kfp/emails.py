@@ -17,6 +17,13 @@ SHARE_TASK_CONTAINER_IMAGE = os.getenv(
     "INIT_TASK_CONTAINER_IMAGE",
     f"platiagro/share-task:{__version__}-SNAPSHOT",
 )
+MAIL_USERNAME = os.getenv("MAIL_USERNAME", "")
+MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "")
+MAIL_SENDER_ADDRESS = os.getenv("MAIL_SENDER_ADDRESS", "")
+MAIL_SERVER = os.getenv("MAIL_SERVER", "")
+MAIL_PORT = str(os.getenv("MAIL_PORT", 587))
+MAIL_TLS = str(os.getenv("MAIL_TLS", True))
+MAIL_SSL = str(os.getenv("MAIL_SSL", False))
 
 
 def send_email(task: models.Task, namespace: str):
@@ -57,7 +64,15 @@ def send_email(task: models.Task, namespace: str):
             "implementation": {
                 "container": {
                     "image": image,
-                    "env": {},
+                    "env": {
+                        "MAIL_USERNAME": MAIL_USERNAME,
+                        "MAIL_PASSWORD": MAIL_PASSWORD,
+                        "MAIL_FROM": MAIL_SENDER_ADDRESS,
+                        "MAIL_PORT": MAIL_PORT,
+                        "MAIL_SERVER": MAIL_SERVER,
+                        "MAIL_TLS": MAIL_TLS,
+                        "MAIL_SSL": MAIL_SSL,
+                    },
                 },
             },
         }

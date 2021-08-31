@@ -37,9 +37,9 @@ def run(source: str, emails: List[str]):
     mail_password = os.getenv("MAIL_PASSWORD", "")
     mail_sender_address = os.getenv("MAIL_SENDER_ADDRESS", "")
     mail_server = os.getenv("MAIL_SERVER", "")
-    mail_port = os.getenv("MAIL_PORT", 587)
-    mail_tls = os.getenv("MAIL_TLS", True)
-    mail_ssl = os.getenv("MAIL_SSL", False)
+    mail_port = int(os.getenv("MAIL_PORT", 587))
+    mail_tls = bool(os.getenv("MAIL_TLS", True))
+    mail_ssl = bool(os.getenv("MAIL_SSL", False))
     CONNECTION_CONFIG = ConnectionConfig(
         MAIL_USERNAME=mail_username,
         MAIL_PASSWORD=mail_password,
