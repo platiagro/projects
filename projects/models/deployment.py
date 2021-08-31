@@ -33,3 +33,4 @@ class Deployment(Base):
     deployed_at = Column(DateTime, nullable=True)
     project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False, index=True)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    project = relationship("Project")

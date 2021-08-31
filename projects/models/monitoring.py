@@ -15,3 +15,4 @@ class Monitoring(Base):
     task_id = Column(String(255), ForeignKey("tasks.uuid"), nullable=False, index=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     task = relationship("Task")
+    deployment = relationship("Deployment")
