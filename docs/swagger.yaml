@@ -664,7 +664,7 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments/{experimentId}/operators/eventsource:
     get:
-      summary: "Server sent events of log stream of pods used in the given experiment."
+      summary: "Server sent events of operator's status change stream."
       tags:
         - "Experiment Operators"
       parameters:
