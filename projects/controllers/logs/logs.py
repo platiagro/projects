@@ -256,6 +256,18 @@ class LogController:
             pass
 
     def event_logs(self, deployment_id: Optional[str] = None, experiment_id: Optional[str] = None):
+        """
+        Search for online pods to start log stream
+
+        Parameters
+        ----------
+            deployment_id: str
+            experiment_id: str
+
+        Return
+        ------
+            Iterator
+        """
         while True:
             pods = list()
             run_id = get_latest_run_id(experiment_id or deployment_id)

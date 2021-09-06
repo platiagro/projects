@@ -217,11 +217,32 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
 
 
 def consume(q, s):
+    """
+    Puts output of an iterator in a queue.
+
+    Parameters
+    ----------
+        q: Queue
+        s: Iterator
+
+    """
     for i in s:
         q.put(i)
 
 
 def merge(iters):
+    """
+    Merges a list of iterators.
+
+    Parameters
+    ----------
+        iters: list
+
+    Yields
+    -------
+    str
+        Output of stream
+    """
     q = Queue()
     for it in iters:
         t = Thread(target=consume, args=(q, it))
