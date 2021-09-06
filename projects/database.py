@@ -15,7 +15,7 @@ engine = create_engine(DB_URL,
                        pool_recycle=300,
                        max_overflow=64,
                        connect_args={'connect_timeout': 10}
-                    )
+                       )
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

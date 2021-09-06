@@ -137,7 +137,7 @@ class TaskController:
         if check_comp_name:
             return self.generate_name_task(name, attempt + 1)
         return name_task
-      
+
     def task_category_is_not_none(self, task_cat):
         if task_cat.category is not None and task_cat.category not in VALID_CATEGORIES:
             valid_str = ",".join(VALID_CATEGORIES)
@@ -167,7 +167,7 @@ class TaskController:
 
         if not task.tags:
             task.tags = ["DEFAULT"]
-        
+
         self.task_category_is_not_none(task)
 
         # check if image is a valid docker image

@@ -2,7 +2,7 @@
 """Deployments API Router."""
 from typing import Optional
 from sse_starlette.sse import EventSourceResponse
-from fastapi import APIRouter, BackgroundTasks, Request, Depends, Header
+from fastapi import APIRouter, BackgroundTasks, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.deployment
