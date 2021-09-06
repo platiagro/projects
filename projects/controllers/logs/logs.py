@@ -289,6 +289,9 @@ class LogController:
                 )
 
             if not pods:
+                """
+                If the pods list is empty, it tries again to retrieve a pod list
+                """
                 pass
             else:
                 iterators = list()
