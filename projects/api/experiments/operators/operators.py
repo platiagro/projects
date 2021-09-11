@@ -25,7 +25,7 @@ async def handle_list_operators(
     project_id: str,
     experiment_id: str,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /.
@@ -60,7 +60,7 @@ async def handle_post_operator(
     experiment_id: str,
     operator: projects.schemas.operator.OperatorCreate,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles POST requests to /.
@@ -97,7 +97,7 @@ async def handle_patch_operator(
     operator_id: str,
     operator: projects.schemas.operator.OperatorUpdate,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles PATCH requests to /<operator_id>.
@@ -137,7 +137,7 @@ async def handle_delete_operator(
     experiment_id: str,
     operator_id: str,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles DELETE requests to /<operator_id>.

@@ -29,7 +29,7 @@ async def handle_get_dataset(
     page_size: Optional[int] = 10,
     accept: Optional[str] = Header(None),
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /.

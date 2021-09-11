@@ -19,7 +19,7 @@ router = APIRouter(
 async def handle_list_projects(
     request: Request,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /.
@@ -55,7 +55,7 @@ async def handle_list_projects(
 async def handle_post_projects(
     project: projects.schemas.project.ProjectCreate,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles POST requests to /.
@@ -79,7 +79,7 @@ async def handle_post_projects(
 async def handle_get_project(
     project_id: str,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /<project_id>.
@@ -104,7 +104,7 @@ async def handle_patch_project(
     project_id: str,
     project: projects.schemas.project.ProjectUpdate,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles PATCH requests to /<project_id>.
@@ -129,7 +129,7 @@ async def handle_patch_project(
 async def handle_delete_project(
     project_id: str,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles DELETE requests to /<project_id>.
@@ -153,7 +153,7 @@ async def handle_delete_project(
 async def handle_post_deleteprojects(
     projects: List[str],
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles POST requests to /deleteprojects.

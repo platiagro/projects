@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
+DB_TENANT = os.getenv("DB_TENANT", "anonymous")
 DB_HOST = os.getenv("MYSQL_DB_HOST", "mysql.platiagro")
 DB_NAME = os.getenv("MYSQL_DB_NAME", "platiagro")
 DB_USER = os.getenv("MYSQL_DB_USER", "root")

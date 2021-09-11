@@ -23,7 +23,7 @@ async def handle_list_operators(
     project_id: str,
     deployment_id: str,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /.
@@ -59,7 +59,7 @@ async def handle_patch_operator(
     operator_id: str,
     operator: projects.schemas.operator.OperatorUpdate,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles PATCH requests to /<deployment_id>/operators/<operator_id>.

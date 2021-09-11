@@ -27,7 +27,7 @@ async def handle_patch_parameter(
     name: str,
     parameter: projects.schemas.operator.ParameterUpdate,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles PATCH requests to /{name}.

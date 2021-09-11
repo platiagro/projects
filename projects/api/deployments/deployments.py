@@ -18,7 +18,7 @@ router = APIRouter(
 async def handle_list_deployments(
     project_id: str,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /.
@@ -49,7 +49,7 @@ async def handle_post_deployments(
     deployment: projects.schemas.deployment.DeploymentCreate,
     background_tasks: BackgroundTasks,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles POST requests to /.
@@ -81,7 +81,7 @@ async def handle_get_deployment(
     project_id: str,
     deployment_id: str,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /<deployment_id>.
@@ -113,7 +113,7 @@ async def handle_patch_deployment(
     deployment_id: str,
     deployment: projects.schemas.deployment.DeploymentUpdate,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles PATCH requests to /<deployment_id>.
@@ -147,7 +147,7 @@ async def handle_delete_deployment(
     deployment_id: str,
     background_tasks: BackgroundTasks,
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles DELETE requests to /<deployment_id>.
