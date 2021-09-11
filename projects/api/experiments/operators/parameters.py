@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
-"""Operators blueprint."""
+"""Operators API router."""
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.operator
-from projects.controllers import ExperimentController, OperatorController, \
-    OperatorParameterController, ProjectController
-from projects.database import session_scope
+from projects import database
+from projects.controllers import (
+    ExperimentController,
+    OperatorController,
+    OperatorParameterController,
+    ProjectController,
+)
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}/parameters",
@@ -16,13 +20,15 @@ router = APIRouter(
 
 
 @router.patch("/{name}")
-async def handle_patch_parameter(project_id: str,
-                                 experiment_id: str,
-                                 operator_id: str,
-                                 name: str,
-                                 parameter: projects.schemas.operator.ParameterUpdate,
-                                 session: Session = Depends(session_scope),
-                                 kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_patch_parameter(
+    project_id: str,
+    experiment_id: str,
+    operator_id: str,
+    name: str,
+    parameter: projects.schemas.operator.ParameterUpdate,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles PATCH requests to /{name}.
 
@@ -50,7 +56,7 @@ async def handle_patch_parameter(project_id: str,
     operator_controller.raise_if_operator_does_not_exist(operator_id)
 
     parameter_controller = OperatorParameterController(session)
-    operator = parameter_controller.update_parameter(name=name,
-                                                     operator_id=operator_id,
-                                                     parameter=parameter)
+    operator = parameter_controller.update_parameter(
+        name=name, operator_id=operator_id, parameter=parameter
+    )
     return operator

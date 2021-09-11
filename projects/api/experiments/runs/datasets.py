@@ -5,10 +5,14 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
-from projects.controllers import DatasetController, ExperimentController, \
-    OperatorController, ProjectController
+from projects import database
+from projects.controllers import (
+    DatasetController,
+    ExperimentController,
+    OperatorController,
+    ProjectController,
+)
 from projects.controllers.experiments.runs import RunController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets",
@@ -16,15 +20,17 @@ router = APIRouter(
 
 
 @router.get("")
-async def handle_get_dataset(project_id: str,
-                             experiment_id: str,
-                             run_id: str,
-                             operator_id: str,
-                             page: Optional[int] = 1,
-                             page_size: Optional[int] = 10,
-                             accept: Optional[str] = Header(None),
-                             session: Session = Depends(session_scope),
-                             kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_get_dataset(
+    project_id: str,
+    experiment_id: str,
+    run_id: str,
+    operator_id: str,
+    page: Optional[int] = 1,
+    page_size: Optional[int] = 10,
+    accept: Optional[str] = Header(None),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles GET requests to /.
 
@@ -54,11 +60,13 @@ async def handle_get_dataset(project_id: str,
     run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
 
     dataset_controller = DatasetController(session)
-    datasets = dataset_controller.get_dataset(project_id=project_id,
-                                              experiment_id=experiment_id,
-                                              run_id=run_id,
-                                              operator_id=operator_id,
-                                              page=page,
-                                              page_size=page_size,
-                                              accept=accept)
+    datasets = dataset_controller.get_dataset(
+        project_id=project_id,
+        experiment_id=experiment_id,
+        run_id=run_id,
+        operator_id=operator_id,
+        page=page,
+        page_size=page_size,
+        accept=accept,
+    )
     return datasets

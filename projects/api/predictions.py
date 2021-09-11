@@ -6,10 +6,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Header, Request, UploadFile
 from sqlalchemy.orm import Session
 
-from projects.controllers import DeploymentController, PredictionController, \
-    ProjectController
+from projects import database
+from projects.controllers import (
+    DeploymentController,
+    PredictionController,
+    ProjectController,
+)
 from projects.exceptions import BadRequest
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/predictions",
@@ -17,12 +20,14 @@ router = APIRouter(
 
 
 @router.post("")
-async def handle_post_prediction(project_id: str,
-                                 deployment_id: str,
-                                 request: Request,
-                                 file: Optional[UploadFile] = File(None),
-                                 session: Session = Depends(session_scope),
-                                 kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_post_prediction(
+    project_id: str,
+    deployment_id: str,
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles POST request to /.
 
@@ -56,6 +61,6 @@ async def handle_post_prediction(project_id: str,
             raise BadRequest("either form-data or json is required")
 
     prediction_controller = PredictionController(session)
-    return prediction_controller.create_prediction(project_id=project_id,
-                                                   deployment_id=deployment_id,
-                                                   **kwargs)
+    return prediction_controller.create_prediction(
+        project_id=project_id, deployment_id=deployment_id, **kwargs
+    )

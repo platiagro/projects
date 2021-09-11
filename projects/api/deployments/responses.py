@@ -6,9 +6,12 @@ from fastapi import APIRouter, Body, Depends, Header
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from projects.controllers import DeploymentController, ProjectController, \
-    ResponseController
-from projects.database import session_scope
+from projects import database
+from projects.controllers import (
+    DeploymentController,
+    ProjectController,
+    ResponseController,
+)
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/responses",
@@ -16,11 +19,13 @@ router = APIRouter(
 
 
 @router.post("")
-async def handle_post_responses(project_id: str,
-                                deployment_id: str,
-                                body: dict = Body(...),
-                                session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_post_responses(
+    project_id: str,
+    deployment_id: str,
+    body: dict = Body(...),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles POST requests to /.
 
@@ -43,9 +48,9 @@ async def handle_post_responses(project_id: str,
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     response_controller = ResponseController(session)
-    response_controller.create_response(project_id=project_id,
-                                        deployment_id=deployment_id,
-                                        body=body)
+    response_controller.create_response(
+        project_id=project_id, deployment_id=deployment_id, body=body
+    )
 
     return JSONResponse(
         status_code=200,

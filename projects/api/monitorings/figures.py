@@ -5,9 +5,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
-from projects.controllers import DeploymentController, MonitoringController, \
-    MonitoringFigureController, ProjectController
-from projects.database import session_scope
+from projects import database
+from projects.controllers import (
+    DeploymentController,
+    MonitoringController,
+    MonitoringFigureController,
+    ProjectController,
+)
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}/figures",
@@ -15,11 +19,13 @@ router = APIRouter(
 
 
 @router.get("")
-async def handle_list_figures_monitorings(project_id: str,
-                                          deployment_id: str,
-                                          monitoring_id: str,
-                                          session: Session = Depends(session_scope),
-                                          kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_list_figures_monitorings(
+    project_id: str,
+    deployment_id: str,
+    monitoring_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles GET requests to /.
 
@@ -45,7 +51,7 @@ async def handle_list_figures_monitorings(project_id: str,
     monitoring_controller.raise_if_monitoring_does_not_exist(monitoring_id)
 
     monitoring_figure_controller = MonitoringFigureController(session)
-    figures_monitoring = monitoring_figure_controller.list_figures(project_id=project_id,
-                                                                   deployment_id=deployment_id,
-                                                                   monitoring_id=monitoring_id)
+    figures_monitoring = monitoring_figure_controller.list_figures(
+        project_id=project_id, deployment_id=deployment_id, monitoring_id=monitoring_id
+    )
     return figures_monitoring

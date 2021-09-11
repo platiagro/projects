@@ -5,8 +5,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
+from projects import database
 from projects.controllers import ParameterController, TaskController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/tasks/{task_id}/parameters",
@@ -14,9 +14,11 @@ router = APIRouter(
 
 
 @router.get("")
-async def handle_list_parameters(task_id: str,
-                                 session: Session = Depends(session_scope),
-                                 kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_list_parameters(
+    task_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles GET requests to /.
 

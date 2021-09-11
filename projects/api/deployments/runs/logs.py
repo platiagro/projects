@@ -5,9 +5,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
+from projects import database
 from projects.controllers import DeploymentController, ProjectController
 from projects.controllers.logs import LogController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/runs/{run_id}/logs",
@@ -15,11 +15,13 @@ router = APIRouter(
 
 
 @router.get("")
-async def handle_list_logs(project_id: str,
-                           deployment_id: str,
-                           run_id: str,
-                           session: Session = Depends(session_scope),
-                           kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_list_logs(
+    project_id: str,
+    deployment_id: str,
+    run_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles GET requests to /.
 
@@ -42,7 +44,7 @@ async def handle_list_logs(project_id: str,
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     log_controller = LogController()
-    logs = log_controller.list_logs(project_id=project_id,
-                                    deployment_id=deployment_id,
-                                    run_id=run_id)
+    logs = log_controller.list_logs(
+        project_id=project_id, deployment_id=deployment_id, run_id=run_id
+    )
     return logs

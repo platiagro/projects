@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.comparison
+from projects import database
 from projects.controllers import ComparisonController, ProjectController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/comparisons",
@@ -15,9 +15,11 @@ router = APIRouter(
 
 
 @router.get("", response_model=projects.schemas.comparison.ComparisonList)
-async def handle_list_comparisons(project_id: str,
-                                  session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_list_comparisons(
+    project_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles GET requests to /.
 
@@ -40,9 +42,11 @@ async def handle_list_comparisons(project_id: str,
 
 
 @router.post("", response_model=projects.schemas.comparison.Comparison)
-async def handle_post_comparisons(project_id: str,
-                                  session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_post_comparisons(
+    project_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles POST requests to /.
 
@@ -65,11 +69,13 @@ async def handle_post_comparisons(project_id: str,
 
 
 @router.patch("/{comparison_id}", response_model=projects.schemas.comparison.Comparison)
-async def handle_patch_comparisons(project_id: str,
-                                   comparison_id: str,
-                                   comparison: projects.schemas.comparison.ComparisonUpdate,
-                                   session: Session = Depends(session_scope),
-                                   kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_patch_comparisons(
+    project_id: str,
+    comparison_id: str,
+    comparison: projects.schemas.comparison.ComparisonUpdate,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles PATCH requests to /<comparison_id>.
 
@@ -98,10 +104,12 @@ async def handle_patch_comparisons(project_id: str,
 
 
 @router.delete("/{comparison_id}")
-async def handle_delete_comparisons(project_id: str,
-                                    comparison_id: str,
-                                    session: Session = Depends(session_scope),
-                                    kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_delete_comparisons(
+    project_id: str,
+    comparison_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles DELETE requests to /<comparison_id>.
 
