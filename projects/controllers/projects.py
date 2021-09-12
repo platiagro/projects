@@ -91,7 +91,10 @@ class ProjectController:
                 .collate("utf8mb4_bin")
             )
 
-        total = query_total.scalar()
+        # BUG
+        # query_total.limit(page_size) didn't work. I'm not sure why...
+        # This solution uses an unoptimized query, and should be improved.
+        total = min(page_size, query_total.scalar())
 
         # Default sort is name in ascending order
         if not order_by:
@@ -291,12 +294,6 @@ class ProjectController:
         total_elements = len(project_ids)
         if total_elements < 1:
             raise BadRequest("inform at least one project")
-
-        experiments = (
-            self.session.query(models.Experiment)
-            .filter(models.Experiment.project_id.in_(project_ids))
-            .all()
-        )
 
         projects = (
             self.session.query(models.Project)
