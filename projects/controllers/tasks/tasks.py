@@ -16,18 +16,42 @@ from sqlalchemy import asc, desc, func
 from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
-from projects.kubernetes.notebook import (copy_file_to_pod,
-                                          get_files_from_task,
-                                          handle_task_creation,
-                                          remove_persistent_volume_claim,
-                                          update_persistent_volume_claim,
-                                          update_task_config_map)
+from projects.kubernetes.notebook import (
+    copy_file_to_pod,
+    get_files_from_task,
+    handle_task_creation,
+    remove_persistent_volume_claim,
+    update_persistent_volume_claim,
+    update_task_config_map,
+)
 
 PREFIX = "tasks"
-VALID_CATEGORIES = ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
-                    "PREDICTOR", "COMPUTER_VISION", "NLP", "MONITORING"]
-DEPLOYMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Deployment.ipynb"))
-EXPERIMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Experiment.ipynb"))
+
+CATEGORY_DEFAULT = "DEFAULT"
+CATEGORY_DATASETS = "DATASETS"
+CATEGORY_DESCRIPTIVE_STATISTICS = "DESCRIPTIVE_STATISTICS"
+CATEGORY_FEATURE_ENGINEERING = "FEATURE_ENGINEERING"
+CATEGORY_PREDICTOR = "PREDICTOR"
+CATEGORY_COMPUTER_VISION = "COMPUTER_VISION"
+CATEGORY_NLP = "NLP"
+CATEGORY_MONITORING = "MONITORING"
+
+VALID_CATEGORIES = [
+    CATEGORY_DEFAULT,
+    CATEGORY_DATASETS,
+    CATEGORY_DESCRIPTIVE_STATISTICS,
+    CATEGORY_FEATURE_ENGINEERING,
+    CATEGORY_PREDICTOR,
+    CATEGORY_COMPUTER_VISION,
+    CATEGORY_NLP,
+    CATEGORY_MONITORING,
+]
+DEPLOYMENT_NOTEBOOK = json.loads(
+    pkgutil.get_data("projects", "config/Deployment.ipynb")
+)
+EXPERIMENT_NOTEBOOK = json.loads(
+    pkgutil.get_data("projects", "config/Experiment.ipynb")
+)
 
 TASK_DEFAULT_EXPERIMENT_IMAGE = os.getenv(
     "TASK_DEFAULT_EXPERIMENT_IMAGE",
@@ -37,10 +61,12 @@ TASK_DEFAULT_CPU_LIMIT = os.getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
 TASK_DEFAULT_CPU_REQUEST = os.getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
 TASK_DEFAULT_MEMORY_LIMIT = os.getenv("TASK_DEFAULT_MEMORY_LIMIT", "10Gi")
 TASK_DEFAULT_MEMORY_REQUEST = os.getenv("TASK_DEFAULT_MEMORY_REQUEST", "2Gi")
-TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(os.getenv(
-    "TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS",
-    "60",
-))
+TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(
+    os.getenv(
+        "TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS",
+        "60",
+    )
+)
 
 EMAIL_MESSAGE_TEMPLATE = pkgutil.get_data("projects", "config/email-template.html")
 
@@ -64,18 +90,21 @@ class TaskController:
         ------
         NotFound
         """
-        exists = self.session.query(models.Task.uuid) \
-            .filter_by(uuid=task_id) \
-            .scalar() is not None
+        exists = (
+            self.session.query(models.Task.uuid).filter_by(uuid=task_id).scalar()
+            is not None
+        )
 
         if not exists:
             raise NOT_FOUND
 
-    def list_tasks(self,
-                   page: Optional[int] = None,
-                   page_size: Optional[int] = None,
-                   order_by: str = Optional[str],
-                   **filters):
+    def list_tasks(
+        self,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
+        order_by: str = Optional[str],
+        **filters,
+    ):
         """
         Lists tasks. Supports pagination, and sorting.
 
@@ -103,7 +132,9 @@ class TaskController:
 
         for column, value in filters.items():
             query = query.filter(getattr(models.Task, column).ilike(f"%{value}%"))
-            query_total = query_total.filter(getattr(models.Task, column).ilike(f"%{value}%"))
+            query_total = query_total.filter(
+                getattr(models.Task, column).ilike(f"%{value}%")
+            )
 
         total = query_total.scalar()
 
@@ -113,7 +144,7 @@ class TaskController:
 
         # Sorts records
         try:
-            (column, sort) = order_by.replace('+', ' ').strip().split()
+            (column, sort) = order_by.replace("+", " ").strip().split()
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Task.__table__.columns.keys()
         except (AssertionError, ValueError):
@@ -133,11 +164,13 @@ class TaskController:
 
     def generate_name_task(self, name, attempt=1):
         name_task = f"{name} - {attempt}"
-        check_comp_name = self.session.query(models.Task).filter_by(name=name_task).first()
+        check_comp_name = (
+            self.session.query(models.Task).filter_by(name=name_task).first()
+        )
         if check_comp_name:
             return self.generate_name_task(name, attempt + 1)
         return name_task
-      
+
     def task_category_is_not_none(self, task_cat):
         if task_cat.category is not None and task_cat.category not in VALID_CATEGORIES:
             valid_str = ",".join(VALID_CATEGORIES)
@@ -166,14 +199,19 @@ class TaskController:
             raise BadRequest("Either provide notebooks or a task to copy from")
 
         if not task.tags:
-            task.tags = ["DEFAULT"]
-        
+            task.tags = [CATEGORY_DEFAULT]
+
         self.task_category_is_not_none(task)
+
+        if not task.category:
+            task.category = CATEGORY_DEFAULT
 
         # check if image is a valid docker image
         self.raise_if_invalid_docker_image(task.image)
 
-        check_comp_name = self.session.query(models.Task).filter_by(name=task.name).first()
+        check_comp_name = (
+            self.session.query(models.Task).filter_by(name=task.name).first()
+        )
         if check_comp_name:
             raise BadRequest("a task with that name already exists")
 
@@ -288,9 +326,7 @@ class TaskController:
         """
         self.raise_if_task_does_not_exist(task_id)
 
-        stored_task = self.session.query(models.Task) \
-            .filter_by(name=task.name) \
-            .first()
+        stored_task = self.session.query(models.Task).filter_by(name=task.name).first()
         if stored_task and stored_task.uuid != task_id:
             raise BadRequest("a task with that name already exists")
 
@@ -310,12 +346,13 @@ class TaskController:
             self.background_tasks.add_task(
                 update_persistent_volume_claim,
                 name=f"vol-task-{task_id}",
-                mount_path=f"/home/jovyan/tasks/{task.name}"
+                mount_path=f"/home/jovyan/tasks/{task.name}",
             )
 
         # update ConfigMap for monitoring tasks
-        if ((task.parameters and "MONITORING" in stored_task.tags) or
-                ("MONITORING" in task.tags if task.tags else False)):
+        if (task.parameters and "MONITORING" in stored_task.tags) or (
+            "MONITORING" in task.tags if task.tags else False
+        ):
             self.background_tasks.add_task(
                 update_task_config_map,
                 task_name=stored_task.name,
@@ -344,7 +381,9 @@ class TaskController:
         dataset_task.uuid: str
         """
 
-        dataset_task = self.session.query(models.Task).filter_by(category="DATASETS").first()
+        dataset_task = (
+            self.session.query(models.Task).filter_by(category="DATASETS").first()
+        )
         if dataset_task is None:
             dataset_task_schema = schemas.TaskCreate(
                 name="Upload de arquivo",
@@ -473,7 +512,7 @@ class TaskController:
         """
 
         # byte to string
-        html_string = str(html_file_content, 'utf-8')
+        html_string = str(html_file_content, "utf-8")
 
         # body message html string to Jinja2 template
         jinja2_like_template = Template(html_string)
@@ -504,22 +543,24 @@ class TaskController:
         file_as_b64 = get_files_from_task(task.name)
 
         # decoding as byte
-        base64_bytes = file_as_b64.encode('ascii')
+        base64_bytes = file_as_b64.encode("ascii")
         file_as_bytes = base64.b64decode(base64_bytes)
 
         # using bytes to build the zipfile
-        with tempfile.NamedTemporaryFile("wb", delete=False,
-                                         dir=os.path.dirname(__file__),
-                                         suffix='.zip') as f:
+        with tempfile.NamedTemporaryFile(
+            "wb", delete=False, dir=os.path.dirname(__file__), suffix=".zip"
+        ) as f:
             f.write(file_as_bytes)
 
         message = MessageSchema(
             subject=f"Arquivos da tarefa '{task.name}'",
-            recipients=email_schema.dict().get("emails"),  # List of recipients, as many as you can pass
+            recipients=email_schema.dict().get(
+                "emails"
+            ),  # List of recipients, as many as you can pass
             body=self.make_email_message(EMAIL_MESSAGE_TEMPLATE, task.name),
             attachments=[f.name],
-            subtype="html"
-            )
+            subtype="html",
+        )
         fm = FastMail(email_schema.conf)
         self.background_tasks.add_task(fm.send_message, message)
 
