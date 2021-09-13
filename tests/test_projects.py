@@ -20,7 +20,7 @@ class TestProjects(unittest.TestCase):
         """
         Sets up the test before running it.
         """
-        util.create_mock_projects()
+        util.create_mocks()
 
     def tearDown(self):
         """
@@ -159,15 +159,15 @@ class TestProjects(unittest.TestCase):
         result = rv.json()
 
         expected = {
-            "createdAt": mock.ANY,
-            "deployments": [],
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "deployments": [util.MOCK_DEPLOYMENT_1, util.MOCK_DEPLOYMENT_2],
             "description": None,
-            "experiments": [],
+            "experiments": [util.MOCK_EXPERIMENT_1, util.MOCK_EXPERIMENT_2],
             "hasDeployment": False,
-            "hasExperiment": False,
-            "hasPreDeployment": False,
+            "hasExperiment": True,
+            "hasPreDeployment": True,
             "name": util.MOCK_PROJECT_NAME_1,
-            "updatedAt": mock.ANY,
+            "updatedAt": util.MOCK_UPDATED_AT_1.isoformat(),
             "uuid": project_id,
         }
         self.assertEqual(result, expected)
@@ -210,13 +210,13 @@ class TestProjects(unittest.TestCase):
         result = rv.json()
 
         expected = {
-            "createdAt": util.MOCK_CREATED_AT_1,
-            "deployments": [],
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "deployments": [util.MOCK_DEPLOYMENT_1, util.MOCK_DEPLOYMENT_2],
             "description": None,
-            "experiments": [],
+            "experiments": [util.MOCK_EXPERIMENT_1, util.MOCK_EXPERIMENT_2],
             "hasDeployment": False,
-            "hasExperiment": False,
-            "hasPreDeployment": False,
+            "hasExperiment": True,
+            "hasPreDeployment": True,
             "name": project_name,
             "updatedAt": mock.ANY,
             "uuid": project_id,

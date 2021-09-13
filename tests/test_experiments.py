@@ -20,7 +20,7 @@ class TestExperiments(unittest.TestCase):
         """
         Sets up the test before running it.
         """
-        util.create_mock_projects()
+        util.create_mocks()
 
     def tearDown(self):
         """
@@ -76,7 +76,7 @@ class TestExperiments(unittest.TestCase):
         """
         Should return http status 422 when invalid request body is given.
         """
-        project_id = "unk"
+        project_id = util.MOCK_UUID_1
 
         rv = TEST_CLIENT.post(f"/projects/{project_id}/experiments", json={})
         self.assertEqual(rv.status_code, 422)
@@ -147,7 +147,28 @@ class TestExperiments(unittest.TestCase):
             "projectId": project_id,
             "position": 2,
             "isActive": True,
-            "operators": [],
+            "operators": [
+                {
+                    "uuid": mock.ANY,
+                    "name": util.MOCK_TASK_NAME_1,
+                    "taskId": util.MOCK_UUID_1,
+                    "task": {
+                        "name": util.MOCK_TASK_NAME_1,
+                        "tags": [],
+                        "parameters": [],
+                    },
+                    "dependencies": [],
+                    "parameters": {},
+                    "experimentId": mock.ANY,
+                    "deploymentId": None,
+                    "positionX": 0,
+                    "positionY": 0,
+                    "createdAt": mock.ANY,
+                    "updatedAt": mock.ANY,
+                    "status": "Unset",
+                    "statusMessage": None,
+                }
+            ],
             "createdAt": mock.ANY,
             "updatedAt": mock.ANY,
             "uuid": mock.ANY,
@@ -216,7 +237,7 @@ class TestExperiments(unittest.TestCase):
             "projectId": project_id,
             "position": 0,
             "isActive": True,
-            "operators": [],
+            "operators": [util.MOCK_OPERATOR_1],
             "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
             "updatedAt": util.MOCK_UPDATED_AT_1.isoformat(),
             "uuid": experiment_id,
