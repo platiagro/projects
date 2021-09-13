@@ -13,11 +13,13 @@ MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3 = (
     "project-2",
     "project-3",
 )
+MOCK_EXPERIMENT_NAME_1, MOCK_EXPERIMENT_NAME_2 = "experiment-1", "experiment-2"
 MOCK_TASK_NAME_1, MOCK_TASK_NAME_2, MOCK_TASK_NAME_3 = (
     "task-1",
     "task-2",
     "task-3",
 )
+MOCK_TEMPLATE_NAME_1 = "template-1"
 MOCK_CREATED_AT_1, MOCK_CREATED_AT_2, MOCK_CREATED_AT_3 = (
     datetime.utcnow(),
     datetime.utcnow(),
@@ -29,13 +31,35 @@ MOCK_UPDATED_AT_1, MOCK_UPDATED_AT_2, MOCK_UPDATED_AT_3 = (
     datetime.utcnow(),
 )
 
+MOCK_EXPERIMENT_1 = {
+    "createdAt": MOCK_CREATED_AT_1.isoformat(),
+    "isActive": True,
+    "name": MOCK_EXPERIMENT_NAME_1,
+    "position": 0,
+    "projectId": MOCK_UUID_1,
+    "operators": [],
+    "updatedAt": MOCK_UPDATED_AT_1.isoformat(),
+    "uuid": MOCK_UUID_1,
+}
+
+MOCK_EXPERIMENT_2 = {
+    "createdAt": MOCK_CREATED_AT_2.isoformat(),
+    "isActive": True,
+    "name": MOCK_EXPERIMENT_NAME_2,
+    "position": 0,
+    "projectId": MOCK_UUID_1,
+    "operators": [],
+    "updatedAt": MOCK_UPDATED_AT_2.isoformat(),
+    "uuid": MOCK_UUID_2,
+}
+
 MOCK_PROJECT_1 = {
     "createdAt": MOCK_CREATED_AT_1.isoformat(),
     "deployments": [],
     "description": None,
-    "experiments": [],
+    "experiments": [MOCK_EXPERIMENT_1, MOCK_EXPERIMENT_2],
     "hasDeployment": False,
-    "hasExperiment": False,
+    "hasExperiment": True,
     "hasPreDeployment": False,
     "name": MOCK_PROJECT_NAME_1,
     "updatedAt": MOCK_UPDATED_AT_1.isoformat(),
@@ -80,6 +104,14 @@ MOCK_PROJECT_LIST = {
 MOCK_PROJECT_LIST_SORTED_BY_NAME_DESC = {
     "projects": MOCK_PROJECT_LIST["projects"][::-1],
     "total": 3,
+}
+
+MOCK_EXPERIMENT_LIST = {
+    "experiments": [
+        MOCK_EXPERIMENT_1,
+        MOCK_EXPERIMENT_2,
+    ],
+    "total": 2,
 }
 
 MOCK_TASK_1 = {
@@ -165,6 +197,24 @@ MOCK_TASK_LIST_SORTED_BY_NAME_DESC = {
     "total": 3,
 }
 
+MOCK_TEMPLATE_1 = {
+    "uuid": MOCK_UUID_1,
+    "name": MOCK_TEMPLATE_NAME_1,
+    "tasks": [
+        {
+            "uuid": MOCK_UUID_1,
+            "taskId": MOCK_UUID_1,
+            "dependencies": [],
+            "positionX": 0,
+            "positionY": 0,
+        }
+    ],
+    "experimentId": MOCK_UUID_1,
+    "deploymentId": None,
+    "createdAt": MOCK_CREATED_AT_1,
+    "updatedAt": MOCK_UPDATED_AT_1,
+}
+
 MOCK_NOTEBOOK = {
     "cells": [
         {
@@ -247,6 +297,40 @@ def create_mock_projects():
             updated_at=MOCK_UPDATED_AT_3,
             tenant=DB_TENANT,
         ),
+    ]
+    session.bulk_save_objects(objects)
+    session.flush()
+    objects = [
+        models.Experiment(
+            uuid=MOCK_UUID_1,
+            name=MOCK_EXPERIMENT_NAME_1,
+            project_id=MOCK_UUID_1,
+            position=0,
+            created_at=MOCK_CREATED_AT_1,
+            updated_at=MOCK_UPDATED_AT_1,
+        ),
+        models.Experiment(
+            uuid=MOCK_UUID_2,
+            name=MOCK_EXPERIMENT_NAME_2,
+            project_id=MOCK_UUID_1,
+            position=0,
+            created_at=MOCK_CREATED_AT_2,
+            updated_at=MOCK_UPDATED_AT_2,
+        ),
+    ]
+    session.bulk_save_objects(objects)
+    session.flush()
+    objects = [
+        models.Template(
+            uuid=MOCK_UUID_1,
+            name=MOCK_TEMPLATE_NAME_1,
+            tasks=[],
+            experiment_id=MOCK_UUID_1,
+            deployment_id=None,
+            created_at=MOCK_CREATED_AT_2,
+            updated_at=MOCK_UPDATED_AT_2,
+            tenant=DB_TENANT,
+        )
     ]
     session.bulk_save_objects(objects)
     session.commit()
