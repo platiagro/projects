@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from projects.models import experiment
+from unittest import mock
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from projects.database import DB_TENANT, Base
 from projects import models
+
+MOCK_RUNS = mock.MagicMock()
+MOCK_LIST_RUNS = mock.MagicMock(return_value=mock.MagicMock(runs=[]))
+MOCK_SET_USER_NAMESPACE = mock.MagicMock()
+MOCK_KFP_CLIENT = mock.MagicMock(
+    runs=MOCK_RUNS,
+    list_runs=MOCK_LIST_RUNS,
+    set_user_namespace=MOCK_SET_USER_NAMESPACE,
+)
 
 MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3 = "uuid-1", "uuid-2", "uuid-3"
 MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3 = (
@@ -187,6 +196,18 @@ MOCK_PROJECT_3 = {
     "uuid": MOCK_UUID_3,
 }
 
+MOCK_COMPARISON_1 = {
+    "activeTab": "1",
+    "createdAt": MOCK_CREATED_AT_1.isoformat(),
+    "experimentId": MOCK_UUID_1,
+    "layout": {"x": 0, "y": 0, "w": 0, "h": 0},
+    "operatorId": MOCK_UUID_1,
+    "projectId": MOCK_UUID_1,
+    "runId": MOCK_UUID_1,
+    "updatedAt": MOCK_UPDATED_AT_1.isoformat(),
+    "uuid": MOCK_UUID_1,
+}
+
 MOCK_PROJECT_LIST = {
     "projects": [
         MOCK_PROJECT_1,
@@ -215,6 +236,13 @@ MOCK_DEPLOYMENT_LIST = {
         MOCK_DEPLOYMENT_2,
     ],
     "total": 2,
+}
+
+MOCK_COMPARISON_LIST = {
+    "comparisons": [
+        MOCK_COMPARISON_1,
+    ],
+    "total": 1,
 }
 
 MOCK_TASK_1 = {
@@ -544,6 +572,21 @@ def create_mocks():
         ),
     ]
     session.bulk_save_objects(objects)
+    session.flush()
+    objects = [
+        models.Comparison(
+            uuid=MOCK_UUID_1,
+            project_id=MOCK_UUID_1,
+            experiment_id=MOCK_UUID_1,
+            operator_id=MOCK_UUID_1,
+            active_tab="1",
+            run_id=MOCK_UUID_1,
+            layout={"x": 0, "y": 0, "w": 0, "h": 0},
+            created_at=MOCK_CREATED_AT_1,
+            updated_at=MOCK_UPDATED_AT_1,
+        ),
+    ]
+    session.bulk_save_objects(objects)
     session.commit()
     session.close()
 
@@ -553,6 +596,7 @@ def delete_mocks():
     Deletes mock records from test database.
     """
     session = TestingSessionLocal()
+    session.query(models.Comparison).delete()
     session.query(models.Operator).delete()
     session.query(models.Deployment).delete()
     session.query(models.Experiment).delete()
