@@ -1841,6 +1841,8 @@ components:
         uuid:
           type: string
           format: uuid
+        activeTab:
+          type: string
         projectId:
           type: string
           format: uuid
