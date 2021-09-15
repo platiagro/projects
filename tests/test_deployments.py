@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from projects.api.main import app
 from projects.database import session_scope
+from projects.kfp import KF_PIPELINES_NAMESPACE
 
 import tests.util as util
 
@@ -103,34 +104,122 @@ class TestDeployments(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    def test_create_deployment_success(self):
+    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_create_deployment_with_experiments_success(
+        self,
+        mock_kfp_client,
+        mock_core_v1_api,
+        mock_custom_objects_api,
+        mock_load_kube_config,
+    ):
         """
         Should create and return an deployment successfully.
         """
         project_id = util.MOCK_UUID_1
-        deployment_name = "deployment-3"
         experiments = [util.MOCK_UUID_1]
 
         rv = TEST_CLIENT.post(
             f"/projects/{project_id}/deployments",
-            json={"name": deployment_name, "experiments": experiments},
+            json={"experiments": experiments},
         )
         result = rv.json()
 
         expected = {
-            "name": deployment_name,
-            "projectId": project_id,
-            "position": 2,
-            "isActive": True,
-            "operators": [],
-            "createdAt": mock.ANY,
-            "updatedAt": mock.ANY,
-            "uuid": mock.ANY,
+            "deployments": [
+                {
+                    "createdAt": mock.ANY,
+                    "isActive": True,
+                    "deployedAt": None,
+                    "experimentId": util.MOCK_UUID_1,
+                    "name": util.MOCK_EXPERIMENT_NAME_1,
+                    "projectId": project_id,
+                    "position": 2,
+                    "operators": [
+                        {
+                            "createdAt": mock.ANY,
+                            "dependencies": [mock.ANY],
+                            "deploymentId": mock.ANY,
+                            "experimentId": None,
+                            "name": util.MOCK_TASK_NAME_1,
+                            "parameters": {},
+                            "positionX": 0,
+                            "positionY": 0,
+                            "status": "Setted up",
+                            "statusMessage": None,
+                            "task": {"name": "task-1", "parameters": [], "tags": []},
+                            "taskId": util.MOCK_UUID_1,
+                            "updatedAt": mock.ANY,
+                            "uuid": mock.ANY,
+                        },
+                        {
+                            "createdAt": mock.ANY,
+                            "dependencies": [],
+                            "deploymentId": mock.ANY,
+                            "experimentId": None,
+                            "name": "Fonte de dados",
+                            "parameters": {"dataset": None, "type": "L"},
+                            "positionX": -300,
+                            "positionY": 0,
+                            "status": "Unset",
+                            "statusMessage": None,
+                            "task": {
+                                "name": "Upload de arquivo",
+                                "parameters": [],
+                                "tags": ["DATASETS"],
+                            },
+                            "taskId": mock.ANY,
+                            "updatedAt": mock.ANY,
+                            "uuid": mock.ANY,
+                        },
+                    ],
+                    "status": "Pending",
+                    "updatedAt": mock.ANY,
+                    "uuid": mock.ANY,
+                    "url": None,
+                }
+            ],
+            "total": 1,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_deployment_with_copy_from_success(self):
+        mock_load_kube_config.assert_any_call()
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_core_v1_api.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_create_deployment_with_copy_from_success(
+        self,
+        mock_kfp_client,
+        mock_core_v1_api,
+        mock_custom_objects_api,
+        mock_load_kube_config,
+    ):
         """
         Should create and return an deployment successfully.
         """
@@ -145,17 +234,68 @@ class TestDeployments(unittest.TestCase):
         result = rv.json()
 
         expected = {
-            "name": deployment_name,
-            "projectId": project_id,
-            "position": 2,
-            "isActive": True,
-            "operators": [],
-            "createdAt": mock.ANY,
-            "updatedAt": mock.ANY,
-            "uuid": mock.ANY,
+            "deployments": [
+                {
+                    "createdAt": mock.ANY,
+                    "isActive": True,
+                    "deployedAt": None,
+                    "experimentId": util.MOCK_UUID_1,
+                    "name": deployment_name,
+                    "projectId": project_id,
+                    "position": 2,
+                    "operators": [
+                        {
+                            "createdAt": mock.ANY,
+                            "dependencies": [mock.ANY],
+                            "deploymentId": mock.ANY,
+                            "experimentId": None,
+                            "name": util.MOCK_TASK_NAME_1,
+                            "parameters": {},
+                            "positionX": 0,
+                            "positionY": 0,
+                            "status": "Setted up",
+                            "statusMessage": None,
+                            "task": {"name": "task-1", "parameters": [], "tags": []},
+                            "taskId": util.MOCK_UUID_1,
+                            "updatedAt": mock.ANY,
+                            "uuid": mock.ANY,
+                        },
+                        {
+                            "createdAt": mock.ANY,
+                            "dependencies": [],
+                            "deploymentId": mock.ANY,
+                            "experimentId": None,
+                            "name": "Fonte de dados",
+                            "parameters": {"dataset": None, "type": "L"},
+                            "positionX": -300,
+                            "positionY": 0,
+                            "status": "Unset",
+                            "statusMessage": None,
+                            "task": {
+                                "name": "Upload de arquivo",
+                                "parameters": [],
+                                "tags": ["DATASETS"],
+                            },
+                            "taskId": mock.ANY,
+                            "updatedAt": mock.ANY,
+                            "uuid": mock.ANY,
+                        },
+                    ],
+                    "status": "Pending",
+                    "updatedAt": mock.ANY,
+                    "uuid": mock.ANY,
+                    "url": None,
+                }
+            ],
+            "total": 1,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
+
+        mock_load_kube_config.assert_any_call()
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_core_v1_api.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
     def test_create_deployment_source_deployment_error(self):
         """
@@ -328,7 +468,18 @@ class TestDeployments(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-    def test_delete_deployment_success(self):
+    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
+        return_value={"items": []},
+    )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_delete_deployment_success(
+        self, mock_kfp_client, mock_list_namespaced_custom_object, mock_load_kube_config
+    ):
         """
         Should delete deployment successfully.
         """
@@ -341,3 +492,9 @@ class TestDeployments(unittest.TestCase):
         expected = {"message": "Deployment deleted"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
+
+        mock_load_kube_config.assert_any_call()
+        mock_list_namespaced_custom_object.assert_any_call(
+            "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
+        )
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")

@@ -8,13 +8,76 @@ from sqlalchemy.orm import sessionmaker
 from projects.database import DB_TENANT, Base
 from projects import models
 
+MOCK_SET_USER_NAMESPACE = mock.MagicMock()
 MOCK_RUNS = mock.MagicMock()
 MOCK_LIST_RUNS = mock.MagicMock(return_value=mock.MagicMock(runs=[]))
-MOCK_SET_USER_NAMESPACE = mock.MagicMock()
+MOCK_WORKFLOW_MANIFEST = open(
+    "tests/resources/deployment_mock_manifest.json", "r"
+).read()
+MOCK_GET_RUN = mock.MagicMock(
+    return_value=mock.MagicMock(
+        run=mock.MagicMock(id="uuid-1", created_at=datetime.utcnow()),
+        pipeline_runtime=mock.MagicMock(workflow_manifest=MOCK_WORKFLOW_MANIFEST),
+    )
+)
+MOCK_CREATE_RUN_FROM_PIPELINE_FUNC = mock.MagicMock()
+MOCK_RUN_PIPELINE = mock.MagicMock(return_value=mock.MagicMock(id="uuid-1"))
+MOCK_GET_EXPERIMENT = mock.MagicMock(return_value=mock.MagicMock(id="uuid-1"))
+MOCK_CREATE_EXPERIMENT = mock.MagicMock(return_value=mock.MagicMock(id="uuid-1"))
+MOCK_DELETE_EXPERIMENT = mock.MagicMock()
+MOCK_EXPERIMENTS = mock.MagicMock(delete_experiment=MOCK_DELETE_EXPERIMENT)
 MOCK_KFP_CLIENT = mock.MagicMock(
+    set_user_namespace=MOCK_SET_USER_NAMESPACE,
     runs=MOCK_RUNS,
     list_runs=MOCK_LIST_RUNS,
-    set_user_namespace=MOCK_SET_USER_NAMESPACE,
+    get_run=MOCK_GET_RUN,
+    create_run_from_pipeline_func=MOCK_CREATE_RUN_FROM_PIPELINE_FUNC,
+    run_pipeline=MOCK_RUN_PIPELINE,
+    get_experiment=MOCK_GET_EXPERIMENT,
+    create_experiment=MOCK_CREATE_EXPERIMENT,
+    experiments=MOCK_EXPERIMENTS,
+)
+
+MOCK_CORE_V1_API = mock.MagicMock(
+    read_namespaced_persistent_volume_claim=mock.MagicMock(
+        side_effect=lambda name, namespace: mock.MagicMock(
+            api_version="v1",
+            kind="PersistentVolumeClaim",
+            metadata=mock.MagicMock(
+                name=f"vol-{name}",
+                namespace=namespace,
+            ),
+            status=mock.MagicMock(phase="Bound"),
+        )
+    ),
+    read_namespaced_pod=mock.MagicMock(
+        side_effect=lambda name, namespace, **kwargs: mock.MagicMock(
+            metadata=mock.MagicMock(name=name, namespace=namespace),
+            spec=mock.MagicMock(
+                volumes=mock.MagicMock(name="vol-task-uuid-1"),
+            ),
+            status=mock.MagicMock(
+                phase="Running", container_statuses=[mock.MagicMock()]
+            ),
+        )
+    ),
+)
+
+MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
+    list_namespaced_custom_object=mock.MagicMock(),
+    get_namespaced_custom_object=mock.MagicMock(
+        return_value={
+            "spec": {
+                "template": {
+                    "spec": {
+                        "containers": [{"volumeMounts": [{"mountPath": ""}]}],
+                        "volumes": [{"name": ""}],
+                    }
+                }
+            }
+        }
+    ),
+    patch_namespaced_custom_object=mock.MagicMock(),
 )
 
 MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3 = "uuid-1", "uuid-2", "uuid-3"
