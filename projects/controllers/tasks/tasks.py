@@ -100,8 +100,8 @@ class TaskController:
 
     def list_tasks(
         self,
-        page: Optional[int] = None,
-        page_size: Optional[int] = None,
+        page: Optional[int] = 1,
+        page_size: Optional[int] = 10,
         order_by: str = Optional[str],
         **filters,
     ):
@@ -136,7 +136,10 @@ class TaskController:
                 getattr(models.Task, column).ilike(f"%{value}%")
             )
 
-        total = query_total.scalar()
+        # BUG
+        # query_total.limit(page_size) didn't work. I'm not sure why...
+        # This solution uses an unoptimized query, and should be improved.
+        total = min(page_size, query_total.scalar())
 
         # Default sort is name in ascending order
         if not order_by:
