@@ -334,16 +334,42 @@ MOCK_TEMPLATE_1 = {
     "tasks": [
         {
             "uuid": MOCK_UUID_1,
-            "taskId": MOCK_UUID_1,
+            "task_id": MOCK_UUID_1,
             "dependencies": [],
-            "positionX": 0,
-            "positionY": 0,
+            "position_x": 0.0,
+            "position_y": 0.0,
         }
     ],
     "experimentId": MOCK_UUID_1,
     "deploymentId": None,
-    "createdAt": MOCK_CREATED_AT_1,
-    "updatedAt": MOCK_UPDATED_AT_1,
+    "createdAt": MOCK_CREATED_AT_1.isoformat(),
+    "updatedAt": MOCK_UPDATED_AT_1.isoformat(),
+}
+
+MOCK_TEMPLATE_2 = {
+    "uuid": MOCK_UUID_2,
+    "name": MOCK_TEMPLATE_NAME_2,
+    "tasks": [
+        {
+            "uuid": MOCK_UUID_2,
+            "task_id": MOCK_UUID_1,
+            "dependencies": [],
+            "position_x": 0.0,
+            "position_y": 0.0,
+        }
+    ],
+    "experimentId": None,
+    "deploymentId": MOCK_UUID_1,
+    "createdAt": MOCK_CREATED_AT_2.isoformat(),
+    "updatedAt": MOCK_UPDATED_AT_2.isoformat(),
+}
+
+MOCK_TEMPLATE_LIST = {
+    "templates": [
+        MOCK_TEMPLATE_1,
+        MOCK_TEMPLATE_2,
+    ],
+    "total": 2,
 }
 
 MOCK_NOTEBOOK = {
@@ -553,7 +579,15 @@ def create_mocks():
         models.Template(
             uuid=MOCK_UUID_1,
             name=MOCK_TEMPLATE_NAME_1,
-            tasks=[],
+            tasks=[
+                {
+                    "uuid": MOCK_UUID_1,
+                    "task_id": MOCK_UUID_1,
+                    "dependencies": [],
+                    "position_x": 0.0,
+                    "position_y": 0.0,
+                }
+            ],
             experiment_id=MOCK_UUID_1,
             deployment_id=None,
             created_at=MOCK_CREATED_AT_1,
@@ -563,7 +597,15 @@ def create_mocks():
         models.Template(
             uuid=MOCK_UUID_2,
             name=MOCK_TEMPLATE_NAME_2,
-            tasks=[],
+            tasks=[
+                {
+                    "uuid": MOCK_UUID_2,
+                    "task_id": MOCK_UUID_1,
+                    "dependencies": [],
+                    "position_x": 0.0,
+                    "position_y": 0.0,
+                }
+            ],
             experiment_id=None,
             deployment_id=MOCK_UUID_1,
             created_at=MOCK_CREATED_AT_2,

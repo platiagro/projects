@@ -1,333 +1,295 @@
 # -*- coding: utf-8 -*-
-from json import dumps
-from unittest import TestCase
+import unittest
+import unittest.mock as mock
 
 from fastapi.testclient import TestClient
 
 from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
+from projects.database import session_scope
 
+import tests.util as util
+
+app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
-EXPERIMENT_ID = str(uuid_alpha())
-DEPLOYMENT_ID = str(uuid_alpha())
-OPERATOR_ID = str(uuid_alpha())
-OPERATOR_ID_2 = str(uuid_alpha())
-PROJECT_ID = str(uuid_alpha())
-TASK_ID = str(uuid_alpha())
-TASK_ID_2 = str(uuid_alpha())
-TEMPLATE_ID = str(uuid_alpha())
-NAME = "foo"
-PARAMETERS = {"coef": 0.1}
-OPERATORS = [{"taskId": TASK_ID}]
-DESCRIPTION = "long foo"
-IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
-TAGS = ["PREDICTOR"]
-TAGS_JSON = dumps(TAGS)
-CATEGORY = "DEFAULT"
-DATA_IN = ""
-DATA_OUT = ""
-DOCS = ""
-TASKS_JSON = dumps([TASK_ID])
-PARAMETERS_JSON = dumps(PARAMETERS)
-POSITION_X = 0.3
-POSITION_Y = 0.5
-STATUS = "Pending"
-URL = None
-TASKS = [
-    {
-        "dependencies": [],
-        "position_x": 0.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID,
-        "uuid": OPERATOR_ID,
-    },
-    {
-        "dependencies": [OPERATOR_ID],
-        "position_x": 200.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID_2,
-        "uuid": OPERATOR_ID_2,
-    },
-]
-TASKS_JSON = dumps([
-    {
-        "uuid": OPERATOR_ID,
-        "position_x": 0.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID,
-        "dependencies": []
-    },
-    {
-        "uuid": OPERATOR_ID_2,
-        "position_x": 200.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID_2,
-        "dependencies": [OPERATOR_ID]
-    },
-])
-CREATED_AT = "2000-01-01 00:00:00"
-CREATED_AT_ISO = "2000-01-01T00:00:00"
-UPDATED_AT = "2000-01-01 00:00:00"
-UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
-DEPENDENCIES_EMPTY = []
-DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
-TENANT = "anonymous"
+class TestTemplates(unittest.TestCase):
+    maxDiff = None
 
-
-class TestTemplates(TestCase):
     def setUp(self):
-        self.maxDiff = None
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID, "name", "desc", "image", None, None, CATEGORY, dumps(["TAGS"]), DATA_IN, DATA_OUT, DOCS, dumps([]),
-                            "experiment_path", "deploy_path", "100m", "100m", "1Gi", "1Gi", 30, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID_2, "name", "desc", "image", None, None, CATEGORY, dumps(["TAGS"]), DATA_IN, DATA_OUT, DOCS, dumps([]),
-                            "experiment_path", "deploy_path", "100m", "100m", "1Gi", "1Gi", 30, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) VALUES "
-            f"(%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, 0, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, 0, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
-                            POSITION_Y, DEPENDENCIES_EMPTY_JSON, '2000-01-02 00:00:00', UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, deployment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, DEPLOYMENT_ID, TASK_ID, PARAMETERS_JSON,
-                            POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO templates (uuid, name, tasks, experiment_id, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, EXPERIMENT_ID, CREATED_AT, UPDATED_AT, TENANT,))
-        conn.close()
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
     def tearDown(self):
-        conn = engine.connect()
-        text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
-        conn.execute(text)
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-        conn = engine.connect()
-        text = f"DELETE FROM templates WHERE name IN ('foo bar', 'foo bar foo', 'foo bar foo bar')"
-        conn.execute(text)
-
-        text = f"DELETE FROM operators WHERE deployment_id = '{DEPLOYMENT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID_2}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
-        conn.execute(text)
-        conn.close()
-
-    def test_list_templates(self):
+    def test_list_templates_no_args(self):
+        """
+        Should return an empty list.
+        """
         rv = TEST_CLIENT.get("/templates")
         result = rv.json()
-        self.assertIsInstance(result["templates"], list)
-        self.assertIsInstance(result["total"], int)
+
+        expected = util.MOCK_TEMPLATE_LIST
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_template(self):
+    def test_create_template_invalid_request_body(self):
+        """
+        Should return http status 422 when invalid request body is given.
+        """
         rv = TEST_CLIENT.post("/templates", json={})
-        result = rv.json()
         self.assertEqual(rv.status_code, 422)
 
-        rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo",
-        })
+    def test_create_template_experiment_or_deployment_needed_to_create(self):
+        """
+        Should return http status 400 and a message 'experimentId or deploymentId needed to create template'.
+        """
+        rv = TEST_CLIENT.post(
+            "/templates",
+            json={
+                "name": "foo",
+            },
+        )
         result = rv.json()
-        expected = {"message": "experimentId or deploymentId needed to create template."}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo",
-            "experimentId": "UNK",
-        })
-        result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo bar",
-            "experimentId": EXPERIMENT_ID,
-        })
-        result = rv.json()
         expected = {
-            "name": "foo bar",
+            "message": "experimentId or deploymentId needed to create template."
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_template_given_name_already_exists(self):
+        """
+        Should return http status 400 and a message 'a template with given name already exists'.
+        """
+        template_name = util.MOCK_TEMPLATE_NAME_1
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            "/templates",
+            json={
+                "name": template_name,
+                "experimentId": experiment_id,
+            },
+        )
+        result = rv.json()
+
+        expected = {"message": "a template with that name already exists"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_template_with_experiment_id_success(self):
+        """
+        Should create and return a template successfully.
+        """
+        template_name = "template-3"
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            "/templates",
+            json={
+                "name": template_name,
+                "experimentId": experiment_id,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "uuid": mock.ANY,
+            "name": template_name,
             "tasks": [
                 {
+                    "uuid": util.MOCK_UUID_1,
+                    "task_id": util.MOCK_UUID_1,
                     "dependencies": [],
-                    "position_x": POSITION_X,
-                    "position_y": POSITION_Y,
-                    "task_id": TASK_ID,
-                    "uuid": OPERATOR_ID
+                    "position_x": 0.0,
+                    "position_y": 0.0,
                 }
             ],
-            "experimentId": EXPERIMENT_ID,
+            "experimentId": experiment_id,
             "deploymentId": None,
+            "createdAt": mock.ANY,
+            "updatedAt": mock.ANY,
         }
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo bar foo",
-            "deploymentId": "UNK",
-        })
-        result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
+    def test_create_template_with_deployment_id_success(self):
+        """
+        Should create and return a template successfully.
+        """
+        template_name = "template-3"
+        deployment_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.post("/templates", json={
-            "name": "foo bar foo bar",
-            "deploymentId": DEPLOYMENT_ID,
-        })
+        rv = TEST_CLIENT.post(
+            "/templates",
+            json={
+                "name": template_name,
+                "deploymentId": deployment_id,
+            },
+        )
         result = rv.json()
+
         expected = {
-            "name": "foo bar foo bar",
+            "uuid": mock.ANY,
+            "name": template_name,
             "tasks": [
                 {
+                    "uuid": util.MOCK_UUID_2,
+                    "task_id": util.MOCK_UUID_1,
                     "dependencies": [],
-                    "position_x": POSITION_X,
-                    "position_y": POSITION_Y,
-                    "task_id": TASK_ID,
-                    "uuid": OPERATOR_ID_2
+                    "position_x": 0.0,
+                    "position_y": 0.0,
                 }
             ],
             "experimentId": None,
-            "deploymentId": DEPLOYMENT_ID,
+            "deploymentId": deployment_id,
+            "createdAt": mock.ANY,
+            "updatedAt": mock.ANY,
         }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
 
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+    def test_get_template_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified template does not exist'.
+        """
+        template_id = "foo"
 
-    def test_get_template(self):
-        rv = TEST_CLIENT.get("/templates/foo")
+        rv = TEST_CLIENT.get(f"/templates/{template_id}")
         result = rv.json()
+
         expected = {"message": "The specified template does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/templates/{TEMPLATE_ID}")
+    def test_get_template_success(self):
+        """
+        Should return a template successfully.
+        """
+        template_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(f"/templates/{template_id}")
         result = rv.json()
+
+        expected = util.MOCK_TEMPLATE_1
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_update_template_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified template does not exist'.
+        """
+        template_id = "foo"
+
+        rv = TEST_CLIENT.patch(f"/templates/{template_id}", json={})
+        result = rv.json()
+
+        expected = {"message": "The specified template does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+    def test_update_template_given_name_already_exists(self):
+        """
+        Should return http status 400 and a message 'a template with given name already exists'.
+        """
+        template_id = util.MOCK_UUID_1
+        template_name = util.MOCK_TEMPLATE_NAME_2
+        rv = TEST_CLIENT.patch(
+            f"/templates/{template_id}", json={"name": template_name}
+        )
+        result = rv.json()
+
+        expected = {"message": "a template with that name already exists"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_template_success(self):
+        """
+        Should update and return a template successfully.
+        """
+        template_id = util.MOCK_UUID_1
+        template_name = "template-3"
+
+        rv = TEST_CLIENT.patch(
+            f"/templates/{template_id}", json={"name": template_name}
+        )
+        result = rv.json()
+
         expected = {
-            "uuid": TEMPLATE_ID,
-            "name": NAME,
-            "tasks": TASKS,
-            "createdAt": CREATED_AT_ISO,
-            "updatedAt": UPDATED_AT_ISO,
-            "experimentId": EXPERIMENT_ID,
+            "uuid": template_id,
+            "name": template_name,
+            "tasks": [
+                {
+                    "uuid": util.MOCK_UUID_1,
+                    "task_id": util.MOCK_UUID_1,
+                    "dependencies": [],
+                    "position_x": 0.0,
+                    "position_y": 0.0,
+                }
+            ],
+            "experimentId": util.MOCK_UUID_1,
             "deploymentId": None,
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "updatedAt": mock.ANY,
         }
-        self.assertDictEqual(expected, result)
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
 
-    def test_update_template(self):
-        rv = TEST_CLIENT.patch("/templates/foo", json={})
+    def test_delete_template_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified template does not exist'.
+        """
+        template_id = "unk"
+
+        rv = TEST_CLIENT.delete(f"/templates/{template_id}")
         result = rv.json()
+
         expected = {"message": "The specified template does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/templates/{TEMPLATE_ID}", json={
-            "name": "bar",
-        })
-        result = rv.json()
-        expected = {
-            "uuid": TEMPLATE_ID,
-            "name": "bar",
-            "tasks": TASKS,
-            "createdAt": CREATED_AT_ISO,
-            "experimentId": EXPERIMENT_ID,
-            "deploymentId": None,
-        }
-        machine_generated = ["updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+    def test_delete_template_success(self):
+        """
+        Should delete template successfully.
+        """
+        template_id = util.MOCK_UUID_1
 
-    def test_delete_template(self):
-        rv = TEST_CLIENT.delete("/templates/unk")
+        rv = TEST_CLIENT.delete(f"/templates/{template_id}")
         result = rv.json()
-        expected = {"message": "The specified template does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.delete(f"/templates/{TEMPLATE_ID}")
-        result = rv.json()
         expected = {"message": "Template deleted"}
         self.assertDictEqual(expected, result)
 
-    def test_delete_multiple_templates(self):
-        rv = TEST_CLIENT.post("/templates/deletetemplates", json=[])
+    def test_delete_multiple_templates_at_least_one_template_error(self):
+        """
+        Should return a http error 400 and a message 'inform at least one template'.
+        """
+        rv = TEST_CLIENT.post(f"/templates/deletetemplates", json=[])
         result = rv.json()
+
         expected = {"message": "inform at least one template"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post("/templates/deletetemplates", json=[TEMPLATE_ID])
+    def test_delete_multiple_templates_success(self):
+        """
+        Should delete templates successfully.
+        """
+        template_id_1 = util.MOCK_UUID_1
+        template_id_2 = util.MOCK_UUID_2
+
+        rv = TEST_CLIENT.post(
+            f"/templates/deletetemplates", json=[template_id_1, template_id_2]
+        )
         result = rv.json()
+
         expected = {"message": "Successfully removed templates"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
