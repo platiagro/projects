@@ -62,8 +62,6 @@ def parse_dataframe_to_seldon_request(dataframe):
         In seldon request format.
     """
     dataframe = dataframe.to_dict("split")
-    print("cccccccccccccccccccccccccccccc")
-
     return {
         "data": {
             "names": dataframe["columns"],
