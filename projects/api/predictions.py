@@ -1,13 +1,28 @@
 # -*- coding: utf-8 -*-
 """Predictions API Router."""
+import asyncio
 from json.decoder import JSONDecodeError
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Header, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Header,
+    Request,
+    UploadFile,
+    BackgroundTasks,
+)
 from sqlalchemy.orm import Session
 
-from projects.controllers import DeploymentController, PredictionController, \
-    ProjectController
+from projects.controllers import (
+    DeploymentController,
+    PredictionController,
+    ProjectController,
+)
+from projects.controllers.utils import uuid_alpha
+
+from projects.controllers.predictions import printar
 from projects.exceptions import BadRequest
 from projects.database import session_scope
 
@@ -17,12 +32,15 @@ router = APIRouter(
 
 
 @router.post("")
-async def handle_post_prediction(project_id: str,
-                                 deployment_id: str,
-                                 request: Request,
-                                 file: Optional[UploadFile] = File(None),
-                                 session: Session = Depends(session_scope),
-                                 kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_post_prediction(
+    project_id: str,
+    deployment_id: str,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: Optional[UploadFile] = File(None),
+    session: Session = Depends(session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles POST request to /.
 
@@ -55,7 +73,12 @@ async def handle_post_prediction(project_id: str,
         except JSONDecodeError:
             raise BadRequest("either form-data or json is required")
 
-    prediction_controller = PredictionController(session)
-    return prediction_controller.create_prediction(project_id=project_id,
-                                                   deployment_id=deployment_id,
-                                                   **kwargs)
+    prediction_controller = PredictionController(session, background_tasks)
+
+    prediction_promise_uuid = str(uuid_alpha())
+
+    prediction_controller.create_prediction(
+        project_id=project_id, deployment_id=deployment_id, **kwargs
+    )
+
+    return prediction_promise_uuid

@@ -1,22 +1,39 @@
 # -*- coding: utf-8 -*-
 """Predictions controller."""
 import json
+import asyncio
+
+from requests.api import request
+from projects.models import deployment, response
 from typing import Optional
 
 import requests
 from platiagro import load_dataset
 
-from projects.controllers.utils import parse_dataframe_to_seldon_request, \
-    parse_file_buffer_to_seldon_request
+from projects.controllers.utils import (
+    parse_dataframe_to_seldon_request,
+    parse_file_buffer_to_seldon_request,
+)
+from projects import models
 from projects.exceptions import BadRequest, InternalServerError
 from projects.kubernetes.seldon import get_seldon_deployment_url
 
+import time
+
 
 class PredictionController:
-    def __init__(self, session):
+    def __init__(self, session, background_tasks=None):
         self.session = session
+        self.background_tasks = background_tasks
 
-    def create_prediction(self, project_id: str, deployment_id: str, upload_file: Optional[bytes] = None, dataset: Optional[str] = None):
+    def create_prediction(
+        self,
+        project_id: str,
+        deployment_id: str,
+        prediction_id: str,
+        upload_file: Optional[bytes] = None,
+        dataset: Optional[str] = None,
+    ):
         """
         POST a prediction file to seldon deployment.
 
@@ -54,6 +71,32 @@ class PredictionController:
         response = requests.post(url, json=request)
 
         try:
-            return json.loads(response._content)
+            response_content_json = json.loads(response._content)
+            self.create_prediction_database_object(
+                prediction_id,
+                deployment_id,
+                request,
+                response_content_json,
+            )
         except json.decoder.JSONDecodeError:
             raise InternalServerError(response._content)
+
+        return "No return implemented yet"
+
+    def create_prediction_database_object(
+        self,
+        uuid,
+        deployment_id,
+        request_body,
+        response_body,
+    ):
+
+        prediction = models.Prediction(
+            uuid=uuid,
+            deployment_id=deployment_id,
+            request_body=request_body,
+            response_body=response_body,
+        )
+
+        self.session.add(prediction)
+        self.session.commit()
