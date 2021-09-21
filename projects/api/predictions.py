@@ -21,7 +21,6 @@ from projects.controllers import (
 )
 from projects.controllers.utils import uuid_alpha
 
-from projects.controllers.predictions import printar
 from projects.exceptions import BadRequest
 from projects.database import session_scope
 
