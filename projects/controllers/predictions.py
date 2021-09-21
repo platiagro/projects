@@ -28,7 +28,6 @@ class PredictionController:
 
     def create_prediction(
         self,
-        project_id: str,
         deployment_id: str,
         prediction_id: str,
         upload_file: Optional[bytes] = None,
@@ -106,7 +105,7 @@ class PredictionController:
         """
 
         prediction = models.Prediction(
-            prediction_id=prediction_id,
+            uuid=prediction_id,
             deployment_id=deployment_id,
             request_body=request_body,
             response_body=response_body,

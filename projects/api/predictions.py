@@ -75,7 +75,7 @@ async def handle_post_prediction(
 
     prediction_controller = PredictionController(session, background_tasks)
     prediction_controller.create_prediction(
-        project_id=project_id, deployment_id=deployment_id, **kwargs
+        deployment_id=deployment_id, prediction_id=prediction_promise_uuid, **kwargs
     )
 
     return {"prediction_id": prediction_promise_uuid}
