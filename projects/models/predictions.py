@@ -8,6 +8,7 @@ from projects.database import Base
 
 
 class Prediction(Base):
+    __tablename__ = "predictions"
     uuid = Column(String(255), primary_key=True)
     deployment_id = Column(String(255), nullable=False, index=True)
     request_body = Column(JSON, nullable=True, default={})
