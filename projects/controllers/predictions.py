@@ -85,14 +85,28 @@ class PredictionController:
 
     def create_prediction_database_object(
         self,
-        uuid,
+        prediction_id,
         deployment_id,
         request_body,
         response_body,
     ):
+        """
+        Creates a prediction objec in database.
+
+        Parameters
+        ----------
+        prediction_id : str
+        deployment_id : str
+        request_body: dict
+        response_body: dict
+
+        Returns
+        -------
+        <I have to figure out yet!>
+        """
 
         prediction = models.Prediction(
-            uuid=uuid,
+            prediction_id=prediction_id,
             deployment_id=deployment_id,
             request_body=request_body,
             response_body=response_body,

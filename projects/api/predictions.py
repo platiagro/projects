@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Predictions API Router."""
-import asyncio
 from json.decoder import JSONDecodeError
 from typing import Optional
 
@@ -73,12 +72,11 @@ async def handle_post_prediction(
         except JSONDecodeError:
             raise BadRequest("either form-data or json is required")
 
-    prediction_controller = PredictionController(session, background_tasks)
-
     prediction_promise_uuid = str(uuid_alpha())
 
+    prediction_controller = PredictionController(session, background_tasks)
     prediction_controller.create_prediction(
         project_id=project_id, deployment_id=deployment_id, **kwargs
     )
 
-    return prediction_promise_uuid
+    return {"prediction_id": prediction_promise_uuid}
