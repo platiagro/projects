@@ -52,3 +52,59 @@ ex: `DELETE /resources/{resourceId}`
 - Para atualizar alguns campos de um resource:
 ex: `PATCH /resources/{resourceId}`
 - Em dúvidas? Mantenha uma consistência com as URLs já existem.
+
+## Testes Unitários
+- Todo teste deve ter um docstring descrevendo o que é testado:
+```python
+def test_something_exception(self):
+    """
+    Should raise an exception when ...
+    """
+```
+- Cada função deve preferencialmente testar 1 única chamada:
+```python
+ def test_something_success(self):
+    """
+    Should return ok.
+    """
+    result = something()
+    assert result == "ok"
+
+def test_something_exception(self):
+    """
+    Should raise an exception.
+    """
+    with self.assertRaises(Exception):
+        something()
+```
+- Utilize [tests/util.py](./tests/util.py) para códigos de teste reutilizáveis.
+```python
+import tests.util as util
+
+@mock.patch(
+    "platiagro.load_dataset",
+    side_effect=util.FILE_NOT_FOUND_ERROR,
+)
+```
+- Quando criar um mock de uma função, use o [`assert_any_call`](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.Mock.assert_any_call) ou [`assert_called_with`](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.Mock.assert_called_with) para testar se a função recebeu os parâmetros adequados.<br>
+Caso algum dos parâmetros tenha valor dinâmico, ou possa ser ignorado, utilize [`mock.ANY`](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.ANY).
+```python
+@mock.patch(
+    "platiagro.save_dataset",
+    return_value=util.IRIS_DATAFRAME,
+)
+def test_create_dataset_with_iris_csv(
+    self, mock_save_dataset
+):
+    ...
+    mock_save_dataset.assert_any_call(
+        dataset_name,
+        mock.ANY,
+        metadata={
+            "columns": util.IRIS_COLUMNS,
+            "featuretypes": util.IRIS_FEATURETYPES,
+            "original-filename": util.IRIS_DATASET_NAME,
+            "total": len(util.IRIS_DATA_ARRAY),
+        },
+    )
+```
