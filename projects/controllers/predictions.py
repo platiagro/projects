@@ -4,7 +4,7 @@ import json
 import asyncio
 
 from requests.api import request
-from projects.models import deployment, response
+from projects.models import deployment, prediction, response
 from typing import Optional
 
 import requests
@@ -49,6 +49,7 @@ class PredictionController:
         -------
         dict
         """
+
         if upload_file is not None:
             file = upload_file.file
             request = parse_file_buffer_to_seldon_request(file=file._file)
@@ -66,29 +67,29 @@ class PredictionController:
         else:
             raise BadRequest("either dataset name or file is required")
 
+        prediction_object = self.create_prediction_database_object(
+            prediction_id=prediction_id,
+            deployment_id=deployment_id,
+            request_body=request,
+            response_body=None,
+            status="started",
+        )
+
         url = get_seldon_deployment_url(deployment_id=deployment_id, external_url=False)
         response = requests.post(url, json=request)
 
         try:
             response_content_json = json.loads(response._content)
         except json.decoder.JSONDecodeError:
-            self.create_prediction_database_object(
-                prediction_id,
-                deployment_id,
-                failed=True
-            )
+            prediction_object.status = "failed"
             raise InternalServerError(response._content)
 
-        self.create_prediction_database_object(
-            prediction_id,
-            deployment_id,
-            request,
-            response_content_json,
-        )
+        prediction_object.status = "done"
+        prediction_object.response_body = response_content_json
         return "No return implemented yet"
 
     def create_prediction_database_object(
-        self, prediction_id, deployment_id, request_body, response_body, **kwargs
+        self, prediction_id, deployment_id, request_body, response_body, status
     ):
         """
         Creates a prediction objec in database.
@@ -104,18 +105,14 @@ class PredictionController:
         -------
         <I have to figure out yet!>
         """
-        if kwargs.get("failed") == True:
-            prediction = models.Prediction(
-                uuid=prediction_id,
-                deployment_id=deployment_id,
-                request_body=None,
-                response_body=None,
-            )
-        else:
-            prediction = models.Prediction(
-                uuid=prediction_id,
-                deployment_id=deployment_id,
-            )
+        prediction = models.Prediction(
+            uuid=prediction_id,
+            deployment_id=deployment_id,
+            request_body=request_body,
+            response_body=response_body,
+        )
 
         self.session.add(prediction)
         self.session.commit()
+
+        return prediction

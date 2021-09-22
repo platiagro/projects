@@ -13,5 +13,6 @@ class Prediction(Base):
     deployment_id = Column(String(255), nullable=False, index=True)
     request_body = Column(JSON, nullable=True, default={})
     response_body = Column(JSON, nullable=True, default={})
+    status = Column(String(255), nullable=False, default="not_started")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
