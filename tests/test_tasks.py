@@ -85,12 +85,30 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_task_invalid_request_body_error(self):
+    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    def test_create_task_invalid_request_body_error(
+        self,
+        mock_core_v1_api,
+        mock_custom_objects_api,
+        mock_load_kube_config,
+    ):
         """
         Should return http status 422 when invalid request body is given.
         """
         rv = TEST_CLIENT.post("/tasks", json={})
         self.assertEqual(rv.status_code, 422)
+
+        mock_load_kube_config.assert_any_call()
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_core_v1_api.assert_any_call()
 
     def test_create_task_given_name_already_exists_error(self):
         """

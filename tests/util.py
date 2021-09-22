@@ -61,6 +61,13 @@ MOCK_CORE_V1_API = mock.MagicMock(
             ),
         )
     ),
+    connect_get_namespaced_pod_exec=mock.MagicMock(
+        __self__=mock.MagicMock(api_client=mock.MagicMock()),
+        side_effect=lambda **kwargs: mock.MagicMock(
+            is_open=mock.MagicMock(return_value=False),
+            close=mock.MagicMock(),
+        ),
+    ),
 )
 
 MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
@@ -79,6 +86,39 @@ MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
     ),
     patch_namespaced_custom_object=mock.MagicMock(),
 )
+
+IRIS_DATASET_NAME = "iris.csv"
+
+IRIS_DATA = (
+    "SepalLengthCm,SepalWidthCm,PetalLengthCm,PetalWidthCm,Species\n"
+    "5.1,3.5,1.4,0.2,Iris-setosa\n"
+    "4.9,3.0,1.4,0.2,Iris-setosa\n"
+    "4.7,3.2,1.3,0.2,Iris-setosa\n"
+    "4.6,3.1,1.5,0.2,Iris-setosa\n"
+)
+
+IRIS_COLUMNS = [
+    "SepalLengthCm",
+    "SepalWidthCm",
+    "PetalLengthCm",
+    "PetalWidthCm",
+    "Species",
+]
+
+IRIS_FEATURETYPES = [
+    "Numerical",
+    "Numerical",
+    "Numerical",
+    "Numerical",
+    "Categorical",
+]
+
+IRIS_DATA_ARRAY = [
+    [5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+    [4.9, 3.0, 1.4, 0.2, "Iris-setosa"],
+    [4.7, 3.2, 1.3, 0.2, "Iris-setosa"],
+    [4.6, 3.1, 1.5, 0.2, "Iris-setosa"],
+]
 
 MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3 = "uuid-1", "uuid-2", "uuid-3"
 MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3 = (
@@ -115,7 +155,7 @@ MOCK_OPERATOR_1 = {
         "parameters": [],
     },
     "dependencies": [],
-    "parameters": {},
+    "parameters": {"dataset": IRIS_DATASET_NAME},
     "experimentId": MOCK_UUID_1,
     "deploymentId": None,
     "positionX": 0,
@@ -604,7 +644,7 @@ def create_mocks():
             experiment_id=MOCK_UUID_1,
             task_id=MOCK_UUID_1,
             dependencies=[],
-            parameters={},
+            parameters={"dataset": IRIS_DATASET_NAME},
             status="Unset",
             position_x=0,
             position_y=0,

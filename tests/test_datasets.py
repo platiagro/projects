@@ -1,301 +1,310 @@
 # -*- coding: utf-8 -*-
-from io import BytesIO
-from json import dumps
-from unittest import TestCase
+import unittest
+import unittest.mock as mock
 
 from fastapi.testclient import TestClient
-from platiagro import CATEGORICAL, DATETIME, NUMERICAL
 
 from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT, make_bucket
+from projects.database import session_scope
 
+import tests.util as util
+
+app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
-PROJECT_ID = str(uuid_alpha())
-EXPERIMENT_ID = str(uuid_alpha())
-EXPERIMENT_ID_2 = str(uuid_alpha())
-EXPERIMENT_ID_3 = str(uuid_alpha())
-TASK_ID = str(uuid_alpha())
-OPERATOR_ID = str(uuid_alpha())
-OPERATOR_ID_2 = str(uuid_alpha())
-OPERATOR_ID_3 = str(uuid_alpha())
-RUN_ID = str(uuid_alpha())
-NAME = "foo"
-DESCRIPTION = "long foo"
-DATASET = "mock.csv"
-DATASET_2 = "foo-mock.csv"
-TARGET = "col4"
-POSITION = 0
-PARAMETERS = {"dataset": DATASET}
-PARAMETERS_2 = {"dataset": DATASET_2}
-PARAMETERS_3 = {"dataset": None}
-COMMANDS = ["CMD"]
-COMMANDS_JSON = dumps(COMMANDS)
-ARGUMENTS = ["ARG"]
-ARGUMENTS_JSON = dumps(ARGUMENTS)
-IMAGE = "platiagro/platiagro-experiment-image-test:0.3.0"
-TAGS = ["PREDICTOR"]
-TAGS_JSON = dumps(TAGS)
-PARAMETERS_JSON = dumps(PARAMETERS)
-PARAMETERS_JSON_2 = dumps(PARAMETERS_2)
-PARAMETERS_JSON_3 = dumps(PARAMETERS_3)
-EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
-CREATED_AT = "2000-01-01 00:00:00"
-UPDATED_AT = "2000-01-01 00:00:00"
-TENANT = "anonymous"
 
+class TestDatasets(unittest.TestCase):
+    maxDiff = None
 
-class TestDatasets(TestCase):
     def setUp(self):
-        self.maxDiff = None
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID_2, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID_3, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON_2, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_3, None, "Unset", None, EXPERIMENT_ID_3, TASK_ID, PARAMETERS_JSON_3, CREATED_AT, UPDATED_AT,))
-        conn.close()
-
-        # uploads mock dataset
-        make_bucket(BUCKET_NAME)
-        file = BytesIO((
-            b'col0,col1,col2,col3,col4,col5\n'
-            b'01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
-            b'01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
-            b'01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
-        ))
-        MINIO_CLIENT.put_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET}/{DATASET}",
-            data=file,
-            length=file.getbuffer().nbytes,
-        )
-        metadata = {
-            "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
-            "featuretypes": [DATETIME, NUMERICAL, NUMERICAL, NUMERICAL, NUMERICAL, CATEGORICAL],
-            "filename": DATASET,
-            "run_id": RUN_ID,
-        }
-        buffer = BytesIO(dumps(metadata).encode())
-        MINIO_CLIENT.put_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET}/{DATASET}.metadata",
-            data=buffer,
-            length=buffer.getbuffer().nbytes,
-        )
-
-        file = BytesIO((
-            b'foo,bar,baz,qux\n'
-            b'01/01/2000,foo,1.2,2.3\n'
-            b'01/01/2000,bar,2.3,3.4\n'
-            b'01/01/2000,baz,4.5,4.5\n'
-        ))
-        MINIO_CLIENT.put_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET_2}/{DATASET_2}",
-            data=file,
-            length=file.getbuffer().nbytes,
-        )
-        metadata = {
-            "columns": ["foo", "bar", "baz", "qux"],
-            "featuretypes": [DATETIME, CATEGORICAL, NUMERICAL, NUMERICAL],
-            "filename": DATASET_2,
-            "runId": None
-        }
-        buffer = BytesIO(dumps(metadata).encode())
-
-        MINIO_CLIENT.put_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET_2}/{DATASET_2}.metadata",
-            data=buffer,
-            length=buffer.getbuffer().nbytes,
-        )
-
-        MINIO_CLIENT.copy_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET}/runs/{RUN_ID}/operators/{OPERATOR_ID}/{DATASET}/{DATASET}",
-            object_source=f"/{BUCKET_NAME}/datasets/{DATASET}/{DATASET}",
-        )
-        MINIO_CLIENT.copy_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET}/runs/{RUN_ID}/operators/{OPERATOR_ID}/{DATASET}/{DATASET}.metadata",
-            object_source=f"/{BUCKET_NAME}/datasets/{DATASET}/{DATASET}.metadata",
-        )
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
     def tearDown(self):
-        MINIO_CLIENT.remove_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET}/runs/{RUN_ID}/operators/{OPERATOR_ID}/{DATASET}/{DATASET}.metadata",
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
+
+    def test_list_datasets_project_not_found(self):
+        """
+        Should return an http status 404 and a message 'specified project does not exist'.
+        """
+        project_id = "unk"
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets"
         )
-        MINIO_CLIENT.remove_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET}/runs/{RUN_ID}/operators/{OPERATOR_ID}/{DATASET}/{DATASET}",
-        )
-        MINIO_CLIENT.remove_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET}/{DATASET}.metadata",
-        )
-        MINIO_CLIENT.remove_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET}/{DATASET}",
-        )
-        MINIO_CLIENT.remove_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET_2}/{DATASET_2}.metadata",
-        )
-        MINIO_CLIENT.remove_object(
-            bucket_name=BUCKET_NAME,
-            object_name=f"datasets/{DATASET_2}/{DATASET_2}",
-        )
-
-        conn = engine.connect()
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_2}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_3}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-        conn.execute(text)
-        conn.close()
-
-    def test_get_dataset(self):
-        rv = TEST_CLIENT.get(f"/projects/1/experiments/unk/runs/unk/operators/{OPERATOR_ID}/datasets")
         result = rv.json()
+
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/unk/runs/unk/operators/{OPERATOR_ID}/datasets")
+    def test_list_datasets_experiment_not_found(self):
+        """
+        Should return an http status 404 and a message 'specified experiment does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets"
+        )
         result = rv.json()
+
         expected = {"message": "The specified experiment does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/unk/datasets")
+    def test_list_datasets_operator_not_found(self):
+        """
+        Should return an http status 404 and a message 'specified operator does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = "unk"
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets"
+        )
         result = rv.json()
+
         expected = {"message": "The specified operator does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_2}/runs/1/operators/{OPERATOR_ID_2}/datasets")
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_list_datasets_dataset_not_found(self, mock_kfp_client):
+        """
+        Should return an http status 404 and a message 'specified run does not contain dataset'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "unk"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets"
+        )
         result = rv.json()
+
         expected = {"message": "The specified run does not contain dataset"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_3}/runs/1/operators/{OPERATOR_ID_3}/datasets")
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch(
+        "projects.controllers.experiments.runs.datasets.stat_dataset",
+        return_value={
+            "columns": util.IRIS_COLUMNS,
+            "featuretypes": util.IRIS_FEATURETYPES,
+            "original-filename": util.IRIS_DATASET_NAME,
+            "total": len(util.IRIS_DATA_ARRAY),
+        },
+    )
+    @mock.patch(
+        "projects.controllers.experiments.runs.datasets.load_dataset",
+        return_value=util.IRIS_DATAFRAME,
+    )
+    def test_list_datasets_no_dataset_assigned_to_run(
+        self, mock_load_dataset, mock_stat_dataset, mock_kfp_client
+    ):
+        """
+        Should return an http status 404 and a message 'No dataset assigned to the run'.
+        """
+        # BUG ??
+        # What's the difference between 'No dataset assigned to the run' and
+        # 'The specified run does not contain dataset'?
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_2
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets"
+        )
         result = rv.json()
+
         expected = {"message": "No dataset assigned to the run"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets")
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        dataset_name = util.IRIS_DATASET_NAME
+        mock_stat_dataset.assert_any_call(dataset_name)
+        mock_load_dataset.assert_any_call(dataset_name)
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_list_datasets_success(self, mock_kfp_client):
+        """
+        Should return a experiment successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets"
+        )
         result = rv.json()
         expected = {
             "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
             "data": [
                 ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
                 ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
+                ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
             ],
-            "total": 3
+            "total": 3,
         }
         self.assertDictEqual(expected, result)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets?page=1&page_size=1")
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_list_datasets_page_size_1(self, mock_kfp_client):
+        """
+        Should return a list of data and columns with one element.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets?page=1&page_size=1"
+        )
+        result = rv.json()
+
+        expected = {
+            "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
+            "data": [["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]],
+            "total": 3,
+        }
+        self.assertDictEqual(expected, result)
+
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_list_datasets_page_size_minus_1(self, mock_kfp_client):
+        """
+        Should return the dataset formated as a .CSV file.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets?page_size=-1"
+        )
         result = rv.json()
         expected = {
             "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
             "data": [
-                ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
+                ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+                ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+                ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
             ],
-            "total": 3
         }
         self.assertDictEqual(expected, result)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets?page=2&page_size=3")
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_list_datasets_page_not_exist(self, mock_kfp_client):
+        """
+        Should return an http status 400 and a message 'specified page does not exist"'.
+        """
+        # BUG ??
+        # A better behaviour would be return an empty list.
+        # I bet this error us not documented on Swagger docs.
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets?page=2&page_size=3"
+        )
         result = rv.json()
         expected = {"message": "The specified page does not exist"}
         self.assertDictEqual(expected, result)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets",
-                             headers={'Accept': 'application/csv'})
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_list_datasets_as_csv(self, mock_kfp_client):
+        """
+        Should return the dataset formated as a .CSV file.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets",
+            headers={"Accept": "application/csv"},
+        )
         result = rv.data
-        expected = b'col0,col1,col2,col3,col4,col5\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
+
+        expected = b"col0,col1,col2,col3,col4,col5\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n"
         self.assertEqual(expected, result)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets?page_size=-1")
-        result = rv.json()
-        expected = {
-            "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
-            "data": [
-                ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                ["01/01/2000", 5.1, 3.5, 1.4, 0.2, "Iris-setosa"]
-            ]
-        }
-        self.assertDictEqual(expected, result)
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/datasets?page_size=-1",
-                             headers={'Accept': 'application/csv'})
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_list_datasets_as_csv_page_size_minus_1(self, mock_kfp_client):
+        """
+        Should return the dataset formated as a .CSV file.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets?page_size=-1",
+            headers={"Accept": "application/csv"},
+        )
         result = rv.data
-        expected = b'col0,col1,col2,col3,col4,col5\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n'
+        expected = b"col0,col1,col2,col3,col4,col5\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n"
         self.assertEqual(expected, result)
+
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
