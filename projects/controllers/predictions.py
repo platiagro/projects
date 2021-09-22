@@ -110,6 +110,7 @@ class PredictionController:
             deployment_id=deployment_id,
             request_body=request_body,
             response_body=response_body,
+            status=status
         )
 
         self.session.add(prediction)
