@@ -71,6 +71,7 @@ class PredictionController:
 
         try:
             response_content_json = json.loads(response._content)
+            request = {"foo":"bar"}
             self.create_prediction_database_object(
                 prediction_id,
                 deployment_id,

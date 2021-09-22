@@ -195,8 +195,13 @@ class TestPredictions(TestCase):
            json={"dataset": IMAGE_DATASET}
         )
         result = rv.json()
+        
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 200)
+        
+        expected_keys = ['prediction_id']
+        for key in expected_keys:
+            self.assertIn(key, result)
 
         # successful csv request
         # reading file for request
@@ -212,8 +217,14 @@ class TestPredictions(TestCase):
             files=files
         )
         result = rv.json()
+   
+        expected_keys = ['prediction_id']
+        for key in expected_keys:
+            self.assertIn(key, result)
+   
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 200)
+        
 
         # successful base64 request
         # reading file for request
@@ -231,6 +242,10 @@ class TestPredictions(TestCase):
         result = rv.json()
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 200)
+        
+        expected_keys = ['prediction_id']
+        for key in expected_keys:
+            self.assertIn(key, result)
 
         # successful strData request
         # reading file for request
