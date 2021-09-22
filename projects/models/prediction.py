@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Operator model."""
+"""Prediction model."""
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, JSON, String
