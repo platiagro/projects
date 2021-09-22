@@ -2,6 +2,7 @@
 from datetime import datetime
 from unittest import mock
 
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -119,6 +120,8 @@ IRIS_DATA_ARRAY = [
     [4.7, 3.2, 1.3, 0.2, "Iris-setosa"],
     [4.6, 3.1, 1.5, 0.2, "Iris-setosa"],
 ]
+
+IRIS_DATAFRAME = pd.DataFrame(IRIS_DATA_ARRAY, columns=IRIS_COLUMNS)
 
 MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3 = "uuid-1", "uuid-2", "uuid-3"
 MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3 = (
