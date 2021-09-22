@@ -1,4 +1,4 @@
-{
+	{
 	"folders": [
 		{
 			"path": "."
@@ -9,7 +9,6 @@
 		"editor.insertSpaces": true,
 		"editor.tabSize": 4,
 		"editor.formatOnSave": true,
-		"editor.formatOnPaste": true,
 		"editor.defaultFormatter": "ms-python.python",
 		"files.watcherExclude": {
 			"**/venv/**": true,
@@ -21,6 +20,11 @@
 			"source.fixAll": true
 		},
 		"python.formatting.provider": "black",
+		"python.testing.pytestArgs": [
+			"tests"
+		],
+		"python.testing.unittestEnabled": false,
+		"python.testing.pytestEnabled": true,
 		"[python]": {
 			"editor.defaultFormatter": "ms-python.python"
 		}
