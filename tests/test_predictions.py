@@ -145,121 +145,134 @@ class TestPredictions(TestCase):
 
     @patch("projects.controllers.predictions.requests")
     def test_create_prediction(self, mock_requests):
-        rv = TEST_CLIENT.post(f"/projects/foo/deployments/{DEPLOYMENT_ID}/predictions")
-        result = rv.json()
-        expected = {"message": "The specified project does not exist"}
-        self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 404)
-
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/foo/predictions")
-        result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
-        self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 404)
-
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions")
-        result = rv.json()
-        expected = {"message": "either form-data or json is required"}
-        self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions", json={})
-        result = rv.json()
-        expected = {"message": "either dataset name or file is required"}
-        self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions", json={"dataset": "unk"})
-        result = rv.json()
-        expected = {"message": "a valid dataset is required"}
-        self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 400)
-
-        # building a functional response for mocked post
-        mocked_response = Response()
-        mocked_response.status_code = 200
-        mocked_response._content = b'{ "foo": "bar" }'
-        mock_requests.post.return_value = mocked_response
-
-        # successful load dataset request
-        rv = TEST_CLIENT.post(
-            f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
-            json={"dataset": DATASET}
-        )
-        result = rv.json()
-        self.assertIsInstance(result, dict)
-        self.assertEqual(rv.status_code, 200)
-
-        rv = TEST_CLIENT.post(
-           f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
-           json={"dataset": IMAGE_DATASET}
-        )
-        result = rv.json()
         
-        self.assertIsInstance(result, dict)
-        self.assertEqual(rv.status_code, 200)
-        
-        expected_keys = ['prediction_id']
-        for key in expected_keys:
-            self.assertIn(key, result)
+        def test_create_prediction_with_nonexistent_project():
+            rv = TEST_CLIENT.post(f"/projects/foo/deployments/{DEPLOYMENT_ID}/predictions")
+            result = rv.json()
+            expected = {"message": "The specified project does not exist"}
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 404)
 
-        # successful csv request
-        # reading file for request
-        mocked_dataset = open(MOCKED_DATASET_PATH, "rb")
-        files = {"file": (
-                    "dataset.csv",
-                    mocked_dataset,
-                    "multipart/form-data"
-                    )}
+        def test_create_prediction_with_nonexistent_deployment():
+            rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/foo/predictions")
+            result = rv.json()
+            expected = {"message": "The specified deployment does not exist"}
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post(
+        def test_create_prediction_without_json_or_formdata():
+            rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions")
+            result = rv.json()
+            expected = {"message": "either form-data or json is required"}
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
+
+        def test_create_prediction_without_dataset_name_or_file():
+            rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions", json={})
+            result = rv.json()
+            expected = {"message": "either dataset name or file is required"}
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
+
+        def test_create_prediction_without_valid_dataset():
+            rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions", json={"dataset": "unk"})
+            result = rv.json()
+            expected = {"message": "a valid dataset is required"}
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
+
+            # building a functional response for mocked post
+            mocked_response = Response()
+            mocked_response.status_code = 200
+            mocked_response._content = b'{ "foo": "bar" }'
+            mock_requests.post.return_value = mocked_response
+
+        def test_create_prediction_with_dataset():
+
+            # successful load dataset request
+            rv = TEST_CLIENT.post(
+                f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
+                json={"dataset": DATASET}
+            )
+            result = rv.json()
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)
+
+            rv = TEST_CLIENT.post(
             f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
-            files=files
-        )
-        result = rv.json()
-   
-        expected_keys = ['prediction_id']
-        for key in expected_keys:
-            self.assertIn(key, result)
-   
-        self.assertIsInstance(result, dict)
-        self.assertEqual(rv.status_code, 200)
+            json={"dataset": IMAGE_DATASET}
+            )
+            result = rv.json()
+            
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)
+            
+            expected_keys = ['prediction_id']
+            for key in expected_keys:
+                self.assertIn(key, result)
+
+        def test_create_prediction_with_csv_dataset():
+
+            # successful csv request
+            # reading file for request
+            mocked_dataset = open(MOCKED_DATASET_PATH, "rb")
+            files = {"file": (
+                        "dataset.csv",
+                        mocked_dataset,
+                        "multipart/form-data"
+                        )}
+
+            rv = TEST_CLIENT.post(
+                f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
+                files=files
+            )
+            result = rv.json()
+    
+            expected_keys = ['prediction_id']
+            for key in expected_keys:
+                self.assertIn(key, result)
+    
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)
         
 
-        # successful base64 request
-        # reading file for request
-        mocked_dataset = open(MOCKED_DATASET_BASE64_PATH, "rb")
-        files = {"file": (
-                    "dataset.csv",
-                    mocked_dataset,
-                    "multipart/form-data"
-                    )}
+        def test_create_prediction_with_base64_dataset():
+            # successful base64 request
+            # reading file for request
+            mocked_dataset = open(MOCKED_DATASET_BASE64_PATH, "rb")
+            files = {"file": (
+                        "dataset.csv",
+                        mocked_dataset,
+                        "multipart/form-data"
+                        )}
 
-        rv = TEST_CLIENT.post(
-            f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
-            files=files
-        )
-        result = rv.json()
-        self.assertIsInstance(result, dict)
-        self.assertEqual(rv.status_code, 200)
-        
-        expected_keys = ['prediction_id']
-        for key in expected_keys:
-            self.assertIn(key, result)
+            rv = TEST_CLIENT.post(
+                f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
+                files=files
+            )
+            result = rv.json()
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)
+            
+            expected_keys = ['prediction_id']
+            for key in expected_keys:
+                self.assertIn(key, result)
 
-        # successful strData request
-        # reading file for request
-        mocked_dataset = open(MOCKED_DATASET_STRDATA_PATH, "rb")
-        files = {"file": (
-                    "dataset.csv",
-                    mocked_dataset,
-                    "multipart/form-data"
-                    )}
+       
+        def test_create_prediction_with_base64_dataset():
+            # successful strData request
+            # reading file for request
+            mocked_dataset = open(MOCKED_DATASET_STRDATA_PATH, "rb")
+            files = {"file": (
+                        "dataset.csv",
+                        mocked_dataset,
+                        "multipart/form-data"
+                        )}
 
-        rv = TEST_CLIENT.post(
-            f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
-            files=files
-        )
-        result = rv.json()
-        self.assertIsInstance(result, dict)
-        self.assertEqual(rv.status_code, 200)
+            rv = TEST_CLIENT.post(
+                f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/predictions",
+                files=files
+            )
+            result = rv.json()
+            self.assertIsInstance(result, dict)
+            self.assertEqual(rv.status_code, 200)

@@ -71,24 +71,24 @@ class PredictionController:
 
         try:
             response_content_json = json.loads(response._content)
-            request = {"foo":"bar"}
+        except json.decoder.JSONDecodeError:
             self.create_prediction_database_object(
                 prediction_id,
                 deployment_id,
-                request,
-                response_content_json,
+                failed=True
             )
-        except json.decoder.JSONDecodeError:
             raise InternalServerError(response._content)
 
+        self.create_prediction_database_object(
+            prediction_id,
+            deployment_id,
+            request,
+            response_content_json,
+        )
         return "No return implemented yet"
 
     def create_prediction_database_object(
-        self,
-        prediction_id,
-        deployment_id,
-        request_body,
-        response_body,
+        self, prediction_id, deployment_id, request_body, response_body, **kwargs
     ):
         """
         Creates a prediction objec in database.
@@ -104,13 +104,18 @@ class PredictionController:
         -------
         <I have to figure out yet!>
         """
-
-        prediction = models.Prediction(
-            uuid=prediction_id,
-            deployment_id=deployment_id,
-            request_body=request_body,
-            response_body=response_body,
-        )
+        if kwargs.get("failed") == True:
+            prediction = models.Prediction(
+                uuid=prediction_id,
+                deployment_id=deployment_id,
+                request_body=None,
+                response_body=None,
+            )
+        else:
+            prediction = models.Prediction(
+                uuid=prediction_id,
+                deployment_id=deployment_id,
+            )
 
         self.session.add(prediction)
         self.session.commit()
