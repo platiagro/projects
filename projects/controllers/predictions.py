@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """Predictions controller."""
 import json
-import asyncio
 
-from requests.api import request
-from projects.models import deployment, prediction, response
 from typing import Optional
 
 import requests
@@ -17,8 +14,6 @@ from projects.controllers.utils import (
 from projects import models
 from projects.exceptions import BadRequest, InternalServerError
 from projects.kubernetes.seldon import get_seldon_deployment_url
-
-import time
 
 
 class PredictionController:
@@ -78,11 +73,11 @@ class PredictionController:
         url = "http://10.50.11.49/seldon/anonymous/aedecb73-f4e6-4d70-b11a-0fdd50206935/api/v1.0/predictions"
         response = requests.post(url, json=request)
 
-        # try:
-        response_content_json = json.loads(response._content)
-        # except json.decoder.JSONDecodeError:
-        #     prediction_object.status = "failed"
-        #     raise InternalServerError(response._content)
+        try:
+            response_content_json = json.loads(response._content)
+        except json.decoder.JSONDecodeError:
+            prediction_object.status = "failed"
+            raise InternalServerError(response._content)
 
         prediction_object.status = "done"
         prediction_object.response_body = response_content_json

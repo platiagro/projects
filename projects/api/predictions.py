@@ -20,6 +20,7 @@ from projects.controllers import (
     ProjectController,
 )
 from projects.controllers.utils import uuid_alpha
+from projects.schemas import Prediction
 
 from projects.exceptions import BadRequest
 from projects.database import session_scope
@@ -29,7 +30,7 @@ router = APIRouter(
 )
 
 
-@router.post("")
+@router.post("",response_model=Prediction)
 async def handle_post_prediction(
     project_id: str,
     deployment_id: str,
@@ -81,4 +82,4 @@ async def handle_post_prediction(
         **kwargs
     )
 
-    return {"prediction_id": prediction_id}
+    return Prediction
