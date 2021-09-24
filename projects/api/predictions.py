@@ -71,14 +71,14 @@ async def handle_post_prediction(
         except JSONDecodeError:
             raise BadRequest("either form-data or json is required")
 
-    prediction_promise_uuid = str(uuid_alpha())
+    prediction_id = str(uuid_alpha())
 
     prediction_controller = PredictionController(session, background_tasks)
     background_tasks.add_task(
         prediction_controller.create_prediction,
         deployment_id=deployment_id,
-        prediction_id=prediction_promise_uuid,
+        prediction_id=prediction_id,
         **kwargs
     )
 
-    return {"prediction_id": prediction_promise_uuid}
+    return {"prediction_id": prediction_id}
