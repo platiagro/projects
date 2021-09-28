@@ -167,5 +167,5 @@ async def handle_log_deployment(deployment_id: str):
     EventSourceResponse
     """
     controller = LogController()
-    stream = controller.event_logs(deployment_id=deployment_id)
+    stream = controller.deployment_event_logs(deployment_id=deployment_id)
     return EventSourceResponse(stream)
