@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Seldon utility functions."""
 from kubernetes import client
+from kubernetes.watch import Watch
 
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.istio import get_cluster_ip, get_protocol
@@ -94,3 +95,64 @@ def list_project_seldon_deployments(project_id):
     )["items"]
 
     return deployments
+
+def watch_deployment_pods(deployment_id):
+    w = Watch()
+    load_kube_config()
+    v1 = client.CoreV1Api()
+    
+    for pod in w.stream(v1.list_namespaced_pod,
+        namespace=KF_PIPELINES_NAMESPACE,
+        label_selector=f'seldon-deployment-id={deployment_id}'):
+        if pod["type"] == "ADDED":
+            pod = pod["object"]
+            for container in pod.spec.containers:
+                if container.name not in EXCLUDE_CONTAINERS and "name" in pod.metadata.annotations:
+                    print(f"added container {container.name} to queue {hex(id(queue))}")
+                    executor.submit(log_stream, pod, container, queue)
+
+
+def log_stream(pod, container, queue):
+    """
+    Generates log stream of given pod's container.
+
+    Parameters
+    ----------
+        pod: str
+        container: str
+
+    Yields
+    ------
+        str
+    """
+    load_kube_config()
+    v1 = client.CoreV1Api()
+    w = Watch()
+    pod_name = pod.metadata.name
+    namespace = pod.metadata.namespace
+    container_name = container.name
+    try:
+        for streamline in w.stream(
+            v1.read_namespaced_pod_log,
+            name=pod_name,
+            namespace=namespace,
+            container=container_name,
+            pretty="true",
+            tail_lines=0,
+            timestamps=True
+        ):
+            queue.put(streamline)
+
+    except RuntimeError as e:
+        logging.exception(e)
+        return
+
+    except asyncio.CancelledError as e:
+        logging.exception(e)
+        return
+    except ApiException:
+        """
+        Expected behavior when trying to connect to a container that isn't ready yet.
+        """
+        pass
+
