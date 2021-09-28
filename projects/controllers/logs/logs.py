@@ -6,14 +6,21 @@ import re
 import dateutil.parser
 import logging
 import asyncio
+
+from concurrent import futures
+from threading import Thread
+from queue import Queue
 from typing import List, Optional
 
+from projects.schemas.log import Log, LogList
 from projects.kfp.runs import get_latest_run_id
 from projects.kubernetes.argo import list_workflow_pods
+from projects.kubernetes.argo import watch_workflow_pods
 from projects.kubernetes.seldon import list_deployment_pods
+from projects.kubernetes.seldon import watch_deployment_pods
 from projects.kubernetes.utils import get_container_logs
-from projects.kubernetes.utils import merge
-from projects.schemas.log import Log, LogList
+from projects.kubernetes.utils import pop_log_queue
+from projects.kubernetes.utils import is_disconnected
 from projects.kubernetes.kube_config import load_kube_config
 
 from kubernetes import client
@@ -32,6 +39,9 @@ LOG_LEVELS = {
 
 
 class LogController:
+
+    q_pods = Queue()
+    q_logs = Queue()
 
     def list_logs(self, project_id: str, run_id: str, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
         """
@@ -254,49 +264,42 @@ class LogController:
             Expected behavior when trying to connect to a container that isn't ready yet.
             """
             pass
-
-    def event_logs(self, deployment_id: Optional[str] = None, experiment_id: Optional[str] = None):
+    def deployment_event_logs(self, deployment_id: str):
         """
         Search for online pods to start log stream
 
         Parameters
         ----------
             deployment_id: str
+
+        Return
+        ------
+            Iterator
+        """
+
+        watch_deployment_pods(deployment_id)
+        executor = futures.ThreadPoolExecutor(5)
+        q = Queue()
+        executor.submit(watch_deployment_pods, deployment_id, executor, q)
+
+        return pop_log_queue(q)
+
+    def experiment_event_logs(self, experiment_id: str, req):
+        """
+        Search for online pods to start log stream
+
+        Parameters
+        ----------
             experiment_id: str
 
         Return
         ------
             Iterator
         """
-        while True:
-            pods = list()
-            run_id = get_latest_run_id(experiment_id or deployment_id)
-            if deployment_id is not None:
-                # Tries to retrieve any pods associated to a seldondeployment
-                pods.extend(
-                    list_deployment_pods(deployment_id=deployment_id),
-                )
+        run_id = get_latest_run_id(experiment_id)
+        executor = futures.ThreadPoolExecutor(10)
+        executor.submit(is_disconnected, req, executor)
+        q = Queue()
+        executor.submit(watch_workflow_pods, run_id, executor, q)
 
-            if len(pods) == 0:
-                # BUG: workflows and pods are deleted after 1 day due to a
-                # "Garbage Collector" feature of Argo workflows/Kubeflow Pipelines.
-                # The link below provide useful information on how to configure log
-                # persistence and where to set the Time-to-live (TTL) for workflows:
-                # https://github.com/kubeflow/pipelines/issues/844#issuecomment-559841627
-                # We can make use of these configurations and fix this bug later.
-                pods.extend(
-                    list_workflow_pods(run_id=run_id),
-                )
-
-            if not pods:
-                """
-                If the pods list is empty, it tries again to retrieve a pod list
-                """
-                pass
-            else:
-                iterators = list()
-                for pod in pods:
-                    for container in pod.spec.containers:
-                        if container.name not in EXCLUDE_CONTAINERS:
-                            iterators.append(self.log_stream(pod, container))
-                return merge(iterators)
+        return pop_log_queue(q)
