@@ -11,7 +11,8 @@ from projects import models
 
 MOCK_SET_USER_NAMESPACE = mock.MagicMock()
 MOCK_RUNS = mock.MagicMock()
-MOCK_LIST_RUNS = mock.MagicMock(return_value=mock.MagicMock(runs=[]))
+MOCK_RUN = mock.MagicMock(id="4546465")
+MOCK_LIST_RUNS = mock.MagicMock(return_value=mock.MagicMock(runs=[MOCK_RUN]))
 MOCK_WORKFLOW_MANIFEST = open(
     "tests/resources/deployment_mock_manifest.json", "r"
 ).read()
@@ -69,12 +70,26 @@ MOCK_CORE_V1_API = mock.MagicMock(
             close=mock.MagicMock(),
         ),
     ),
+    read_namespaced_service=mock.MagicMock(
+        side_effect=lambda name, namespace: mock.MagicMock(
+            api_version="v1",
+            metadata=mock.MagicMock(
+                name=name,
+                namespace=namespace,
+            ),
+        ),
+    ),
 )
 
-MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
-    list_namespaced_custom_object=mock.MagicMock(),
-    get_namespaced_custom_object=mock.MagicMock(
-        return_value={
+
+def mock_get_namespaced_custom_object(plural, **kwargs):
+    if plural == 'gateways':
+        return {
+            'spec': {
+                "servers": [{}]}
+        }
+    elif plural == "notebooks":
+        return {
             "spec": {
                 "template": {
                     "spec": {
@@ -84,6 +99,12 @@ MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
                 }
             }
         }
+
+
+MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
+    list_namespaced_custom_object=mock.MagicMock(),
+    get_namespaced_custom_object=mock.MagicMock(
+        side_effect=mock_get_namespaced_custom_object
     ),
     patch_namespaced_custom_object=mock.MagicMock(),
 )
@@ -342,6 +363,47 @@ MOCK_DEPLOYMENT_LIST = {
         MOCK_DEPLOYMENT_2,
     ],
     "total": 2,
+}
+# {
+# 'createdAt': mock.ANY,
+# 'operators': {
+#     'deployment': {
+#         'parameters': {},
+#         'status': 'Succeeded'
+#     },
+#     MOCK_UUID_3: {
+#         'parameters': {
+#             'dataset': None,
+#             'features_to_filter': ['Vibracao1']
+#         },
+#         'status': 'Succeeded',
+#         'taskId': MOCK_UUID_2
+#     },
+# },
+# 'uuid': 'uuid-1'
+# }
+MOCK_DEPLOYMENT_RUN_LIST = {
+    "runs": [
+        {
+            'createdAt': mock.ANY,
+            'operators': {
+                'deployment': {
+                    'parameters': {},
+                    'status': 'Succeeded'
+                },
+                'f08ccfda-9206-4f26-8326-ad666b1761e7': {
+                    'parameters': {
+                        'dataset': None,
+                        'features_to_filter': ['Vibracao1']
+                    },
+                    'status': 'Succeeded',
+                    'taskId': 'f298de51-cfc1-4bc9-8ebd-0959d74d7b91'
+                }
+            },
+            'uuid': 'uuid-1'
+        }
+    ],
+    "total": 1,
 }
 
 MOCK_COMPARISON_LIST = {
@@ -753,3 +815,6 @@ def delete_mocks():
     session.query(models.Task).delete()
     session.commit()
     session.close()
+
+
+FILE_NOT_FOUND_ERROR = FileNotFoundError("The specified dataset does not exist")

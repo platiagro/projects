@@ -86,7 +86,11 @@ class TestDatasets(unittest.TestCase):
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
     )
-    def test_list_datasets_dataset_not_found(self, mock_kfp_client):
+    @mock.patch(
+        "projects.controllers.experiments.runs.datasets.stat_dataset",
+        side_effect=util.FILE_NOT_FOUND_ERROR,
+    )
+    def test_list_datasets_dataset_not_found(self, mock_stat_dataset, mock_kfp_client):
         """
         Should return an http status 404 and a message 'specified run does not contain dataset'.
         """
@@ -94,6 +98,7 @@ class TestDatasets(unittest.TestCase):
         experiment_id = util.MOCK_UUID_1
         run_id = "unk"
         operator_id = util.MOCK_UUID_1
+        name = util.IRIS_DATASET_NAME
 
         rv = TEST_CLIENT.get(
             f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/datasets"
@@ -105,6 +110,7 @@ class TestDatasets(unittest.TestCase):
         self.assertEqual(rv.status_code, 404)
 
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_stat_dataset.assert_any_call(name=name, operator_id=operator_id, run_id=run_id)
 
     @mock.patch(
         "kfp.Client",
