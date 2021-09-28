@@ -40,7 +40,7 @@ async def handle_list_operators(project_id: str,
     deployment_controller = DeploymentController(session)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
-    operator_controller = OperatorController(session)
+    operator_controller = OperatorController(session, kubeflow_userid=kubeflow_userid)
     operators = operator_controller.list_operators(project_id=project_id,
                                                    deployment_id=deployment_id)
     return operators

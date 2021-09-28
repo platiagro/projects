@@ -13,7 +13,6 @@ from kubernetes import stream
 
 from projects.kubernetes.kube_config import load_kube_config
 from projects.exceptions import InternalServerError
-from projects.kfp import KF_PIPELINES_NAMESPACE
 
 IGNORABLE_MESSAGES_KEYTEXTS = ["ContainerCreating",
                                "PodInitializing"]

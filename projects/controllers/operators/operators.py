@@ -2,8 +2,6 @@
 """Operator controller."""
 from datetime import datetime
 from typing import Dict, List, Optional
-import logging
-import asyncio
 import time
 
 from projects import models, schemas
@@ -12,7 +10,6 @@ from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.kube_config import load_kube_config
 from projects.agent.utils import list_resource_version
-from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kfp.runs import get_latest_run_id
 
 from kubernetes import client
@@ -26,8 +23,9 @@ DEPENDENCIES_EXCEPTION_MSG = "The specified dependencies are not valid."
 
 
 class OperatorController:
-    def __init__(self, session):
+    def __init__(self, session, kubeflow_userid=None):
         self.session = session
+        self.kubeflow_userid = kubeflow_userid
         self.task_controller = TaskController(session)
 
     def raise_if_operator_does_not_exist(self, operator_id: str):
@@ -412,7 +410,7 @@ class OperatorController:
                 resource_version = list_resource_version(
                     group=GROUP,
                     version=VERSION,
-                    namespace=KF_PIPELINES_NAMESPACE,
+                    namespace=self.kubeflow_userid,
                     plural=PLURAL,
                 )
                 w = Watch()
@@ -420,7 +418,7 @@ class OperatorController:
                     api.list_namespaced_custom_object,
                     group=GROUP,
                     version=VERSION,
-                    namespace=KF_PIPELINES_NAMESPACE,
+                    namespace=self.kubeflow_userid,
                     plural=PLURAL,
                     resource_version=resource_version,
                     label_selector=f"pipeline/runid={run_id}",
