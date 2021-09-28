@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 """Utility functions."""
 import time
+import asyncio
 
+from concurrent import futures
 from queue import Queue
 from threading import Thread
-
+from typing import Optional
 
 from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes import stream
 
+from projects.kubernetes.argo import list_workflow_pods
+from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.kube_config import load_kube_config
 from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
@@ -216,46 +220,30 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     return clean_zip_file_content
 
 
-def consume(q, s):
-    """
-    Puts output of an iterator in a queue.
-
-    Parameters
-    ----------
-        q: Queue
-        s: Iterator
-
-    """
-    for i in s:
-        q.put(i)
 
 
-def merge(iters):
-    """
-    Merges a list of iterators.
 
-    Parameters
-    ----------
-        iters: list
-
-    Yields
-    -------
-    str
-        Output of stream
-    """
-    q = Queue()
-    for it in iters:
-        t = Thread(target=consume, args=(q, it))
-        t.start()
-
-    done = 0
+async def wait_for_client(req):
+    print("waiting")
     while True:
-        out = q.get()
+        if await req.is_disconnected():
+            break
+    print("client disconnected!!!")
+    return True
+
+
+def is_disconnected(req, executor):
+    f = asyncio.run(wait_for_client(req))
+    if f.result():
+        print("Trying to disconnect")
+        executor.shutdown(wait=False)
+
+
+def pop_log_queue(queue):
+    while True:
+
+        out = queue.get()
+        print(out)
         if out == '':
-            # End of the stream.
-            done += 1
-            if done == len(iters):
-                # When all iters are done, break out.
-                return
-        else:
-            yield out
+            return
+        yield out
