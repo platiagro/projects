@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """Experiments API Router."""
+
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header
+
+from fastapi import APIRouter, Depends, Header, Request
+from sse_starlette.sse import EventSourceResponse
 from sqlalchemy.orm import Session
 
 import projects.schemas.experiment
-from projects.controllers import ExperimentController, ProjectController
+from projects.controllers import ExperimentController, ProjectController, LogController
 from projects.database import session_scope
 
 router = APIRouter(
@@ -152,3 +155,21 @@ async def handle_delete_experiment(project_id: str,
     experiment = experiment_controller.delete_experiment(experiment_id=experiment_id,
                                                          project_id=project_id)
     return experiment
+
+
+@router.get("/{experiment_id}/logs/eventsource")
+async def handle_log_deployment(experiment_id: str):
+    """
+    Handles log event source requests to /<experiment_id>/logs/eventsource.
+
+    Parameters
+    ----------
+    experiment_id : str
+    
+    Returns
+    -------
+    EventSourceResponse
+    """
+    controller = LogController()
+    stream = controller.event_logs(experiment_id=experiment_id)
+    return EventSourceResponse(stream)

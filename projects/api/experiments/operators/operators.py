@@ -4,11 +4,13 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
+from sse_starlette.sse import EventSourceResponse
 
 import projects.schemas.operator
 from projects.controllers import ExperimentController, OperatorController, \
     ProjectController
 from projects.database import session_scope
+
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/operators",
@@ -148,3 +150,22 @@ async def handle_delete_operator(project_id: str,
                                                    project_id=project_id,
                                                    experiment_id=experiment_id)
     return operator
+
+@router.get("/eventsource")
+async def handle_experiment_operator_stream(experiment_id: str, session: Session = Depends(session_scope)):
+    """
+    Handle event source requests to /eventsource.
+
+    Parameters
+    ----------
+    experiment_id : str
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    EventSourceResponse
+    """
+    controller = OperatorController(session)
+    stream = controller.watch_operator(experiment_id=experiment_id)
+
+    return EventSourceResponse(stream)

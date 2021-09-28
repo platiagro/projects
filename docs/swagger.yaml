@@ -65,6 +65,14 @@ tags:
     description: >
       Monitorings allow to ensure that models are maintaining a predetermined desired level of performance.
 paths:
+  /healthcheck:
+    get:
+      summary: "Check the connection with the database."
+      responses:
+        "200":
+          description: "Successfully connected to database"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /tasks:
     get:
       summary: "List tasks. Supports pagination, and sorting."
@@ -578,6 +586,33 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/logs/eventsource:
+    get:
+        summary: "Server sent events of log stream of pods used in the given experiment."
+        tags:
+          - "Experiments"
+        parameters:
+          - name: projectId
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+          - name: experimentId
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          "200":
+            description: "Returns log stream"
+          "400":
+            $ref: "#/components/responses/BadRequest"
+          "500":
+            $ref: "#/components/responses/InternalServerError"
+          "503":
+            $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/experiments/{experimentId}/operators:
     get:
       summary: "List all operators, unsorted."
@@ -635,6 +670,27 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/eventsource:
+    get:
+      summary: "Server sent events of operator's status change stream."
+      tags:
+        - "Experiment Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "Returns log stream"
   /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}:
     patch:
       summary: "Update an operator by ID."
@@ -1238,6 +1294,33 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/deployments/{deploymentId}/logs/eventsource:
+   get:
+       summary: "Server sent events of log stream of pods used in the given deployment."
+       tags:
+         - "Deployments"
+       parameters:
+         - in: path
+           name: projectId
+           required: true
+           schema:
+             type: string
+             format: uuid
+         - in: path
+           name: deploymentId
+           required: true
+           schema:
+             type: string
+             format: uuid
+       responses:
+         "200":
+           description: "Returns log stream"
+         "400":
+           $ref: "#/components/responses/BadRequest"
+         "500":
+           $ref: "#/components/responses/InternalServerError"
+         "503":
+           $ref: "#/components/responses/ServiceUnavailable"
   /projects/{projectId}/deployments/{deploymentId}/operators:
     get:
       summary: "List all operators, unsorted."

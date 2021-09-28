@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 
 from projects import __version__
-from projects.api import comparisons, deployments, experiments, monitorings, \
+from projects.api import comparisons, deployments, experiments, healthcheck, monitorings, \
     predictions, projects, tasks, templates
 from projects.api.deployments import operators as deployment_operators, \
     runs as deployment_runs, responses
@@ -22,7 +22,7 @@ from projects.api.experiments.operators import parameters as operator_parameters
 from projects.api.tasks import parameters
 from projects.database import init_db
 from projects.exceptions import BadRequest, Forbidden, NotFound, \
-    InternalServerError
+    InternalServerError, ServiceUnavailable
 from projects.api.monitorings import figures as monitoring_figures
 
 init_db()
@@ -55,6 +55,7 @@ app.include_router(tasks.router)
 app.include_router(parameters.router)
 app.include_router(templates.router)
 app.include_router(responses.router)
+app.include_router(healthcheck.router)
 
 
 @app.get("/", response_class=PlainTextResponse)
@@ -69,6 +70,7 @@ async def ping():
 @app.exception_handler(NotFound)
 @app.exception_handler(InternalServerError)
 @app.exception_handler(Forbidden)
+@app.exception_handler(ServiceUnavailable)
 async def handle_errors(request: Request, exception: Exception):
     """
     Handles exceptions raised by the API.

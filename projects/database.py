@@ -13,7 +13,9 @@ DB_URL = f"mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
 engine = create_engine(DB_URL,
                        pool_size=32,
                        pool_recycle=300,
-                       max_overflow=64)
+                       max_overflow=64,
+                       connect_args={'connect_timeout': 10}
+                    )
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

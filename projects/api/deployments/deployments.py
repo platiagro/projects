@@ -4,9 +4,10 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
+from sse_starlette.sse import EventSourceResponse
 
 import projects.schemas.deployment
-from projects.controllers import DeploymentController, ProjectController
+from projects.controllers import DeploymentController, ProjectController, LogController
 from projects.database import session_scope
 
 router = APIRouter(
@@ -149,3 +150,21 @@ async def handle_delete_deployment(project_id: str,
     deployment = deployment_controller.delete_deployment(deployment_id=deployment_id,
                                                          project_id=project_id)
     return deployment
+
+
+@router.get("/{deployment_id}/logs/eventsource")
+async def handle_log_deployment(deployment_id: str):
+    """
+    Handles log event source requests to /<deployment_id>/logs/eventsource.
+
+    Parameters
+    ----------
+    deployment_id : str
+
+    Returns
+    -------
+    EventSourceResponse
+    """
+    controller = LogController()
+    stream = controller.event_logs(deployment_id=deployment_id)
+    return EventSourceResponse(stream)
