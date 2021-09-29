@@ -145,7 +145,7 @@ class PredictionController:
             response_content_json = json.loads(response._content)
         except json.decoder.JSONDecodeError:
             prediction_object.status = "failed"
-            self.session.flush()
+            self.session.commit()
             raise InternalServerError(response._content)
 
         prediction_object.status = "done"

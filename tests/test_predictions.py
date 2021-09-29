@@ -301,6 +301,7 @@ class TestPredictions(TestCase):
             files=files,
         )
         result = rv.json()
+        print(result)
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 200)
 
