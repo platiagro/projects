@@ -23,8 +23,8 @@ class PredictionController:
 
     def create_prediction(
         self,
-        deployment_id: str,
         prediction_id: str,
+        deployment_id: str,
         upload_file: Optional[bytes] = None,
         dataset: Optional[str] = None,
     ):
@@ -65,23 +65,26 @@ class PredictionController:
         prediction_object = self.create_prediction_database_object(
             prediction_id=prediction_id,
             deployment_id=deployment_id,
-            request_body={"foo": "bar"},
+            request_body=request,
             response_body=None,
             status="started",
         )
 
-        url = "http://10.50.11.49/seldon/anonymous/aedecb73-f4e6-4d70-b11a-0fdd50206935/api/v1.0/predictions"
+        url = get_seldon_deployment_url(deployment_id=deployment_id, external_url=True)
         response = requests.post(url, json=request)
 
         try:
             response_content_json = json.loads(response._content)
         except json.decoder.JSONDecodeError:
             prediction_object.status = "failed"
+            self.session.flush()
             raise InternalServerError(response._content)
 
         prediction_object.status = "done"
         prediction_object.response_body = response_content_json
-        return "No return implemented yet"
+        self.session.commit()
+    
+    def get_and_save_seldon_prediction():    
 
     def create_prediction_database_object(
         self,

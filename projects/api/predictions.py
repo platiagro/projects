@@ -30,7 +30,7 @@ router = APIRouter(
 )
 
 
-@router.post("",response_model=Prediction)
+@router.post("", response_model=Prediction)
 async def handle_post_prediction(
     project_id: str,
     deployment_id: str,
@@ -54,7 +54,7 @@ async def handle_post_prediction(
 
     Returns
     -------
-    dict
+    Prediction: projects.schema.prediction.Prediction
     """
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
@@ -75,11 +75,14 @@ async def handle_post_prediction(
     prediction_id = str(uuid_alpha())
 
     prediction_controller = PredictionController(session, background_tasks)
-    background_tasks.add_task(
-        prediction_controller.create_prediction,
-        deployment_id=deployment_id,
-        prediction_id=prediction_id,
-        **kwargs
+    prediction_controller.create_prediction(
+        deployment_id=deployment_id, prediction_id=prediction_id, **kwargs
     )
 
-    return Prediction
+    prediction = {
+        "uuid": prediction_id,
+        "deployment_id": deployment_id,
+        "status": "started",
+    }
+
+    return prediction
