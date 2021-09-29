@@ -43,7 +43,7 @@ class PredictionController:
 
         Returns
         -------
-        dict
+        prediction_as_schema: dict
         """
 
         if upload_file is not None:
@@ -106,7 +106,8 @@ class PredictionController:
 
         Returns
         -------
-        <I have to figure out yet!>
+        prediction: models.prediction.Prediction
+
         """
         prediction = models.Prediction(
             uuid=prediction_id,
@@ -118,10 +119,27 @@ class PredictionController:
 
         self.session.add(prediction)
         self.session.commit()
-
         return prediction
 
     def start_and_save_seldon_prediction(self, request_body, prediction_object, url):
+        """
+        Makes a request in seldon API and gets the result and updates the prediction
+        object in database
+
+        Parameters
+        ----------
+        request_body: dict
+            request data to send as POST on seldon API
+        prediction_object : models.prediction.Prediction
+            prediction database object so that data can be updated in database
+        url : str
+            seld API url to send the request as POST
+
+        Returns
+        -------
+        prediction: models.prediction.Prediction
+
+        """
         response = requests.post(url, json=request_body)
         try:
             response_content_json = json.loads(response._content)

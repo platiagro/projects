@@ -308,7 +308,7 @@ class TestPredictions(TestCase):
         for key in expected_keys:
             self.assertIn(key, result)
 
-    def test_create_prediction_with_base64_dataset(
+    def test_create_prediction_with_strdata_dataset(
         self,
     ):
         # successful strData request
