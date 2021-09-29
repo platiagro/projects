@@ -66,7 +66,7 @@ class PredictionController:
         prediction_object = self.create_prediction_database_object(
             prediction_id=str(uuid_alpha()),
             deployment_id=deployment_id,
-            request_body=request,
+            request_body=json.dumps(request),
             response_body=None,
             status="started",
         )
@@ -113,8 +113,8 @@ class PredictionController:
             uuid=prediction_id,
             deployment_id=deployment_id,
             status=status,
-            request_body=request_body,
-            response_body=response_body,
+            request_body=json.dumps(request_body),
+            response_body=json.dumps(response_body),
         )
 
         self.session.add(prediction)
@@ -123,8 +123,8 @@ class PredictionController:
 
     def start_and_save_seldon_prediction(self, request_body, prediction_object, url):
         """
-        Makes a request in seldon API and gets the result and updates the prediction
-        object in database
+        Makes a POST request in seldon API to start prediction and gets the result
+        and updates the prediction object in database
 
         Parameters
         ----------
@@ -133,21 +133,22 @@ class PredictionController:
         prediction_object : models.prediction.Prediction
             prediction database object so that data can be updated in database
         url : str
-            seld API url to send the request as POST
+            seldon API url to send the request as POST
 
         Returns
         -------
         prediction: models.prediction.Prediction
 
         """
-        response = requests.post(url, json=request_body)
+        response = requests.post(url=url, json=request_body)
         try:
             response_content_json = json.loads(response._content)
         except json.decoder.JSONDecodeError:
+            print(response.reason)
             prediction_object.status = "failed"
             self.session.commit()
             raise InternalServerError(response._content)
 
         prediction_object.status = "done"
-        prediction_object.response_body = response_content_json
+        prediction_object.response_body = json.dumps(response_content_json)
         self.session.commit()
