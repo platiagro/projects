@@ -3,6 +3,7 @@
 import json
 
 from typing import Optional
+from fastapi import background
 
 import requests
 from platiagro import load_dataset
@@ -10,6 +11,7 @@ from platiagro import load_dataset
 from projects.controllers.utils import (
     parse_dataframe_to_seldon_request,
     parse_file_buffer_to_seldon_request,
+    uuid_alpha,
 )
 from projects import models
 from projects.exceptions import BadRequest, InternalServerError
@@ -23,7 +25,6 @@ class PredictionController:
 
     def create_prediction(
         self,
-        prediction_id: str,
         deployment_id: str,
         upload_file: Optional[bytes] = None,
         dataset: Optional[str] = None,
@@ -63,28 +64,27 @@ class PredictionController:
             raise BadRequest("either dataset name or file is required")
 
         prediction_object = self.create_prediction_database_object(
-            prediction_id=prediction_id,
+            prediction_id=str(uuid_alpha()),
             deployment_id=deployment_id,
             request_body=request,
             response_body=None,
             status="started",
         )
 
+        prediction_as_schema = {
+            "uuid": prediction_object.uuid,
+            "deployment_id": prediction_object.deployment_id,
+            "status": prediction_object.status,
+        }
+
         url = get_seldon_deployment_url(deployment_id=deployment_id, external_url=True)
-        response = requests.post(url, json=request)
-
-        try:
-            response_content_json = json.loads(response._content)
-        except json.decoder.JSONDecodeError:
-            prediction_object.status = "failed"
-            self.session.flush()
-            raise InternalServerError(response._content)
-
-        prediction_object.status = "done"
-        prediction_object.response_body = response_content_json
-        self.session.commit()
-    
-    def get_and_save_seldon_prediction():    
+        self.background_tasks.add_task(
+            self.start_and_save_seldon_prediction,
+            request_body=request,
+            prediction_object=prediction_object,
+            url=url,
+        )
+        return prediction_as_schema
 
     def create_prediction_database_object(
         self,
@@ -120,3 +120,16 @@ class PredictionController:
         self.session.commit()
 
         return prediction
+
+    def start_and_save_seldon_prediction(self, request_body, prediction_object, url):
+        response = requests.post(url, json=request_body)
+        try:
+            response_content_json = json.loads(response._content)
+        except json.decoder.JSONDecodeError:
+            prediction_object.status = "failed"
+            self.session.flush()
+            raise InternalServerError(response._content)
+
+        prediction_object.status = "done"
+        prediction_object.response_body = response_content_json
+        self.session.commit()
