@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from projects.models import task
+from json import loads
 import unittest
 import unittest.mock as mock
 
@@ -85,7 +86,6 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
     @mock.patch(
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
@@ -94,19 +94,17 @@ class TestTasks(unittest.TestCase):
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
-    def test_create_task_invalid_request_body_error(
+    def test_create_task_not_request_body(
         self,
         mock_core_v1_api,
         mock_custom_objects_api,
-        mock_load_kube_config,
     ):
         """
-        Should return http status 422 when invalid request body is given.
+        Should create task successfully.
         """
         rv = TEST_CLIENT.post("/tasks", json={})
-        self.assertEqual(rv.status_code, 422)
+        self.assertEqual(rv.status_code, 200)
 
-        mock_load_kube_config.assert_any_call()
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_core_v1_api.assert_any_call()
 
@@ -121,7 +119,19 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    def test_create_task_without_name_success(self):
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    def test_create_task_without_name_success(
+        self,
+        mock_core_v1_api,
+        mock_custom_objects_api,
+    ):
         """
         Should create and return a task successfully. A task name is auto generated.
         """
@@ -134,8 +144,8 @@ class TestTasks(unittest.TestCase):
             "arguments": None,
             "category": "DEFAULT",
             "commands": None,
-            "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
-            "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
             "createdAt": mock.ANY,
             "dataIn": None,
             "dataOut": None,
@@ -148,18 +158,33 @@ class TestTasks(unittest.TestCase):
             "name": "Tarefa em branco - 1",
             "parameters": [],
             "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
-            "tags": None,
+            "tags": ['DEFAULT'],
             "updatedAt": mock.ANY,
             "uuid": mock.ANY,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_task_with_name_success(self):
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_core_v1_api.assert_any_call()
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    def test_create_task_with_name_success(
+        self,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
         """
         Should create and return a task successfully.
         """
-        task_name = "task-4"
+        task_name = "task-6"
         task_category = "DEFAULT"
 
         rv = TEST_CLIENT.post(
@@ -185,14 +210,29 @@ class TestTasks(unittest.TestCase):
             "name": task_name,
             "parameters": [],
             "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
-            "tags": None,
+            "tags": ['DEFAULT'],
             "updatedAt": mock.ANY,
             "uuid": mock.ANY,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_task_copy_from_success(self):
+        mock_core_v1_api.assert_any_call()
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    def test_create_task_copy_from_success(
+            self,
+            mock_custom_objects_api,
+            mock_core_v1_api,
+    ):
         """
         Should create and return a task successfully. A task name is auto generated.
         """
@@ -219,14 +259,29 @@ class TestTasks(unittest.TestCase):
             "name": f"{util.MOCK_TASK_NAME_1} - Cópia - 1",
             "parameters": [],
             "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
-            "tags": None,
+            "tags": ['DEFAULT'],
             "updatedAt": mock.ANY,
             "uuid": mock.ANY,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_task_with_notebook_success(self):
+        mock_core_v1_api.assert_any_call()
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    def test_create_task_with_notebook_success(
+        self,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
         """
         Should create and return a task successfully.
         """
@@ -257,12 +312,15 @@ class TestTasks(unittest.TestCase):
             "name": "Tarefa em branco - 1",
             "parameters": [],
             "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
-            "tags": None,
+            "tags": ['DEFAULT'],
             "updatedAt": mock.ANY,
             "uuid": mock.ANY,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
+
+        mock_core_v1_api.assert_any_call()
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
 
     def test_get_task_not_found(self):
         """
@@ -290,174 +348,248 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    # def test_update_task(self):
-    #     # task none
-    #     rv = TEST_CLIENT.patch("/tasks/foo", json={
-    #         "name": "foo 2",
-    #     })
-    #     result = rv.json()
-    #     expected = {"message": "The specified task does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+    def test_update_task(self):
+        """
+        Should return a http error 404 and a message 'The specified task does not exist'.
+        """
+        rv = TEST_CLIENT.patch("/tasks/foo", json={
+            "name": "foo 2",
+        })
+        result = rv.json()
+        expected = {"message": "The specified task does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     # task name already exists
-    #     rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-    #         "name": "foo 2",
-    #     })
-    #     result = rv.json()
-    #     expected = {"message": "a task with that name already exists"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 400)
+    def test_update_task_exists(self):
+        """
+        Should return a http error 400 and a message 'The task with that name already exists'.
+        """
+        task_id = util.MOCK_UUID_4
 
-    #     # invalid tags
-    #     rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-    #         "tags": ["UNK"],
-    #     })
-    #     result = rv.json()
-    #     self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
+            "name": "task-5",
+        })
+        result = rv.json()
+        expected = {"message": "a task with that name already exists"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
 
-    #     # update task using the same name
-    #     rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-    #         "name": "name foo",
-    #     })
-    #     result = rv.json()
-    #     self.assertEqual(rv.status_code, 200)
+    def test_update_task_unk_tags(self):
+        """
+        Should return a successfully updated task.
+        """
+        task_id = util.MOCK_UUID_5
 
-    #     # update task name
-    #     rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-    #         "name": "new name foo",
-    #     })
-    #     result = rv.json()
-    #     expected = {
-    #         "uuid": TASK_ID,
-    #         "name": "new name foo",
-    #         "description": DESCRIPTION,
-    #         "commands": COMMANDS,
-    #         "cpuLimit": "100m",
-    #         "cpuRequest": "100m",
-    #         "arguments": ARGUMENTS,
-    #         "category": CATEGORY,
-    #         "tags": ["UNK"],
-    #         "dataIn": DATA_IN,
-    #         "dataOut": DATA_OUT,
-    #         "docs": DOCS,
-    #         "hasNotebook": False,
-    #         "image": IMAGE,
-    #         "memoryLimit": "1Gi",
-    #         "memoryRequest": "1Gi",
-    #         "parameters": [],
-    #         "readinessProbeInitialDelaySeconds": "300",
-    #         "createdAt": CREATED_AT_ISO,
-    #     }
-    #     machine_generated = ["updatedAt"]
-    #     for attr in machine_generated:
-    #         self.assertIn(attr, result)
-    #         del result[attr]
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
+            "tags": ["UNK"],
+        })
+        result = rv.json()
+        expected = {
+            'arguments': None,
+            'category': 'DEFAULT',
+            'commands': None,
+            'cpuLimit': '2000m',
+            'cpuRequest': '100m',
+            'createdAt': mock.ANY,
+            'dataIn': None,
+            'dataOut': None,
+            'description': None,
+            'docs': None,
+            'hasNotebook': False,
+            'image': 'platiagro/platiagro-experiment-image:0.3.0',
+            'memoryLimit': '10Gi',
+            'memoryRequest': '2Gi',
+            'name': 'task-5',
+            'parameters': [],
+            'readinessProbeInitialDelaySeconds': 60,
+            'tags': ['UNK'],
+            'updatedAt': mock.ANY,
+            'uuid': 'uuid-5'
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
 
-    #     # update task tags
-    #     rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-    #         "tags": ["FEATURE_ENGINEERING"],
-    #     })
-    #     result = rv.json()
-    #     expected = {
-    #         "uuid": TASK_ID,
-    #         "name": "new name foo",
-    #         "description": DESCRIPTION,
-    #         "commands": COMMANDS,
-    #         "cpuLimit": "100m",
-    #         "cpuRequest": "100m",
-    #         "arguments": ARGUMENTS,
-    #         "category": CATEGORY,
-    #         "tags": ["FEATURE_ENGINEERING"],
-    #         "dataIn": DATA_IN,
-    #         "dataOut": DATA_OUT,
-    #         "docs": DOCS,
-    #         "hasNotebook": False,
-    #         "image": IMAGE,
-    #         "memoryLimit": "1Gi",
-    #         "memoryRequest": "1Gi",
-    #         "parameters": [],
-    #         "readinessProbeInitialDelaySeconds": "300",
-    #         "createdAt": CREATED_AT_ISO,
-    #     }
-    #     machine_generated = ["updatedAt"]
-    #     for attr in machine_generated:
-    #         self.assertIn(attr, result)
-    #         del result[attr]
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 200)
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    def test_update_task_name(
+        self,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
+        """
+        Should return a successfully updated task.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
+            "name": "name foo",
+        })
+        result = rv.json()
+        expected = {
+            'arguments': None,
+            'category': 'DEFAULT',
+            'commands': None,
+            'cpuLimit': '2000m',
+            'cpuRequest': '100m',
+            'createdAt': mock.ANY,
+            'dataIn': None,
+            'dataOut': None,
+            'description': None,
+            'docs': None,
+            'hasNotebook': False,
+            'image': 'platiagro/platiagro-experiment-image:0.3.0',
+            'memoryLimit': '10Gi',
+            'memoryRequest': '2Gi',
+            'name': 'name foo',
+            'parameters': [],
+            'readinessProbeInitialDelaySeconds': 60,
+            'tags': [],
+            'updatedAt': mock.ANY,
+            'uuid': 'uuid-5'
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
 
-    #     # update task experiment notebook
-    #     rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-    #         "experimentNotebook": loads(SAMPLE_NOTEBOOK),
-    #     })
-    #     result = rv.json()
-    #     expected = {
-    #         "uuid": TASK_ID,
-    #         "name": "new name foo",
-    #         "description": DESCRIPTION,
-    #         "commands": COMMANDS,
-    #         "arguments": ARGUMENTS,
-    #         "cpuLimit": "100m",
-    #         "cpuRequest": "100m",
-    #         "category": CATEGORY,
-    #         "tags": ["FEATURE_ENGINEERING"],
-    #         "dataIn": DATA_IN,
-    #         "dataOut": DATA_OUT,
-    #         "docs": DOCS,
-    #         "hasNotebook": True,
-    #         "image": IMAGE,
-    #         "memoryLimit": "1Gi",
-    #         "memoryRequest": "1Gi",
-    #         "parameters": [],
-    #         "readinessProbeInitialDelaySeconds": "300",
-    #         "createdAt": CREATED_AT_ISO,
-    #     }
-    #     machine_generated = ["updatedAt"]
-    #     for attr in machine_generated:
-    #         self.assertIn(attr, result)
-    #         del result[attr]
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 200)
+        mock_core_v1_api.assert_any_call()
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
 
-    #     # update task deployment notebook
-    #     rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-    #         "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
-    #     })
-    #     result = rv.json()
-    #     expected = {
-    #         "uuid": TASK_ID,
-    #         "name": "new name foo",
-    #         "description": DESCRIPTION,
-    #         "commands": COMMANDS,
-    #         "cpuLimit": "100m",
-    #         "cpuRequest": "100m",
-    #         "arguments": ARGUMENTS,
-    #         "category": CATEGORY,
-    #         "tags": ["FEATURE_ENGINEERING"],
-    #         "dataIn": DATA_IN,
-    #         "dataOut": DATA_OUT,
-    #         "docs": DOCS,
-    #         "hasNotebook": True,
-    #         "image": IMAGE,
-    #         "memoryLimit": "1Gi",
-    #         "memoryRequest": "1Gi",
-    #         "parameters": [],
-    #         "readinessProbeInitialDelaySeconds": "300",
-    #         "createdAt": CREATED_AT_ISO,
-    #     }
-    #     machine_generated = ["updatedAt"]
-    #     for attr in machine_generated:
-    #         self.assertIn(attr, result)
-    #         del result[attr]
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 200)
+    def test_update_task_tags(self):
+        """
+        Should return a successfully updated task.
+        """
+        task_id = util.MOCK_UUID_5
+
+        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
+            "tags": ["FEATURE_ENGINEERING"],
+        })
+        result = rv.json()
+        expected = {
+            "uuid": "uuid-5",
+            "name": "task-5",
+            "description": None,
+            "commands": None,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
+            "arguments": None,
+            "category": "DEFAULT",
+            "tags": ["FEATURE_ENGINEERING"],
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
+            "hasNotebook": False,
+            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": 60,
+            "createdAt": mock.ANY,
+        }
+        machine_generated = ["updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    def test_update_task_experiment_notebook(
+        self,
+        mock_core_v1_api,
+    ):
+        """
+        Should return a successfully updated task experiment notebook.
+        """
+        task_id = util.MOCK_UUID_5
+
+        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
+            "experimentNotebook": loads(util.SAMPLE_NOTEBOOK),
+        })
+        result = rv.json()
+        expected = {
+            "uuid": "uuid-5",
+            "name": "task-5",
+            "description": None,
+            "commands": None,
+            "arguments": None,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
+            "category": "DEFAULT",
+            "tags": [],
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
+            "hasNotebook": True,
+            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": 60,
+            "createdAt": mock.ANY,
+        }
+        machine_generated = ["updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
+        mock_core_v1_api.assert_any_call()
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    def test_update_task_deployment_notebook(self, mock_core_v1_api):
+        """
+        Should return a successfully updated task deployment notebook.
+        """
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
+            "deploymentNotebook": loads(util.SAMPLE_NOTEBOOK),
+        })
+        result = rv.json()
+        expected = {
+            "uuid": "uuid-4",
+            "name": "task-4",
+            "description": None,
+            "commands": None,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
+            "arguments": None,
+            "category": "DEFAULT",
+            "tags": [],
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
+            "hasNotebook": True,
+            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": 60,
+            "createdAt": mock.ANY,
+        }
+        machine_generated = ["updatedAt"]
+        for attr in machine_generated:
+            self.assertIn(attr, result)
+            del result[attr]
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
+        mock_core_v1_api.assert_any_call()
 
     def test_delete_task_not_found(self):
         """
-        Should return a http error 404 and a message 'specified task does not exist'.
+        Should return a http error 404 and a message 'The specified task does not exist'.
         """
         task_id = "unk"
 
@@ -468,11 +600,23 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-    def test_delete_task_success(self):
+    @ mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @ mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    def test_delete_task_success(
+        self,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
         """
         Should delete task successfully.
         """
-        task_id = util.MOCK_UUID_1
+        task_id = util.MOCK_UUID_4
 
         rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
         result = rv.json()
@@ -480,16 +624,5 @@ class TestTasks(unittest.TestCase):
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
 
-    def test_delete_multiple_tasks_success(self):
-        """
-        Should delete tasks successfully.
-        """
-        task_id_1 = util.MOCK_UUID_1
-        task_id_2 = util.MOCK_UUID_2
-
-        rv = TEST_CLIENT.post(f"/tasks/deletetasks", json=[task_id_1, task_id_2])
-        result = rv.json()
-
-        expected = {"message": "Successfully removed tasks"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
+        mock_core_v1_api.assert_any_call()
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)

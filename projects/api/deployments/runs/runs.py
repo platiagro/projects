@@ -144,7 +144,5 @@ async def handle_delete_runs(
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     run_controller = RunController(session)
-    run = run_controller.terminate_run(
-        project_id=project_id, deployment_id=deployment_id, run_id=run_id
-    )
+    run = run_controller.terminate_run(deployment_id=deployment_id)
     return run

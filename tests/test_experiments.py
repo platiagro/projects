@@ -158,7 +158,7 @@ class TestExperiments(unittest.TestCase):
                         "parameters": [],
                     },
                     "dependencies": [],
-                    "parameters": {},
+                    "parameters": {'dataset': 'iris.csv'},
                     "experimentId": mock.ANY,
                     "deploymentId": None,
                     "positionX": 0,

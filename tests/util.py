@@ -12,7 +12,7 @@ from projects import models
 MOCK_SET_USER_NAMESPACE = mock.MagicMock()
 MOCK_RUNS = mock.MagicMock()
 MOCK_RUN = mock.MagicMock(id="4546465")
-MOCK_LIST_RUNS = mock.MagicMock(return_value=mock.MagicMock(runs=[MOCK_RUN]))
+MOCK_LIST_RUNS = mock.MagicMock(return_value=mock.MagicMock(runs=[MOCK_RUN], next_page_token=None))
 MOCK_WORKFLOW_MANIFEST = open(
     "tests/resources/deployment_mock_manifest.json", "r"
 ).read()
@@ -83,9 +83,9 @@ MOCK_CORE_V1_API = mock.MagicMock(
 
 
 def mock_get_namespaced_custom_object(plural, **kwargs):
-    if plural == 'gateways':
+    if plural == "gateways":
         return {
-            'spec': {
+            "spec": {
                 "servers": [{}]}
         }
     elif plural == "notebooks":
@@ -144,26 +144,33 @@ IRIS_DATA_ARRAY = [
 
 IRIS_DATAFRAME = pd.DataFrame(IRIS_DATA_ARRAY, columns=IRIS_COLUMNS)
 
-MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3 = "uuid-1", "uuid-2", "uuid-3"
-MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3 = (
+MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3, MOCK_UUID_4, MOCK_UUID_5 = "uuid-1", "uuid-2", "uuid-3", "uuid-4", "uuid-5"
+MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3, MOCK_PROJECT_NAME_4 = (
     "project-1",
     "project-2",
     "project-3",
+    "project-4",
 )
 MOCK_EXPERIMENT_NAME_1, MOCK_EXPERIMENT_NAME_2 = "experiment-1", "experiment-2"
 MOCK_DEPLOYMENT_NAME_1, MOCK_DEPLOYMENT_NAME_2 = "deployment-1", "deployment-2"
-MOCK_TASK_NAME_1, MOCK_TASK_NAME_2, MOCK_TASK_NAME_3 = (
+MOCK_TASK_NAME_1, MOCK_TASK_NAME_2, MOCK_TASK_NAME_3, MOCK_TASK_NAME_4, MOCK_TASK_NAME_5 = (
     "task-1",
     "task-2",
     "task-3",
+    "task-4",
+    "task-5",
 )
 MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
-MOCK_CREATED_AT_1, MOCK_CREATED_AT_2, MOCK_CREATED_AT_3 = (
+MOCK_CREATED_AT_1, MOCK_CREATED_AT_2, MOCK_CREATED_AT_3, MOCK_CREATED_AT_4, MOCK_CREATED_AT_5 = (
+    datetime.utcnow(),
+    datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
 )
-MOCK_UPDATED_AT_1, MOCK_UPDATED_AT_2, MOCK_UPDATED_AT_3 = (
+MOCK_UPDATED_AT_1, MOCK_UPDATED_AT_2, MOCK_UPDATED_AT_3, MOCK_UPDATED_AT_4, MOCK_UPDATED_AT_5 = (
+    datetime.utcnow(),
+    datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
@@ -482,18 +489,66 @@ MOCK_TASK_3 = {
     "uuid": MOCK_UUID_3,
 }
 
+MOCK_TASK_4 = {
+    "arguments": None,
+    "category": "DEFAULT",
+    "commands": None,
+    "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
+    "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
+    "createdAt": MOCK_CREATED_AT_4.isoformat(),
+    "dataIn": None,
+    "dataOut": None,
+    "description": None,
+    "docs": None,
+    "hasNotebook": False,
+    "image": models.task.TASK_DEFAULT_EXPERIMENT_IMAGE,
+    "memoryLimit": models.task.TASK_DEFAULT_MEMORY_LIMIT,
+    "memoryRequest": models.task.TASK_DEFAULT_MEMORY_REQUEST,
+    "name": MOCK_TASK_NAME_4,
+    "parameters": [],
+    "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
+    "tags": [],
+    "updatedAt": MOCK_UPDATED_AT_4.isoformat(),
+    "uuid": MOCK_UUID_4,
+}
+
+MOCK_TASK_5 = {
+    "arguments": None,
+    "category": "DEFAULT",
+    "commands": None,
+    "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
+    "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
+    "createdAt": MOCK_CREATED_AT_5.isoformat(),
+    "dataIn": None,
+    "dataOut": None,
+    "description": None,
+    "docs": None,
+    "hasNotebook": False,
+    "image": models.task.TASK_DEFAULT_EXPERIMENT_IMAGE,
+    "memoryLimit": models.task.TASK_DEFAULT_MEMORY_LIMIT,
+    "memoryRequest": models.task.TASK_DEFAULT_MEMORY_REQUEST,
+    "name": MOCK_TASK_NAME_5,
+    "parameters": [],
+    "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
+    "tags": [],
+    "updatedAt": MOCK_UPDATED_AT_5.isoformat(),
+    "uuid": MOCK_UUID_5,
+}
+
 MOCK_TASK_LIST = {
     "tasks": [
         MOCK_TASK_1,
         MOCK_TASK_2,
         MOCK_TASK_3,
+        MOCK_TASK_4,
+        MOCK_TASK_5,
     ],
-    "total": 3,
+    "total": 5,
 }
 
 MOCK_TASK_LIST_SORTED_BY_NAME_DESC = {
     "tasks": MOCK_TASK_LIST["tasks"][::-1],
-    "total": 3,
+    "total": 5,
 }
 
 MOCK_TEMPLATE_1 = {
@@ -651,6 +706,22 @@ def create_mocks():
             tags=[],
             created_at=MOCK_CREATED_AT_3,
             updated_at=MOCK_UPDATED_AT_3,
+        ),
+        models.Task(
+            uuid=MOCK_UUID_4,
+            name=MOCK_TASK_NAME_4,
+            category="DEFAULT",
+            tags=[],
+            created_at=MOCK_CREATED_AT_4,
+            updated_at=MOCK_UPDATED_AT_4,
+        ),
+        models.Task(
+            uuid=MOCK_UUID_5,
+            name=MOCK_TASK_NAME_5,
+            category="DEFAULT",
+            tags=[],
+            created_at=MOCK_CREATED_AT_4,
+            updated_at=MOCK_UPDATED_AT_4,
         ),
     ]
     session.bulk_save_objects(objects)
@@ -818,3 +889,4 @@ def delete_mocks():
 
 
 FILE_NOT_FOUND_ERROR = FileNotFoundError("The specified dataset does not exist")
+SAMPLE_NOTEBOOK = '{"cells": [{"cell_type": "code","execution_count": null,"metadata": {"tags": ["parameters"]},"outputs":[],"source":["shuffle = True #@param {type: \\"boolean\\"}"]}],"metadata": {"kernelspec": {"display_name": "Python 3","language": "python","name": "python3"},"language_info": {"codemirror_mode": {"name": "ipython","version": 3},"file_extension": ".py","mimetype": "text/x-python","name": "python","nbconvert_exporter": "python","pygments_lexer": "ipython3","version": "3.6.9"}},"nbformat": 4,"nbformat_minor": 4}'

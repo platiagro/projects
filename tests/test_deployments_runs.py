@@ -83,9 +83,13 @@ class TestDeploymentsRuns(unittest.TestCase):
     @mock.patch(
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
-
     )
-    def test_create_project_deployment_run(self, mock_custom_objects_api, mock_core_v1_api, mock_kfp_client):
+    def test_create_project_deployment_run(
+        self,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+        mock_kfp_client
+    ):
         """
         Should raise an exception when ...
         """
@@ -95,24 +99,68 @@ class TestDeploymentsRuns(unittest.TestCase):
         rv = TEST_CLIENT.post(f"/projects/{project_id}/deployments/{deployment_id}/runs")
         result = rv.json()
         self.assertIsInstance(result, dict)
-        # self.assertIn("uuid", result)
-        # self.assertIn("operators", result)
-        # self.assertEqual(deployment_id, result["deploymentId"])
-        # self.assertEqual(rv.status_code, 200)
+        self.assertIn("uuid", result)
+        self.assertIn("operators", result)
+        self.assertEqual(deployment_id, result["deploymentId"])
+        self.assertEqual(rv.status_code, 200)
 
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_core_v1_api.assert_any_call()
-        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_custom_objects_api.assert_any_call()
 
-#     def test_get_run(self):
-#         rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
-#         result = rv.json()
-#         self.assertIsInstance(result, dict)
-#         self.assertEqual(rv.status_code, 200)
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_get_run(self, mock_kfp_client):
+        """
+        Should raise an exception when ...
+        """
+        project_id = util.MOCK_UUID_1
+        deployment_id = util.MOCK_UUID_1
 
-# #    def test_delete_run(self):
-# #        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/runs/latest")
-# #        result = rv.json()
-# #        expected = {"message": "Deployment deleted"}
-# #        self.assertDictEqual(expected, result)
-# #        self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/deployments/{deployment_id}/runs/latest")
+        result = rv.json()
+        self.assertIsInstance(result, dict)
+        self.assertEqual(rv.status_code, 200)
+
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
+    # @mock.patch(
+    #     "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
+    #     return_value={"items": []},
+    # )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    def test_delete_run(self, mock_custom_objects_api, mock_core_v1_api, mock_kfp_client, mock_load_kube_config):
+        """
+        Should raise an exception when ...
+        """
+        project_id = util.MOCK_UUID_1
+        deployment_id = util.MOCK_UUID_1
+        run_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.delete(f"/projects/{project_id}/deployments/{deployment_id}/runs/latest")
+        result = rv.json()
+        expected = {"message": "Deployment deleted"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
+        mock_load_kube_config.assert_any_call()
+        # mock_list_namespaced_custom_object.assert_any_call(
+        #     "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
+        # )
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_core_v1_api.assert_any_call()
+        mock_custom_objects_api.assert_any_call()

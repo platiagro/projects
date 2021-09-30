@@ -237,7 +237,6 @@ class TestProjects(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
     @mock.patch(
         "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
         return_value={"items": []},
@@ -247,7 +246,7 @@ class TestProjects(unittest.TestCase):
         return_value=util.MOCK_KFP_CLIENT,
     )
     def test_delete_project_success(
-        self, mock_kfp_client, mock_list_namespaced_custom_object, mock_load_kube_config
+        self, mock_kfp_client, mock_list_namespaced_custom_object
     ):
         """
         Should delete project successfully.
@@ -260,7 +259,6 @@ class TestProjects(unittest.TestCase):
         expected = {"message": "Project deleted"}
         self.assertDictEqual(expected, result)
 
-        mock_load_kube_config.assert_any_call()
         mock_list_namespaced_custom_object.assert_any_call(
             "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
         )
@@ -277,7 +275,6 @@ class TestProjects(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
     @mock.patch(
         "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
         return_value={"items": []},
@@ -287,7 +284,7 @@ class TestProjects(unittest.TestCase):
         return_value=util.MOCK_KFP_CLIENT,
     )
     def test_delete_multiple_projects_success(
-        self, mock_kfp_client, mock_list_namespaced_custom_object, mock_load_kube_config
+        self, mock_kfp_client, mock_list_namespaced_custom_object
     ):
         """
         Should delete projects successfully.
@@ -304,7 +301,6 @@ class TestProjects(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        mock_load_kube_config.assert_any_call()
         mock_list_namespaced_custom_object.assert_any_call(
             "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
         )

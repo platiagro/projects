@@ -104,7 +104,6 @@ class TestDeployments(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
     @mock.patch(
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
@@ -122,7 +121,6 @@ class TestDeployments(unittest.TestCase):
         mock_kfp_client,
         mock_core_v1_api,
         mock_custom_objects_api,
-        mock_load_kube_config,
     ):
         """
         Should create and return an deployment successfully.
@@ -153,7 +151,7 @@ class TestDeployments(unittest.TestCase):
                             "deploymentId": mock.ANY,
                             "experimentId": None,
                             "name": util.MOCK_TASK_NAME_1,
-                            "parameters": {},
+                            "parameters": {'dataset': 'iris.csv'},
                             "positionX": 0,
                             "positionY": 0,
                             "status": "Setted up",
@@ -195,12 +193,11 @@ class TestDeployments(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_load_kube_config.assert_any_call()
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_core_v1_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
-    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
+    # @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
     @mock.patch(
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
@@ -218,7 +215,6 @@ class TestDeployments(unittest.TestCase):
         mock_kfp_client,
         mock_core_v1_api,
         mock_custom_objects_api,
-        mock_load_kube_config,
     ):
         """
         Should create and return an deployment successfully.
@@ -292,7 +288,6 @@ class TestDeployments(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_load_kube_config.assert_any_call()
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_core_v1_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
@@ -468,7 +463,6 @@ class TestDeployments(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
     @mock.patch(
         "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
         return_value={"items": []},
@@ -478,7 +472,7 @@ class TestDeployments(unittest.TestCase):
         return_value=util.MOCK_KFP_CLIENT,
     )
     def test_delete_deployment_success(
-        self, mock_kfp_client, mock_list_namespaced_custom_object, mock_load_kube_config
+        self, mock_kfp_client, mock_list_namespaced_custom_object
     ):
         """
         Should delete deployment successfully.
@@ -493,7 +487,6 @@ class TestDeployments(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        mock_load_kube_config.assert_any_call()
         mock_list_namespaced_custom_object.assert_any_call(
             "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
         )
