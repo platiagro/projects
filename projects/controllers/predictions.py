@@ -7,6 +7,7 @@ from fastapi import background
 
 import requests
 from platiagro import load_dataset
+from requests.api import request
 
 from projects.controllers.utils import (
     parse_dataframe_to_seldon_request,
@@ -53,10 +54,8 @@ class PredictionController:
             try:
                 dataset = load_dataset(dataset)
                 request = parse_dataframe_to_seldon_request(dataframe=dataset)
-
             except AttributeError:
                 request = parse_file_buffer_to_seldon_request(file=dataset)
-
             except FileNotFoundError:
                 raise BadRequest("a valid dataset is required")
 
@@ -140,11 +139,42 @@ class PredictionController:
         prediction: models.prediction.Prediction
 
         """
-        response = requests.post(url=url, json=request_body)
+        print(request_body)
+        request_body = {
+            "data": {
+                "names": [
+                    "sepal_length",
+                    "sepal_width",
+                    "petal_length",
+                    "petal_width",
+                    "species",
+                ],
+                "ndarray": [
+                    [5.1, 3.5, 1.4, 0.2, "setosa"],
+                    [4.9, 3.0, 1.4, 0.2, "setosa"],
+                    [4.7, 3.2, 1.3, 0.2, "setosa"],
+                    [4.6, 3.1, 1.5, 0.2, "setosa"],
+                    [5.0, 3.6, 1.4, 0.2, "setosa"],
+                    [5.4, 3.9, 1.7, 0.4, "setosa"],
+                    [4.6, 3.4, 1.4, 0.3, "setosa"],
+                    [5.0, 3.4, 1.5, 0.2, "setosa"],
+                    [4.4, 2.9, 1.4, 0.2, "setosa"],
+                    [4.9, 3.1, 1.5, 0.1, "setosa"],
+                    [5.4, 3.7, 1.5, 0.2, "setosa"],
+                    [4.8, 3.4, 1.6, 0.2, "setosa"],
+                    [4.8, 3.0, 1.4, 0.1, "setosa"],
+                    [4.3, 3.0, 1.1, 0.1, "setosa"],
+                ],
+            },
+            "meta": {},
+        }
+        headers = {"Content-type": "application/json", "Accept": "*/*"}
+        response = requests.post(url=url, json=request_body, headers=headers)
+        print(response.reason)
+
         try:
             response_content_json = json.loads(response._content)
         except json.decoder.JSONDecodeError:
-            print(response.reason)
             prediction_object.status = "failed"
             self.session.commit()
             raise InternalServerError(response._content)
