@@ -3,11 +3,9 @@
 import json
 
 from typing import Optional
-from fastapi import background
 
 import requests
 from platiagro import load_dataset
-from requests.api import request
 
 from projects.controllers.utils import (
     parse_dataframe_to_seldon_request,

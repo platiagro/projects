@@ -19,7 +19,6 @@ from projects.controllers import (
     PredictionController,
     ProjectController,
 )
-from projects.controllers.utils import uuid_alpha
 from projects.schemas import Prediction
 
 from projects.exceptions import BadRequest
