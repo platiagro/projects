@@ -52,7 +52,7 @@ async def handle_post_prediction(
 
     Returns
     -------
-    Prediction: projects.schema.prediction.Prediction
+    Prediction: projects.schemas.prediction.Prediction
     """
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
