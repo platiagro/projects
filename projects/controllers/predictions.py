@@ -7,9 +7,11 @@ import requests
 from platiagro import load_dataset
 
 from projects import models
-from projects.controllers.utils import (parse_dataframe_to_seldon_request,
-                                        parse_file_buffer_to_seldon_request,
-                                        uuid_alpha)
+from projects.controllers.utils import (
+    parse_dataframe_to_seldon_request,
+    parse_file_buffer_to_seldon_request,
+    uuid_alpha,
+)
 from projects.exceptions import BadRequest, InternalServerError
 from projects.kubernetes.seldon import get_seldon_deployment_url
 
