@@ -95,7 +95,7 @@ class PredictionController:
         response_body: Optional[dict] = None,
     ):
         """
-        Creates a prediction objec in database.
+        Creates a prediction object in database.
 
         Parameters
         ----------
@@ -137,7 +137,6 @@ class PredictionController:
 
         Returns
         -------
-        prediction: models.prediction.Prediction
 
         """
 
