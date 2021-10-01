@@ -53,7 +53,7 @@
 				"request": "launch",
 				"module": "pytest",
 				"args": [
-					"tests/test_predictions.py"
+					"tests/"
 				],
 				"jinja": true
 			}
