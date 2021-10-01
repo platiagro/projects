@@ -3,26 +3,15 @@
 from json.decoder import JSONDecodeError
 from typing import Optional
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    Header,
-    Request,
-    UploadFile,
-    BackgroundTasks,
-)
+from fastapi import (APIRouter, BackgroundTasks, Depends, File, Header,
+                     Request, UploadFile)
 from sqlalchemy.orm import Session
 
-from projects.controllers import (
-    DeploymentController,
-    PredictionController,
-    ProjectController,
-)
-from projects.schemas import Prediction
-
-from projects.exceptions import BadRequest
+from projects.controllers import (DeploymentController, PredictionController,
+                                  ProjectController)
 from projects.database import session_scope
+from projects.exceptions import BadRequest
+from projects.schemas import Prediction
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/predictions",

@@ -2,7 +2,7 @@
 """Prediction model."""
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Text, String
+from sqlalchemy import Column, DateTime, String, Text
 
 from projects.database import Base
 
