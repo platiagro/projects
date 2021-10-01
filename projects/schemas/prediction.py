@@ -9,3 +9,9 @@ class Prediction(BaseModel):
     uuid: str
     deployment_id: str
     status: str
+
+    @classmethod
+    def from_orm(cls, model):
+        return Prediction(
+            uuid=model.uuid, deployment_id=model.deployment_id, status=model.status
+        )

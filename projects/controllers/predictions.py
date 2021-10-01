@@ -69,11 +69,7 @@ class PredictionController:
             status="started",
         )
 
-        prediction_as_schema = schemas.Prediction(
-            uuid=prediction_object.uuid,
-            deployment_id=prediction_object.deployment_id,
-            status=prediction_object.status,
-        )
+        prediction_as_schema = schemas.Prediction.from_orm(prediction_object)
 
         url = get_seldon_deployment_url(deployment_id=deployment_id, external_url=True)
         self.background_tasks.add_task(
