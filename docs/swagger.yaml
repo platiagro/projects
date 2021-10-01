@@ -2145,6 +2145,7 @@ components:
           format: uuid
         status:
           type: string    
+          enum: [not_started, started, done, failed]
     Data:
       type: object
       properties:
