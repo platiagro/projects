@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Predictions controller."""
 import json
+import logging
 from typing import Optional
 
 import requests
 from platiagro import load_dataset
+from requests.models import Response
 
 from projects import models, schemas
 from projects.controllers.utils import (
@@ -133,15 +135,12 @@ class PredictionController:
         -------
 
         """
-
         response = requests.post(url=url, json=request_body)
-        try:
-            response_content_json = json.loads(response._content)
-        except json.decoder.JSONDecodeError:
+        if response.status_code == 200:
+            prediction_object.status = "done"
+        else:
+            logging.info(f"Unable to acquire prediction data: {response._content}")
             prediction_object.status = "failed"
-            self.session.commit()
-            raise InternalServerError(response._content)
 
-        prediction_object.status = "done"
-        prediction_object.response_body = json.dumps(response_content_json)
+        prediction_object.response_body = response._content
         self.session.commit()
