@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """Seldon utility functions."""
+import asyncio
+
 from kubernetes import client
+from kubernetes.client.rest import ApiException
 from kubernetes.watch import Watch
 
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.istio import get_cluster_ip, get_protocol
 from projects.kubernetes.kube_config import load_kube_config
+
+EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
 
 
 def get_seldon_deployment_url(deployment_id, ip=None, protocol=None, external_url=True):
@@ -87,32 +92,33 @@ def list_project_seldon_deployments(project_id):
     custom_api = client.CustomObjectsApi()
 
     deployments = custom_api.list_namespaced_custom_object(
-            group='machinelearning.seldon.io',
-            version='v1',
-            namespace=KF_PIPELINES_NAMESPACE,
-            plural='seldondeployments',
-            label_selector=f'projectId={project_id}',
+        group='machinelearning.seldon.io',
+        version='v1',
+        namespace=KF_PIPELINES_NAMESPACE,
+        plural='seldondeployments',
+        label_selector=f'projectId={project_id}',
     )["items"]
 
     return deployments
 
-def watch_deployment_pods(deployment_id):
-    w = Watch()
+
+async def watch_deployment_pods(deployment_id, queue):
     load_kube_config()
     v1 = client.CoreV1Api()
-    
+    w = Watch()
+
     for pod in w.stream(v1.list_namespaced_pod,
-        namespace=KF_PIPELINES_NAMESPACE,
-        label_selector=f'seldon-deployment-id={deployment_id}'):
+                        namespace=KF_PIPELINES_NAMESPACE,
+                        label_selector=f'seldon-deployment-id={deployment_id}'):
         if pod["type"] == "ADDED":
             pod = pod["object"]
             for container in pod.spec.containers:
-                if container.name not in EXCLUDE_CONTAINERS and "name" in pod.metadata.annotations:
+                if container.name not in EXCLUDE_CONTAINERS:
                     print(f"added container {container.name} to queue {hex(id(queue))}")
-                    executor.submit(log_stream, pod, container, queue)
+                    await asyncio.create_task(log_stream(pod, container, queue))
 
 
-def log_stream(pod, container, queue):
+async def log_stream(pod, container, queue):
     """
     Generates log stream of given pod's container.
 
@@ -141,7 +147,8 @@ def log_stream(pod, container, queue):
             tail_lines=0,
             timestamps=True
         ):
-            queue.put(streamline)
+            print(f"botando output na pilha {hex(id(queue))}")
+            await queue.put(streamline)
 
     except RuntimeError as e:
         logging.exception(e)
@@ -155,4 +162,3 @@ def log_stream(pod, container, queue):
         Expected behavior when trying to connect to a container that isn't ready yet.
         """
         pass
-

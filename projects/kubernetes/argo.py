@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 """Argo Workflows utility functions."""
+import asyncio
+
 from queue import Queue
 
+from kubernetes.client.rest import ApiException
 from kubernetes import client
 from kubernetes.watch import Watch
 
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.kube_config import load_kube_config
 EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
+
 
 def list_workflows(run_id):
     """
@@ -73,7 +77,8 @@ def list_workflow_pods(run_id: str):
 
     return pod_list
 
-def watch_workflow_pods(run_id: str, executor, queue):
+
+async def watch_workflow_pods(run_id: str, queue):
     workflows = list_workflows(run_id)
     if len(workflows) == 0:
         return []
@@ -84,17 +89,17 @@ def watch_workflow_pods(run_id: str, executor, queue):
     v1 = client.CoreV1Api()
     w = Watch()
     for pod in w.stream(v1.list_namespaced_pod,
-                               namespace=KF_PIPELINES_NAMESPACE,
-                               label_selector=f"workflows.argoproj.io/workflow={workflow_name}"):
+                        namespace=KF_PIPELINES_NAMESPACE,
+                        label_selector=f"workflows.argoproj.io/workflow={workflow_name}"):
         if pod["type"] == "ADDED":
             pod = pod["object"]
             for container in pod.spec.containers:
                 if container.name not in EXCLUDE_CONTAINERS and "name" in pod.metadata.annotations:
                     print(f"added container {container.name} to queue {hex(id(queue))}")
-                    executor.submit(log_stream, pod, container, queue)
+                    await asyncio.create_task(log_stream(pod, container, queue))
 
 
-def log_stream(pod, container, queue):
+async def log_stream(pod, container, queue):
     """
     Generates log stream of given pod's container.
 
@@ -123,7 +128,7 @@ def log_stream(pod, container, queue):
             tail_lines=0,
             timestamps=True
         ):
-            queue.put(streamline)
+            await queue.put(streamline)
 
     except RuntimeError as e:
         logging.exception(e)
@@ -137,4 +142,3 @@ def log_stream(pod, container, queue):
         Expected behavior when trying to connect to a container that isn't ready yet.
         """
         pass
-

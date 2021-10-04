@@ -220,30 +220,41 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     return clean_zip_file_content
 
 
-
-
-
-async def wait_for_client(req):
+async def wait_for_client(req, executor):
     print("waiting")
-    while True:
-        if await req.is_disconnected():
-            break
-    print("client disconnected!!!")
-    return True
+    try:
+        while True:
+            await asyncio.sleep(2)
+            if await req.is_disconnected():
+                executor.shutdown(wait=False)
+                break
+    except asyncio.CancelledError as e:
+        print("encerrando")
+        executor.shutdown(wait=False)
+    print("depois do except")
 
 
 def is_disconnected(req, executor):
-    f = asyncio.run(wait_for_client(req))
+    f = asyncio.run(wait_for_client(req, executor))
     if f.result():
         print("Trying to disconnect")
         executor.shutdown(wait=False)
 
 
-def pop_log_queue(queue):
+# async def pop_log_queue(queue,req):
+#     while True:
+#         if await req.is_disconnected():
+#             break
+#         out = queue.get()
+#         print(out)
+#         if out == '':
+#             return
+#         yield out
+async def pop_log_queue(req, queue):
+    # try:
+    print(f"iniciando leitura da pilha {hex(id(queue))}")
     while True:
-
-        out = queue.get()
+        out = await queue.get()
         print(out)
-        if out == '':
-            return
+
         yield out

@@ -2,7 +2,7 @@
 """Experiments API Router."""
 
 from typing import Optional
-
+import asyncio
 
 from fastapi import APIRouter, Depends, Header, Request
 from sse_starlette.sse import EventSourceResponse
@@ -169,6 +169,8 @@ async def handle_log_deployment(req:Request, experiment_id: str):
     -------
     EventSourceResponse
     """
+
     controller = LogController()
     stream = controller.experiment_event_logs(experiment_id, req)
     return EventSourceResponse(stream)
+

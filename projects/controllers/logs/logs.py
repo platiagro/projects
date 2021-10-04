@@ -264,7 +264,8 @@ class LogController:
             Expected behavior when trying to connect to a container that isn't ready yet.
             """
             pass
-    def deployment_event_logs(self, deployment_id: str):
+
+    def deployment_event_logs(self, deployment_id: str, req):
         """
         Search for online pods to start log stream
 
@@ -277,12 +278,9 @@ class LogController:
             Iterator
         """
 
-        watch_deployment_pods(deployment_id)
-        executor = futures.ThreadPoolExecutor(5)
-        q = Queue()
-        executor.submit(watch_deployment_pods, deployment_id, executor, q)
-
-        return pop_log_queue(q)
+        q = asyncio.Queue()
+        asyncio.create_task(watch_deployment_pods(deployment_id, q))
+        return pop_log_queue(req, q)
 
     def experiment_event_logs(self, experiment_id: str, req):
         """
@@ -297,9 +295,6 @@ class LogController:
             Iterator
         """
         run_id = get_latest_run_id(experiment_id)
-        executor = futures.ThreadPoolExecutor(10)
-        executor.submit(is_disconnected, req, executor)
-        q = Queue()
-        executor.submit(watch_workflow_pods, run_id, executor, q)
-
-        return pop_log_queue(q)
+        q = asyncio.Queue()
+        asyncio.create_task(watch_workflow_pods(run_id, q))
+        return pop_log_queue(req, q)
