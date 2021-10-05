@@ -31,10 +31,10 @@ from kubernetes.client.rest import ApiException
 EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
 LOG_PATTERN = re.compile(r"(.*?)\s(INFO|WARN|WARNING|ERROR|DEBUG)\s*(.*)")
 LOG_LEVELS = {
-    'info': 'INFO',
-    'debug': 'DEBUG',
-    'error': 'ERROR',
-    'warn': 'ERROR',
+    "info": "INFO",
+    "debug": "DEBUG",
+    "error": "ERROR",
+    "warn": "ERROR",
 }
 
 
@@ -43,7 +43,13 @@ class LogController:
     q_pods = Queue()
     q_logs = Queue()
 
-    def list_logs(self, project_id: str, run_id: str, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
+    def list_logs(
+        self,
+        project_id: str,
+        run_id: str,
+        experiment_id: Optional[str] = None,
+        deployment_id: Optional[str] = None,
+    ):
         """
         Lists logs from a run.
 
@@ -87,7 +93,7 @@ class LogController:
 
         # for now, we don't want log level as 'WARN' so we will change to 'DEBUG'
         for log in logs:
-            log.level = LOG_LEVELS.get(log.level.lower(), 'INFO')
+            log.level = LOG_LEVELS.get(log.level.lower(), "INFO")
 
         # Sorts logs by creation date DESC
         logs = sorted(logs, key=lambda l: l.created_at, reverse=True)
@@ -120,7 +126,10 @@ class LogController:
                     if container.env is None:
                         task_name = pod.metadata.name
                     else:
-                        task_name = next((e.value for e in container.env if e.name == "TASK_NAME"), pod.metadata.name)
+                        task_name = next(
+                            (e.value for e in container.env if e.name == "TASK_NAME"),
+                            pod.metadata.name,
+                        )
 
                     created_at = pod.metadata.creation_timestamp
 
@@ -130,7 +139,9 @@ class LogController:
 
         return logs
 
-    def split_messages(self, raw_logs: str, task_name: str, created_at: datetime.datetime):
+    def split_messages(
+        self, raw_logs: str, task_name: str, created_at: datetime.datetime
+    ):
         """
         Splits raw log text into a list of log schemas.
 
@@ -196,7 +207,9 @@ class LogController:
                 # look for timestamp at the beginning of line.
                 line = re.sub(
                     r"^([0-9]{4}(-[0-9]{2}){2}T[0-9]{2}(:[0-9]{2}){2}.[0-9]+Z\s)",
-                    "", line, 2
+                    "",
+                    line,
+                    2,
                 )
 
                 message_lines.append(line)
@@ -237,7 +250,10 @@ class LogController:
         if container.env is None:
             task_name = pod.metadata.name
         else:
-            task_name = next((e.value for e in container.env if e.name == "TASK_NAME"), pod.metadata.name)
+            task_name = next(
+                (e.value for e in container.env if e.name == "TASK_NAME"),
+                pod.metadata.name,
+            )
         created_at = pod.metadata.creation_timestamp
         try:
             for streamline in w.stream(
@@ -247,10 +263,10 @@ class LogController:
                 container=container_name,
                 pretty="true",
                 tail_lines=0,
-                timestamps=True
+                timestamps=True,
             ):
                 for message in self.split_messages(streamline, task_name, created_at):
-                    yield(message.json())
+                    yield (message.json())
 
         except RuntimeError as e:
             logging.exception(e)
@@ -279,7 +295,9 @@ class LogController:
         """
 
         q = asyncio.Queue()
-        asyncio.create_task(watch_deployment_pods(deployment_id, q))
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, watch_deployment_pods, deployment_id, q, loop)
+        print(f"iniciando leitura da pilha {hex(id(q))}")
         return pop_log_queue(req, q)
 
     def experiment_event_logs(self, experiment_id: str, req):

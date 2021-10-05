@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Seldon utility functions."""
 import asyncio
+import time
 
 from kubernetes import client
 from kubernetes.client.rest import ApiException
@@ -43,7 +44,7 @@ def get_seldon_deployment_url(deployment_id, ip=None, protocol=None, external_ur
         if not protocol:
             protocol = get_protocol()
 
-        return f'{protocol}://{ip}/seldon/{KF_PIPELINES_NAMESPACE}/{deployment_id}/api/v1.0/predictions'
+        return f"{protocol}://{ip}/seldon/{KF_PIPELINES_NAMESPACE}/{deployment_id}/api/v1.0/predictions"
     else:
         return f"http://{deployment_id}-model.{KF_PIPELINES_NAMESPACE}:8000/api/v1.0/predictions"
 
@@ -69,7 +70,7 @@ def list_deployment_pods(deployment_id):
     core_api = client.CoreV1Api()
     pod_list = core_api.list_namespaced_pod(
         namespace=KF_PIPELINES_NAMESPACE,
-        label_selector=f'seldon-deployment-id={deployment_id}',
+        label_selector=f"seldon-deployment-id={deployment_id}",
     ).items
 
     return pod_list
@@ -92,33 +93,35 @@ def list_project_seldon_deployments(project_id):
     custom_api = client.CustomObjectsApi()
 
     deployments = custom_api.list_namespaced_custom_object(
-        group='machinelearning.seldon.io',
-        version='v1',
+        group="machinelearning.seldon.io",
+        version="v1",
         namespace=KF_PIPELINES_NAMESPACE,
-        plural='seldondeployments',
-        label_selector=f'projectId={project_id}',
+        plural="seldondeployments",
+        label_selector=f"projectId={project_id}",
     )["items"]
 
     return deployments
 
 
-async def watch_deployment_pods(deployment_id, queue):
+def watch_deployment_pods(deployment_id, queue, event_loop):
     load_kube_config()
     v1 = client.CoreV1Api()
     w = Watch()
 
-    for pod in w.stream(v1.list_namespaced_pod,
-                        namespace=KF_PIPELINES_NAMESPACE,
-                        label_selector=f'seldon-deployment-id={deployment_id}'):
+    for pod in w.stream(
+        v1.list_namespaced_pod,
+        namespace=KF_PIPELINES_NAMESPACE,
+        label_selector=f"seldon-deployment-id={deployment_id}",
+    ):
         if pod["type"] == "ADDED":
             pod = pod["object"]
             for container in pod.spec.containers:
                 if container.name not in EXCLUDE_CONTAINERS:
                     print(f"added container {container.name} to queue {hex(id(queue))}")
-                    await asyncio.create_task(log_stream(pod, container, queue))
+                    event_loop.run_in_executor(None, log_stream, pod, container, queue)
 
 
-async def log_stream(pod, container, queue):
+def log_stream(pod, container, queue):
     """
     Generates log stream of given pod's container.
 
@@ -145,10 +148,10 @@ async def log_stream(pod, container, queue):
             container=container_name,
             pretty="true",
             tail_lines=0,
-            timestamps=True
+            timestamps=True,
         ):
             print(f"botando output na pilha {hex(id(queue))}")
-            await queue.put(streamline)
+            queue.put_nowait(streamline)
 
     except RuntimeError as e:
         logging.exception(e)
