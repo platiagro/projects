@@ -8,8 +8,6 @@ import logging
 import asyncio
 
 from concurrent import futures
-from threading import Thread
-from queue import Queue
 from typing import List, Optional
 
 from projects.schemas.log import Log, LogList
@@ -20,7 +18,6 @@ from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.seldon import watch_deployment_pods
 from projects.kubernetes.utils import get_container_logs
 from projects.kubernetes.utils import pop_log_queue
-from projects.kubernetes.utils import is_disconnected
 from projects.kubernetes.kube_config import load_kube_config
 
 from kubernetes import client
@@ -39,10 +36,6 @@ LOG_LEVELS = {
 
 
 class LogController:
-
-    q_pods = Queue()
-    q_logs = Queue()
-
     def list_logs(
         self,
         project_id: str,
@@ -228,59 +221,6 @@ class LogController:
 
         return logs
 
-    def log_stream(self, pod, container):
-        """
-        Generates log stream of given pod's container.
-
-        Parameters
-        ----------
-            pod: str
-            container: str
-
-        Yields
-        ------
-            str
-        """
-        load_kube_config()
-        v1 = client.CoreV1Api()
-        w = Watch()
-        pod_name = pod.metadata.name
-        namespace = pod.metadata.namespace
-        container_name = container.name
-        if container.env is None:
-            task_name = pod.metadata.name
-        else:
-            task_name = next(
-                (e.value for e in container.env if e.name == "TASK_NAME"),
-                pod.metadata.name,
-            )
-        created_at = pod.metadata.creation_timestamp
-        try:
-            for streamline in w.stream(
-                v1.read_namespaced_pod_log,
-                name=pod_name,
-                namespace=namespace,
-                container=container_name,
-                pretty="true",
-                tail_lines=0,
-                timestamps=True,
-            ):
-                for message in self.split_messages(streamline, task_name, created_at):
-                    yield (message.json())
-
-        except RuntimeError as e:
-            logging.exception(e)
-            return
-
-        except asyncio.CancelledError as e:
-            logging.exception(e)
-            return
-        except ApiException:
-            """
-            Expected behavior when trying to connect to a container that isn't ready yet.
-            """
-            pass
-
     def deployment_event_logs(self, deployment_id: str, req):
         """
         Search for online pods to start log stream
@@ -296,9 +236,9 @@ class LogController:
 
         q = asyncio.Queue()
         loop = asyncio.get_running_loop()
-        loop.run_in_executor(None, watch_deployment_pods, deployment_id, q, loop)
-        print(f"iniciando leitura da pilha {hex(id(q))}")
-        return pop_log_queue(req, q)
+        pool = futures.ThreadPoolExecutor()
+        loop.run_in_executor(pool, watch_deployment_pods, deployment_id, q, loop,pool)
+        return pop_log_queue(q, pool)
 
     def experiment_event_logs(self, experiment_id: str, req):
         """
@@ -314,5 +254,7 @@ class LogController:
         """
         run_id = get_latest_run_id(experiment_id)
         q = asyncio.Queue()
-        asyncio.create_task(watch_workflow_pods(run_id, q))
-        return pop_log_queue(req, q)
+        loop = asyncio.get_running_loop()
+        pool = futures.ThreadPoolExecutor()
+        loop.run_in_executor(pool, watch_workflow_pods, run_id, q, loop, pool)
+        return pop_log_queue(q, pool)
