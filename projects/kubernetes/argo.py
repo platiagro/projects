@@ -2,7 +2,7 @@
 """Argo Workflows utility functions."""
 import asyncio
 
-from queue import Queue
+from asyncio import CancelledError
 
 from kubernetes.client.rest import ApiException
 from kubernetes import client
@@ -78,7 +78,7 @@ def list_workflow_pods(run_id: str):
     return pod_list
 
 
-async def watch_workflow_pods(run_id: str, queue):
+def watch_workflow_pods(run_id: str, queue, event_loop,pool):
     workflows = list_workflows(run_id)
     if len(workflows) == 0:
         return []
@@ -88,15 +88,23 @@ async def watch_workflow_pods(run_id: str, queue):
     load_kube_config()
     v1 = client.CoreV1Api()
     w = Watch()
-    for pod in w.stream(v1.list_namespaced_pod,
-                        namespace=KF_PIPELINES_NAMESPACE,
-                        label_selector=f"workflows.argoproj.io/workflow={workflow_name}"):
-        if pod["type"] == "ADDED":
-            pod = pod["object"]
-            for container in pod.spec.containers:
-                if container.name not in EXCLUDE_CONTAINERS and "name" in pod.metadata.annotations:
-                    print(f"added container {container.name} to queue {hex(id(queue))}")
-                    await asyncio.create_task(log_stream(pod, container, queue))
+    try:
+        for pod in w.stream(v1.list_namespaced_pod,
+                            namespace=KF_PIPELINES_NAMESPACE,
+                            label_selector=f"workflows.argoproj.io/workflow={workflow_name}"):
+            if pod["type"] == "ADDED":
+                pod = pod["object"]
+                for container in pod.spec.containers:
+                    if container.name not in EXCLUDE_CONTAINERS and "name" in pod.metadata.annotations:
+                        print(f"added container {container.name} to queue {hex(id(queue))}")
+                        event_loop.run_in_executor(pool, log_stream, pod, container, queue)
+    except CancelledError:
+        """
+        Expected behavior when trying to cancel task
+        """
+        print("Stopping watcher")
+        w.stop()
+        return
 
 
 async def log_stream(pod, container, queue):
@@ -142,3 +150,9 @@ async def log_stream(pod, container, queue):
         Expected behavior when trying to connect to a container that isn't ready yet.
         """
         pass
+    except CancelledError:
+        """
+        Expected behavior when trying to cancel task
+        """
+        print("Stopping log watcher")
+        return

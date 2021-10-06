@@ -3,6 +3,7 @@
 import asyncio
 import time
 
+from asyncio import CancelledError
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes.watch import Watch
@@ -103,22 +104,30 @@ def list_project_seldon_deployments(project_id):
     return deployments
 
 
-def watch_deployment_pods(deployment_id, queue, event_loop):
+def watch_deployment_pods(deployment_id, queue, event_loop,pool):
     load_kube_config()
     v1 = client.CoreV1Api()
     w = Watch()
+    try:
 
-    for pod in w.stream(
-        v1.list_namespaced_pod,
-        namespace=KF_PIPELINES_NAMESPACE,
-        label_selector=f"seldon-deployment-id={deployment_id}",
-    ):
-        if pod["type"] == "ADDED":
-            pod = pod["object"]
-            for container in pod.spec.containers:
-                if container.name not in EXCLUDE_CONTAINERS:
-                    print(f"added container {container.name} to queue {hex(id(queue))}")
-                    event_loop.run_in_executor(None, log_stream, pod, container, queue)
+        for pod in w.stream(
+            v1.list_namespaced_pod,
+            namespace=KF_PIPELINES_NAMESPACE,
+            label_selector=f"seldon-deployment-id={deployment_id}",
+        ):
+            if pod["type"] == "ADDED":
+                pod = pod["object"]
+                for container in pod.spec.containers:
+                    if container.name not in EXCLUDE_CONTAINERS:
+                        print(f"added container {container.name} to queue {hex(id(queue))}")
+                        event_loop.run_in_executor(pool, log_stream, pod, container, queue)
+    except CancelledError:
+        """
+        Expected behavior when trying to cancel task
+        """
+        print("Stopping watcher")
+        w.stop()
+        return
 
 
 def log_stream(pod, container, queue):
@@ -150,7 +159,6 @@ def log_stream(pod, container, queue):
             tail_lines=0,
             timestamps=True,
         ):
-            print(f"botando output na pilha {hex(id(queue))}")
             queue.put_nowait(streamline)
 
     except RuntimeError as e:
@@ -165,3 +173,9 @@ def log_stream(pod, container, queue):
         Expected behavior when trying to connect to a container that isn't ready yet.
         """
         pass
+    except CancelledError:
+        """
+        Expected behavior when trying to cancel task
+        """
+        print("Stopping log watcher")
+        return
