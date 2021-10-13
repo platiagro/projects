@@ -3,7 +3,6 @@
 import json
 import logging
 from typing import Optional
-from sqlalchemy import asc, desc, func
 
 import requests
 from platiagro import load_dataset
@@ -14,8 +13,7 @@ from projects.controllers.utils import (
     parse_file_buffer_to_seldon_request,
     uuid_alpha,
 )
-
-from projects.exceptions import BadRequest, InternalServerError, NotFound
+from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.seldon import get_seldon_deployment_url
 
 NOT_FOUND = NotFound("The specified prediction does not exist")
@@ -150,7 +148,6 @@ class PredictionController:
     def get_prediction(
         self,
         prediction_id,
-
     ):
         """
         Gets prediction from database by uuid and returns to client.
@@ -161,18 +158,17 @@ class PredictionController:
 
         Returns
         -------
-        dict 
-        
+        dict
+
         Raises
         ------
         BadRequest
             When query doesn't find prediction in database with given ID.
         """
         prediction_orm_obj = self.session.query(models.Prediction).get(prediction_id)
-        
+
         if not prediction_orm_obj:
             raise BadRequest(NOT_FOUND)
-
 
         predicton_json_info = {
             "uuid": prediction_orm_obj.uuid,
