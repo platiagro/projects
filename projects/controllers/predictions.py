@@ -150,33 +150,29 @@ class PredictionController:
     def get_prediction(
         self,
         prediction_id,
-        page: Optional[int] = None,
-        page_size: Optional[int] = None,
-        order_by: str = Optional[str],
+
     ):
         """
-        Lists tasks. Supports pagination, and sorting.
+        Gets prediction from database by uuid and returns to client.
 
         Parameters
         ----------
-        page : int
-            The page number. First page is 1.
-        page_size : int
-            The page size.
-        order_by : str
-            Order by instruction. Format is "column [asc|desc]".
-        **filters : dict
+        prediction_id: str
 
         Returns
         -------
-        projects.schemas.task.TaskList
-
+        dict 
+        
         Raises
         ------
         BadRequest
-            When order_by is invalid.
+            When query doesn't find prediction in database with given ID.
         """
         prediction_orm_obj = self.session.query(models.Prediction).get(prediction_id)
+        
+        if not prediction_orm_obj:
+            raise BadRequest(NOT_FOUND)
+
 
         predicton_json_info = {
             "uuid": prediction_orm_obj.uuid,
