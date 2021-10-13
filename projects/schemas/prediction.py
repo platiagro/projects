@@ -4,8 +4,6 @@
 
 from pydantic import BaseModel
 
-from projects.models import response
-
 
 class Prediction(BaseModel):
     uuid: str
