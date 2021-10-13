@@ -3,10 +3,10 @@
 import json
 import logging
 from typing import Optional
+from sqlalchemy import asc, desc, func
 
 import requests
 from platiagro import load_dataset
-from requests.models import Response
 
 from projects import models, schemas
 from projects.controllers.utils import (
@@ -15,8 +15,10 @@ from projects.controllers.utils import (
     uuid_alpha,
 )
 
-from projects.exceptions import BadRequest, InternalServerError
+from projects.exceptions import BadRequest, InternalServerError, NotFound
 from projects.kubernetes.seldon import get_seldon_deployment_url
+
+NOT_FOUND = NotFound("The specified prediction does not exist")
 
 
 class PredictionController:
@@ -144,3 +146,45 @@ class PredictionController:
 
         prediction_object.response_body = response._content
         self.session.commit()
+
+    def get_prediction(
+        self,
+        prediction_id,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
+        order_by: str = Optional[str],
+    ):
+        """
+        Lists tasks. Supports pagination, and sorting.
+
+        Parameters
+        ----------
+        page : int
+            The page number. First page is 1.
+        page_size : int
+            The page size.
+        order_by : str
+            Order by instruction. Format is "column [asc|desc]".
+        **filters : dict
+
+        Returns
+        -------
+        projects.schemas.task.TaskList
+
+        Raises
+        ------
+        BadRequest
+            When order_by is invalid.
+        """
+        prediction_orm_obj = self.session.query(models.Prediction).get(prediction_id)
+
+        predicton_json_info = {
+            "uuid": prediction_orm_obj.uuid,
+            "deployment_id": prediction_orm_obj.deployment_id,
+            "request_body": prediction_orm_obj.request_body,
+            "response_body": prediction_orm_obj.response_body,
+            "status": prediction_orm_obj.status,
+            "created_at": prediction_orm_obj.created_at,
+            "updated_at": prediction_orm_obj.updated_at,
+        }
+        return predicton_json_info

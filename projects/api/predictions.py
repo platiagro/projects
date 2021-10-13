@@ -75,3 +75,25 @@ async def handle_post_prediction(
         deployment_id=deployment_id, **kwargs
     )
     return prediction
+
+
+@router.get("/{prediction_id}")
+async def handle_get_prediction(
+    prediction_id: str, session: Session = Depends(session_scope)
+):
+    """
+    Handles GET requests to /<task_id>.
+
+    Parameters
+    ----------
+    task_id : str
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    projects.schemas.task.Task
+    """
+
+    prediction_controller = PredictionController(session)
+    prediction = prediction_controller.get_prediction(prediction_id=prediction_id)
+    return prediction
