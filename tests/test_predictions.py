@@ -1,7 +1,7 @@
 # -*-  coding: utf-8 -*-
 from base64 import b64decode
 from io import BytesIO
-from json import dumps, loads
+from json import dumps
 from unittest import TestCase
 from unittest.mock import patch
 
