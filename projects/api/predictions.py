@@ -82,16 +82,16 @@ async def handle_get_prediction(
     prediction_id: str, session: Session = Depends(session_scope)
 ):
     """
-    Handles GET requests to /<task_id>.
+    Handles GET requests to /<prediction_id>.
 
     Parameters
     ----------
-    task_id : str
+    prediction_id : str
     session : sqlalchemy.orm.session.Session
 
     Returns
     -------
-    projects.schemas.task.Task
+    dict
     """
 
     prediction_controller = PredictionController(session)
