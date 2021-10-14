@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from unittest import mock
+import json
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -109,6 +110,28 @@ MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
     patch_namespaced_custom_object=mock.MagicMock(),
 )
 
+MOCK_POST_PREDICTION = mock.MagicMock(
+    status_code=200,
+    _content=json.dumps(
+        {
+            "data": {
+                "names": [
+                    "SepalLengthCm",
+                    "SepalWidthCm",
+                    "PetalLengthCm",
+                    "PetalWidthCm",
+                    "Species", ],
+                "ndarray": [
+                    [5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+                    [4.9, 3.0, 1.4, 0.2, "Iris-setosa"],
+                    [4.7, 3.2, 1.3, 0.2, "Iris-setosa"],
+                    [4.6, 3.1, 1.5, 0.2, "Iris-setosa"],
+                ]
+            }
+        }
+    )
+)
+
 IRIS_DATASET_NAME = "iris.csv"
 
 IRIS_DATA = (
@@ -127,6 +150,14 @@ IRIS_COLUMNS = [
     "Species",
 ]
 
+IRIS_HEADERLESS_COLUMNS = [
+    "col0",
+    "col1",
+    "col2",
+    "col3",
+    "col4",
+]
+
 IRIS_FEATURETYPES = [
     "Numerical",
     "Numerical",
@@ -142,7 +173,13 @@ IRIS_DATA_ARRAY = [
     [4.6, 3.1, 1.5, 0.2, "Iris-setosa"],
 ]
 
+
+def mock_load_dataset(page_size, **kwargs):
+    return IRIS_HEADERLESS_DATAFRAME.iloc[:page_size]
+
+
 IRIS_DATAFRAME = pd.DataFrame(IRIS_DATA_ARRAY, columns=IRIS_COLUMNS)
+IRIS_HEADERLESS_DATAFRAME = pd.DataFrame(IRIS_DATA_ARRAY, columns=IRIS_HEADERLESS_COLUMNS)
 
 MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3, MOCK_UUID_4, MOCK_UUID_5 = "uuid-1", "uuid-2", "uuid-3", "uuid-4", "uuid-5"
 MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3, MOCK_PROJECT_NAME_4 = (
