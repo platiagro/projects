@@ -24,7 +24,6 @@ async def handle_post_responses(
     deployment_id: str,
     body: dict = Body(...),
     session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles POST requests to /.
@@ -41,9 +40,6 @@ async def handle_post_responses(
     -------
     fastapi.responses.JSONResponse
     """
-    project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
-    project_controller.raise_if_project_does_not_exist(project_id)
-
     deployment_controller = DeploymentController(session)
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
