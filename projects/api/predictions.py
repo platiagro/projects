@@ -21,14 +21,14 @@ from projects.controllers import (
 )
 from projects.database import session_scope
 from projects.exceptions import BadRequest
-from projects.schemas import Prediction
+from projects.schemas import PredictionBase
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/predictions",
 )
 
 
-@router.post("", response_model=Prediction)
+@router.post("", response_model=PredictionBase)
 async def handle_post_prediction(
     project_id: str,
     deployment_id: str,
