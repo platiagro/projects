@@ -34,7 +34,10 @@ MOCKED_DATASET_NO_HEADER_PATH = "tests/resources/mocked_dataset_no_header.csv"
 MOCKED_DATASET_BASE64_PATH = "tests/resources/mocked_dataset_base64.jpeg"
 MOCKED_DATASET_STRDATA_PATH = "tests/resources/mocked_dataset_strdata.txt"
 
-MOCKED_PREDICTION_RESQUEST_BODY = '"{\\"data\\": {\\"names\\": [\\"Data\\", \\"Temperatura\\", \\"Umidade\\", \\"Maquina\\", \\"Vibracao1\\", \\"Vibracao2\\", \\"Vibracao3\\", \\"Vibracao4\\", \\"Vibracao5\\", \\"Vibracao6\\", \\"HorasDesdeAUltimaFalha\\"], \\"ndarray\\": [[\\"2016-01-02\\", 62, 80, \\"Minerva\\", 1233, 364, 1549, 330, 1395, 428, 132]]}}"'
+MOCKED_PREDICTION_RESQUEST_BODY = (
+    '{"data": {"names": ["Data", "Temperatura", "Umidade", "Maquina", "Vibracao1", "Vibracao2", "Vibracao3", "Vibracao4", "Vibracao5", "Vibracao6", "HorasDesdeAUltimaFalha"], "ndarray": [["2016-01-02", 62, 80, "Minerva", 1233, 364, 1549, 330, 1395, 428, 132]]}}"',
+)
+
 MOCKED_PREDICTION_RESPONSE_BODY = '{"data":{"names":["Data","Temperatura","Umidade","Maquina","Vibracao1","Vibracao2","Vibracao3","Vibracao4","Vibracao5","Vibracao6","HorasDesdeAUltimaFalha","RFClassifier_predict_proba_N_o","RFClassifier_predict_proba_Sim","RFClassifier_predict_class"],"ndarray":[["2016-01-02","62","80","Minerva","1233","364","1549","330","1395","428","132",1.0,0.0,"N\\u00e3o"]]},"meta":{}}\n'
 
 MOCK_IMAGE = b64decode(
@@ -341,7 +344,7 @@ class TestPredictions(TestCase):
 
         expected = {
             "deployment_id": DEPLOYMENT_ID,
-            "request_body": '"{\\"data\\": {\\"names\\": [\\"Data\\", \\"Temperatura\\", \\"Umidade\\", \\"Maquina\\", \\"Vibracao1\\", \\"Vibracao2\\", \\"Vibracao3\\", \\"Vibracao4\\", \\"Vibracao5\\", \\"Vibracao6\\", \\"HorasDesdeAUltimaFalha\\"], \\"ndarray\\": [[\\"2016-01-02\\", 62, 80, \\"Minerva\\", 1233, 364, 1549, 330, 1395, 428, 132]]}}"',
+            "request_body": '{"data": {"names": ["Data", "Temperatura", "Umidade", "Maquina", "Vibracao1", "Vibracao2", "Vibracao3", "Vibracao4", "Vibracao5", "Vibracao6", "HorasDesdeAUltimaFalha"], "ndarray": [["2016-01-02", 62, 80, "Minerva", 1233, 364, 1549, 330, 1395, 428, 132]]}}"',
             "response_body": '{"data":{"names":["Data","Temperatura","Umidade","Maquina","Vibracao1","Vibracao2","Vibracao3","Vibracao4","Vibracao5","Vibracao6","HorasDesdeAUltimaFalha","RFClassifier_predict_proba_N_o","RFClassifier_predict_proba_Sim","RFClassifier_predict_class"],"ndarray":[["2016-01-02","62","80","Minerva","1233","364","1549","330","1395","428","132",1.0,0.0,"N\\u00e3o"]]},"meta":{}}\n',
             "status": "done",
         }

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Prediction schema."""
 
-
+from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -20,8 +20,8 @@ class PredictionBase(BaseModel):
 class Prediction(PredictionBase):
     request_body: str
     response_body: str
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def from_orm(cls, model):
