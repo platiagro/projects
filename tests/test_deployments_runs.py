@@ -126,41 +126,41 @@ class TestDeploymentsRuns(unittest.TestCase):
 
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
-    @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
+    # @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
+    # # @mock.patch(
+    # #     "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
+    # #     return_value={"items": []},
+    # # )
     # @mock.patch(
-    #     "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
-    #     return_value={"items": []},
+    #     "kfp.Client",
+    #     return_value=util.MOCK_KFP_CLIENT,
     # )
-    @mock.patch(
-        "kfp.Client",
-        return_value=util.MOCK_KFP_CLIENT,
-    )
-    @mock.patch(
-        "kubernetes.client.CoreV1Api",
-        return_value=util.MOCK_CORE_V1_API,
-    )
-    @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
-    def test_delete_run(self, mock_custom_objects_api, mock_core_v1_api, mock_kfp_client, mock_load_kube_config):
-        """
-        Should raise an exception when ...
-        """
-        project_id = util.MOCK_UUID_1
-        deployment_id = util.MOCK_UUID_1
-        run_id = util.MOCK_UUID_1
+    # @mock.patch(
+    #     "kubernetes.client.CoreV1Api",
+    #     return_value=util.MOCK_CORE_V1_API,
+    # )
+    # @mock.patch(
+    #     "kubernetes.client.CustomObjectsApi",
+    #     return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    # )
+    # def test_delete_run(self, mock_custom_objects_api, mock_core_v1_api, mock_kfp_client, mock_load_kube_config):
+    #     """
+    #     Should raise an exception when ...
+    #     """
+    #     project_id = util.MOCK_UUID_1
+    #     deployment_id = util.MOCK_UUID_1
+    #     run_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.delete(f"/projects/{project_id}/deployments/{deployment_id}/runs/latest")
-        result = rv.json()
-        expected = {"message": "Deployment deleted"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
+    #     rv = TEST_CLIENT.delete(f"/projects/{project_id}/deployments/{deployment_id}/runs/latest")
+    #     result = rv.json()
+    #     expected = {"message": "Deployment deleted"}
+    #     self.assertDictEqual(expected, result)
+    #     self.assertEqual(rv.status_code, 200)
 
-        mock_load_kube_config.assert_any_call()
-        # mock_list_namespaced_custom_object.assert_any_call(
-        #     "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
-        # )
-        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
-        mock_core_v1_api.assert_any_call()
-        mock_custom_objects_api.assert_any_call()
+    #     mock_load_kube_config.assert_any_call()
+    #     # mock_list_namespaced_custom_object.assert_any_call(
+    #     #     "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
+    #     # )
+    #     mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+    #     mock_core_v1_api.assert_any_call()
+    #     mock_custom_objects_api.assert_any_call()

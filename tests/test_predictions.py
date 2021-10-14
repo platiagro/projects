@@ -195,58 +195,58 @@ class TestPredictions(unittest.TestCase):
             }
         })
 
-    @mock.patch(
-        "requests.post",
-        return_value=util.MOCK_POST_PREDICTION,
-    )
-    def test_create_prediction_dataset_csv(self, mock_requests_post):
-        """
-        successful csv request
-        """
-        project_id = util.MOCK_UUID_1
-        deployment_id = util.MOCK_UUID_1
-        name = (
-            b"SepalLengthCm, SepalWidthCm, PetalLengthCm, PetalWidthCm, Species\n"
-            b"5.1,3.5,1.4,0.2,Iris-setosa\n"
-            b"4.9,3.0,1.4,0.2,Iris-setosa\n"
-            b"4.7,3.2,1.3,0.2,Iris-setosa\n"
-            b"4.6,3.1,1.5,0.2,Iris-setosa\n")
-        url = "http://uuid-1-model.anonymous:8000/api/v1.0/predictions"
-        MOCKED_DATASET_PATH = "tests/resources/mocked_dataset.csv"
+    # @mock.patch(
+    #     "requests.post",
+    #     return_value=util.MOCK_POST_PREDICTION,
+    # )
+    # def test_create_prediction_dataset_csv(self, mock_requests_post):
+    #     """
+    #     successful csv request
+    #     """
+    #     project_id = util.MOCK_UUID_1
+    #     deployment_id = util.MOCK_UUID_1
+    #     name = (
+    #         b"SepalLengthCm, SepalWidthCm, PetalLengthCm, PetalWidthCm, Species\n"
+    #         b"5.1,3.5,1.4,0.2,Iris-setosa\n"
+    #         b"4.9,3.0,1.4,0.2,Iris-setosa\n"
+    #         b"4.7,3.2,1.3,0.2,Iris-setosa\n"
+    #         b"4.6,3.1,1.5,0.2,Iris-setosa\n")
+    #     url = "http://uuid-1-model.anonymous:8000/api/v1.0/predictions"
+    #     MOCKED_DATASET_PATH = "tests/resources/mocked_dataset.csv"
 
-        mocked_dataset = open(MOCKED_DATASET_PATH, "rb")
-        files = {"file": (
-            "dataset.csv",
-            name,
-            "multipart/form-data"
-        )}
+    #     mocked_dataset = open(MOCKED_DATASET_PATH, "rb")
+    #     files = {"file": (
+    #         "dataset.csv",
+    #         name,
+    #         "multipart/form-data"
+    #     )}
 
-        rv = TEST_CLIENT.post(
-            f"/projects/{project_id}/deployments/{deployment_id}/predictions",
-            files=files
-        )
-        result = rv.json()
-        self.assertIsInstance(result, dict)
-        self.assertEqual(rv.status_code, 200)
+    #     rv = TEST_CLIENT.post(
+    #         f"/projects/{project_id}/deployments/{deployment_id}/predictions",
+    #         files=files
+    #     )
+    #     result = rv.json()
+    #     self.assertIsInstance(result, dict)
+    #     self.assertEqual(rv.status_code, 200)
 
-        mock_requests_post.assert_any_call(url, json={
-            "data": {
-                "names": [
-                    'SepalLengthCm',
-                    'SepalWidthCm',
-                    'PetalLengthCm',
-                    'PetalWidthCm',
-                    'Species'
-                ],
-                "ndarray": [
-                    [5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
-                    [4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
-                    [4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
-                    [4.6, 3.1, 1.5, 0.2, 'Iris-setosa']
-                ]
-            }
-        })
-        # mock_load_dataset.assert_any_call()
+    #     mock_requests_post.assert_any_call(url, json={
+    #         "data": {
+    #             "names": [
+    #                 'SepalLengthCm',
+    #                 'SepalWidthCm',
+    #                 'PetalLengthCm',
+    #                 'PetalWidthCm',
+    #                 'Species'
+    #             ],
+    #             "ndarray": [
+    #                 [5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+    #                 [4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+    #                 [4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+    #                 [4.6, 3.1, 1.5, 0.2, 'Iris-setosa']
+    #             ]
+    #         }
+    #     })
+    #     # mock_load_dataset.assert_any_call()
 
         #     # successful base64 request
         #     # reading file for request
@@ -274,18 +274,18 @@ class TestPredictions(unittest.TestCase):
         #                 "multipart/form-data"
         #                 )}
 
-    def test_create_prediction_dataset_file(self):
-        project_id = util.MOCK_UUID_1
-        deployment_id = util.MOCK_UUID_1
-        name = util.IRIS_DATASET_NAME
-        MOCKED_DATASET_STRDATA_PATH = "tests/resources/mocked_dataset_strdata.txt"
-        mocked_dataset = open(MOCKED_DATASET_STRDATA_PATH, "rb")
-        files = {"file": ("dataset.csv", mocked_dataset, "multipart/form-data")}
+    # def test_create_prediction_dataset_file(self):
+    #     project_id = util.MOCK_UUID_1
+    #     deployment_id = util.MOCK_UUID_1
+    #     name = util.IRIS_DATASET_NAME
+    #     MOCKED_DATASET_STRDATA_PATH = "tests/resources/mocked_dataset_strdata.txt"
+    #     mocked_dataset = open(MOCKED_DATASET_STRDATA_PATH, "rb")
+    #     files = {"file": ("dataset.csv", mocked_dataset, "multipart/form-data")}
 
-        rv = TEST_CLIENT.post(
-            f"/projects/{project_id}/deployments/{deployment_id}/predictions",
-            files=files
-        )
-        result = rv.json()
-        self.assertIsInstance(result, dict)
-        self.assertEqual(rv.status_code, 200)
+    #     rv = TEST_CLIENT.post(
+    #         f"/projects/{project_id}/deployments/{deployment_id}/predictions",
+    #         files=files
+    #     )
+    #     result = rv.json()
+    #     self.assertIsInstance(result, dict)
+    #     self.assertEqual(rv.status_code, 200)
