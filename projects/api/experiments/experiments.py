@@ -165,6 +165,8 @@ async def handle_log_deployment(req:Request, experiment_id: str):
     Parameters
     ----------
     experiment_id : str
+    req : Request
+    
     Returns
     -------
     EventSourceResponse

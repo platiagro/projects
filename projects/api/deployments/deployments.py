@@ -161,6 +161,7 @@ async def handle_log_deployment(req: Request, deployment_id: str):
     Parameters
     ----------
     deployment_id : str
+    req : Request
 
     Returns
     -------
