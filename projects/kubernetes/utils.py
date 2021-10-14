@@ -220,7 +220,16 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
 
 
 async def pop_log_queue(queue, pool):
-    print(f"iniciando leitura da pilha {hex(id(queue))}")
+    """
+    ----------
+    Parameters
+        queue : asyncio.Queue
+        pool : futures.ThreadPoolExecutor
+
+    ----------
+    Yields
+        out :  str
+    """
     try:
         while True:
             out = await queue.get()
