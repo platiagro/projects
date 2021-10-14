@@ -7,15 +7,16 @@ import dateutil.parser
 import logging
 import asyncio
 
+from asyncio import CancelledError
 from concurrent import futures
 from typing import List, Optional
 
 from projects.schemas.log import Log, LogList
 from projects.kfp.runs import get_latest_run_id
+from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.argo import list_workflow_pods
-from projects.kubernetes.argo import watch_workflow_pods
+from projects.kubernetes.argo import list_workflows
 from projects.kubernetes.seldon import list_deployment_pods
-from projects.kubernetes.seldon import watch_deployment_pods
 from projects.kubernetes.utils import get_container_logs
 from projects.kubernetes.utils import pop_log_queue
 from projects.kubernetes.kube_config import load_kube_config
@@ -36,6 +37,11 @@ LOG_LEVELS = {
 
 
 class LogController:
+    
+    def __init__(self):
+        self.queue = asyncio.Queue()
+        self.loop = asyncio.get_running_loop()
+        self.pool = futures.ThreadPoolExecutor()
     def list_logs(
         self,
         project_id: str,
@@ -221,6 +227,59 @@ class LogController:
 
         return logs
 
+    def log_stream(self, pod, container):
+        """
+        Generates log stream of given pod's container.
+
+
+        Whenever the event source is called, there's a new thread for each pod that listen for new logs and 
+        there's a thread that watches for new pods being created. But there's a limitation within the log generation.
+        When the client disconnects from the event source, the allocated threads aren't deallocated, not releasing the memory and process used.
+
+        Parameters
+        ----------
+            pod: str
+            container: str
+
+        Yields
+        ------
+            str
+        """
+        load_kube_config()
+        v1 = client.CoreV1Api()
+        w = Watch()
+        pod_name = pod.metadata.name
+        namespace = pod.metadata.namespace
+        container_name = container.name
+        try:
+            for streamline in w.stream(
+                v1.read_namespaced_pod_log,
+                name=pod_name,
+                namespace=namespace,
+                container=container_name,
+                pretty="true",
+                tail_lines=0,
+                timestamps=True,
+            ):
+                self.queue.put_nowait(streamline)
+
+        except RuntimeError as e:
+            logging.exception(e)
+            return
+
+        except asyncio.CancelledError as e:
+            logging.exception(e)
+            return
+        except ApiException:
+            """
+            Expected behavior when trying to connect to a container that isn't ready yet.
+            """
+            pass
+        except CancelledError:
+            """
+            Expected behavior when trying to cancel task
+            """
+            return
     def deployment_event_logs(self, deployment_id: str, req):
         """
         Search for online pods to start log stream
@@ -228,18 +287,39 @@ class LogController:
         Parameters
         ----------
             deployment_id: str
+            req : Request
 
         Return
         ------
             Iterator
         """
+        self.loop.run_in_executor(self.pool, self.watch_deployment_pods, deployment_id)
+        return pop_log_queue(self.queue, self.pool)
 
-        q = asyncio.Queue()
-        loop = asyncio.get_running_loop()
-        pool = futures.ThreadPoolExecutor()
-        loop.run_in_executor(pool, watch_deployment_pods, deployment_id, q, loop,pool)
-        return pop_log_queue(q, pool)
+    def watch_deployment_pods(self, deployment_id):
+        load_kube_config()
+        v1 = client.CoreV1Api()
+        w = Watch()
+        try:
 
+            for pod in w.stream(
+                v1.list_namespaced_pod,
+                namespace=KF_PIPELINES_NAMESPACE,
+                label_selector=f"seldon-deployment-id={deployment_id}",
+            ):
+                if pod["type"] == "ADDED":
+                    pod = pod["object"]
+                    for container in pod.spec.containers:
+                        if container.name not in EXCLUDE_CONTAINERS:
+                            self.loop.run_in_executor(self.pool, self.log_stream, pod, container)
+        except CancelledError:
+            """
+            Expected behavior when trying to cancel task
+            """
+            w.stop()
+            return
+    
+    
     def experiment_event_logs(self, experiment_id: str, req):
         """
         Search for online pods to start log stream
@@ -247,14 +327,39 @@ class LogController:
         Parameters
         ----------
             experiment_id: str
+            req : Request
 
         Return
         ------
             Iterator
         """
         run_id = get_latest_run_id(experiment_id)
-        q = asyncio.Queue()
-        loop = asyncio.get_running_loop()
-        pool = futures.ThreadPoolExecutor()
-        loop.run_in_executor(pool, watch_workflow_pods, run_id, q, loop, pool)
-        return pop_log_queue(q, pool)
+        self.loop.run_in_executor(self.pool, self.watch_workflow_pods, run_id)
+        return pop_log_queue(self.queue, self.pool)
+
+
+    def watch_workflow_pods(self, run_id: str):
+        workflows = list_workflows(run_id)
+        if len(workflows) == 0:
+            return []
+
+        workflow_name = workflows[0]["metadata"]["name"]
+
+        load_kube_config()
+        v1 = client.CoreV1Api()
+        w = Watch()
+        try:
+            for pod in w.stream(v1.list_namespaced_pod,
+                                namespace=KF_PIPELINES_NAMESPACE,
+                                label_selector=f"workflows.argoproj.io/workflow={workflow_name}"):
+                if pod["type"] == "ADDED":
+                    pod = pod["object"]
+                    for container in pod.spec.containers:
+                        if container.name not in EXCLUDE_CONTAINERS and "name" in pod.metadata.annotations:
+                            self.loop.run_in_executor(self.pool, self.log_stream, pod, container)
+        except CancelledError:
+            """
+            Expected behavior when trying to cancel task
+            """
+            w.stop()
+            return
