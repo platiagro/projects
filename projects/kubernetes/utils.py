@@ -237,7 +237,8 @@ async def pop_log_queue(queue, pool):
             queue.task_done()
 
             yield out
+    except asyncio.CancelledError:
+        pool.shutdown(wait=False)
     finally:
-        print("client disconnected!!!")
         pool.shutdown(wait=False)
 
