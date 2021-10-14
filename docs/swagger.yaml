@@ -10,6 +10,7 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 servers:
   - url: http://localhost:8080
+  - url: http://localhost:8000
 security:
   - ApiKeyAuth: []
 tags:
@@ -2137,10 +2138,17 @@ components:
         total:
           type: integer
     Prediction:
-      oneOf:
-        - $ref: "#/components/schemas/Data"
-        - $ref: "#/components/schemas/BinData"
-        - $ref: "#/components/schemas/StrData"
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        deployment_id:
+          type: string
+          format: uuid
+        status:
+          type: string    
+          enum: [not_started, started, done, failed]
     Data:
       type: object
       properties:
@@ -3072,24 +3080,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Prediction"
-          examples:
-            data:
-              summary: Tabular data
-              value:
-                data:
-                  ndarray: [[1.0, 2.0, 3.0, 3.0]]
-                meta: {}
-            strData:
-              summary: String data
-              value:
-                strData: "The blue fox jumps over the lazy dog"
-                meta: {}
-            binData:
-              summary: Binary data
-              value:
-                binData: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-                meta:
-                  tags: {"content-type": "image/jpg"}
     Operator:
       description: ""
       content:

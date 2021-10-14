@@ -3,7 +3,15 @@
 from json.decoder import JSONDecodeError
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Header, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Header,
+    Request,
+    UploadFile,
+)
 from sqlalchemy.orm import Session
 
 from projects import database
@@ -12,21 +20,25 @@ from projects.controllers import (
     PredictionController,
     ProjectController,
 )
+
+from projects.database import session_scope
 from projects.exceptions import BadRequest
+from projects.schemas import Prediction
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/predictions",
 )
 
 
-@router.post("")
+@router.post("", response_model=Prediction)
 async def handle_post_prediction(
     project_id: str,
     deployment_id: str,
     request: Request,
+    background_tasks: BackgroundTasks,
     file: Optional[UploadFile] = File(None),
-    session: Session = Depends(database.session_scope),
-    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+    session: Session = Depends(session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
 ):
     """
     Handles POST request to /.
@@ -42,7 +54,7 @@ async def handle_post_prediction(
 
     Returns
     -------
-    dict
+    Prediction: projects.schemas.prediction.Prediction
     """
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
@@ -60,7 +72,8 @@ async def handle_post_prediction(
         except JSONDecodeError:
             raise BadRequest("either form-data or json is required")
 
-    prediction_controller = PredictionController(session)
-    return prediction_controller.create_prediction(
-        project_id=project_id, deployment_id=deployment_id, **kwargs
+    prediction_controller = PredictionController(session, background_tasks)
+    prediction = prediction_controller.create_prediction(
+        deployment_id=deployment_id, **kwargs
     )
+    return prediction

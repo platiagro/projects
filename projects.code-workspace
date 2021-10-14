@@ -50,6 +50,16 @@
 					"projects.api.main:app"
 				],
 				"jinja": true
+			},
+			{
+				"name": "Python: Pytest",
+				"type": "python",
+				"request": "launch",
+				"module": "pytest",
+				"args": [
+					"tests/"
+				],
+				"jinja": true
 			}
 		]
 	}
