@@ -1688,7 +1688,7 @@ paths:
             format: uuid    
       responses:
         "200":
-          $ref: "#/components/responses/Prediction"
+          $ref: "#/components/responses/PredictionInfo"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -3136,7 +3136,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Prediction"         
+            $ref: "#/components/schemas/PredictionInfo"         
     Operator:
       description: ""
       content:
