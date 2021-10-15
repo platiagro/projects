@@ -21,7 +21,7 @@ from projects.controllers import (
 )
 from projects.database import session_scope
 from projects.exceptions import BadRequest
-from projects.schemas import PredictionBase
+from projects.schemas import Prediction, PredictionBase
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/predictions",
@@ -77,7 +77,7 @@ async def handle_post_prediction(
     return prediction
 
 
-@router.get("/{prediction_id}")
+@router.get("/{prediction_id}", response_model=Prediction)
 async def handle_get_prediction(
     prediction_id: str, session: Session = Depends(session_scope)
 ):
