@@ -2191,7 +2191,7 @@ components:
           type: string
         response_body:
           type: string
-        created_body:
+        created_at:
           type: string
           format: date
         updated_at:
