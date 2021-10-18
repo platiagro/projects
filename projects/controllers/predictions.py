@@ -44,7 +44,7 @@ class PredictionController:
 
         Returns
         -------
-        prediction_as_schema: schemas.prediction.Prediction
+        prediction_as_schema: schemas.prediction.PredictionBase
 
         """
 
@@ -158,7 +158,7 @@ class PredictionController:
 
         Returns
         -------
-        dict
+        prediction_as_schema: schemas.prediction.Prediction
 
         Raises
         ------
