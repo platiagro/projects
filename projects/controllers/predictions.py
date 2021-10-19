@@ -6,7 +6,6 @@ from typing import Optional
 
 import requests
 from platiagro import load_dataset
-from requests.models import Response
 
 from projects import models, schemas
 from projects.controllers.utils import (
@@ -14,9 +13,10 @@ from projects.controllers.utils import (
     parse_file_buffer_to_seldon_request,
     uuid_alpha,
 )
-
-from projects.exceptions import BadRequest, InternalServerError
+from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.seldon import get_seldon_deployment_url
+
+NOT_FOUND = NotFound("The specified prediction does not exist")
 
 
 class PredictionController:
@@ -44,7 +44,7 @@ class PredictionController:
 
         Returns
         -------
-        prediction_as_schema: schemas.prediction.Prediction
+        prediction_as_schema: schemas.prediction.PredictionBase
 
         """
 
@@ -66,12 +66,12 @@ class PredictionController:
         prediction_object = self.create_prediction_database_object(
             prediction_id=str(uuid_alpha()),
             deployment_id=deployment_id,
-            request_body=json.dumps(request),
+            request_body=request,
             response_body=None,
             status="started",
         )
 
-        prediction_as_schema = schemas.Prediction.from_orm(prediction_object)
+        prediction_as_schema = schemas.PredictionBase.from_orm(prediction_object)
 
         url = get_seldon_deployment_url(deployment_id=deployment_id, external_url=True)
         self.background_tasks.add_task(
@@ -144,3 +144,31 @@ class PredictionController:
 
         prediction_object.response_body = response._content
         self.session.commit()
+
+    def get_prediction(
+        self,
+        prediction_id,
+    ):
+        """
+        Gets prediction from database by uuid and returns to client.
+
+        Parameters
+        ----------
+        prediction_id: str
+
+        Returns
+        -------
+        prediction_as_schema: schemas.prediction.Prediction
+
+        Raises
+        ------
+        BadRequest
+            When query doesn't find prediction in database with given ID.
+        """
+        prediction_orm_obj = self.session.query(models.Prediction).get(prediction_id)
+
+        if not prediction_orm_obj:
+            raise BadRequest(NOT_FOUND)
+
+        predicton_as_schema = schemas.Prediction.from_orm(prediction_orm_obj)
+        return predicton_as_schema

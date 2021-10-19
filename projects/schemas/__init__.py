@@ -9,4 +9,4 @@ from .project import Project, ProjectCreate, ProjectList, ProjectUpdate
 from .run import Run, RunList
 from .task import Task, TaskCreate, TaskList, TaskUpdate
 from .template import Template, TemplateCreate, TemplateList, TemplateUpdate
-from .prediction import Prediction
+from .prediction import Prediction, PredictionBase
