@@ -9,7 +9,10 @@ import requests
 from projects import models
 from projects.controllers.utils import uuid_alpha
 
-BROKER_URL = os.getenv("BROKER_URL", "http://default-broker.anonymous.svc.cluster.local")
+BROKER_URL = os.getenv(
+    "BROKER_URL",
+    "http://broker-ingress.knative-eventing.svc.cluster.local/anonymous/default",
+)
 
 
 class ResponseController:
@@ -50,10 +53,12 @@ class ResponseController:
         self.session.bulk_save_objects(responses)
         self.session.commit()
 
-        responses = self.session.query(models.Response) \
-            .filter_by(deployment_id=deployment_id) \
-            .order_by(models.Response.created_at.asc()) \
+        responses = (
+            self.session.query(models.Response)
+            .filter_by(deployment_id=deployment_id)
+            .order_by(models.Response.created_at.asc())
             .all()
+        )
 
         d = []
 
