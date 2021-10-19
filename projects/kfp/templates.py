@@ -173,6 +173,9 @@ MONITORING_SERVICE = Template(
             "metadata": {
                 "annotations": {
                     "autoscaling.knative.dev/minScale": "1"
+                },
+                "labels": {
+                    "monitoring": "true"
                 }
             },
             "spec": {
