@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from string import Template
 
-SELDON_DEPLOYMENT = Template("""{
+SELDON_DEPLOYMENT = Template(
+    """{
     "apiVersion": "machinelearning.seldon.io/v1",
     "kind": "SeldonDeployment",
     "metadata": {
@@ -42,9 +43,11 @@ SELDON_DEPLOYMENT = Template("""{
         ]
     }
 }
-""")
+"""
+)
 
-COMPONENT_SPEC = Template("""
+COMPONENT_SPEC = Template(
+    """
 {
     "spec": {
         "containers": [
@@ -140,9 +143,11 @@ COMPONENT_SPEC = Template("""
             }
         ]
     }
-}""")
+}"""
+)
 
-GRAPH = Template("""{
+GRAPH = Template(
+    """{
     "name": "$name",
     "type": "MODEL",
     "endpoint": {
@@ -151,11 +156,13 @@ GRAPH = Template("""{
     "children": [
         $children
     ]
-} """)
+} """
+)
 
 
-MONITORING_SERVICE = Template("""{
-    "apiVersion": "serving.knative.dev/v1alpha1",
+MONITORING_SERVICE = Template(
+    """{
+    "apiVersion": "serving.knative.dev/v1",
     "kind": "Service",
     "metadata": {
         "name": "$name",
@@ -236,11 +243,13 @@ MONITORING_SERVICE = Template("""{
             }
         }
     }
-} """)
+} """
+)
 
 
-MONITORING_TRIGGER = Template("""{
-    "apiVersion": "eventing.knative.dev/v1alpha1",
+MONITORING_TRIGGER = Template(
+    """{
+    "apiVersion": "eventing.knative.dev/v1",
     "kind": "Trigger",
     "metadata": {
         "name": "$name",
@@ -255,11 +264,12 @@ MONITORING_TRIGGER = Template("""{
         },
         "subscriber": {
             "ref": {
-                "apiVersion": "serving.knative.dev/v1alpha1",
+                "apiVersion": "serving.knative.dev/v1",
                 "kind": "Service",
                 "name": "$service"
             },
             "uri": "/api/v1.0/predictions"
         }
     }
-} """)
+} """
+)
