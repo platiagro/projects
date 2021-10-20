@@ -270,25 +270,27 @@ class LogController:
         except asyncio.CancelledError as e:
             logging.exception(e)
             return
-        except ApiException:
+        
+        except ApiException as e:
             """
             Expected behavior when trying to connect to a container that isn't ready yet.
             """
-            pass
-        except CancelledError:
+            logging.exception(e)
+        
+        except CancelledError as e:
             """
             Expected behavior when trying to cancel task
             """
+            logging.exception(e)
             return
 
-    def deployment_event_logs(self, deployment_id: str, req):
+    def deployment_event_logs(self, deployment_id: str):
         """
         Search for online pods to start log stream
 
         Parameters
         ----------
             deployment_id: str
-            req : Request
 
         Return
         ------
@@ -320,14 +322,13 @@ class LogController:
             w.stop()
             return
 
-    def experiment_event_logs(self, experiment_id: str, req):
+    def experiment_event_logs(self, experiment_id: str):
         """
         Search for online pods to start log stream
 
         Parameters
         ----------
             experiment_id: str
-            req : Request
 
         Return
         ------
