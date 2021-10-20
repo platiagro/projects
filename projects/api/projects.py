@@ -41,7 +41,7 @@ async def handle_list_projects(request: Request,
 
     page_size = filters.pop("page_size", None)
     page_size = int(page_size) if page_size else 10
-    print("Simple print just for testing purposes!!!!")
+    
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     projects = project_controller.list_projects(page=page,
                                                 page_size=page_size,

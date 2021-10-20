@@ -33,19 +33,24 @@ class ProjectController:
         ------
         NotFound
         """
-        exists = self.session.query(models.Project.uuid) \
-            .filter_by(uuid=project_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
-            .scalar() is not None
+        exists = (
+            self.session.query(models.Project.uuid)
+            .filter_by(uuid=project_id)
+            .filter_by(tenant=self.kubeflow_userid)
+            .scalar()
+            is not None
+        )
 
         if not exists:
             raise NOT_FOUND
 
-    def list_projects(self,
-                      page: Optional[int] = 1,
-                      page_size: Optional[int] = 10,
-                      order_by: Optional[str] = None,
-                      **filters):
+    def list_projects(
+        self,
+        page: Optional[int] = 1,
+        page_size: Optional[int] = 10,
+        order_by: Optional[str] = None,
+        **filters,
+    ):
         """
         Lists projects. Supports pagination, and sorting.
 
@@ -68,12 +73,24 @@ class ProjectController:
         BadRequest
             When order_by is invalid.
         """
-        query = self.session.query(models.Project).filter_by(tenant=self.kubeflow_userid)
-        query_total = self.session.query(func.count(models.Project.uuid)).filter_by(tenant=self.kubeflow_userid)
+        query = self.session.query(models.Project).filter_by(
+            tenant=self.kubeflow_userid
+        )
+        query_total = self.session.query(func.count(models.Project.uuid)).filter_by(
+            tenant=self.kubeflow_userid
+        )
 
         for column, value in filters.items():
-            query = query.filter(getattr(models.Project, column).ilike(f"%{value}%").collate("utf8mb4_bin"))
-            query_total = query_total.filter(getattr(models.Project, column).ilike(f"%{value}%").collate("utf8mb4_bin"))
+            query = query.filter(
+                getattr(models.Project, column)
+                .ilike(f"%{value}%")
+                .collate("utf8mb4_bin")
+            )
+            query_total = query_total.filter(
+                getattr(models.Project, column)
+                .ilike(f"%{value}%")
+                .collate("utf8mb4_bin")
+            )
 
         total = query_total.scalar()
 
@@ -117,10 +134,12 @@ class ProjectController:
         BadRequest
             When the project attributes are invalid.
         """
-        store_project = self.session.query(models.Project) \
-            .filter_by(name=project.name) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        store_project = (
+            self.session.query(models.Project)
+            .filter_by(name=project.name)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
         if store_project:
             raise BadRequest("a project with that name already exists")
 
@@ -134,7 +153,9 @@ class ProjectController:
         self.session.flush()
 
         experiment = schemas.ExperimentCreate(name="Experimento 1")
-        self.experiment_controller.create_experiment(experiment=experiment, project_id=project.uuid)
+        self.experiment_controller.create_experiment(
+            experiment=experiment, project_id=project.uuid
+        )
 
         self.session.commit()
         self.session.refresh(project)
@@ -158,10 +179,12 @@ class ProjectController:
         NotFound
             When project_id does not exist.
         """
-        project = self.session.query(models.Project) \
-            .filter_by(uuid=project_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        project = (
+            self.session.query(models.Project)
+            .filter_by(uuid=project_id)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
 
         if project is None:
             raise NOT_FOUND
@@ -190,26 +213,29 @@ class ProjectController:
         """
         self.raise_if_project_does_not_exist(project_id)
 
-        stored_project = self.session.query(models.Project) \
-            .filter_by(name=project.name) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        stored_project = (
+            self.session.query(models.Project)
+            .filter_by(name=project.name)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
         if stored_project and stored_project.uuid != project_id:
             raise BadRequest("a project with that name already exists")
 
         update_data = project.dict(exclude_unset=True)
         update_data.update({"updated_at": datetime.utcnow()})
 
-        self.session.query(models.Project) \
-            .filter_by(uuid=project_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
-            .update(update_data)
+        self.session.query(models.Project).filter_by(uuid=project_id).filter_by(
+            tenant=self.kubeflow_userid
+        ).update(update_data)
         self.session.commit()
 
-        project = self.session.query(models.Project) \
-            .filter_by(uuid=project_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        project = (
+            self.session.query(models.Project)
+            .filter_by(uuid=project_id)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
 
         return schemas.Project.from_orm(project)
 
@@ -230,14 +256,25 @@ class ProjectController:
         NotFound
             When project_id does not exist.
         """
-        project = self.session.query(models.Project) \
-            .filter_by(uuid=project_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        project = (
+            self.session.query(models.Project)
+            .filter_by(uuid=project_id)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
 
         if project is None:
             raise NOT_FOUND
-
+       
+        comparisons = (
+            self.session.query(models.Comparison)
+            .filter(models.Comparison.project_id.in_(project_id))
+            .all()
+        )
+        
+        for comparison in comparisons:
+            self.session.delete(comparison)
+        
         self.session.delete(project)
         self.session.commit()
 
@@ -268,14 +305,18 @@ class ProjectController:
         if total_elements < 1:
             raise BadRequest("inform at least one project")
 
-        experiments = self.session.query(models.Experiment) \
-            .filter(models.Experiment.project_id.in_(project_ids)) \
+        experiments = (
+            self.session.query(models.Experiment)
+            .filter(models.Experiment.project_id.in_(project_ids))
             .all()
+        )
 
-        projects = self.session.query(models.Project) \
-            .filter(models.Project.uuid.in_(project_ids)) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        projects = (
+            self.session.query(models.Project)
+            .filter(models.Project.uuid.in_(project_ids))
+            .filter_by(tenant=self.kubeflow_userid)
             .all()
+        )
 
         for project in projects:
             self.session.delete(project)
