@@ -10,6 +10,7 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 servers:
   - url: http://localhost:8080
+  - url: http://localhost:8000
 security:
   - ApiKeyAuth: []
 tags:
@@ -670,6 +671,27 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /projects/{projectId}/experiments/{experimentId}/operators/eventsource:
+    get:
+      summary: "Server sent events of operator's status change stream."
+      tags:
+        - "Experiment Operators"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "Returns log stream"
   /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}:
     patch:
       summary: "Update an operator by ID."
@@ -1640,6 +1662,37 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /projects/{projectId}/deployments/{deploymentId}/predictions/{predictionId}:
+    get:
+      summary: "Gets prediciton object and returns as json"
+      tags:
+        - "Predictions"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: predictionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid    
+      responses:
+        "200":
+          $ref: "#/components/responses/PredictionInfo"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"        
   /projects/{projectId}/deployments/{deploymentId}/runs/{runId}/logs:
     get:
       summary: "Get logs from a deployment run"
@@ -2114,10 +2167,39 @@ components:
         total:
           type: integer
     Prediction:
-      oneOf:
-        - $ref: "#/components/schemas/Data"
-        - $ref: "#/components/schemas/BinData"
-        - $ref: "#/components/schemas/StrData"
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        deployment_id:
+          type: string
+          format: uuid
+        status:
+          type: string    
+          enum: [not_started, started, done, failed]
+    PredictionInfo:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        deployment_id:
+          type: string
+          format: uuid
+        request_body:
+          type: string
+        response_body:
+          type: string
+        created_at:
+          type: string
+          format: date
+        updated_at:
+          type: string
+          format: date
+        status:
+          type: string    
+          enum: [not_started, started, done, failed]      
     Data:
       type: object
       properties:
@@ -3049,24 +3131,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Prediction"
-          examples:
-            data:
-              summary: Tabular data
-              value:
-                data:
-                  ndarray: [[1.0, 2.0, 3.0, 3.0]]
-                meta: {}
-            strData:
-              summary: String data
-              value:
-                strData: "The blue fox jumps over the lazy dog"
-                meta: {}
-            binData:
-              summary: Binary data
-              value:
-                binData: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-                meta:
-                  tags: {"content-type": "image/jpg"}
+    PredictionInfo:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PredictionInfo"         
     Operator:
       description: ""
       content:

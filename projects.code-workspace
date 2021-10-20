@@ -1,0 +1,62 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"editor.rulers": [80, 120],
+		"editor.insertSpaces": true,
+		"editor.tabSize": 4,
+		"editor.formatOnSave": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "ms-python.python",
+		"files.watcherExclude": {
+			"**/venv/**": true,
+			"**/build/**": true,
+			"**/dist/**": true,
+			"**/coverage/**": true
+		},
+		"editor.codeActionsOnSave": {
+			"source.fixAll": true
+		},
+		"python.formatting.provider": "black",
+		"[python]": {
+			"editor.defaultFormatter": "ms-python.python"
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-python.python",
+			"sonarsource.sonarlint-vscode"
+		]
+	},
+	"launch": {
+		// Use IntelliSense to learn about possible attributes.
+		// Hover to view descriptions of existing attributes.
+		// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Python: FastAPI",
+				"type": "python",
+				"request": "launch",
+				"module": "uvicorn",
+				"args": [
+					"projects.api.main:app"
+				],
+				"jinja": true
+			},
+			{
+				"name": "Python: Pytest",
+				"type": "python",
+				"request": "launch",
+				"module": "pytest",
+				"args": [
+					"tests/"
+				],
+				"jinja": true
+			}
+		]
+	}
+}
