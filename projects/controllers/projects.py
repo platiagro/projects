@@ -275,6 +275,7 @@ class ProjectController:
         for comparison in comparisons:
             self.session.delete(comparison)
         
+        self.session.commit()
         self.session.delete(project)
         self.session.commit()
 
