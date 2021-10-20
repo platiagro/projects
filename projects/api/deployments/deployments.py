@@ -2,7 +2,7 @@
 """Deployments API Router."""
 from typing import Optional
 from sse_starlette.sse import EventSourceResponse
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.deployment
@@ -154,19 +154,18 @@ async def handle_delete_deployment(project_id: str,
 
 
 @router.get("/{deployment_id}/logs/eventsource")
-async def handle_log_deployment(req: Request, deployment_id: str):
+async def handle_log_deployment(deployment_id: str):
     """
     Handles log event source requests to /<deployment_id>/logs/eventsource.
 
     Parameters
     ----------
     deployment_id : str
-    req : Request
 
     Returns
     -------
     EventSourceResponse
     """
     controller = LogController()
-    stream = controller.deployment_event_logs(deployment_id, req)
+    stream = controller.deployment_event_logs(deployment_id)
     return EventSourceResponse(stream)

@@ -3,7 +3,7 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Header
 from sse_starlette.sse import EventSourceResponse
 from sqlalchemy.orm import Session
 
@@ -157,14 +157,13 @@ async def handle_delete_experiment(project_id: str,
 
 
 @router.get("/{experiment_id}/logs/eventsource")
-async def handle_log_deployment(req: Request, experiment_id: str):
+async def handle_log_deployment(experiment_id: str):
     """
     Handles log event source requests to /<experiment_id>/logs/eventsource.
 
     Parameters
     ----------
     experiment_id : str
-    req : Request
 
     Returns
     -------
@@ -172,5 +171,5 @@ async def handle_log_deployment(req: Request, experiment_id: str):
     """
 
     controller = LogController()
-    stream = controller.experiment_event_logs(experiment_id, req)
+    stream = controller.experiment_event_logs(experiment_id)
     return EventSourceResponse(stream)
