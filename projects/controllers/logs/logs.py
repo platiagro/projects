@@ -15,7 +15,6 @@ from projects.schemas.log import Log, LogList
 from projects.kfp.runs import get_latest_run_id
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.argo import list_workflow_pods
-from projects.kubernetes.argo import list_workflows
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_container_logs
 from projects.kubernetes.utils import pop_log_queue
@@ -270,13 +269,13 @@ class LogController:
         except asyncio.CancelledError as e:
             logging.exception(e)
             return
-        
+
         except ApiException as e:
             """
             Expected behavior when trying to connect to a container that isn't ready yet.
             """
             logging.exception(e)
-        
+
         except CancelledError as e:
             """
             Expected behavior when trying to cancel task
