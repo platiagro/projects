@@ -304,7 +304,6 @@ class LogController:
         v1 = client.CoreV1Api()
         w = Watch()
         try:
-
             for pod in w.stream(
                 v1.list_namespaced_pod,
                 namespace=KF_PIPELINES_NAMESPACE,
@@ -334,16 +333,10 @@ class LogController:
         ------
             Iterator
         """
-        run_id = get_latest_run_id(experiment_id)
-        self.loop.run_in_executor(self.pool, self.watch_workflow_pods, run_id)
+        self.loop.run_in_executor(self.pool, self.watch_workflow_pods, experiment_id)
         return pop_log_queue(self.queue, self.pool)
 
-    def watch_workflow_pods(self, run_id: str):
-        workflows = list_workflows(run_id)
-        if len(workflows) == 0:
-            return []
-
-        workflow_name = workflows[0]["metadata"]["name"]
+    def watch_workflow_pods(self, experiment_id: str):
 
         load_kube_config()
         v1 = client.CoreV1Api()
@@ -351,7 +344,7 @@ class LogController:
         try:
             for pod in w.stream(v1.list_namespaced_pod,
                                 namespace=KF_PIPELINES_NAMESPACE,
-                                label_selector=f"workflows.argoproj.io/workflow={workflow_name}"):
+                                label_selector=f"experiment-id={experiment_id}"):
                 if pod["type"] == "ADDED":
                     pod = pod["object"]
                     for container in pod.spec.containers:
