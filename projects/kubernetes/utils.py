@@ -3,18 +3,12 @@
 import time
 import asyncio
 
-from concurrent import futures
-from queue import Queue
-from threading import Thread
-from typing import Optional
 
 from ast import literal_eval
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from kubernetes import stream
 
-from projects.kubernetes.argo import list_workflow_pods
-from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.kube_config import load_kube_config
 from projects.exceptions import InternalServerError
 from projects.kfp import KF_PIPELINES_NAMESPACE
@@ -241,4 +235,3 @@ async def pop_log_queue(queue, pool):
         pool.shutdown(wait=False)
     finally:
         pool.shutdown(wait=False)
-

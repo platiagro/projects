@@ -2,7 +2,6 @@
 """Experiments API Router."""
 
 from typing import Optional
-import asyncio
 
 from fastapi import APIRouter, Depends, Header, Request
 from sse_starlette.sse import EventSourceResponse
@@ -158,7 +157,7 @@ async def handle_delete_experiment(project_id: str,
 
 
 @router.get("/{experiment_id}/logs/eventsource")
-async def handle_log_deployment(req:Request, experiment_id: str):
+async def handle_log_deployment(req: Request, experiment_id: str):
     """
     Handles log event source requests to /<experiment_id>/logs/eventsource.
 
@@ -166,7 +165,7 @@ async def handle_log_deployment(req:Request, experiment_id: str):
     ----------
     experiment_id : str
     req : Request
-    
+
     Returns
     -------
     EventSourceResponse
@@ -175,4 +174,3 @@ async def handle_log_deployment(req:Request, experiment_id: str):
     controller = LogController()
     stream = controller.experiment_event_logs(experiment_id, req)
     return EventSourceResponse(stream)
-

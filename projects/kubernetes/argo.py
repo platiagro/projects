@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 """Argo Workflows utility functions."""
-import asyncio
 
-from asyncio import CancelledError
-
-from kubernetes.client.rest import ApiException
 from kubernetes import client
-from kubernetes.watch import Watch
 
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.kube_config import load_kube_config
@@ -76,4 +71,3 @@ def list_workflow_pods(run_id: str):
     pod_list = [pod for pod in pod_list if "name" in pod.metadata.annotations]
 
     return pod_list
-

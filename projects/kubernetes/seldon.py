@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 """Seldon utility functions."""
-import asyncio
-import time
 
-from asyncio import CancelledError
+
 from kubernetes import client
-from kubernetes.client.rest import ApiException
-from kubernetes.watch import Watch
+
 
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.istio import get_cluster_ip, get_protocol
@@ -102,4 +99,3 @@ def list_project_seldon_deployments(project_id):
     )["items"]
 
     return deployments
-

@@ -37,11 +37,11 @@ LOG_LEVELS = {
 
 
 class LogController:
-    
     def __init__(self):
         self.queue = asyncio.Queue()
         self.loop = asyncio.get_running_loop()
         self.pool = futures.ThreadPoolExecutor()
+
     def list_logs(
         self,
         project_id: str,
@@ -232,7 +232,7 @@ class LogController:
         Generates log stream of given pod's container.
 
 
-        Whenever the event source is called, there's a new thread for each pod that listen for new logs and 
+        Whenever the event source is called, there's a new thread for each pod that listen for new logs and
         there's a thread that watches for new pods being created. But there's a limitation within the log generation.
         When the client disconnects from the event source, the allocated threads aren't deallocated, not releasing the memory and process used.
 
@@ -280,6 +280,7 @@ class LogController:
             Expected behavior when trying to cancel task
             """
             return
+
     def deployment_event_logs(self, deployment_id: str, req):
         """
         Search for online pods to start log stream
@@ -318,8 +319,7 @@ class LogController:
             """
             w.stop()
             return
-    
-    
+
     def experiment_event_logs(self, experiment_id: str, req):
         """
         Search for online pods to start log stream
@@ -336,7 +336,6 @@ class LogController:
         run_id = get_latest_run_id(experiment_id)
         self.loop.run_in_executor(self.pool, self.watch_workflow_pods, run_id)
         return pop_log_queue(self.queue, self.pool)
-
 
     def watch_workflow_pods(self, run_id: str):
         workflows = list_workflows(run_id)
