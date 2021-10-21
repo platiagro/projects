@@ -12,14 +12,18 @@ TEST_CLIENT = TestClient(app)
 
 PROJECT_ID = str(uuid_alpha())
 PROJECT_ID_2 = str(uuid_alpha())
+PROJECT_ID_3 = str(uuid_alpha())
 NAME = "foo"
 NAME_2 = "foo 2"
 NAME_3 = "foo 3"
+NAME_4 = "foo 4"
 DESCRIPTION = "Description"
 EXPERIMENT_ID = str(uuid_alpha())
 EXPERIMENT_ID_2 = str(uuid_alpha())
+EXPERIMENT_ID_3 = str(uuid_alpha())
 EXPERIMENT_NAME = "Experimento 1"
 DEPLOYMENT_ID = str(uuid_alpha())
+COMPARISON_ID = str(uuid_alpha())
 STATUS = "Pending"
 URL = None
 POSITION = 0
@@ -29,6 +33,7 @@ CREATED_AT_ISO = "2000-01-01T00:00:00"
 UPDATED_AT = "2000-01-01 00:00:00"
 UPDATED_AT_ISO = "2000-01-01T00:00:00"
 TENANT = "anonymous"
+ACTIVE_TAB = "1"
 
 
 class TestProjects(TestCase):
@@ -46,6 +51,13 @@ class TestProjects(TestCase):
             f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (PROJECT_ID_2, NAME_2, DESCRIPTION, CREATED_AT, UPDATED_AT, TENANT,))
+        
+        text = (
+            f"INSERT INTO projects (uuid, name, description, created_at, updated_at, tenant) "
+            f"VALUES (%s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (PROJECT_ID_3, NAME_4, DESCRIPTION, CREATED_AT, UPDATED_AT, TENANT,))
+
 
         text = (
             f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
@@ -58,12 +70,25 @@ class TestProjects(TestCase):
             f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (EXPERIMENT_ID_2, NAME, PROJECT_ID_2, POSITION, IS_ACTIVE, CREATED_AT, UPDATED_AT))
+        
+        text = (
+            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (EXPERIMENT_ID_3, NAME, PROJECT_ID_3, POSITION, IS_ACTIVE, CREATED_AT, UPDATED_AT))
 
         text = (
             f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
             f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
         conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID_2, EXPERIMENT_ID_2, POSITION, IS_ACTIVE, STATUS, URL, CREATED_AT, UPDATED_AT))
+        
+        
+        text = (
+            f"INSERT INTO comparisons (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        conn.execute(text, (COMPARISON_ID, PROJECT_ID_3, EXPERIMENT_ID_2, ACTIVE_TAB, CREATED_AT, UPDATED_AT))
         conn.close()
 
     def tearDown(self):
@@ -76,6 +101,12 @@ class TestProjects(TestCase):
 
         text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID_2}'"
         conn.execute(text)
+        
+        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID_3}'"
+        conn.execute(text)
+        
+        text = f"DELETE FROM comparisons WHERE project_id = '{PROJECT_ID_3}'"
+        conn.execute(text)
 
         text = f"DELETE e.* FROM experiments e INNER JOIN projects p ON e.project_id = p.uuid WHERE p.name = '{NAME_3}'"
         conn.execute(text)
@@ -83,6 +114,9 @@ class TestProjects(TestCase):
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
         conn.execute(text)
 
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_2}'"
+        conn.execute(text)
+        
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_2}'"
         conn.execute(text)
 
