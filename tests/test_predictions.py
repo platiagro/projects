@@ -54,7 +54,9 @@ class TestPredictions(unittest.TestCase):
         project_id = "unk"
         deployment_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.post(f"/projects/{project_id}/deployments/{deployment_id}/predictions")
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/predictions"
+        )
         result = rv.json()
         expected = {"message": "The specified project does not exist"}
         self.assertEqual(result, expected)
@@ -67,7 +69,9 @@ class TestPredictions(unittest.TestCase):
         project_id = util.MOCK_UUID_1
         deployment_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.post(f"/projects/{project_id}/deployments/{deployment_id}/predictions")
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/predictions"
+        )
         result = rv.json()
         expected = {"message": "either form-data or json is required"}
         self.assertEqual(result, expected)
@@ -80,7 +84,9 @@ class TestPredictions(unittest.TestCase):
         project_id = util.MOCK_UUID_1
         deployment_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.post(f"/projects/{project_id}/deployments/{deployment_id}/predictions", json={})
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/predictions", json={}
+        )
         result = rv.json()
         expected = {"message": "either dataset name or file is required"}
         self.assertEqual(result, expected)
@@ -90,7 +96,7 @@ class TestPredictions(unittest.TestCase):
         "projects.controllers.predictions.load_dataset",
         side_effect=util.FILE_NOT_FOUND_ERROR,
     )
-    def test_create_prediction_dataset_required(self,  mock_load_dataset):
+    def test_create_prediction_dataset_required(self, mock_load_dataset):
         """
         Should return an http status 400 and a message 'a valid dataset is required'.
         """
@@ -98,7 +104,10 @@ class TestPredictions(unittest.TestCase):
         deployment_id = util.MOCK_UUID_1
         name_dataset = "unk"
 
-        rv = TEST_CLIENT.post(f"/projects/{project_id}/deployments/{deployment_id}/predictions", json={"dataset": name_dataset})
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/predictions",
+            json={"dataset": name_dataset},
+        )
         result = rv.json()
         expected = {"message": "a valid dataset is required"}
         self.assertEqual(result, expected)
@@ -108,24 +117,38 @@ class TestPredictions(unittest.TestCase):
 
     @mock.patch(
         "projects.controllers.predictions.load_dataset",
-        return_value=util.IRIS_DATAFRAME
+        return_value=util.IRIS_DATAFRAME,
     )
     @mock.patch(
         "requests.post",
         return_value=util.MOCK_POST_PREDICTION,
     )
-    def test_create_prediction_dataset(self, mock_requests_post, mock_load_dataset):
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    def test_create_prediction_dataset(
+        self,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+        mock_requests_post,
+        mock_load_dataset,
+    ):
         """
         Should load dataset request successfully.
         """
         project_id = util.MOCK_UUID_1
         deployment_id = util.MOCK_UUID_1
         name = util.IRIS_DATASET_NAME
-        url = "http://uuid-1-model.anonymous:8000/api/v1.0/predictions"
+        url = "http://anonymous/seldon/anonymous/uuid-1/api/v1.0/predictions"
 
         rv = TEST_CLIENT.post(
             f"/projects/{project_id}/deployments/{deployment_id}/predictions",
-            json={"dataset": name}
+            json={"dataset": name},
         )
         result = rv.json()
         self.assertIsInstance(result, dict)
@@ -133,7 +156,7 @@ class TestPredictions(unittest.TestCase):
 
         mock_load_dataset.assert_any_call(name)
         mock_requests_post.assert_any_call(
-            url,
+            url=url,
             json={
                 "data": {
                     "names": [
@@ -141,26 +164,43 @@ class TestPredictions(unittest.TestCase):
                         "SepalWidthCm",
                         "PetalLengthCm",
                         "PetalWidthCm",
-                        "Species", ],
+                        "Species",
+                    ],
                     "ndarray": [
                         [5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
                         [4.9, 3.0, 1.4, 0.2, "Iris-setosa"],
                         [4.7, 3.2, 1.3, 0.2, "Iris-setosa"],
                         [4.6, 3.1, 1.5, 0.2, "Iris-setosa"],
-                    ]
+                    ],
                 }
-            }
+            },
         )
+        mock_core_v1_api.assert_any_call()
+        mock_custom_objects_api.assert_any_call()
 
     @mock.patch(
         "projects.controllers.predictions.load_dataset",
-        return_value=util.IRIS_DATAFRAME
+        return_value=util.IRIS_DATAFRAME,
     )
     @mock.patch(
         "requests.post",
         return_value=util.MOCK_POST_PREDICTION,
     )
-    def test_create_prediction_dataset_image(self, mock_requests_post, mock_load_dataset):
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    def test_create_prediction_dataset_image(
+        self,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+        mock_requests_post,
+        mock_load_dataset,
+    ):
         """
         Should load the dataset request with an image successfully.
         """
@@ -168,29 +208,35 @@ class TestPredictions(unittest.TestCase):
         deployment_id = util.MOCK_UUID_1
         dataset_name = "mock.jpg"
 
-        url = "http://uuid-1-model.anonymous:8000/api/v1.0/predictions"
+        url = "http://anonymous/seldon/anonymous/uuid-1/api/v1.0/predictions"
         rv = TEST_CLIENT.post(
             f"/projects/{project_id}/deployments/{deployment_id}/predictions",
-            json={"dataset": dataset_name}
+            json={"dataset": dataset_name},
         )
         result = rv.json()
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 200)
 
         mock_load_dataset.assert_any_call(dataset_name)
-        mock_requests_post.assert_any_call(url, json={
-            "data": {
-                "names": [
-                    "SepalLengthCm",
-                    "SepalWidthCm",
-                    "PetalLengthCm",
-                    "PetalWidthCm",
-                    "Species", ],
-                "ndarray": [
-                    [5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
-                    [4.9, 3.0, 1.4, 0.2, "Iris-setosa"],
-                    [4.7, 3.2, 1.3, 0.2, "Iris-setosa"],
-                    [4.6, 3.1, 1.5, 0.2, "Iris-setosa"],
-                ]
-            }
-        })
+        mock_requests_post.assert_any_call(
+            url=url,
+            json={
+                "data": {
+                    "names": [
+                        "SepalLengthCm",
+                        "SepalWidthCm",
+                        "PetalLengthCm",
+                        "PetalWidthCm",
+                        "Species",
+                    ],
+                    "ndarray": [
+                        [5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
+                        [4.9, 3.0, 1.4, 0.2, "Iris-setosa"],
+                        [4.7, 3.2, 1.3, 0.2, "Iris-setosa"],
+                        [4.6, 3.1, 1.5, 0.2, "Iris-setosa"],
+                    ],
+                }
+            },
+        )
+        mock_core_v1_api.assert_any_call()
+        mock_custom_objects_api.assert_any_call()

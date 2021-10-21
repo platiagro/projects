@@ -16,6 +16,27 @@ TEST_CLIENT = TestClient(app)
 class TestExperimentData(unittest.TestCase):
     maxDiff = None
 
+    def setUp(self):
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
+
+    def tearDown(self):
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
+
+    # @patch("kubernetes.client.CoreV1Api")
+    # @patch("kubernetes.stream.stream")
+    def test_get_data(self, mock_k8s_stream, mock_client):
+        rv = TEST_CLIENT.get(f"/projects/unk/experiments/{EXPERIMENT_ID}/data")
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
     # def setUp(self):
     #     conn = engine.connect()
     #     text = (

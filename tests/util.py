@@ -13,7 +13,9 @@ from projects import models
 MOCK_SET_USER_NAMESPACE = mock.MagicMock()
 MOCK_RUNS = mock.MagicMock()
 MOCK_RUN = mock.MagicMock(id="4546465")
-MOCK_LIST_RUNS = mock.MagicMock(return_value=mock.MagicMock(runs=[MOCK_RUN], next_page_token=None))
+MOCK_LIST_RUNS = mock.MagicMock(
+    return_value=mock.MagicMock(runs=[MOCK_RUN], next_page_token=None)
+)
 MOCK_WORKFLOW_MANIFEST = open(
     "tests/resources/deployment_mock_manifest.json", "r"
 ).read()
@@ -78,6 +80,11 @@ MOCK_CORE_V1_API = mock.MagicMock(
                 name=name,
                 namespace=namespace,
             ),
+            status=mock.MagicMock(
+                load_balancer=mock.MagicMock(
+                    ingress=[mock.MagicMock(ip="10.10.10.10:8000", hostname="anonymous")]
+                )
+            ),
         ),
     ),
 )
@@ -85,10 +92,7 @@ MOCK_CORE_V1_API = mock.MagicMock(
 
 def mock_get_namespaced_custom_object(plural, **kwargs):
     if plural == "gateways":
-        return {
-            "spec": {
-                "servers": [{}]}
-        }
+        return {"spec": {"servers": [{}]}}
     elif plural == "notebooks":
         return {
             "spec": {
@@ -120,16 +124,17 @@ MOCK_POST_PREDICTION = mock.MagicMock(
                     "SepalWidthCm",
                     "PetalLengthCm",
                     "PetalWidthCm",
-                    "Species", ],
+                    "Species",
+                ],
                 "ndarray": [
                     [5.1, 3.5, 1.4, 0.2, "Iris-setosa"],
                     [4.9, 3.0, 1.4, 0.2, "Iris-setosa"],
                     [4.7, 3.2, 1.3, 0.2, "Iris-setosa"],
                     [4.6, 3.1, 1.5, 0.2, "Iris-setosa"],
-                ]
+                ],
             }
         }
-    )
+    ),
 )
 
 IRIS_DATASET_NAME = "iris.csv"
@@ -179,9 +184,17 @@ def mock_load_dataset(page_size, **kwargs):
 
 
 IRIS_DATAFRAME = pd.DataFrame(IRIS_DATA_ARRAY, columns=IRIS_COLUMNS)
-IRIS_HEADERLESS_DATAFRAME = pd.DataFrame(IRIS_DATA_ARRAY, columns=IRIS_HEADERLESS_COLUMNS)
+IRIS_HEADERLESS_DATAFRAME = pd.DataFrame(
+    IRIS_DATA_ARRAY, columns=IRIS_HEADERLESS_COLUMNS
+)
 
-MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3, MOCK_UUID_4, MOCK_UUID_5 = "uuid-1", "uuid-2", "uuid-3", "uuid-4", "uuid-5"
+MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3, MOCK_UUID_4, MOCK_UUID_5 = (
+    "uuid-1",
+    "uuid-2",
+    "uuid-3",
+    "uuid-4",
+    "uuid-5",
+)
 MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3, MOCK_PROJECT_NAME_4 = (
     "project-1",
     "project-2",
@@ -190,7 +203,13 @@ MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3, MOCK_PROJECT_NAME
 )
 MOCK_EXPERIMENT_NAME_1, MOCK_EXPERIMENT_NAME_2 = "experiment-1", "experiment-2"
 MOCK_DEPLOYMENT_NAME_1, MOCK_DEPLOYMENT_NAME_2 = "deployment-1", "deployment-2"
-MOCK_TASK_NAME_1, MOCK_TASK_NAME_2, MOCK_TASK_NAME_3, MOCK_TASK_NAME_4, MOCK_TASK_NAME_5 = (
+(
+    MOCK_TASK_NAME_1,
+    MOCK_TASK_NAME_2,
+    MOCK_TASK_NAME_3,
+    MOCK_TASK_NAME_4,
+    MOCK_TASK_NAME_5,
+) = (
     "task-1",
     "task-2",
     "task-3",
@@ -198,14 +217,26 @@ MOCK_TASK_NAME_1, MOCK_TASK_NAME_2, MOCK_TASK_NAME_3, MOCK_TASK_NAME_4, MOCK_TAS
     "task-5",
 )
 MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
-MOCK_CREATED_AT_1, MOCK_CREATED_AT_2, MOCK_CREATED_AT_3, MOCK_CREATED_AT_4, MOCK_CREATED_AT_5 = (
+(
+    MOCK_CREATED_AT_1,
+    MOCK_CREATED_AT_2,
+    MOCK_CREATED_AT_3,
+    MOCK_CREATED_AT_4,
+    MOCK_CREATED_AT_5,
+) = (
     datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
 )
-MOCK_UPDATED_AT_1, MOCK_UPDATED_AT_2, MOCK_UPDATED_AT_3, MOCK_UPDATED_AT_4, MOCK_UPDATED_AT_5 = (
+(
+    MOCK_UPDATED_AT_1,
+    MOCK_UPDATED_AT_2,
+    MOCK_UPDATED_AT_3,
+    MOCK_UPDATED_AT_4,
+    MOCK_UPDATED_AT_5,
+) = (
     datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
@@ -429,22 +460,19 @@ MOCK_DEPLOYMENT_LIST = {
 MOCK_DEPLOYMENT_RUN_LIST = {
     "runs": [
         {
-            'createdAt': mock.ANY,
-            'operators': {
-                'deployment': {
-                    'parameters': {},
-                    'status': 'Succeeded'
-                },
-                'f08ccfda-9206-4f26-8326-ad666b1761e7': {
-                    'parameters': {
-                        'dataset': None,
-                        'features_to_filter': ['Vibracao1']
+            "createdAt": mock.ANY,
+            "operators": {
+                "deployment": {"parameters": {}, "status": "Succeeded"},
+                "f08ccfda-9206-4f26-8326-ad666b1761e7": {
+                    "parameters": {
+                        "dataset": None,
+                        "features_to_filter": ["Vibracao1"],
                     },
-                    'status': 'Succeeded',
-                    'taskId': 'f298de51-cfc1-4bc9-8ebd-0959d74d7b91'
-                }
+                    "status": "Succeeded",
+                    "taskId": "f298de51-cfc1-4bc9-8ebd-0959d74d7b91",
+                },
             },
-            'uuid': 'uuid-1'
+            "uuid": "uuid-1",
         }
     ],
     "total": 1,
@@ -463,7 +491,7 @@ MOCK_TASK_1 = {
     "commands": None,
     "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
     "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
-    "createdAt": MOCK_CREATED_AT_1.isoformat(),
+    "createdAt": mock.ANY,
     "dataIn": None,
     "dataOut": None,
     "description": None,
@@ -476,7 +504,7 @@ MOCK_TASK_1 = {
     "parameters": [],
     "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
     "tags": [],
-    "updatedAt": MOCK_UPDATED_AT_1.isoformat(),
+    "updatedAt": mock.ANY,
     "uuid": MOCK_UUID_1,
 }
 
@@ -486,7 +514,7 @@ MOCK_TASK_2 = {
     "commands": None,
     "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
     "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
-    "createdAt": MOCK_CREATED_AT_2.isoformat(),
+    "createdAt": mock.ANY,
     "dataIn": None,
     "dataOut": None,
     "description": None,
@@ -499,7 +527,7 @@ MOCK_TASK_2 = {
     "parameters": [],
     "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
     "tags": [],
-    "updatedAt": MOCK_UPDATED_AT_2.isoformat(),
+    "updatedAt": mock.ANY,
     "uuid": MOCK_UUID_2,
 }
 
@@ -509,7 +537,7 @@ MOCK_TASK_3 = {
     "commands": None,
     "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
     "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
-    "createdAt": MOCK_CREATED_AT_3.isoformat(),
+    "createdAt": mock.ANY,
     "dataIn": None,
     "dataOut": None,
     "description": None,
@@ -522,7 +550,7 @@ MOCK_TASK_3 = {
     "parameters": [],
     "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
     "tags": [],
-    "updatedAt": MOCK_UPDATED_AT_3.isoformat(),
+    "updatedAt": mock.ANY,
     "uuid": MOCK_UUID_3,
 }
 
@@ -532,7 +560,7 @@ MOCK_TASK_4 = {
     "commands": None,
     "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
     "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
-    "createdAt": MOCK_CREATED_AT_4.isoformat(),
+    "createdAt": mock.ANY,
     "dataIn": None,
     "dataOut": None,
     "description": None,
@@ -545,7 +573,7 @@ MOCK_TASK_4 = {
     "parameters": [],
     "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
     "tags": [],
-    "updatedAt": MOCK_UPDATED_AT_4.isoformat(),
+    "updatedAt": mock.ANY,
     "uuid": MOCK_UUID_4,
 }
 
@@ -555,7 +583,7 @@ MOCK_TASK_5 = {
     "commands": None,
     "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
     "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
-    "createdAt": MOCK_CREATED_AT_5.isoformat(),
+    "createdAt": mock.ANY,
     "dataIn": None,
     "dataOut": None,
     "description": None,
@@ -568,7 +596,7 @@ MOCK_TASK_5 = {
     "parameters": [],
     "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
     "tags": [],
-    "updatedAt": MOCK_UPDATED_AT_5.isoformat(),
+    "updatedAt": mock.ANY,
     "uuid": MOCK_UUID_5,
 }
 
