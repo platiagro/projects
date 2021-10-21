@@ -194,3 +194,26 @@ class TestPredictions(unittest.TestCase):
                 ]
             }
         })
+
+    def test_get_prediction(self):
+        """
+        Should get prediction details successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        deployment_id = util.MOCK_UUID_1
+        prediction_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/deployments/{deployment_id}/predictions/{prediction_id}",
+        )
+        result = rv.json()
+        self.assertIsInstance(result, dict)
+        self.assertEqual(rv.status_code, 200)
+
+        expected = {
+            "deployment_id": DEPLOYMENT_ID,
+            "request_body": '{"data": {"names": ["Data", "Temperatura", "Umidade", "Maquina", "Vibracao1", "Vibracao2", "Vibracao3", "Vibracao4", "Vibracao5", "Vibracao6", "HorasDesdeAUltimaFalha"], "ndarray": [["2016-01-02", 62, 80, "Minerva", 1233, 364, 1549, 330, 1395, 428, 132]]}}"',
+            "response_body": '{"data":{"names":["Data","Temperatura","Umidade","Maquina","Vibracao1","Vibracao2","Vibracao3","Vibracao4","Vibracao5","Vibracao6","HorasDesdeAUltimaFalha","RFClassifier_predict_proba_N_o","RFClassifier_predict_proba_Sim","RFClassifier_predict_class"],"ndarray":[["2016-01-02","62","80","Minerva","1233","364","1549","330","1395","428","132",1.0,0.0,"N\\u00e3o"]]},"meta":{}}\n',
+            "status": "done",
+        }
+        self.assertEqual(result, expected)

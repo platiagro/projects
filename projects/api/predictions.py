@@ -23,14 +23,14 @@ from projects.controllers import (
 
 from projects.database import session_scope
 from projects.exceptions import BadRequest
-from projects.schemas import Prediction
+from projects.schemas import Prediction, PredictionBase
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/predictions",
 )
 
 
-@router.post("", response_model=Prediction)
+@router.post("", response_model=PredictionBase)
 async def handle_post_prediction(
     project_id: str,
     deployment_id: str,
@@ -76,4 +76,26 @@ async def handle_post_prediction(
     prediction = prediction_controller.create_prediction(
         deployment_id=deployment_id, **kwargs
     )
+    return prediction
+
+
+@router.get("/{prediction_id}", response_model=Prediction)
+async def handle_get_prediction(
+    prediction_id: str, session: Session = Depends(session_scope)
+):
+    """
+    Handles GET requests to /<prediction_id>.
+
+    Parameters
+    ----------
+    prediction_id : str
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    dict
+    """
+
+    prediction_controller = PredictionController(session)
+    prediction = prediction_controller.get_prediction(prediction_id=prediction_id)
     return prediction
