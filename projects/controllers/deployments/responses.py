@@ -9,10 +9,10 @@ import requests
 from projects import models
 from projects.controllers.utils import uuid_alpha
 
-BROKER_URL = os.getenv(
-    "BROKER_URL",
-    "http://broker-ingress.knative-eventing.svc.cluster.local/anonymous/default",
+DEFAULT_BROKER_URL = (
+    "http://broker-ingress.knative-eventing.svc.cluster.local/anonymous/default"
 )
+BROKER_URL = os.getenv("BROKER_URL", DEFAULT_BROKER_URL)
 
 
 class ResponseController:
