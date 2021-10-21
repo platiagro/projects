@@ -265,17 +265,7 @@ class ProjectController:
 
         if project is None:
             raise NOT_FOUND
-       
-        comparisons = (
-            self.session.query(models.Comparison)
-            .filter(models.Comparison.project_id.in_(project_id))
-            .all()
-        )
-        
-        for comparison in comparisons:
-            self.session.delete(comparison)
-        
-        self.session.commit()
+
         self.session.delete(project)
         self.session.commit()
 
