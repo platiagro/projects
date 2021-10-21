@@ -85,10 +85,10 @@ class TestProjects(TestCase):
         
         
         text = (
-            f"INSERT INTO comparisons (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            f"INSERT INTO comparisons (uuid, project_id, experiment_id, active_tab, created_at, updated_at) "
+            f"VALUES (%s, %s, %s, %s, %s, %s)"
         )
-        conn.execute(text, (COMPARISON_ID, PROJECT_ID_3, EXPERIMENT_ID_2, ACTIVE_TAB, CREATED_AT, UPDATED_AT))
+        conn.execute(text, (COMPARISON_ID, PROJECT_ID_3, EXPERIMENT_ID_3, ACTIVE_TAB, CREATED_AT, UPDATED_AT))
         conn.close()
 
     def tearDown(self):
@@ -96,17 +96,19 @@ class TestProjects(TestCase):
         text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID_2}'"
         conn.execute(text)
 
+        text = f"DELETE FROM comparisons WHERE project_id = '{PROJECT_ID_3}'"
+        conn.execute(text)
+     
         text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
         conn.execute(text)
 
         text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID_2}'"
         conn.execute(text)
         
+        
         text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID_3}'"
         conn.execute(text)
         
-        text = f"DELETE FROM comparisons WHERE project_id = '{PROJECT_ID_3}'"
-        conn.execute(text)
 
         text = f"DELETE e.* FROM experiments e INNER JOIN projects p ON e.project_id = p.uuid WHERE p.name = '{NAME_3}'"
         conn.execute(text)
@@ -117,7 +119,7 @@ class TestProjects(TestCase):
         text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_2}'"
         conn.execute(text)
         
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_2}'"
+        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_3}'"
         conn.execute(text)
 
         text = f"DELETE FROM projects WHERE name = '{NAME_3}'"
@@ -190,6 +192,7 @@ class TestProjects(TestCase):
             "description": DESCRIPTION
         })
         result = rv.json()
+        print(result)
         result_experiments = result.pop("experiments")
         expected = {
             "name": NAME_3,
@@ -345,14 +348,20 @@ class TestProjects(TestCase):
         expected = {"message": "Project deleted"}
         self.assertDictEqual(expected, result)
 
+        # testing deletion of project that has related comparison
+        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID_3}")
+        result = rv.json()
+        expected = {"message": "Project deleted"}
+        self.assertDictEqual(expected, result)
+    
     def test_delete_projects(self):
         rv = TEST_CLIENT.post("/projects/deleteprojects", json=[])
         result = rv.json()
         expected = {"message": "inform at least one project"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[PROJECT_ID_2])
+   
+        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[PROJECT_ID_2,])
         result = rv.json()
         expected = {"message": "Successfully removed projects"}
         self.assertDictEqual(expected, result)

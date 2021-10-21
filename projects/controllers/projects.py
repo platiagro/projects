@@ -311,9 +311,9 @@ class ProjectController:
 
         for project in projects:
             self.session.delete(project)
-
+            
         self.session.commit()
-
+    
         for experiment in experiments:
             prefix = join("experiments", experiment.uuid)
             try:
