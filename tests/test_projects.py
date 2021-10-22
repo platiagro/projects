@@ -273,8 +273,8 @@ class TestProjects(TestCase):
             "/projects", json={"name": NAME_3, "description": DESCRIPTION}
         )
         result = rv.json()
-        print(result)
         result_experiments = result.pop("experiments")
+   
         expected = {
             "name": NAME_3,
             "description": DESCRIPTION,
