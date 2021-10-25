@@ -15,114 +15,94 @@ TEST_CLIENT = TestClient(app)
 
 class TestExperimentsRuns(unittest.TestCase):
     maxDiff = None
-    # def setUp(self):
-    #     self.maxDiff = None
 
-    #     conn = engine.connect()
-    #     text = (
-    #         f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
-    #         f"VALUES (%s, %s, %s, %s, %s)"
+    def setUp(self):
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
+
+    def tearDown(self):
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_list_runs(self, mock_kfp_client):
+        """
+        Should return an runs successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments/{experiment_id}/runs")
+        result = rv.json()
+        self.assertIsInstance(result["runs"], list)
+        self.assertIsInstance(result["total"], int)
+        self.assertEqual(rv.status_code, 200)
+
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_create_run(self, mock_kfp_client):
+        """
+        Should return the creation of a successful runs.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs", json={}
+        )
+        result = rv.json()
+        self.assertIsInstance(result, dict)
+        self.assertIn("operators", result)
+        self.assertIn("uuid", result)
+        self.assertEqual(rv.status_code, 200)
+
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    def test_create_run_status_operator(self):
+        """
+        Should return the creation of a successful runs.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments/{experiment_id}")
+        result = rv.json()
+        operator = result["operators"][0]
+        self.assertEqual("Unset", operator["status"])
+        self.assertEqual(rv.status_code, 200)
+
+    # @mock.patch(
+    #     "kfp.Client",
+    #     return_value=util.MOCK_KFP_CLIENT,
+    # )
+    # def test_get_run(self, mock_kfp_client):
+    #     """
+    #     Should return the creation of a successful runs.
+    #     """
+    #     project_id = util.MOCK_UUID_1
+    #     experiment_id = util.MOCK_UUID_1
+    #     run_id = "unk"
+
+    #     rv = TEST_CLIENT.get(
+    #         f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}"
     #     )
-    #     conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
-
-    #     text = (
-    #         f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-    #         f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
-
-    #     text = (
-    #         f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-    #         f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-    #         f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-    #         f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
-    #                         EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-    #     text = (
-    #         f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-    #         f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-    #         f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-    #         f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, COMMANDS, ARGUMENTS_JSON, CATEGORY, TASK_DATASET_TAGS_JSON, DATA_IN,
-    #                         DATA_OUT, DOCS, dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi",
-    #                         300, 0, CREATED_AT, UPDATED_AT,))
-
-    #     text = (
-    #         f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, "
-    #         f"position_x, position_y, dependencies, created_at, updated_at) "
-    #         f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
-    #                         POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
-    #     conn.close()
-
-    #     # Creates pipelines for log generation
-    #     with open("tests/resources/mocked_experiment.yaml", "r") as file:
-    #         content = file.read()
-    #     content = content.replace("$experimentId", EXPERIMENT_ID)
-    #     content = content.replace("$taskName", NAME)
-    #     content = content.replace("$operatorId", OPERATOR_ID)
-    #     content = content.replace("$image", IMAGE)
-    #     with open("tests/resources/mocked.yaml", "w") as file:
-    #         file.write(content)
-    #     kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
-    #     run = kfp_client().run_pipeline(
-    #         experiment_id=kfp_experiment.id,
-    #         job_name=f"experiment-{EXPERIMENT_ID}",
-    #         pipeline_package_path="tests/resources/mocked.yaml",
-    #     )
-    #     # Awaits 120 seconds (for the pipeline to run and complete)
-    #     kfp_client().wait_for_run_completion(run_id=run.id, timeout=120)
-
-    # def tearDown(self):
-    #     kfp_experiment = kfp_client().get_experiment(experiment_name=EXPERIMENT_ID)
-    #     kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
-
-    #     conn = engine.connect()
-
-    #     text = f"DELETE FROM operators WHERE experiment_id in" \
-    #            f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
-    #     conn.execute(text)
-
-    #     text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}')"
-    #     conn.execute(text)
-
-    #     text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
-    #     conn.execute(text)
-
-    #     text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-    #     conn.execute(text)
-    #     conn.close()
-
-    # def test_list_runs(self):
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs")
-    #     result = rv.json()
-    #     self.assertIsInstance(result["runs"], list)
-    #     self.assertIsInstance(result["total"], int)
-    #     self.assertEqual(rv.status_code, 200)
-
-    # def test_create_run(self):
-    #     rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs", json={})
-    #     result = rv.json()
-    #     self.assertIsInstance(result, dict)
-    #     self.assertIn("operators", result)
-    #     self.assertIn("uuid", result)
-    #     self.assertEqual(rv.status_code, 200)
-
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}")
-    #     result = rv.json()
-    #     operator = result["operators"][0]
-    #     self.assertEqual("Pending", operator["status"])
-
-    # def test_get_run(self):
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun")
     #     result = rv.json()
     #     expected = {"message": "The specified run does not exist"}
     #     self.assertDictEqual(expected, result)
     #     self.assertEqual(rv.status_code, 404)
+
+    #     mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
     #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
     #     result = rv.json()

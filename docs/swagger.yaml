@@ -1662,6 +1662,37 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /projects/{projectId}/deployments/{deploymentId}/predictions/{predictionId}:
+    get:
+      summary: "Gets prediciton object and returns as json"
+      tags:
+        - "Predictions"
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: predictionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid    
+      responses:
+        "200":
+          $ref: "#/components/responses/PredictionInfo"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"        
   /projects/{projectId}/deployments/{deploymentId}/runs/{runId}/logs:
     get:
       summary: "Get logs from a deployment run"
@@ -2149,6 +2180,28 @@ components:
         status:
           type: string    
           enum: [not_started, started, done, failed]
+    PredictionInfo:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        deployment_id:
+          type: string
+          format: uuid
+        request_body:
+          type: string
+        response_body:
+          type: string
+        created_at:
+          type: string
+          format: date
+        updated_at:
+          type: string
+          format: date
+        status:
+          type: string    
+          enum: [not_started, started, done, failed]      
     Data:
       type: object
       properties:
@@ -3080,6 +3133,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Prediction"
+    PredictionInfo:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PredictionInfo"         
     Operator:
       description: ""
       content:

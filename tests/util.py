@@ -43,6 +43,14 @@ MOCK_KFP_CLIENT = mock.MagicMock(
     experiments=MOCK_EXPERIMENTS,
 )
 
+MOCK_STREAM = mock.MagicMock(
+    is_open=mock.MagicMock(
+        side_effect=[True, False]
+    ),
+    read_stdout=mock.MagicMock(
+        return_value=("Z2l0aHViLmNvbS9wbGF0aWFncm8vcHJvamVjdHM=")
+    )
+)
 MOCK_CORE_V1_API = mock.MagicMock(
     read_namespaced_persistent_volume_claim=mock.MagicMock(
         side_effect=lambda name, namespace: mock.MagicMock(
@@ -955,3 +963,5 @@ def delete_mocks():
 
 FILE_NOT_FOUND_ERROR = FileNotFoundError("The specified dataset does not exist")
 SAMPLE_NOTEBOOK = '{"cells": [{"cell_type": "code","execution_count": null,"metadata": {"tags": ["parameters"]},"outputs":[],"source":["shuffle = True #@param {type: \\"boolean\\"}"]}],"metadata": {"kernelspec": {"display_name": "Python 3","language": "python","name": "python3"},"language_info": {"codemirror_mode": {"name": "ipython","version": 3},"file_extension": ".py","mimetype": "text/x-python","name": "python","nbconvert_exporter": "python","pygments_lexer": "ipython3","version": "3.6.9"}},"nbformat": 4,"nbformat_minor": 4}'
+CONTENT_DISPOSITION = "attachment; filename=results.zip"
+CONTENT_TYPE = "application/x-zip-compressed"
