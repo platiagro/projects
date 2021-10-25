@@ -12,6 +12,8 @@ from projects.models.experiment import Experiment
 from projects.models.comparison import Comparison
 
 CASCADE_BEHAVIOR = "all, delete-orphan"
+
+
 class Project(Base):
     __tablename__ = "projects"
     uuid = Column(String(255), primary_key=True)
