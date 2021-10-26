@@ -528,7 +528,7 @@ def get_file_from_pod(filepath):
     str
         File content.
     """
-    notebook_path = f"{JUPYTER_WORKSPACE}/{filepath}/"
+    notebook_path = f"{JUPYTER_WORKSPACE}/{filepath}"
 
     warnings.warn(f"Fetching {notebook_path} from pod...")
     load_kube_config()

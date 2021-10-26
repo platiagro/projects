@@ -274,7 +274,7 @@ class TestProjects(TestCase):
         )
         result = rv.json()
         result_experiments = result.pop("experiments")
-
+        
         expected = {
             "name": NAME_3,
             "description": DESCRIPTION,
