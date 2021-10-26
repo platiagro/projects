@@ -27,24 +27,15 @@ from projects.kubernetes.notebook import (
 
 PREFIX = "tasks"
 
-CATEGORY_DEFAULT = "DEFAULT"
-CATEGORY_DATASETS = "DATASETS"
-CATEGORY_DESCRIPTIVE_STATISTICS = "DESCRIPTIVE_STATISTICS"
-CATEGORY_FEATURE_ENGINEERING = "FEATURE_ENGINEERING"
-CATEGORY_PREDICTOR = "PREDICTOR"
-CATEGORY_COMPUTER_VISION = "COMPUTER_VISION"
-CATEGORY_NLP = "NLP"
-CATEGORY_MONITORING = "MONITORING"
-
 VALID_CATEGORIES = [
-    CATEGORY_DEFAULT,
-    CATEGORY_DATASETS,
-    CATEGORY_DESCRIPTIVE_STATISTICS,
-    CATEGORY_FEATURE_ENGINEERING,
-    CATEGORY_PREDICTOR,
-    CATEGORY_COMPUTER_VISION,
-    CATEGORY_NLP,
-    CATEGORY_MONITORING,
+    "DATASETS",
+    "DEFAULT",
+    "DESCRIPTIVE_STATISTICS",
+    "FEATURE_ENGINEERING",
+    "PREDICTOR",
+    "COMPUTER_VISION",
+    "NLP",
+    "MONITORING",
 ]
 DEPLOYMENT_NOTEBOOK = json.loads(
     pkgutil.get_data("projects", "config/Deployment.ipynb")
@@ -100,8 +91,8 @@ class TaskController:
 
     def list_tasks(
         self,
-        page: Optional[int] = 1,
-        page_size: Optional[int] = 10,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
         order_by: str = Optional[str],
         **filters,
     ):
@@ -202,7 +193,7 @@ class TaskController:
             raise BadRequest("Either provide notebooks or a task to copy from")
 
         if not task.tags:
-            task.tags = [CATEGORY_DEFAULT]
+            task.tags = ["DEFAULT"]
 
         self.task_category_is_not_none(task)
 
@@ -353,8 +344,8 @@ class TaskController:
             )
 
         # update ConfigMap for monitoring tasks
-        if (task.parameters and "MONITORING" in stored_task.tags) or (
-            "MONITORING" in task.tags if task.tags else False
+        if (task.parameters and stored_task.category == "MONITORING") or (
+            task.category == "MONITORING"
         ):
             self.background_tasks.add_task(
                 update_task_config_map,
