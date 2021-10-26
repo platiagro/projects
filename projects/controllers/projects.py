@@ -91,9 +91,6 @@ class ProjectController:
                 .collate("utf8mb4_bin")
             )
 
-        # BUG
-        # query_total.limit(page_size) didn't work. I'm not sure why...
-        # This solution uses an unoptimized query, and should be improved.
         total = query_total.scalar()
 
         # Default sort is name in ascending order
