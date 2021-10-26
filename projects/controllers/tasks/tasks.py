@@ -26,7 +26,6 @@ from projects.kubernetes.notebook import (
 )
 
 PREFIX = "tasks"
-
 VALID_CATEGORIES = [
     "DATASETS",
     "DEFAULT",
