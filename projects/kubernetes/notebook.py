@@ -189,11 +189,11 @@ def create_persistent_volume_claim(name, mount_path):
                     _request_timeout=5,
                 )
 
-                if pod.status.phase == "Running" and all(
-                    [c.state.running for c in pod.status.container_statuses]
+                if (
+                    pod.status.phase == "Running"
+                    and all([c.state.running for c in pod.status.container_statuses])
+                    and any([v for v in pod.spec.volumes if v.name == f"{name}"])
                 ):
-                    # TODO commented out so mocks works
-                    # and any([v for v in pod.spec.volumes if v.name == f"{name}"])
                     warnings.warn(f"Mounted volume {name} in notebook server!")
                     break
             except ApiException:
