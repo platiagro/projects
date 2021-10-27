@@ -44,13 +44,24 @@ MOCK_KFP_CLIENT = mock.MagicMock(
 )
 
 MOCK_STREAM = mock.MagicMock(
-    is_open=mock.MagicMock(
-        side_effect=[True, False]
-    ),
+    is_open=mock.MagicMock(side_effect=[True, False]),
     read_stdout=mock.MagicMock(
         return_value=("Z2l0aHViLmNvbS9wbGF0aWFncm8vcHJvamVjdHM=")
-    )
+    ),
 )
+
+MOCK_POD = mock.MagicMock(
+    metadata=mock.MagicMock(name="server-0", namespace="anonymous"),
+    status=mock.MagicMock(
+        phase="Running",
+        container_statuses=[mock.MagicMock(state=mock.MagicMock(running=True))],
+    ),
+)
+
+MOCK_POD.spec = mock.MagicMock(
+    volumes=[mock.MagicMock(name=mock.ANY)],
+)
+
 MOCK_CORE_V1_API = mock.MagicMock(
     read_namespaced_persistent_volume_claim=mock.MagicMock(
         side_effect=lambda name, namespace: mock.MagicMock(
@@ -64,15 +75,7 @@ MOCK_CORE_V1_API = mock.MagicMock(
         )
     ),
     read_namespaced_pod=mock.MagicMock(
-        side_effect=lambda name, namespace, **kwargs: mock.MagicMock(
-            metadata=mock.MagicMock(name=name, namespace=namespace),
-            spec=mock.MagicMock(
-                volumes=mock.MagicMock(name="vol-task-uuid-1"),
-            ),
-            status=mock.MagicMock(
-                phase="Running", container_statuses=[mock.MagicMock()]
-            ),
-        )
+        side_effect=lambda name, namespace, **kwargs: MOCK_POD
     ),
     connect_get_namespaced_pod_exec=mock.MagicMock(
         __self__=mock.MagicMock(api_client=mock.MagicMock()),
@@ -90,10 +93,23 @@ MOCK_CORE_V1_API = mock.MagicMock(
             ),
             status=mock.MagicMock(
                 load_balancer=mock.MagicMock(
-                    ingress=[mock.MagicMock(ip="10.10.10.10:8000", hostname="anonymous")]
+                    ingress=[
+                        mock.MagicMock(ip="10.10.10.10:8000", hostname="anonymous")
+                    ]
                 )
             ),
         ),
+    ),
+    create_namespaced_persistent_volume_clain=mock.MagicMock(
+        side_effect=lambda name, namespace: mock.MagicMock(
+            api_version="v1",
+            kind="PersistentVolumeClaim",
+            metadata=mock.MagicMock(
+                name=f"vol-{name}",
+                namespace=namespace,
+            ),
+            status=mock.MagicMock(phase="Bound"),
+        )
     ),
 )
 
