@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
+import io
 import unittest
 import unittest.mock as mock
 
 from fastapi.testclient import TestClient
+from minio.datatypes import Object
+from urllib3.response import HTTPResponse
 
 from projects.api.main import app
 from projects.database import session_scope
+from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
 
 import tests.util as util
 
@@ -16,236 +20,273 @@ TEST_CLIENT = TestClient(app)
 class TestResults(unittest.TestCase):
     maxDiff = None
 
-    # def setUp(self):
-    #     conn = engine.connect()
-    #     text = (
-    #         f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
-    #         f"VALUES (%s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
+    def setUp(self):
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
-    #     text = (
-    #         f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-    #         f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, 1, 1, CREATED_AT, UPDATED_AT))
+    def tearDown(self):
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-    #     text = (
-    #         f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-    #         f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (EXPERIMENT_ID_2, NAME, PROJECT_ID, 1, 1, CREATED_AT, UPDATED_AT))
+    def test_get_results_project_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = "unk"
+        experiment_id = "unk"
+        run_id = "unk"
 
-    #     text = (
-    #         f"INSERT INTO tasks (uuid, name, image, category, parameters, "
-    #         f"experiment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-    #         f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-    #         f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (TASK_ID, NAME, IMAGE, CATEGORY, dumps([]),
-    #                         "Experiment.ipynb", "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/results"
+        )
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     text = (
-    #         f"INSERT INTO operators (uuid, status, experiment_id, task_id, parameters, created_at, updated_at) "
-    #         f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (OPERATOR_ID, "Unset", EXPERIMENT_ID, TASK_ID, dumps([]), CREATED_AT, UPDATED_AT,))
+    def test_get_results_experiment_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+        run_id = "unk"
 
-    #     text = (
-    #         f"INSERT INTO operators (uuid, status, experiment_id, task_id, parameters, created_at, updated_at) "
-    #         f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    #     )
-    #     conn.execute(text, (OPERATOR_ID_2, "Unset", EXPERIMENT_ID, TASK_ID, dumps([]), CREATED_AT, UPDATED_AT,))
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/results"
+        )
+        result = rv.json()
+        expected = {"message": "The specified experiment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     with open(MOCK_EXPERIMENT_PATH, "r") as file:
-    #         content = file.read()
-    #     content = content.replace("$experimentId", EXPERIMENT_ID)
-    #     content = content.replace("$taskName", NAME)
-    #     content = content.replace("$operatorId", OPERATOR_ID)
-    #     content = content.replace("$image", IMAGE)
-    #     with open(MOCK_DESTINATION_PATH, "w") as file:
-    #         file.write(content)
-    #     kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID)
-    #     run = kfp_client().run_pipeline(
-    #         experiment_id=kfp_experiment.id,
-    #         job_name=f"experiment-{EXPERIMENT_ID}",
-    #         pipeline_package_path=MOCK_DESTINATION_PATH,
-    #     )
-    #     self.run_id = run.id
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch.object(MINIO_CLIENT, "make_bucket")
+    @mock.patch.object(
+        MINIO_CLIENT,
+        "list_objects",
+        return_value=[],
+    )
+    def test_get_results_no_results(
+        self, mock_list_objects, mock_make_bucket, mock_kfp_client
+    ):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
 
-    #     with open(MOCK_EXPERIMENT_PATH, "r") as file:
-    #         content = file.read()
-    #     content = content.replace("$experimentId", EXPERIMENT_ID_2)
-    #     content = content.replace("$taskName", NAME)
-    #     content = content.replace("$operatorId", OPERATOR_ID)
-    #     content = content.replace("$image", IMAGE)
-    #     with open(MOCK_DESTINATION_PATH, "w") as file:
-    #         file.write(content)
-    #     kfp_experiment = kfp_client().create_experiment(name=EXPERIMENT_ID_2)
-    #     run = kfp_client().run_pipeline(
-    #         experiment_id=kfp_experiment.id,
-    #         job_name=f"experiment-{EXPERIMENT_ID_2}",
-    #         pipeline_package_path=MOCK_DESTINATION_PATH,
-    #     )
-    #     self.run_id_empty = run.id
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/results"
+        )
+        result = rv.json()
+        expected = {"message": "The specified run has no results"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     make_bucket(BUCKET_NAME)
-    #     buffer = BytesIO()
-    #     MINIO_CLIENT.put_object(
-    #         bucket_name=BUCKET_NAME,
-    #         object_name=f"experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/{self.run_id}/figure-000101000000000000.png",
-    #         data=buffer,
-    #         length=buffer.getbuffer().nbytes,
-    #     )
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_make_bucket.assert_any_call(BUCKET_NAME)
+        mock_list_objects.assert_any_call(
+            bucket_name=BUCKET_NAME,
+            prefix=f"experiments/{experiment_id}/operators/",
+            recursive=True,
+        )
 
-    #     MINIO_CLIENT.put_object(
-    #         bucket_name=BUCKET_NAME,
-    #         object_name=f"experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/{self.run_id}/.metadata",
-    #         data=buffer,
-    #         length=buffer.getbuffer().nbytes,
-    #     )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch.object(MINIO_CLIENT, "make_bucket")
+    @mock.patch.object(
+        MINIO_CLIENT,
+        "list_objects",
+        return_value=[
+            Object(
+                BUCKET_NAME,
+                f"experiments/{util.MOCK_UUID_1}/operators/{util.MOCK_UUID_1}/{util.MOCK_RUN_ID}/figure-202110281200000000.png",
+            )
+        ],
+    )
+    @mock.patch.object(
+        MINIO_CLIENT,
+        "get_object",
+        return_value=HTTPResponse(body=io.BytesIO(b""), preload_content=False),
+    )
+    def test_get_results_success(
+        self, mock_get_object, mock_list_objects, mock_make_bucket, mock_kfp_client
+    ):
+        """
+        Should return results successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
 
-    #     MINIO_CLIENT.put_object(
-    #         bucket_name=BUCKET_NAME,
-    #         object_name=f"experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/foo/.metadata",
-    #         data=buffer,
-    #         length=buffer.getbuffer().nbytes,
-    #     )
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/results"
+        )
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(
+            rv.headers.get("Content-Disposition"), "attachment; filename=results.zip"
+        )
+        self.assertEqual(rv.headers.get("Content-Type"), "application/x-zip-compressed")
 
-    # def tearDown(self):
-    #     kfp_experiment = kfp_client().get_experiment(experiment_name=EXPERIMENT_ID)
-    #     kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_make_bucket.assert_any_call(BUCKET_NAME)
+        mock_list_objects.assert_any_call(
+            bucket_name=BUCKET_NAME,
+            prefix=f"experiments/{experiment_id}/operators/",
+            recursive=True,
+        )
+        mock_get_object.assert_any_call(
+            bucket_name=BUCKET_NAME,
+            object_name=f"experiments/{experiment_id}/operators/{util.MOCK_UUID_1}/{util.MOCK_RUN_ID}/figure-202110281200000000.png",
+        )
 
-    #     kfp_experiment = kfp_client().get_experiment(experiment_name=EXPERIMENT_ID_2)
-    #     kfp_client().experiments.delete_experiment(id=kfp_experiment.id)
+    def test_get_operators_results_project_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = "unk"
+        experiment_id = "unk"
+        run_id = "unk"
+        operator_id = "unk"
 
-    #     MINIO_CLIENT.remove_object(
-    #         bucket_name=BUCKET_NAME,
-    #         object_name=f"experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/{self.run_id}/figure-000101000000000000.png",
-    #     )
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/results"
+        )
+        result = rv.json()
+        expected = {"message": "The specified project does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     MINIO_CLIENT.remove_object(
-    #         bucket_name=BUCKET_NAME,
-    #         object_name=f"experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/foo/.metadata",
-    #     )
+    def test_get_operators_results_experiment_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+        run_id = "unk"
+        operator_id = "unk"
 
-    #     MINIO_CLIENT.remove_object(
-    #         bucket_name=BUCKET_NAME,
-    #         object_name=f"experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}/{self.run_id}/.metadata",
-    #     )
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/results"
+        )
+        result = rv.json()
+        expected = {"message": "The specified experiment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     conn = engine.connect()
-    #     text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
-    #     conn.execute(text)
+    def test_get_operators_results_operator_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = "unk"
 
-    #     text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
-    #     conn.execute(text)
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/results"
+        )
+        result = rv.json()
+        expected = {"message": "The specified operator does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
-    #     conn.execute(text)
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch.object(MINIO_CLIENT, "make_bucket")
+    @mock.patch.object(
+        MINIO_CLIENT,
+        "list_objects",
+        return_value=[],
+    )
+    def test_get_operators_results_operator_no_results(
+        self, mock_list_objects, mock_make_bucket, mock_kfp_client
+    ):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
 
-    #     text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-    #     conn.execute(text)
-    #     conn.close()
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/results"
+        )
+        result = rv.json()
+        expected = {"message": "The specified operator has no results"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    # def test_get_results(self):
-    #     rv = TEST_CLIENT.get(f"/projects/unk/experiments/{EXPERIMENT_ID}/runs/{LATEST_RUN}/results")
-    #     result = rv.json()
-    #     expected = {"message": "The specified project does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_make_bucket.assert_any_call(BUCKET_NAME)
+        mock_list_objects.assert_any_call(
+            bucket_name=BUCKET_NAME,
+            prefix=f"experiments/{experiment_id}/operators/{operator_id}",
+            recursive=True,
+        )
 
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/unk/runs/{LATEST_RUN}/results")
-    #     result = rv.json()
-    #     expected = {"message": "The specified experiment does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch.object(MINIO_CLIENT, "make_bucket")
+    @mock.patch.object(
+        MINIO_CLIENT,
+        "list_objects",
+        return_value=[
+            Object(
+                BUCKET_NAME,
+                f"experiments/{util.MOCK_UUID_1}/operators/{util.MOCK_UUID_1}/{util.MOCK_RUN_ID}/figure-202110281200000000.png",
+            )
+        ],
+    )
+    @mock.patch.object(
+        MINIO_CLIENT,
+        "get_object",
+        return_value=HTTPResponse(body=io.BytesIO(b""), preload_content=False),
+    )
+    def test_get_operators_results_operator_success(
+        self, mock_get_object, mock_list_objects, mock_make_bucket, mock_kfp_client
+    ):
+        """
+        Should return results successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
 
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/unk/results")
-    #     result = rv.json()
-    #     expected = {"message": "The specified run does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/results"
+        )
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(
+            rv.headers.get("Content-Disposition"), "attachment; filename=results.zip"
+        )
+        self.assertEqual(rv.headers.get("Content-Type"), "application/x-zip-compressed")
 
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_2}/runs/{self.run_id_empty}/results")
-    #     result = rv.json()
-    #     expected = {"message": "The specified run has no results"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
-
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{self.run_id}/results")
-    #     self.assertEqual(rv.status_code, 200)
-    #     self.assertEqual(
-    #         rv.headers.get("Content-Disposition"),
-    #         CONTENT_DISPOSITION
-    #     )
-    #     self.assertEqual(
-    #         rv.headers.get("Content-Type"),
-    #         CONTENT_TYPE
-    #     )
-
-    #     # test `run_id=latest`
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{LATEST_RUN}/results")
-    #     self.assertEqual(rv.status_code, 200)
-    #     self.assertEqual(
-    #         rv.headers.get("Content-Disposition"),
-    #         CONTENT_DISPOSITION
-    #     )
-    #     self.assertEqual(
-    #         rv.headers.get("Content-Type"),
-    #         CONTENT_TYPE
-    #     )
-
-    # def test_get_operators_results(self):
-    #     rv = TEST_CLIENT.get(f"/projects/unk/experiments/{EXPERIMENT_ID}/runs/{LATEST_RUN}/operators/{OPERATOR_ID}/results")
-    #     result = rv.json()
-    #     expected = {"message": "The specified project does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
-
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/unk/runs/{LATEST_RUN}/operators/{OPERATOR_ID}/results")
-    #     result = rv.json()
-    #     expected = {"message": "The specified experiment does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
-
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/unk/operators/{OPERATOR_ID}/results")
-    #     result = rv.json()
-    #     expected = {"message": "The specified run does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
-
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{LATEST_RUN}/operators/unk/results")
-    #     result = rv.json()
-    #     expected = {"message": "The specified operator does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
-
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{LATEST_RUN}/operators/{OPERATOR_ID_2}/results")
-    #     result = rv.json()
-    #     expected = {"message": "The specified operator has no results"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
-
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{self.run_id}/operators/{OPERATOR_ID}/results")
-    #     self.assertEqual(rv.status_code, 200)
-    #     self.assertEqual(
-    #         rv.headers.get("Content-Disposition"),
-    #         CONTENT_DISPOSITION
-    #     )
-    #     self.assertEqual(
-    #         rv.headers.get("Content-Type"),
-    #         CONTENT_TYPE
-    #     )
-
-    #     # test `run_id=latest`
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{LATEST_RUN}/operators/{OPERATOR_ID}/results")
-    #     self.assertEqual(rv.status_code, 200)
-    #     self.assertEqual(
-    #         rv.headers.get("Content-Disposition"),
-    #         CONTENT_DISPOSITION
-    #     )
-    #     self.assertEqual(
-    #         rv.headers.get("Content-Type"),
-    #         CONTENT_TYPE
-    #     )
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_make_bucket.assert_any_call(BUCKET_NAME)
+        mock_list_objects.assert_any_call(
+            bucket_name=BUCKET_NAME,
+            prefix=f"experiments/{experiment_id}/operators/{operator_id}",
+            recursive=True,
+        )
+        mock_get_object.assert_any_call(
+            bucket_name=BUCKET_NAME,
+            object_name=f"experiments/{experiment_id}/operators/{operator_id}/{util.MOCK_RUN_ID}/figure-202110281200000000.png",
+        )

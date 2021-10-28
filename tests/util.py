@@ -12,7 +12,8 @@ from projects import models
 
 MOCK_SET_USER_NAMESPACE = mock.MagicMock()
 MOCK_RUNS = mock.MagicMock()
-MOCK_RUN = mock.MagicMock(id="4546465")
+MOCK_RUN_ID = "4546465"
+MOCK_RUN = mock.MagicMock(id=MOCK_RUN_ID)
 MOCK_LIST_RUNS = mock.MagicMock(
     return_value=mock.MagicMock(runs=[MOCK_RUN], next_page_token=None)
 )
