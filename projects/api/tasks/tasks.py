@@ -51,7 +51,6 @@ async def handle_list_tasks(request: Request,
 
 @router.post("", response_model=projects.schemas.task.Task)
 async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
-                            background_tasks: BackgroundTasks,
                             session: Session = Depends(session_scope)):
     """
     Handles POST requests to /.
@@ -66,7 +65,7 @@ async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
     -------
     projects.schemas.task.Task
     """
-    task_controller = TaskController(session, background_tasks)
+    task_controller = TaskController(session)
     task = task_controller.create_task(task=task)
     return task
 
