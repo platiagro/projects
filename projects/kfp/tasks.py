@@ -28,7 +28,7 @@ INIT_TASK_CONTAINER_IMAGE = os.getenv(
 TASK_CONFIGMAP = Template(pkgutil.get_data("projects", "kfp/resources/TaskConfigMap.yaml").decode())
 
 
-def create_task(task: models.Task, all_tasks: List[models.Task], namespace: str, copy_from: Optional[models.Task] = None):
+def make_task_creation_job(task: models.Task, all_tasks: List[models.Task], namespace: str, copy_from: Optional[models.Task] = None):
     """
     Runs a Kubeflow Pipeline that creates all resources necessary for a new task.
 
@@ -80,7 +80,7 @@ def create_task(task: models.Task, all_tasks: List[models.Task], namespace: str,
 
     run_name = f"Create Task - {task.name}"
 
-    return kfp_client(namespace).create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,

@@ -183,6 +183,10 @@ class TaskController:
         BadRequest
             When task attributes are invalid.
         """
+        # for now we need import here to avoid circular import
+        from projects.kfp.tasks import make_task_creation_job
+        from projects.kfp import KF_PIPELINES_NAMESPACE
+        
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
         if task.copy_from and has_notebook:
@@ -196,15 +200,13 @@ class TaskController:
         # check if image is a valid docker image
         self.raise_if_invalid_docker_image(task.image)
 
-        check_comp_name = (
-            self.session.query(models.Task).filter_by(name=task.name).first()
-        )
+        check_comp_name = self.session.query(models.Task).filter_by(name=task.name).first()
         if check_comp_name:
             raise BadRequest("a task with that name already exists")
 
         # creates a task with specified name,
         # but copies notebooks from a source task
-        stored_task_name = None
+        stored_task = None
         if task.copy_from:
             stored_task = self.session.query(models.Task).get(task.copy_from)
             if stored_task is None:
@@ -214,7 +216,6 @@ class TaskController:
             task.commands = stored_task.commands
             task.arguments = stored_task.arguments
             task.parameters = stored_task.parameters
-            stored_task_name = stored_task.name
             experiment_notebook_path = stored_task.experiment_notebook_path
             deployment_notebook_path = stored_task.deployment_notebook_path
             task.cpu_limit = stored_task.cpu_limit
@@ -241,15 +242,6 @@ class TaskController:
 
         task_id = str(uuid_alpha())
 
-        self.background_tasks.add_task(
-            handle_task_creation,
-            task=task,
-            task_id=task_id,
-            experiment_notebook_path=experiment_notebook_path,
-            deployment_notebook_path=deployment_notebook_path,
-            copy_name=stored_task_name,
-        )
-
         task_dict = task.dict(exclude_unset=True)
         task_dict.pop("copy_from", None)
         task_dict.pop("experiment_notebook", None)
@@ -264,6 +256,15 @@ class TaskController:
         self.session.add(task)
         self.session.commit()
         self.session.refresh(task)
+
+        all_tasks = self.session.query(models.Task).all()
+
+        make_task_creation_job(
+            task=task,
+            namespace=KF_PIPELINES_NAMESPACE,
+            all_tasks=all_tasks,
+            copy_from=stored_task,
+        )
 
         return schemas.Task.from_orm(task)
 
