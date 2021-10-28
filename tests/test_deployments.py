@@ -116,8 +116,12 @@ class TestDeployments(unittest.TestCase):
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_create_deployment_with_experiments_success(
         self,
+        mock_load_config,
         mock_kfp_client,
         mock_core_v1_api,
         mock_custom_objects_api,
@@ -151,7 +155,7 @@ class TestDeployments(unittest.TestCase):
                             "deploymentId": mock.ANY,
                             "experimentId": None,
                             "name": util.MOCK_TASK_NAME_1,
-                            "parameters": {'dataset': 'iris.csv'},
+                            "parameters": {"dataset": "iris.csv"},
                             "positionX": 0,
                             "positionY": 0,
                             "status": "Setted up",
@@ -196,6 +200,7 @@ class TestDeployments(unittest.TestCase):
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_core_v1_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_load_config.assert_any_call()
 
     # @mock.patch("projects.kubernetes.kube_config.config.load_incluster_config")
     @mock.patch(
@@ -210,8 +215,12 @@ class TestDeployments(unittest.TestCase):
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_create_deployment_with_copy_from_success(
         self,
+        mock_load_config,
         mock_kfp_client,
         mock_core_v1_api,
         mock_custom_objects_api,
@@ -291,6 +300,7 @@ class TestDeployments(unittest.TestCase):
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_core_v1_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_load_config.assert_any_call()
 
     def test_create_deployment_source_deployment_error(self):
         """
@@ -471,8 +481,11 @@ class TestDeployments(unittest.TestCase):
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_delete_deployment_success(
-        self, mock_kfp_client, mock_list_namespaced_custom_object
+        self, mock_load_config, mock_kfp_client, mock_list_namespaced_custom_object
     ):
         """
         Should delete deployment successfully.
@@ -491,3 +504,4 @@ class TestDeployments(unittest.TestCase):
             "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
         )
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_load_config.assert_any_call()

@@ -60,7 +60,10 @@ class TestExperimentData(unittest.TestCase):
         "kubernetes.stream.stream",
         return_value=util.MOCK_STREAM,
     )
-    def teste_get_data(self, mock_k8s_stream, mock_core_v1_api):
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def teste_get_data(self, mock_load_config, mock_k8s_stream, mock_core_v1_api):
         """
         Should load data request successfully.
         """
@@ -90,3 +93,4 @@ class TestExperimentData(unittest.TestCase):
             tty=False,
             _preload_content=False,
         )
+        mock_load_config.assert_any_call()

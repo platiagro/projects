@@ -94,8 +94,12 @@ class TestTasks(unittest.TestCase):
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_create_task_not_request_body(
         self,
+        mock_config_load,
         mock_core_v1_api,
         mock_custom_objects_api,
     ):
@@ -107,6 +111,7 @@ class TestTasks(unittest.TestCase):
 
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_core_v1_api.assert_any_call()
+        mock_config_load.assert_any_call()
 
     def test_create_task_given_name_already_exists_error(self):
         """
@@ -127,8 +132,12 @@ class TestTasks(unittest.TestCase):
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_create_task_without_name_success(
         self,
+        mock_config_load,
         mock_core_v1_api,
         mock_custom_objects_api,
     ):
@@ -158,7 +167,7 @@ class TestTasks(unittest.TestCase):
             "name": "Tarefa em branco - 1",
             "parameters": [],
             "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
-            "tags": ['DEFAULT'],
+            "tags": ["DEFAULT"],
             "updatedAt": mock.ANY,
             "uuid": mock.ANY,
         }
@@ -167,6 +176,7 @@ class TestTasks(unittest.TestCase):
 
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_core_v1_api.assert_any_call()
+        mock_config_load.assert_any_call()
 
     @mock.patch(
         "kubernetes.client.CoreV1Api",
@@ -176,8 +186,12 @@ class TestTasks(unittest.TestCase):
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_create_task_with_name_success(
         self,
+        mock_config_load,
         mock_custom_objects_api,
         mock_core_v1_api,
     ):
@@ -210,7 +224,7 @@ class TestTasks(unittest.TestCase):
             "name": task_name,
             "parameters": [],
             "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
-            "tags": ['DEFAULT'],
+            "tags": ["DEFAULT"],
             "updatedAt": mock.ANY,
             "uuid": mock.ANY,
         }
@@ -219,6 +233,7 @@ class TestTasks(unittest.TestCase):
 
         mock_core_v1_api.assert_any_call()
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_config_load.assert_any_call()
 
     @mock.patch(
         "kubernetes.client.CoreV1Api",
@@ -228,10 +243,14 @@ class TestTasks(unittest.TestCase):
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_create_task_copy_from_success(
-            self,
-            mock_custom_objects_api,
-            mock_core_v1_api,
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api,
     ):
         """
         Should create and return a task successfully. A task name is auto generated.
@@ -259,7 +278,7 @@ class TestTasks(unittest.TestCase):
             "name": f"{util.MOCK_TASK_NAME_1} - Cópia - 1",
             "parameters": [],
             "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
-            "tags": ['DEFAULT'],
+            "tags": ["DEFAULT"],
             "updatedAt": mock.ANY,
             "uuid": mock.ANY,
         }
@@ -268,6 +287,7 @@ class TestTasks(unittest.TestCase):
 
         mock_core_v1_api.assert_any_call()
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_config_load.assert_any_call()
 
     @mock.patch(
         "kubernetes.client.CoreV1Api",
@@ -277,8 +297,12 @@ class TestTasks(unittest.TestCase):
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_create_task_with_notebook_success(
         self,
+        mock_config_load,
         mock_custom_objects_api,
         mock_core_v1_api,
     ):
@@ -312,7 +336,7 @@ class TestTasks(unittest.TestCase):
             "name": "Tarefa em branco - 1",
             "parameters": [],
             "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
-            "tags": ['DEFAULT'],
+            "tags": ["DEFAULT"],
             "updatedAt": mock.ANY,
             "uuid": mock.ANY,
         }
@@ -321,6 +345,7 @@ class TestTasks(unittest.TestCase):
 
         mock_core_v1_api.assert_any_call()
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_config_load.assert_any_call()
 
     def test_get_task_not_found(self):
         """
@@ -352,9 +377,12 @@ class TestTasks(unittest.TestCase):
         """
         Should return a http error 404 and a message 'The specified task does not exist'.
         """
-        rv = TEST_CLIENT.patch("/tasks/foo", json={
-            "name": "foo 2",
-        })
+        rv = TEST_CLIENT.patch(
+            "/tasks/foo",
+            json={
+                "name": "foo 2",
+            },
+        )
         result = rv.json()
         expected = {"message": "The specified task does not exist"}
         self.assertDictEqual(expected, result)
@@ -366,9 +394,12 @@ class TestTasks(unittest.TestCase):
         """
         task_id = util.MOCK_UUID_4
 
-        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
-            "name": "task-5",
-        })
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "name": "task-5",
+            },
+        )
         result = rv.json()
         expected = {"message": "a task with that name already exists"}
         self.assertDictEqual(expected, result)
@@ -380,31 +411,34 @@ class TestTasks(unittest.TestCase):
         """
         task_id = util.MOCK_UUID_5
 
-        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
-            "tags": ["UNK"],
-        })
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "tags": ["UNK"],
+            },
+        )
         result = rv.json()
         expected = {
-            'arguments': None,
-            'category': 'DEFAULT',
-            'commands': None,
-            'cpuLimit': '2000m',
-            'cpuRequest': '100m',
-            'createdAt': mock.ANY,
-            'dataIn': None,
-            'dataOut': None,
-            'description': None,
-            'docs': None,
-            'hasNotebook': False,
-            'image': 'platiagro/platiagro-experiment-image:0.3.0',
-            'memoryLimit': '10Gi',
-            'memoryRequest': '2Gi',
-            'name': 'task-5',
-            'parameters': [],
-            'readinessProbeInitialDelaySeconds': 60,
-            'tags': ['UNK'],
-            'updatedAt': mock.ANY,
-            'uuid': 'uuid-5'
+            "arguments": None,
+            "category": "DEFAULT",
+            "commands": None,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
+            "createdAt": mock.ANY,
+            "dataIn": None,
+            "dataOut": None,
+            "description": None,
+            "docs": None,
+            "hasNotebook": False,
+            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
+            "name": "task-5",
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": 60,
+            "tags": ["UNK"],
+            "updatedAt": mock.ANY,
+            "uuid": "uuid-5",
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
@@ -417,8 +451,12 @@ class TestTasks(unittest.TestCase):
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_update_task_name(
         self,
+        mock_config_load,
         mock_custom_objects_api,
         mock_core_v1_api,
     ):
@@ -426,37 +464,41 @@ class TestTasks(unittest.TestCase):
         Should return a successfully updated task.
         """
         task_id = util.MOCK_UUID_5
-        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
-            "name": "name foo",
-        })
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "name": "name foo",
+            },
+        )
         result = rv.json()
         expected = {
-            'arguments': None,
-            'category': 'DEFAULT',
-            'commands': None,
-            'cpuLimit': '2000m',
-            'cpuRequest': '100m',
-            'createdAt': mock.ANY,
-            'dataIn': None,
-            'dataOut': None,
-            'description': None,
-            'docs': None,
-            'hasNotebook': False,
-            'image': 'platiagro/platiagro-experiment-image:0.3.0',
-            'memoryLimit': '10Gi',
-            'memoryRequest': '2Gi',
-            'name': 'name foo',
-            'parameters': [],
-            'readinessProbeInitialDelaySeconds': 60,
-            'tags': [],
-            'updatedAt': mock.ANY,
-            'uuid': 'uuid-5'
+            "arguments": None,
+            "category": "DEFAULT",
+            "commands": None,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
+            "createdAt": mock.ANY,
+            "dataIn": None,
+            "dataOut": None,
+            "description": None,
+            "docs": None,
+            "hasNotebook": False,
+            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
+            "name": "name foo",
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": 60,
+            "tags": [],
+            "updatedAt": mock.ANY,
+            "uuid": "uuid-5",
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
         mock_core_v1_api.assert_any_call()
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_config_load.assert_any_call()
 
     def test_update_task_tags(self):
         """
@@ -464,9 +506,12 @@ class TestTasks(unittest.TestCase):
         """
         task_id = util.MOCK_UUID_5
 
-        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
-            "tags": ["FEATURE_ENGINEERING"],
-        })
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "tags": ["FEATURE_ENGINEERING"],
+            },
+        )
         result = rv.json()
         expected = {
             "uuid": "uuid-5",
@@ -500,8 +545,12 @@ class TestTasks(unittest.TestCase):
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_update_task_experiment_notebook(
         self,
+        mock_config_load,
         mock_core_v1_api,
     ):
         """
@@ -509,9 +558,12 @@ class TestTasks(unittest.TestCase):
         """
         task_id = util.MOCK_UUID_5
 
-        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
-            "experimentNotebook": loads(util.SAMPLE_NOTEBOOK),
-        })
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "experimentNotebook": loads(util.SAMPLE_NOTEBOOK),
+            },
+        )
         result = rv.json()
         expected = {
             "uuid": "uuid-5",
@@ -542,20 +594,27 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
 
         mock_core_v1_api.assert_any_call()
+        mock_config_load.assert_any_call()
 
     @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
-    def test_update_task_deployment_notebook(self, mock_core_v1_api):
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_deployment_notebook(self, mock_config_load, mock_core_v1_api):
         """
         Should return a successfully updated task deployment notebook.
         """
         task_id = util.MOCK_UUID_4
 
-        rv = TEST_CLIENT.patch(f"/tasks/{task_id}", json={
-            "deploymentNotebook": loads(util.SAMPLE_NOTEBOOK),
-        })
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "deploymentNotebook": loads(util.SAMPLE_NOTEBOOK),
+            },
+        )
         result = rv.json()
         expected = {
             "uuid": "uuid-4",
@@ -586,6 +645,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
 
         mock_core_v1_api.assert_any_call()
+        mock_config_load.assert_any_call()
 
     def test_delete_task_not_found(self):
         """
@@ -600,16 +660,20 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-    @ mock.patch(
+    @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
-    @ mock.patch(
+    @mock.patch(
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_delete_task_success(
         self,
+        mock_config_load,
         mock_custom_objects_api,
         mock_core_v1_api,
     ):
@@ -626,3 +690,4 @@ class TestTasks(unittest.TestCase):
 
         mock_core_v1_api.assert_any_call()
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_config_load.assert_any_call()

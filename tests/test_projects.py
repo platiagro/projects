@@ -244,8 +244,11 @@ class TestProjects(unittest.TestCase):
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_delete_project_success(
-        self, mock_kfp_client, mock_list_namespaced_custom_object
+        self, mock_config_load, mock_kfp_client, mock_list_namespaced_custom_object
     ):
         """
         Should delete project successfully.
@@ -262,6 +265,7 @@ class TestProjects(unittest.TestCase):
             "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
         )
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_config_load.assert_any_call()
 
     def test_delete_multiple_projects_at_least_one_project_error(self):
         """
@@ -282,8 +286,11 @@ class TestProjects(unittest.TestCase):
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_delete_multiple_projects_success(
-        self, mock_kfp_client, mock_list_namespaced_custom_object
+        self, mock_config_load, mock_kfp_client, mock_list_namespaced_custom_object
     ):
         """
         Should delete projects successfully.
@@ -304,3 +311,4 @@ class TestProjects(unittest.TestCase):
             "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
         )
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_config_load.assert_any_call()

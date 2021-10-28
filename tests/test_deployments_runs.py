@@ -52,7 +52,9 @@ class TestDeploymentsRuns(unittest.TestCase):
         Should return an http status 404 and a message 'The specified project does not exist'.
         """
         deployment_id = util.MOCK_UUID_1
-        rv = TEST_CLIENT.post(f"/projects/foo/deployments/{deployment_id}/runs", json={})
+        rv = TEST_CLIENT.post(
+            f"/projects/foo/deployments/{deployment_id}/runs", json={}
+        )
         result = rv.json()
         expected = {"message": "The specified project does not exist"}
         self.assertIsInstance(result, dict)
@@ -84,11 +86,15 @@ class TestDeploymentsRuns(unittest.TestCase):
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
     def test_create_project_deployment_run(
         self,
+        mock_load_config,
         mock_custom_objects_api,
         mock_core_v1_api,
-        mock_kfp_client
+        mock_kfp_client,
     ):
         """
         Should raise an exception when ...
@@ -96,7 +102,9 @@ class TestDeploymentsRuns(unittest.TestCase):
         project_id = util.MOCK_UUID_1
         deployment_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.post(f"/projects/{project_id}/deployments/{deployment_id}/runs")
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/runs"
+        )
         result = rv.json()
         self.assertIsInstance(result, dict)
         self.assertIn("uuid", result)
@@ -107,6 +115,7 @@ class TestDeploymentsRuns(unittest.TestCase):
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_core_v1_api.assert_any_call()
         mock_custom_objects_api.assert_any_call()
+        mock_load_config.assert_any_call()
 
     @mock.patch(
         "kfp.Client",
@@ -119,7 +128,9 @@ class TestDeploymentsRuns(unittest.TestCase):
         project_id = util.MOCK_UUID_1
         deployment_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.get(f"/projects/{project_id}/deployments/{deployment_id}/runs/latest")
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/deployments/{deployment_id}/runs/latest"
+        )
         result = rv.json()
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 200)

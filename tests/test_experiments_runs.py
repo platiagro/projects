@@ -82,27 +82,27 @@ class TestExperimentsRuns(unittest.TestCase):
         self.assertEqual("Unset", operator["status"])
         self.assertEqual(rv.status_code, 200)
 
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
-    # def test_get_run(self, mock_kfp_client):
-    #     """
-    #     Should return the creation of a successful runs.
-    #     """
-    #     project_id = util.MOCK_UUID_1
-    #     experiment_id = util.MOCK_UUID_1
-    #     run_id = "unk"
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_get_run(self, mock_kfp_client):
+        """
+        Should return the creation of a successful runs.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "unk"
 
-    #     rv = TEST_CLIENT.get(
-    #         f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}"
-    #     )
-    #     result = rv.json()
-    #     expected = {"message": "The specified run does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}"
+        )
+        result = rv.json()
+        expected = {"message": "The specified run does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
     #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
     #     result = rv.json()
