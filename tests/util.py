@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from unittest import mock
+from kfp_server_api.rest import ApiException
 import json
 
 import pandas as pd
@@ -20,6 +21,9 @@ MOCK_LIST_RUNS = mock.MagicMock(
 MOCK_WORKFLOW_MANIFEST = open(
     "tests/resources/deployment_mock_manifest.json", "r"
 ).read()
+MOCK_NOT_GET_RUN = mock.MagicMock(
+    runs=mock.MagicMock(terminate_run=mock.MagicMock(side_effect=ApiException()))
+)
 MOCK_GET_RUN = mock.MagicMock(
     return_value=mock.MagicMock(
         run=mock.MagicMock(id="uuid-1", created_at=datetime.utcnow()),

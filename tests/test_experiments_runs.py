@@ -69,9 +69,9 @@ class TestExperimentsRuns(unittest.TestCase):
 
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
-    def test_create_run_status_operator(self):
+    def test_list_run_status_operator(self):
         """
-        Should return the creation of a successful runs.
+        Should return an runs successfully.
         """
         project_id = util.MOCK_UUID_1
         experiment_id = util.MOCK_UUID_1
@@ -82,20 +82,57 @@ class TestExperimentsRuns(unittest.TestCase):
         self.assertEqual("Unset", operator["status"])
         self.assertEqual(rv.status_code, 200)
 
-    @mock.patch(
-        "kfp.Client",
-        return_value=util.MOCK_KFP_CLIENT,
-    )
-    def test_get_run(self, mock_kfp_client):
+    def test_list_run(self):
         """
-        Should return the creation of a successful runs.
+        Should return a http error 404 and a message 'The specified experiment does not exist'.
         """
         project_id = util.MOCK_UUID_1
-        experiment_id = util.MOCK_UUID_1
+        experiment_id = "unk"
         run_id = "unk"
 
         rv = TEST_CLIENT.get(
             f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}"
+        )
+        result = rv.json()
+        expected = {"message": "The specified experiment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_list_run_lastest(self, mock_kfp_client):
+        """
+        Should return an runs successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/latest"
+        )
+        result = rv.json()
+        self.assertIsInstance(result, dict)
+        self.assertIn("operators", result)
+        self.assertIn("uuid", result)
+        self.assertEqual(rv.status_code, 200)
+
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_NOT_GET_RUN,
+    )
+    def test_terminate_not_run(self, mock_kfp_client):
+        """
+        Should return a http error 404 and a message 'The specified runs does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.delete(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/unk"
         )
         result = rv.json()
         expected = {"message": "The specified run does not exist"}
@@ -104,22 +141,23 @@ class TestExperimentsRuns(unittest.TestCase):
 
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
-    #     rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
-    #     result = rv.json()
-    #     self.assertIsInstance(result, dict)
-    #     self.assertIn("operators", result)
-    #     self.assertIn("uuid", result)
-    #     self.assertEqual(rv.status_code, 200)
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_terminate_run(self, mock_kfp_client):
+        """
+        Should return an runs successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
 
-    # def test_terminate_run(self):
-    #     rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/notRealRun")
-    #     result = rv.json()
-    #     expected = {"message": "The specified run does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+        rv = TEST_CLIENT.delete(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/latest"
+        )
+        result = rv.json()
+        expected = {"message": "Run terminated"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
 
-    #     # rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/latest")
-    #     # result = rv.json()
-    #     # expected = {"message": "Run terminated"}
-    #     # self.assertDictEqual(expected, result)
-    #     # self.assertEqual(rv.status_code, 200)
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")

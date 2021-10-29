@@ -123,18 +123,8 @@ class TestPredictions(unittest.TestCase):
         "requests.post",
         return_value=util.MOCK_POST_PREDICTION,
     )
-    @mock.patch(
-        "kubernetes.client.CoreV1Api",
-        return_value=util.MOCK_CORE_V1_API,
-    )
-    @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
     def test_create_prediction_dataset(
         self,
-        mock_custom_objects_api,
-        mock_core_v1_api,
         mock_requests_post,
         mock_load_dataset,
     ):
@@ -144,7 +134,7 @@ class TestPredictions(unittest.TestCase):
         project_id = util.MOCK_UUID_1
         deployment_id = util.MOCK_UUID_1
         name = util.IRIS_DATASET_NAME
-        url = "http://anonymous/seldon/anonymous/uuid-1/api/v1.0/predictions"
+        url = "http://uuid-1-model.anonymous:8000/api/v1.0/predictions"
 
         rv = TEST_CLIENT.post(
             f"/projects/{project_id}/deployments/{deployment_id}/predictions",
@@ -175,8 +165,6 @@ class TestPredictions(unittest.TestCase):
                 }
             },
         )
-        mock_core_v1_api.assert_any_call()
-        mock_custom_objects_api.assert_any_call()
 
     @mock.patch(
         "projects.controllers.predictions.load_dataset",
@@ -186,18 +174,8 @@ class TestPredictions(unittest.TestCase):
         "requests.post",
         return_value=util.MOCK_POST_PREDICTION,
     )
-    @mock.patch(
-        "kubernetes.client.CoreV1Api",
-        return_value=util.MOCK_CORE_V1_API,
-    )
-    @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
     def test_create_prediction_dataset_image(
         self,
-        mock_custom_objects_api,
-        mock_core_v1_api,
         mock_requests_post,
         mock_load_dataset,
     ):
@@ -208,7 +186,7 @@ class TestPredictions(unittest.TestCase):
         deployment_id = util.MOCK_UUID_1
         dataset_name = "mock.jpg"
 
-        url = "http://anonymous/seldon/anonymous/uuid-1/api/v1.0/predictions"
+        url = "http://uuid-1-model.anonymous:8000/api/v1.0/predictions"
         rv = TEST_CLIENT.post(
             f"/projects/{project_id}/deployments/{deployment_id}/predictions",
             json={"dataset": dataset_name},
@@ -238,5 +216,3 @@ class TestPredictions(unittest.TestCase):
                 }
             },
         )
-        mock_core_v1_api.assert_any_call()
-        mock_custom_objects_api.assert_any_call()
