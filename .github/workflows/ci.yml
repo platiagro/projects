@@ -62,6 +62,8 @@ jobs:
         pip install -e .[testing]
 
     - name: Test with pytest
+      env:
+        ENABLE_CORS: 1 
       run: |
         coverage erase
         coverage run --branch --source=projects -m pytest
