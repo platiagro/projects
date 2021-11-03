@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """Deployments controller."""
 import sys
+import warnings
 from datetime import datetime
+
+from sqlalchemy import event
 
 from projects import models, schemas
 from projects.controllers.deployments.runs import RunController
@@ -26,6 +29,22 @@ class DeploymentController:
         )
         self.task_controller = TaskController(session, background_tasks)
         self.background_tasks = background_tasks
+
+    @staticmethod
+    @event.listens_for(models.Deployment, "after_delete")
+    def after_delete(_mapper, connection, target):
+        """
+        Starts a pipeline that deletes K8s resources associated with target deployment.
+        Parameters
+        ----------
+        _mapper : sqlalchemy.orm.Mapper
+        connection : sqlalchemy.engine.Connection
+        target : models.Deployment
+        """
+        try:
+            RunController(connection).terminate_run(deployment_id=target.uuid)
+        except NotFound as e:
+            warnings.warn(e.message)
 
     def raise_if_deployment_does_not_exist(self, deployment_id: str):
         """
