@@ -110,7 +110,14 @@ class TestTemplates(unittest.TestCase):
                     "dependencies": [],
                     "position_x": 0.0,
                     "position_y": 0.0,
-                }
+                },
+                {
+                    "uuid": util.MOCK_UUID_4,
+                    "task_id": util.MOCK_UUID_1,
+                    "dependencies": [util.MOCK_UUID_1],
+                    "position_x": 0.0,
+                    "position_y": 0.0,
+                },
             ],
             "experimentId": experiment_id,
             "deploymentId": None,

@@ -336,13 +336,34 @@ MOCK_OPERATOR_3 = {
     "statusMessage": None,
 }
 
+MOCK_OPERATOR_4 = {
+    "uuid": MOCK_UUID_4,
+    "name": MOCK_TASK_NAME_1,
+    "taskId": MOCK_UUID_1,
+    "task": {
+        "name": MOCK_TASK_NAME_1,
+        "tags": [],
+        "parameters": [],
+    },
+    "dependencies": [MOCK_UUID_1],
+    "parameters": {},
+    "experimentId": MOCK_UUID_1,
+    "deploymentId": None,
+    "positionX": 0,
+    "positionY": 0,
+    "createdAt": MOCK_CREATED_AT_1.isoformat(),
+    "updatedAt": MOCK_UPDATED_AT_1.isoformat(),
+    "status": "Unset",
+    "statusMessage": None,
+}
+
 MOCK_EXPERIMENT_1 = {
     "createdAt": MOCK_CREATED_AT_1.isoformat(),
     "isActive": True,
     "name": MOCK_EXPERIMENT_NAME_1,
     "position": 0,
     "projectId": MOCK_UUID_1,
-    "operators": [MOCK_OPERATOR_1],
+    "operators": [MOCK_OPERATOR_1, MOCK_OPERATOR_4],
     "updatedAt": MOCK_UPDATED_AT_1.isoformat(),
     "uuid": MOCK_UUID_1,
 }
@@ -472,8 +493,9 @@ MOCK_DEPLOYMENT_LIST = {
 MOCK_OPERATOR_LIST = {
     "operators": [
         MOCK_OPERATOR_1,
+        MOCK_OPERATOR_4,
     ],
-    "total": 1,
+    "total": 2,
 }
 # {
 # 'createdAt': mock.ANY,
@@ -911,6 +933,18 @@ def create_mocks():
             position_y=0,
             created_at=MOCK_CREATED_AT_3,
             updated_at=MOCK_UPDATED_AT_3,
+        ),
+        models.Operator(
+            uuid=MOCK_UUID_4,
+            experiment_id=MOCK_UUID_1,
+            task_id=MOCK_UUID_1,
+            dependencies=[MOCK_UUID_1],
+            parameters={},
+            status="Unset",
+            position_x=0,
+            position_y=0,
+            created_at=MOCK_CREATED_AT_1,
+            updated_at=MOCK_UPDATED_AT_1,
         ),
     ]
     session.bulk_save_objects(objects)

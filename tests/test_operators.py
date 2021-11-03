@@ -452,25 +452,25 @@ class TestOperators(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    # def test_update_operator_cyclical_dependencies_error(self):
-    #     """
-    #     Should return http status 400 and a message 'Cyclical dependencies.'.
-    #     """
-    #     project_id = util.MOCK_UUID_1
-    #     experiment_id = util.MOCK_UUID_1
-    #     operator_id = util.MOCK_UUID_4
-    #     dependencies = [util.MOCK_UUID_1]
+    def test_update_operator_cyclical_dependencies_error(self):
+        """
+        Should return http status 400 and a message 'Cyclical dependencies.'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_1
+        dependencies = [util.MOCK_UUID_4]
 
-    #     rv = TEST_CLIENT.patch(
-    #         f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
-    #         json={
-    #             "dependencies": dependencies,
-    #         },
-    #     )
-    #     result = rv.json()
-    #     expected = {"message": "Cyclical dependencies."}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 400)
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={
+                "dependencies": dependencies,
+            },
+        )
+        result = rv.json()
+        expected = {"message": "Cyclical dependencies."}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
 
     def test_update_operator_with_empty_success(self):
         """
@@ -551,44 +551,44 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    # def test_update_operator_with_dependencies_success(self):
-    #     """
-    #     Should update and return an operator successfully.
-    #     """
-    #     project_id = util.MOCK_UUID_1
-    #     experiment_id = util.MOCK_UUID_1
-    #     operator_id = util.MOCK_UUID_1
-    #     dependencies = [util.MOCK_UUID_4]
+    def test_update_operator_with_dependencies_success(self):
+        """
+        Should update and return an operator successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_4
+        dependencies = [util.MOCK_UUID_1]
 
-    #     rv = TEST_CLIENT.patch(
-    #         f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
-    #         json={
-    #             "dependencies": dependencies,
-    #         },
-    #     )
-    #     result = rv.json()
-    #     expected = {
-    #         "uuid": operator_id,
-    #         "name": util.MOCK_TASK_NAME_1,
-    #         "taskId": util.MOCK_UUID_1,
-    #         "task": {
-    #             "name": util.MOCK_TASK_NAME_1,
-    #             "tags": [],
-    #             "parameters": [],
-    #         },
-    #         "dependencies": dependencies,
-    #         "parameters": {"dataset": util.IRIS_DATASET_NAME},
-    #         "experimentId": experiment_id,
-    #         "deploymentId": None,
-    #         "positionX": 0,
-    #         "positionY": 0,
-    #         "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
-    #         "updatedAt": mock.ANY,
-    #         "status": "Setted up",  # Status should change to "Setted up"
-    #         "statusMessage": None,
-    #     }
-    #     self.assertEqual(result, expected)
-    #     self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={
+                "dependencies": dependencies,
+            },
+        )
+        result = rv.json()
+        expected = {
+            "uuid": operator_id,
+            "name": util.MOCK_TASK_NAME_1,
+            "taskId": util.MOCK_UUID_1,
+            "task": {
+                "name": util.MOCK_TASK_NAME_1,
+                "tags": [],
+                "parameters": [],
+            },
+            "dependencies": dependencies,
+            "parameters": {},
+            "experimentId": experiment_id,
+            "deploymentId": None,
+            "positionX": 0,
+            "positionY": 0,
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "updatedAt": mock.ANY,
+            "status": "Unset",
+            "statusMessage": None,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
 
     def test_delete_operator_project_not_found(self):
         """
