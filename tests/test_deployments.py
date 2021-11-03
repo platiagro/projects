@@ -3,6 +3,7 @@ import unittest
 import unittest.mock as mock
 
 from fastapi.testclient import TestClient
+from kfp_server_api.exceptions import ApiException
 
 from projects.api.main import app
 from projects.database import session_scope
@@ -490,8 +491,8 @@ class TestDeployments(unittest.TestCase):
         self.assertEqual(rv.status_code, 404)
 
     @mock.patch(
-        "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
-        return_value={"items": []},
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
     @mock.patch(
         "kfp.Client",
@@ -501,7 +502,10 @@ class TestDeployments(unittest.TestCase):
         "kubernetes.config.load_kube_config",
     )
     def test_delete_deployment_success(
-        self, mock_load_config, mock_kfp_client, mock_list_namespaced_custom_object
+        self,
+        mock_load_config,
+        mock_kfp_client,
+        mock_custom_objects_api,
     ):
         """
         Should delete deployment successfully.
@@ -516,8 +520,6 @@ class TestDeployments(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        mock_list_namespaced_custom_object.assert_any_call(
-            "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
-        )
+        mock_custom_objects_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_load_config.assert_any_call()

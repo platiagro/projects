@@ -237,8 +237,8 @@ class TestProjects(unittest.TestCase):
         self.assertEqual(rv.status_code, 404)
 
     @mock.patch(
-        "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
-        return_value={"items": []},
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
     @mock.patch(
         "kfp.Client",
@@ -248,7 +248,10 @@ class TestProjects(unittest.TestCase):
         "kubernetes.config.load_kube_config",
     )
     def test_delete_project_success(
-        self, mock_config_load, mock_kfp_client, mock_list_namespaced_custom_object
+        self,
+        mock_config_load,
+        mock_kfp_client,
+        mock_custom_objects_api,
     ):
         """
         Should delete project successfully.
@@ -261,9 +264,7 @@ class TestProjects(unittest.TestCase):
         expected = {"message": "Project deleted"}
         self.assertDictEqual(expected, result)
 
-        mock_list_namespaced_custom_object.assert_any_call(
-            "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
-        )
+        mock_custom_objects_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_config_load.assert_any_call()
 
@@ -279,8 +280,8 @@ class TestProjects(unittest.TestCase):
         self.assertEqual(rv.status_code, 400)
 
     @mock.patch(
-        "kubernetes.client.CustomObjectsApi.list_namespaced_custom_object",
-        return_value={"items": []},
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
     @mock.patch(
         "kfp.Client",
@@ -290,7 +291,7 @@ class TestProjects(unittest.TestCase):
         "kubernetes.config.load_kube_config",
     )
     def test_delete_multiple_projects_success(
-        self, mock_config_load, mock_kfp_client, mock_list_namespaced_custom_object
+        self, mock_config_load, mock_kfp_client, mock_custom_objects_api
     ):
         """
         Should delete projects successfully.
@@ -307,8 +308,6 @@ class TestProjects(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        mock_list_namespaced_custom_object.assert_any_call(
-            "machinelearning.seldon.io", "v1", "anonymous", "seldondeployments"
-        )
+        mock_custom_objects_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_config_load.assert_any_call()

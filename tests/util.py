@@ -119,11 +119,15 @@ MOCK_CORE_V1_API = mock.MagicMock(
 )
 
 
-def mock_get_namespaced_custom_object(plural, **kwargs):
+def mock_get_namespaced_custom_object(plural, name, namespace, **kwargs):
     if plural == "gateways":
         return {"spec": {"servers": [{}]}}
     elif plural == "notebooks":
         return {
+            "metadata": {
+                "namespace": namespace,
+                "name": name,
+            },
             "spec": {
                 "template": {
                     "spec": {
@@ -131,7 +135,25 @@ def mock_get_namespaced_custom_object(plural, **kwargs):
                         "volumes": [{"name": ""}],
                     }
                 }
-            }
+            },
+        }
+    elif plural == "services":
+        return {
+            "kind": "services",
+            "metadata": {
+                "namespace": namespace,
+                "name": name,
+            },
+            "spec": {},
+        }
+    elif plural == "triggers":
+        return {
+            "kind": "triggers",
+            "metadata": {
+                "namespace": namespace,
+                "name": name,
+            },
+            "spec": {},
         }
 
 
@@ -676,6 +698,20 @@ MOCK_TASK_LIST_SORTED_BY_NAME_DESC = {
     "total": 5,
 }
 
+MOCK_MONITORING_1 = {
+    "createdAt": mock.ANY,
+    "deploymentId": MOCK_UUID_1,
+    "taskId": MOCK_UUID_1,
+    "task": {"name": MOCK_TASK_NAME_1, "tags": []},
+    "uuid": MOCK_UUID_1,
+}
+
+MOCK_MONITORING_LIST = {
+    "monitorings": [
+        MOCK_MONITORING_1,
+    ],
+    "total": 1,
+}
 
 MOCK_TEMPLATE_1 = {
     "uuid": MOCK_UUID_1,
@@ -1006,6 +1042,16 @@ def create_mocks():
         ),
     ]
     session.bulk_save_objects(objects)
+    session.flush()
+    objects = [
+        models.Monitoring(
+            uuid=MOCK_UUID_1,
+            deployment_id=MOCK_UUID_1,
+            task_id=MOCK_UUID_1,
+            created_at=MOCK_CREATED_AT_1,
+        ),
+    ]
+    session.bulk_save_objects(objects)
     session.commit()
     session.close()
 
@@ -1015,6 +1061,7 @@ def delete_mocks():
     Deletes mock records from test database.
     """
     session = TestingSessionLocal()
+    session.query(models.Monitoring).delete()
     session.query(models.Comparison).delete()
     session.query(models.Operator).delete()
     session.query(models.Deployment).delete()
