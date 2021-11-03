@@ -468,6 +468,13 @@ MOCK_DEPLOYMENT_LIST = {
     ],
     "total": 2,
 }
+
+MOCK_OPERATOR_LIST = {
+    "operators": [
+        MOCK_OPERATOR_1,
+    ],
+    "total": 1,
+}
 # {
 # 'createdAt': mock.ANY,
 # 'operators': {
