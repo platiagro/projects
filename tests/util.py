@@ -543,6 +543,8 @@ MOCK_COMPARISON_LIST = {
     "total": 1,
 }
 
+MOCK_PARAMETERS_TASK_1 = []
+
 MOCK_TASK_1 = {
     "arguments": None,
     "category": "DEFAULT",
@@ -673,6 +675,7 @@ MOCK_TASK_LIST_SORTED_BY_NAME_DESC = {
     "tasks": MOCK_TASK_LIST["tasks"][::-1],
     "total": 5,
 }
+
 
 MOCK_TEMPLATE_1 = {
     "uuid": MOCK_UUID_1,
