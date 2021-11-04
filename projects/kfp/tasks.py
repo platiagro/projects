@@ -20,6 +20,7 @@ TASK_VOLUME_MOUNT_PATH = "/home/jovyan/tasks"
 SOURCE_TASK_VOLUME_MOUNT_PATH = "/home/source"
 DESTINATION_TASK_VOLUME_MOUNT_PATH = "/home/destination"
 DEFAULT_TIMEOUT_IN_SECONDS = 120
+COMPONENT_DOCKER_IMAGE = "alpine:3.14"
 
 INIT_TASK_CONTAINER_IMAGE = os.getenv(
     "INIT_TASK_CONTAINER_IMAGE",
@@ -122,7 +123,7 @@ def create_init_task_container_op(
 
         "implementation": {
             "container": {
-                "image": "alpine:3.14",
+                "image": COMPONENT_DOCKER_IMAGE,
                 "command": ["cp", "-R", SOURCE_TASK_VOLUME_MOUNT_PATH, DESTINATION_TASK_VOLUME_MOUNT_PATH]
             },
         },
