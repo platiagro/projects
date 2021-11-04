@@ -110,22 +110,7 @@ def create_init_task_container_op(
     -------
     kfp.dsl.ContainerOp
     """
-    args = ["--task-id", task.uuid, "--destination", DESTINATION_TASK_VOLUME_MOUNT_PATH]
 
-    if copy_from:
-        args.extend(["--source", SOURCE_TASK_VOLUME_MOUNT_PATH])
-
-    if experiment_notebook:
-        # BUG
-        # If len(experiment_notebook) is greater that OS limit, it will truncate
-        # See this URL https://serverfault.com/questions/163371/linux-command-line-character-limit
-        # for further details
-        args.extend(["--experiment-notebook", experiment_notebook])
-
-    if deployment_notebook:
-        # BUG
-        # Same problem described for experiment_notebook.
-        args.extend(["--deployment-notebook", deployment_notebook])
 
     component = {
         "name": "init-task",
@@ -137,8 +122,8 @@ def create_init_task_container_op(
 
         "implementation": {
             "container": {
-                "image": INIT_TASK_CONTAINER_IMAGE,
-                "args": args,
+                "image": "alpine:3.14",
+                "command": ["cp", "-R", SOURCE_TASK_VOLUME_MOUNT_PATH, DESTINATION_TASK_VOLUME_MOUNT_PATH]
             },
         },
     }
