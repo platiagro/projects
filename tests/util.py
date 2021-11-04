@@ -1061,6 +1061,7 @@ def delete_mocks():
     Deletes mock records from test database.
     """
     session = TestingSessionLocal()
+    session.query(models.Response).delete()
     session.query(models.Monitoring).delete()
     session.query(models.Comparison).delete()
     session.query(models.Operator).delete()
