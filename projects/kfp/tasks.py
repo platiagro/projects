@@ -26,10 +26,17 @@ INIT_TASK_CONTAINER_IMAGE = os.getenv(
     "INIT_TASK_CONTAINER_IMAGE",
     f"platiagro/init-task:{__version__}-SNAPSHOT",
 )
-TASK_CONFIGMAP = Template(pkgutil.get_data("projects", "kfp/resources/TaskConfigMap.yaml").decode())
+TASK_CONFIGMAP = Template(
+    pkgutil.get_data("projects", "kfp/resources/TaskConfigMap.yaml").decode()
+)
 
 
-def make_task_creation_job(task: models.Task, all_tasks: List[models.Task], namespace: str, copy_from: Optional[models.Task] = None):
+def make_task_creation_job(
+    task: models.Task,
+    all_tasks: List[models.Task],
+    namespace: str,
+    copy_from: Optional[models.Task] = None,
+):
     """
     Runs a Kubeflow Pipeline that creates all resources necessary for a new task.
 
@@ -60,13 +67,19 @@ def make_task_creation_job(task: models.Task, all_tasks: List[models.Task], name
         # Either the contents of other task are copied,
         # or some empty notebooks are copied into the volume
         container_op = create_init_task_container_op(task=task, copy_from=copy_from)
-        container_op.add_pvolumes({DESTINATION_TASK_VOLUME_MOUNT_PATH: volume_op_task.volume})
+        container_op.add_pvolumes(
+            {DESTINATION_TASK_VOLUME_MOUNT_PATH: volume_op_task.volume}
+        )
         container_op.set_timeout(DEFAULT_TIMEOUT_IN_SECONDS)
 
         if copy_from:
             # If task is a copy, also adds a volume mount to the source task volume
-            volume_op_task = create_volume_op(name=f"task-{copy_from.uuid}", namespace=namespace)
-            container_op.add_pvolumes({SOURCE_TASK_VOLUME_MOUNT_PATH: volume_op_task.volume})
+            volume_op_task = create_volume_op(
+                name=f"task-{copy_from.uuid}", namespace=namespace
+            )
+            container_op.add_pvolumes(
+                {SOURCE_TASK_VOLUME_MOUNT_PATH: volume_op_task.volume}
+            )
 
         if task.category == "MONITORING":
             # if it is a "MONITORING task", creates a configmap using the contents of this task.
@@ -77,7 +90,9 @@ def make_task_creation_job(task: models.Task, all_tasks: List[models.Task], name
             create_configmap_op(task=task, namespace=namespace, content="")
 
         # Patches JupyterLab to mount new task volume
-        patch_notebook_volume_mounts_op(tasks=all_tasks, namespace=namespace).after(container_op)
+        patch_notebook_volume_mounts_op(tasks=all_tasks, namespace=namespace).after(
+            container_op
+        )
 
     run_name = f"Create Task - {task.name}"
 
@@ -88,6 +103,7 @@ def make_task_creation_job(task: models.Task, all_tasks: List[models.Task], name
         experiment_name=task.uuid,
         namespace=namespace,
     )
+
 
 def create_init_task_container_op(
     task: models.Task,
@@ -112,25 +128,27 @@ def create_init_task_container_op(
     kfp.dsl.ContainerOp
     """
 
-
     component = {
         "name": "init-task",
         "description": "",
-
         "inputs": [],
-
         "outputs": [],
-
         "implementation": {
             "container": {
                 "image": COMPONENT_DOCKER_IMAGE,
-                "command": ["cp", "-R", SOURCE_TASK_VOLUME_MOUNT_PATH, DESTINATION_TASK_VOLUME_MOUNT_PATH]
+                "command": [
+                    "cp",
+                    "-R",
+                    SOURCE_TASK_VOLUME_MOUNT_PATH,
+                    DESTINATION_TASK_VOLUME_MOUNT_PATH,
+                ],
             },
         },
     }
     text = json.dumps(component)
     func = load_component_from_text(text)
     return func()
+
 
 def create_configmap_op(task: models.Task, namespace: str, content: str):
     """
@@ -162,6 +180,7 @@ def create_configmap_op(task: models.Task, namespace: str, content: str):
         },  # makes this ResourceOp to have a unique cache key
     )
 
+
 def patch_notebook_volume_mounts_op(tasks: List[models.Task], namespace: str):
     """
     Creates a kfp.ResourceOp that patches notebook server.
@@ -183,9 +202,7 @@ def patch_notebook_volume_mounts_op(tasks: List[models.Task], namespace: str):
         "metadata": {
             "name": "server",
             "namespace": namespace,
-            "labels": {
-                "app": "server"
-            }
+            "labels": {"app": "server"},
         },
         "spec": {
             "template": {
@@ -195,51 +212,42 @@ def patch_notebook_volume_mounts_op(tasks: List[models.Task], namespace: str):
                             "name": "server",
                             "image": "platiagro/platiagro-notebook-image:0.3.0",
                             "env": [
-                                {
-                                    "name": "EXPERIMENT_ID",
-                                    "value": "notebook"
-                                },
-                                {
-                                    "name": "OPERATOR_ID",
-                                    "value": "notebook"
-                                },
+                                {"name": "EXPERIMENT_ID", "value": "notebook"},
+                                {"name": "OPERATOR_ID", "value": "notebook"},
                                 {
                                     "name": "MINIO_ENDPOINT",
-                                    "value": "minio.platiagro:9000"
+                                    "value": "minio.platiagro:9000",
                                 },
                                 {
                                     "name": "MINIO_ACCESS_KEY",
                                     "valueFrom": {
                                         "secretKeyRef": {
                                             "key": "MINIO_ACCESS_KEY",
-                                            "name": "minio-secrets"
+                                            "name": "minio-secrets",
                                         }
-                                    }
+                                    },
                                 },
                                 {
                                     "name": "MINIO_SECRET_KEY",
                                     "valueFrom": {
                                         "secretKeyRef": {
                                             "key": "MINIO_SECRET_KEY",
-                                            "name": "minio-secrets"
+                                            "name": "minio-secrets",
                                         }
-                                    }
-                                }
+                                    },
+                                },
                             ],
                             "volumeMounts": [
                                 {
                                     "mountPath": "/home/jovyan/tasks",
-                                    "name": "vol-tasks"
+                                    "name": "vol-tasks",
                                 },
                                 {
                                     "mountPath": "/home/jovyan/experiments",
-                                    "name": "vol-experiments"
+                                    "name": "vol-experiments",
                                 },
-                                {
-                                    "mountPath": "/tmp/data",
-                                    "name": "vol-datasets"
-                                }
-                            ]
+                                {"mountPath": "/tmp/data", "name": "vol-datasets"},
+                            ],
                         }
                     ],
                     "serviceAccountName": "default-editor",
@@ -247,26 +255,20 @@ def patch_notebook_volume_mounts_op(tasks: List[models.Task], namespace: str):
                     "volumes": [
                         {
                             "name": "vol-tasks",
-                            "persistentVolumeClaim": {
-                                "claimName": "vol-tasks"
-                            }
+                            "persistentVolumeClaim": {"claimName": "vol-tasks"},
                         },
                         {
                             "name": "vol-experiments",
-                            "persistentVolumeClaim": {
-                                "claimName": "vol-experiments"
-                            }
+                            "persistentVolumeClaim": {"claimName": "vol-experiments"},
                         },
                         {
                             "name": "vol-datasets",
-                            "persistentVolumeClaim": {
-                                "claimName": "vol-datasets"
-                            }
-                        }
-                    ]
+                            "persistentVolumeClaim": {"claimName": "vol-datasets"},
+                        },
+                    ],
                 }
             }
-        }
+        },
     }
 
     for task in tasks:
@@ -282,7 +284,9 @@ def patch_notebook_volume_mounts_op(tasks: List[models.Task], namespace: str):
             }
         )
 
-        k8s_resource["spec"]["template"]["spec"]["containers"][0]["volumeMounts"].append(
+        k8s_resource["spec"]["template"]["spec"]["containers"][0][
+            "volumeMounts"
+        ].append(
             {
                 "mountPath": mount_path,
                 "name": name,

@@ -19,7 +19,6 @@ from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import (
     copy_file_to_pod,
     get_files_from_task,
-    handle_task_creation,
     remove_persistent_volume_claim,
     update_persistent_volume_claim,
     update_task_config_map,
@@ -186,7 +185,7 @@ class TaskController:
         # for now we need import here to avoid circular import
         from projects.kfp.tasks import make_task_creation_job
         from projects.kfp import KF_PIPELINES_NAMESPACE
-        
+
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
         if task.copy_from and has_notebook:
@@ -200,7 +199,9 @@ class TaskController:
         # check if image is a valid docker image
         self.raise_if_invalid_docker_image(task.image)
 
-        check_comp_name = self.session.query(models.Task).filter_by(name=task.name).first()
+        check_comp_name = (
+            self.session.query(models.Task).filter_by(name=task.name).first()
+        )
         if check_comp_name:
             raise BadRequest("a task with that name already exists")
 
