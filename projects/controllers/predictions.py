@@ -73,7 +73,7 @@ class PredictionController:
 
         prediction_as_schema = schemas.PredictionBase.from_orm(prediction_object)
 
-        url = get_seldon_deployment_url(deployment_id=deployment_id, external_url=True)
+        url = get_seldon_deployment_url(deployment_id=deployment_id, external_url=False)
         self.background_tasks.add_task(
             self.start_and_save_seldon_prediction,
             request_body=request,

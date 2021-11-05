@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 import projects.schemas.message
 import projects.schemas.task
+from projects import database
 from projects.controllers import TaskController
-from projects.database import session_scope
 from projects.schemas.mailing import EmailSchema
 from projects.utils import format_query_params
 
@@ -15,12 +15,13 @@ router = APIRouter(
     prefix="/tasks",
 )
 
-ATTACHMENT_FILE_NAME = 'taskfiles.zip'
+ATTACHMENT_FILE_NAME = "taskfiles.zip"
 
 
 @router.get("", response_model=projects.schemas.task.TaskList)
-async def handle_list_tasks(request: Request,
-                            session: Session = Depends(session_scope)):
+async def handle_list_tasks(
+    request: Request, session: Session = Depends(database.session_scope)
+):
     """
     Handles GET requests to /.
 
@@ -33,26 +34,29 @@ async def handle_list_tasks(request: Request,
     -------
     projects.schemas.task.TaskList
     """
-    task_controller = TaskController(session)
     filters = format_query_params(str(request.query_params))
+
     order_by = filters.pop("order", None)
-    page = filters.pop("page", None)
-    if page:
-        page = int(page)
+
+    page = filters.pop("page", 1)
+    page = int(page) if page else 1
+
     page_size = filters.pop("page_size", None)
-    if page_size:
-        page_size = int(page_size)
-    tasks = task_controller.list_tasks(page=page,
-                                       page_size=page_size,
-                                       order_by=order_by,
-                                       **filters)
+    page_size = int(page_size) if page_size else 10
+
+    task_controller = TaskController(session)
+    tasks = task_controller.list_tasks(
+        page=page, page_size=page_size, order_by=order_by, **filters
+    )
     return tasks
 
 
 @router.post("", response_model=projects.schemas.task.Task)
-async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
-                            background_tasks: BackgroundTasks,
-                            session: Session = Depends(session_scope)):
+async def handle_post_tasks(
+    task: projects.schemas.task.TaskCreate,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(database.session_scope),
+):
     """
     Handles POST requests to /.
 
@@ -72,8 +76,9 @@ async def handle_post_tasks(task: projects.schemas.task.TaskCreate,
 
 
 @router.get("/{task_id}", response_model=projects.schemas.task.Task)
-async def handle_get_task(task_id: str,
-                          session: Session = Depends(session_scope)):
+async def handle_get_task(
+    task_id: str, session: Session = Depends(database.session_scope)
+):
     """
     Handles GET requests to /<task_id>.
 
@@ -92,10 +97,12 @@ async def handle_get_task(task_id: str,
 
 
 @router.patch("/{task_id}", response_model=projects.schemas.task.Task)
-async def handle_patch_task(task_id: str,
-                            task: projects.schemas.task.TaskUpdate,
-                            background_tasks: BackgroundTasks,
-                            session: Session = Depends(session_scope)):
+async def handle_patch_task(
+    task_id: str,
+    task: projects.schemas.task.TaskUpdate,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(database.session_scope),
+):
     """
     Handles PATCH requests to /<task_id>.
 
@@ -116,9 +123,11 @@ async def handle_patch_task(task_id: str,
 
 
 @router.delete("/{task_id}")
-async def handle_delete_task(task_id: str,
-                             background_tasks: BackgroundTasks,
-                             session: Session = Depends(session_scope)):
+async def handle_delete_task(
+    task_id: str,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(database.session_scope),
+):
     """
     Handles DELETE requests to /<task_id>.
 
@@ -138,10 +147,12 @@ async def handle_delete_task(task_id: str,
 
 
 @router.post("/{task_id}/emails", status_code=200)
-async def handle_task_email_sender(task_id: str,
-                                   email_schema: EmailSchema,
-                                   background_tasks: BackgroundTasks,
-                                   session: Session = Depends(session_scope)):
+async def handle_task_email_sender(
+    task_id: str,
+    email_schema: EmailSchema,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(database.session_scope),
+):
     """
     Handles request to /{task_id}/email
 
@@ -157,7 +168,6 @@ async def handle_task_email_sender(task_id: str,
     message: str
 
     """
-
     task_controller = TaskController(session, background_tasks)
     result = task_controller.send_emails(email_schema, task_id=task_id)
 

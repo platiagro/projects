@@ -1,325 +1,313 @@
 # -*- coding: utf-8 -*-
-from tests.test_experiments import IS_ACTIVE
-from unittest import TestCase
+import unittest
+import unittest.mock as mock
 
 from fastapi.testclient import TestClient
 
 from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
+from projects.database import session_scope
 
+import tests.util as util
+
+app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
-PROJECT_ID = str(uuid_alpha())
-PROJECT_ID_2 = str(uuid_alpha())
-NAME = "foo"
-NAME_2 = "foo 2"
-NAME_3 = "foo 3"
-DESCRIPTION = "Description"
-EXPERIMENT_ID = str(uuid_alpha())
-EXPERIMENT_ID_2 = str(uuid_alpha())
-EXPERIMENT_NAME = "Experimento 1"
-DEPLOYMENT_ID = str(uuid_alpha())
-STATUS = "Pending"
-URL = None
-POSITION = 0
-IS_ACTIVE = True
-CREATED_AT = "2000-01-01 00:00:00"
-CREATED_AT_ISO = "2000-01-01T00:00:00"
-UPDATED_AT = "2000-01-01 00:00:00"
-UPDATED_AT_ISO = "2000-01-01T00:00:00"
-TENANT = "anonymous"
 
+class TestProjects(unittest.TestCase):
+    maxDiff = None
 
-class TestProjects(TestCase):
     def setUp(self):
-        self.maxDiff = None
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO projects (uuid, name, description, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID, NAME, DESCRIPTION, CREATED_AT, UPDATED_AT, TENANT,))
-
-        text = (
-            f"INSERT INTO projects (uuid, name, description, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID_2, NAME_2, DESCRIPTION, CREATED_AT, UPDATED_AT, TENANT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, IS_ACTIVE, CREATED_AT, UPDATED_AT))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID_2, NAME, PROJECT_ID_2, POSITION, IS_ACTIVE, CREATED_AT, UPDATED_AT))
-
-        text = (
-            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID_2, EXPERIMENT_ID_2, POSITION, IS_ACTIVE, STATUS, URL, CREATED_AT, UPDATED_AT))
-        conn.close()
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
     def tearDown(self):
-        conn = engine.connect()
-        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID_2}'"
-        conn.execute(text)
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID_2}'"
-        conn.execute(text)
-
-        text = f"DELETE e.* FROM experiments e INNER JOIN projects p ON e.project_id = p.uuid WHERE p.name = '{NAME_3}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID_2}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM projects WHERE name = '{NAME_3}'"
-        conn.execute(text)
-
-        conn.close()
-
-    def test_list_projects(self):
+    def test_list_projects_no_args(self):
+        """
+        Should return an empty list.
+        """
         rv = TEST_CLIENT.get("/projects")
         result = rv.json()
-        self.assertIsInstance(result['projects'], list)
+
+        expected = util.MOCK_PROJECT_LIST
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.get("/projects?order=uuid asc")
-        result = rv.json()
-        self.assertIsInstance(result["projects"], list)
-        self.assertIsInstance(result["total"], int)
-        self.assertEqual(rv.status_code, 200)
-
-        rv = TEST_CLIENT.get("/projects?page=1")
-        result = rv.json()
-        self.assertIsInstance(result["projects"], list)
-        self.assertIsInstance(result["total"], int)
-        self.assertEqual(rv.status_code, 200)
-
-        rv = TEST_CLIENT.get(f"/projects?name={NAME}&page=1&order=uuid asc")
-        result = rv.json()
-        self.assertIsInstance(result["projects"], list)
-        self.assertIsInstance(result["total"], int)
-        self.assertEqual(rv.status_code, 200)
-
-        rv = TEST_CLIENT.get(f"/projects?name={NAME}&page=1&page_size=10&order=name desc")
-        result = rv.json()
-        self.assertIsInstance(result["projects"], list)
-        self.assertIsInstance(result["total"], int)
-        self.assertEqual(rv.status_code, 200)
-
+    def test_list_projects_order_name_asc(self):
+        """
+        Should return a list of projects sorted by name descending.
+        """
         rv = TEST_CLIENT.get("/projects?order=name desc")
         result = rv.json()
-        self.assertIsInstance(result["projects"], list)
-        self.assertIsInstance(result["total"], int)
+
+        expected = util.MOCK_PROJECT_LIST_SORTED_BY_NAME_DESC
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
+    def test_list_projects_invalid_order_argument(self):
+        """
+        Should return a http error 400 and a message 'invalid order argument'.
+        """
         rv = TEST_CLIENT.get("/projects?order=name unk")
         result = rv.json()
+
         expected = {"message": "Invalid order argument"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.get("/projects?order=name")
+    def test_list_projects_page_size_1(self):
+        """
+        Should return a list of projects with one element.
+        """
+        rv = TEST_CLIENT.get("/projects?page_size=1")
         result = rv.json()
-        expected = {"message": "Invalid order argument"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
 
-    def test_create_project(self):
+        expected = {"projects": [util.MOCK_PROJECT_1], "total": 1}
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_list_projects_page_size_1_page_3(self):
+        """
+        Should return a list of projects with one element.
+        """
+        rv = TEST_CLIENT.get("/projects?page_size=1&page=3")
+        result = rv.json()
+
+        expected = {"projects": [util.MOCK_PROJECT_3], "total": 1}
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_create_project_invalid_request_body(self):
+        """
+        Should return http status 422 when invalid request body is given.
+        """
         rv = TEST_CLIENT.post("/projects", json={})
         self.assertEqual(rv.status_code, 422)
 
-        rv = TEST_CLIENT.post("/projects", json={
-            "name": NAME
-        })
+    def test_create_project_given_name_already_exists(self):
+        """
+        Should return http status 400 and a message 'a project with given name already exists'.
+        """
+        rv = TEST_CLIENT.post("/projects", json={"name": util.MOCK_PROJECT_NAME_1})
         result = rv.json()
+
         expected = {"message": "a project with that name already exists"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post("/projects", json={
-            "name": NAME_3,
-            "description": DESCRIPTION
-        })
+    def test_create_project_success(self):
+        """
+        Should create and return a project successfully.
+        """
+        project_name = "project-4"
+
+        rv = TEST_CLIENT.post("/projects", json={"name": project_name})
         result = rv.json()
-        result_experiments = result.pop("experiments")
         expected = {
-            "name": NAME_3,
-            "description": DESCRIPTION,
+            "createdAt": mock.ANY,
+            "deployments": [],
+            "description": None,
+            "experiments": [
+                {
+                    "createdAt": mock.ANY,
+                    "isActive": True,
+                    "name": "Experimento 1",
+                    "operators": [],
+                    "position": 0,
+                    "projectId": mock.ANY,
+                    "updatedAt": mock.ANY,
+                    "uuid": mock.ANY,
+                }
+            ],
             "hasDeployment": False,
             "hasExperiment": True,
             "hasPreDeployment": False,
-            "deployments": []
+            "name": project_name,
+            "updatedAt": mock.ANY,
+            "uuid": mock.ANY,
         }
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
 
-        expected = {
-            "name": EXPERIMENT_NAME,
-            "position": POSITION,
-            "isActive": IS_ACTIVE,
-            "operators": [],
-        }
-        self.assertEqual(len(result_experiments), 1)
-        machine_generated = ["uuid", "projectId", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result_experiments[0])
-            del result_experiments[0][attr]
-        self.assertDictEqual(expected, result_experiments[0])
+    def test_get_project_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "foo"
 
-    def test_get_project(self):
-        rv = TEST_CLIENT.get("/projects/foo")
+        rv = TEST_CLIENT.get(f"/projects/{project_id}")
         result = rv.json()
+
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID_2}")
+    def test_get_project_success(self):
+        """
+        Should return a project successfully.
+        """
+        project_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(f"/projects/{project_id}")
         result = rv.json()
-        result_experiments = result.pop("experiments")
-        result_deployments = result.pop("deployments")
+
         expected = {
-            "uuid": PROJECT_ID_2,
-            "name": NAME_2,
-            "createdAt": CREATED_AT_ISO,
-            "updatedAt": UPDATED_AT_ISO,
-            "description": DESCRIPTION,
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "deployments": [util.MOCK_DEPLOYMENT_1, util.MOCK_DEPLOYMENT_2],
+            "description": None,
+            "experiments": [util.MOCK_EXPERIMENT_1, util.MOCK_EXPERIMENT_2],
             "hasDeployment": False,
             "hasExperiment": True,
             "hasPreDeployment": True,
+            "name": util.MOCK_PROJECT_NAME_1,
+            "updatedAt": util.MOCK_UPDATED_AT_1.isoformat(),
+            "uuid": project_id,
         }
-        self.assertDictEqual(expected, result)
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
 
-        expected = {
-            "uuid": EXPERIMENT_ID_2,
-            "name": NAME,
-            "projectId": PROJECT_ID_2,
-            "position": 0,
-            "isActive": True,
-            "operators": [],
-        }
-        self.assertEqual(len(result_experiments), 1)
-        machine_generated = ["createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result_experiments[0])
-            del result_experiments[0][attr]
-        self.assertDictEqual(expected, result_experiments[0])
+    def test_update_project_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "foo"
 
-        expected = {
-            "uuid": DEPLOYMENT_ID,
-            "name": NAME,
-            "projectId": PROJECT_ID_2,
-            "experimentId": EXPERIMENT_ID_2,
-            "position": POSITION,
-            "isActive": IS_ACTIVE,
-            "operators": [],
-            "url": URL,
-            "status": STATUS,
-        }
-        self.assertEqual(len(result_deployments), 1)
-        machine_generated = ["createdAt", "updatedAt", "deployedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result_deployments[0])
-            del result_deployments[0][attr]
-        self.assertDictEqual(expected, result_deployments[0])
-
-    def test_update_project(self):
-        rv = TEST_CLIENT.patch("/projects/foo", json={})
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={})
         result = rv.json()
+
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}", json={
-            "name": NAME_2,
-        })
+    def test_update_project_given_name_already_exists(self):
+        """
+        Should return http status 400 and a message 'a project with given name already exists'.
+        """
+        project_id = util.MOCK_UUID_1
+        project_name = util.MOCK_PROJECT_NAME_2
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"name": project_name})
         result = rv.json()
+
         expected = {"message": "a project with that name already exists"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        #update project using the same name
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}", json={
-            "name": NAME,
-        })
-        self.assertEqual(rv.status_code, 200)
+    def test_update_project_success(self):
+        """
+        Should update and return a project successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        project_name = "project-4"
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}", json={
-            "name": "bar",
-        })
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"name": project_name})
         result = rv.json()
-        result_experiments = result.pop("experiments")
+
         expected = {
-            "uuid": PROJECT_ID,
-            "name": "bar",
-            "description": DESCRIPTION,
-            "createdAt": CREATED_AT_ISO,
-            "hasPreDeployment": False,
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "deployments": [util.MOCK_DEPLOYMENT_1, util.MOCK_DEPLOYMENT_2],
+            "description": None,
+            "experiments": [util.MOCK_EXPERIMENT_1, util.MOCK_EXPERIMENT_2],
             "hasDeployment": False,
             "hasExperiment": True,
-            "deployments": []
+            "hasPreDeployment": True,
+            "name": project_name,
+            "updatedAt": mock.ANY,
+            "uuid": project_id,
         }
-        machine_generated = ["updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
 
-        expected = {
-            "uuid": EXPERIMENT_ID,
-            "name": NAME,
-            "projectId": PROJECT_ID,
-            "position": POSITION,
-            "isActive": IS_ACTIVE,
-            "operators": [],
-        }
-        self.assertEqual(len(result_experiments), 1)
-        machine_generated = ["createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result_experiments[0])
-            del result_experiments[0][attr]
-        self.assertDictEqual(expected, result_experiments[0])
+    def test_delete_project_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "unk"
 
-    def test_delete_project(self):
-        rv = TEST_CLIENT.delete("/projects/unk")
+        rv = TEST_CLIENT.delete(f"/projects/{project_id}")
         result = rv.json()
+
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}")
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_delete_project_success(
+        self,
+        mock_config_load,
+        mock_kfp_client,
+        mock_custom_objects_api,
+    ):
+        """
+        Should delete project successfully.
+        """
+        project_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.delete(f"/projects/{project_id}")
         result = rv.json()
+
         expected = {"message": "Project deleted"}
         self.assertDictEqual(expected, result)
 
-    def test_delete_projects(self):
-        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[])
+        mock_custom_objects_api.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_config_load.assert_any_call()
+
+    def test_delete_multiple_projects_at_least_one_project_error(self):
+        """
+        Should return a http error 400 and a message 'inform at least one project'.
+        """
+        rv = TEST_CLIENT.post(f"/projects/deleteprojects", json=[])
         result = rv.json()
+
         expected = {"message": "inform at least one project"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[PROJECT_ID_2])
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_delete_multiple_projects_success(
+        self, mock_config_load, mock_kfp_client, mock_custom_objects_api
+    ):
+        """
+        Should delete projects successfully.
+        """
+        project_id_1 = util.MOCK_UUID_1
+        project_id_2 = util.MOCK_UUID_2
+
+        rv = TEST_CLIENT.post(
+            f"/projects/deleteprojects", json=[project_id_1, project_id_2]
+        )
         result = rv.json()
+
         expected = {"message": "Successfully removed projects"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
+
+        mock_custom_objects_api.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_config_load.assert_any_call()

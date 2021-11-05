@@ -6,10 +6,14 @@ from fastapi import APIRouter, Depends, Header
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from projects.controllers import ExperimentController, ProjectController, \
-    OperatorController, ResultController
+from projects import database
+from projects.controllers import (
+    ExperimentController,
+    ProjectController,
+    OperatorController,
+    ResultController,
+)
 from projects.controllers.experiments.runs import RunController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}",
@@ -17,11 +21,13 @@ router = APIRouter(
 
 
 @router.get("/results")
-async def handle_get_results(project_id: str,
-                             experiment_id: str,
-                             run_id: str,
-                             session: Session = Depends(session_scope),
-                             kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_get_results(
+    project_id: str,
+    experiment_id: str,
+    run_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles GET requests to /results.
 
@@ -48,8 +54,7 @@ async def handle_get_results(project_id: str,
     run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
 
     result_controller = ResultController(session)
-    results = result_controller.get_results(experiment_id=experiment_id,
-                                            run_id=run_id)
+    results = result_controller.get_results(experiment_id=experiment_id, run_id=run_id)
 
     response = StreamingResponse(results, media_type="application/x-zip-compressed")
     response.headers["Content-Disposition"] = "attachment; filename=results.zip"
@@ -57,12 +62,14 @@ async def handle_get_results(project_id: str,
 
 
 @router.get("/operators/{operator_id}/results")
-async def handle_get_operator_results(project_id: str,
-                                      experiment_id: str,
-                                      run_id: str,
-                                      operator_id: str,
-                                      session: Session = Depends(session_scope),
-                                      kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_get_operator_results(
+    project_id: str,
+    experiment_id: str,
+    run_id: str,
+    operator_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles GET requests to /operators/<operator_id>/results.
 
@@ -93,9 +100,9 @@ async def handle_get_operator_results(project_id: str,
     run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
 
     result_controller = ResultController(session)
-    results = result_controller.get_results(experiment_id=experiment_id,
-                                            run_id=run_id,
-                                            operator_id=operator_id)
+    results = result_controller.get_results(
+        experiment_id=experiment_id, run_id=run_id, operator_id=operator_id
+    )
 
     response = StreamingResponse(results, media_type="application/x-zip-compressed")
     response.headers["Content-Disposition"] = "attachment; filename=results.zip"

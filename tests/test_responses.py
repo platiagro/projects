@@ -1,102 +1,166 @@
 # -*- coding: utf-8 -*-
-import multiprocessing
-import os
-from unittest import TestCase
+import unittest
+import unittest.mock as mock
 
-import uvicorn
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from projects.api.main import app, parse_args
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
+from projects.api.main import app
+from projects.database import session_scope
 
+import tests.util as util
+
+app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
-PROJECT_ID = str(uuid_alpha())
-DEPLOYMENT_ID = str(uuid_alpha())
-EXPERIMENT_ID = None
-NAME = "foo"
-CREATED_AT = "2000-01-01 00:00:00"
-UPDATED_AT = "2000-01-01 00:00:00"
-DESCRIPTION = "Description"
-POSITION = 0
-STATUS = "Pending"
-URL = None
-TENANT = "anonymous"
 
-
-class TestResponses(TestCase):
+class TestResponses(unittest.TestCase):
+    maxDiff = None
 
     def setUp(self):
-        os.environ["BROKER_URL"] = "http://localhost:8000"
-        app = FastAPI()
-
-        @app.post("/")
-        async def root():
-            return {}
-
-        self.proc = multiprocessing.Process(target=uvicorn.run, args=(app,))
-        self.proc.start()
-
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO projects (uuid, name, description, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID, NAME, DESCRIPTION, CREATED_AT, UPDATED_AT, TENANT,))
-
-        text = (
-            f"INSERT INTO deployments (uuid, name, project_id, experiment_id, position, is_active, status, url, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (DEPLOYMENT_ID, NAME, PROJECT_ID, EXPERIMENT_ID, POSITION, 1, STATUS, URL, CREATED_AT, UPDATED_AT,))
-
-        conn.close()
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
     def tearDown(self):
-        self.proc.terminate()
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-        conn = engine.connect()
+    def test_create_response_deployment_not_found(self):
+        """
+        Should return a http status 404 and an error message.
+        """
+        project_id = util.MOCK_UUID_1
+        deployment_id = "unk"
 
-        text = f"DELETE FROM deployments WHERE project_id = '{PROJECT_ID}'"
-        conn.execute(text)
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/responses",
+            json={},
+        )
+        result = rv.json()
 
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-        conn.execute(text)
+        expected = {"message": "The specified deployment does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-        conn.close()
+    @mock.patch(
+        "requests.post",
+        return_value=util.MOCK_POST_PREDICTION,
+    )
+    def test_create_response_success_1(
+        self,
+        mock_requests_post,
+    ):
+        """
+        Should create and return a response successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        deployment_id = util.MOCK_UUID_1
+        data = {"data": {"ndarray": [[1, 2, "a"]]}}
 
-    def test_parse_args(self):
-        parser = parse_args([])
-        self.assertEqual(parser.port, 8080)
-        self.assertFalse(parser.enable_cors)
-
-    def test_post(self):
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/responses", json={
-            "data": {
-                "ndarray": [
-                    [1, 2, "a"]
-                ]
-            }
-        })
-        result = rv.text
-        expected = "{\"message\":\"OK\"}"
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/responses",
+            json=data,
+        )
+        result = rv.json()
+        expected = {"message": "OK"}
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/responses", json={
-            "strData": "texto"
-        })
-        result = rv.text
-        expected = "{\"message\":\"OK\"}"
+        mock_requests_post.assert_any_call(
+            "http://broker-ingress.knative-eventing.svc.cluster.local/anonymous/default",
+            json={
+                "data": {
+                    "ndarray": [[1, 2, "a"]],
+                    "names": ["0", "1", "2"],
+                },
+            },
+            headers={
+                "Ce-Id": mock.ANY,
+                "Ce-Specversion": "1.0",
+                "Ce-Type": f"deployment.{deployment_id}",
+                "Ce-Source": "logger.anonymous",
+            },
+        )
+
+    @mock.patch(
+        "requests.post",
+        return_value=util.MOCK_POST_PREDICTION,
+    )
+    def test_create_response_success_2(
+        self,
+        mock_requests_post,
+    ):
+        """
+        Should create and return a response successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        deployment_id = util.MOCK_UUID_1
+        data = {"strData": "texto"}
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/responses",
+            json=data,
+        )
+        result = rv.json()
+        expected = {"message": "OK"}
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/deployments/{DEPLOYMENT_ID}/responses", json={
-            "binData": "Cg=="
-        })
-        result = rv.text
-        expected = "{\"message\":\"OK\"}"
+        mock_requests_post.assert_any_call(
+            "http://broker-ingress.knative-eventing.svc.cluster.local/anonymous/default",
+            json={
+                "data": {
+                    "ndarray": [["texto"]],
+                    "names": ["strData"],
+                },
+            },
+            headers={
+                "Ce-Id": mock.ANY,
+                "Ce-Specversion": "1.0",
+                "Ce-Type": f"deployment.{deployment_id}",
+                "Ce-Source": "logger.anonymous",
+            },
+        )
+
+    @mock.patch(
+        "requests.post",
+        return_value=util.MOCK_POST_PREDICTION,
+    )
+    def test_create_response_success_3(
+        self,
+        mock_requests_post,
+    ):
+        """
+        Should create and return a response successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        deployment_id = util.MOCK_UUID_1
+        data = {"binData": "Cg=="}
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/responses",
+            json=data,
+        )
+        result = rv.json()
+        expected = {"message": "OK"}
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
+
+        mock_requests_post.assert_any_call(
+            "http://broker-ingress.knative-eventing.svc.cluster.local/anonymous/default",
+            json={
+                "data": {
+                    "ndarray": [["Cg=="]],
+                    "names": ["binData"],
+                },
+            },
+            headers={
+                "Ce-Id": mock.ANY,
+                "Ce-Specversion": "1.0",
+                "Ce-Type": f"deployment.{deployment_id}",
+                "Ce-Source": "logger.anonymous",
+            },
+        )

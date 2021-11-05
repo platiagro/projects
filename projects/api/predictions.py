@@ -14,11 +14,13 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from projects import database
 from projects.controllers import (
     DeploymentController,
     PredictionController,
     ProjectController,
 )
+
 from projects.database import session_scope
 from projects.exceptions import BadRequest
 from projects.schemas import Prediction, PredictionBase
