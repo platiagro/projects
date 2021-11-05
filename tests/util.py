@@ -105,12 +105,12 @@ MOCK_CORE_V1_API = mock.MagicMock(
             ),
         ),
     ),
-    create_namespaced_persistent_volume_clain=mock.MagicMock(
-        side_effect=lambda name, namespace: mock.MagicMock(
+    create_namespaced_persistent_volume_claim=mock.MagicMock(
+        side_effect=lambda namespace, body: mock.MagicMock(
             api_version="v1",
             kind="PersistentVolumeClaim",
             metadata=mock.MagicMock(
-                name=f"vol-{name}",
+                name=f"vol-{body['metadata']['name']}",
                 namespace=namespace,
             ),
             status=mock.MagicMock(phase="Bound"),
