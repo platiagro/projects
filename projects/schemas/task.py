@@ -9,7 +9,6 @@ from projects.utils import to_camel_case
 
 
 class TaskBase(BaseModel):
-
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True
@@ -82,7 +81,7 @@ class Task(TaskBase):
     created_at: datetime
     updated_at: datetime
     has_notebook: bool
-    readiness_probe_initial_delay_seconds: Optional[str]
+    readiness_probe_initial_delay_seconds: Optional[int]
 
     @classmethod
     def from_orm(cls, model):

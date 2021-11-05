@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.template
+from projects import database
 from projects.controllers import TemplateController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/templates",
@@ -15,8 +15,10 @@ router = APIRouter(
 
 
 @router.get("", response_model=projects.schemas.template.TemplateList)
-async def handle_list_templates(session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_list_templates(
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles GET requests to /.
 
@@ -34,9 +36,11 @@ async def handle_list_templates(session: Session = Depends(session_scope),
 
 
 @router.post("", response_model=projects.schemas.template.Template)
-async def handle_post_templates(template: projects.schemas.template.TemplateCreate,
-                                session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_post_templates(
+    template: projects.schemas.template.TemplateCreate,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles POST requests to /.
 
@@ -56,9 +60,11 @@ async def handle_post_templates(template: projects.schemas.template.TemplateCrea
 
 
 @router.get("/{template_id}", response_model=projects.schemas.template.Template)
-async def handle_get_template(template_id: str,
-                              session: Session = Depends(session_scope),
-                              kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_get_template(
+    template_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles GET requests to /<template_id>.
 
@@ -78,10 +84,12 @@ async def handle_get_template(template_id: str,
 
 
 @router.patch("/{template_id}", response_model=projects.schemas.template.Template)
-async def handle_patch_template(template_id: str,
-                                template: projects.schemas.template.TemplateUpdate,
-                                session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_patch_template(
+    template_id: str,
+    template: projects.schemas.template.TemplateUpdate,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles PATCH requests to /<template_id>.
 
@@ -97,14 +105,18 @@ async def handle_patch_template(template_id: str,
     projects.schemas.template.Template
     """
     template_controller = TemplateController(session, kubeflow_userid=kubeflow_userid)
-    template = template_controller.update_template(template_id=template_id, template=template)
+    template = template_controller.update_template(
+        template_id=template_id, template=template
+    )
     return template
 
 
 @router.delete("/{template_id}")
-async def handle_delete_template(template_id: str,
-                                 session: Session = Depends(session_scope),
-                                 kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_delete_template(
+    template_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles DELETE requests to /<template_id>.
 
@@ -124,9 +136,11 @@ async def handle_delete_template(template_id: str,
 
 
 @router.post("/deletetemplates")
-async def handle_post_deletetemplates(templates: List[str],
-                                      session: Session = Depends(session_scope),
-                                      kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_post_deletetemplates(
+    templates: List[str],
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles POST requests to /deletetemplates.
 

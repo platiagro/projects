@@ -9,8 +9,8 @@ from sse_starlette.sse import EventSourceResponse
 from sqlalchemy.orm import Session
 
 import projects.schemas.experiment
+from projects import database
 from projects.controllers import ExperimentController, ProjectController, LogController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments",
@@ -18,9 +18,11 @@ router = APIRouter(
 
 
 @router.get("", response_model=projects.schemas.experiment.ExperimentList)
-async def handle_list_experiments(project_id: str,
-                                  session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_list_experiments(
+    project_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles GET requests to /.
 
@@ -43,10 +45,12 @@ async def handle_list_experiments(project_id: str,
 
 
 @router.post("", response_model=projects.schemas.experiment.Experiment)
-async def handle_post_experiments(project_id: str,
-                                  experiment: projects.schemas.experiment.ExperimentCreate,
-                                  session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_post_experiments(
+    project_id: str,
+    experiment: projects.schemas.experiment.ExperimentCreate,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles POST requests to /.
 
@@ -65,16 +69,19 @@ async def handle_post_experiments(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
-    experiment = experiment_controller.create_experiment(project_id=project_id,
-                                                         experiment=experiment)
+    experiment = experiment_controller.create_experiment(
+        project_id=project_id, experiment=experiment
+    )
     return experiment
 
 
 @router.get("/{experiment_id}", response_model=projects.schemas.experiment.Experiment)
-async def handle_get_experiment(project_id: str,
-                                experiment_id: str,
-                                session: Session = Depends(session_scope),
-                                kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_get_experiment(
+    project_id: str,
+    experiment_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles GET requests to /<experiment_id>.
 
@@ -93,17 +100,20 @@ async def handle_get_experiment(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
-    experiment = experiment_controller.get_experiment(experiment_id=experiment_id,
-                                                      project_id=project_id)
+    experiment = experiment_controller.get_experiment(
+        experiment_id=experiment_id, project_id=project_id
+    )
     return experiment
 
 
 @router.patch("/{experiment_id}", response_model=projects.schemas.experiment.Experiment)
-async def handle_patch_experiment(project_id: str,
-                                  experiment_id: str,
-                                  experiment: projects.schemas.experiment.ExperimentUpdate,
-                                  session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_patch_experiment(
+    project_id: str,
+    experiment_id: str,
+    experiment: projects.schemas.experiment.ExperimentUpdate,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles PATCH requests to /<experiment_id>.
 
@@ -123,17 +133,19 @@ async def handle_patch_experiment(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
-    experiment = experiment_controller.update_experiment(experiment_id=experiment_id,
-                                                         project_id=project_id,
-                                                         experiment=experiment)
+    experiment = experiment_controller.update_experiment(
+        experiment_id=experiment_id, project_id=project_id, experiment=experiment
+    )
     return experiment
 
 
 @router.delete("/{experiment_id}")
-async def handle_delete_experiment(project_id: str,
-                                   experiment_id: str,
-                                   session: Session = Depends(session_scope),
-                                   kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_delete_experiment(
+    project_id: str,
+    experiment_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles DELETE requests to /<experiment_id>.
 
@@ -152,8 +164,9 @@ async def handle_delete_experiment(project_id: str,
     project_controller.raise_if_project_does_not_exist(project_id)
 
     experiment_controller = ExperimentController(session)
-    experiment = experiment_controller.delete_experiment(experiment_id=experiment_id,
-                                                         project_id=project_id)
+    experiment = experiment_controller.delete_experiment(
+        experiment_id=experiment_id, project_id=project_id
+    )
     return experiment
 
 
@@ -165,7 +178,7 @@ async def handle_log_deployment(experiment_id: str):
     Parameters
     ----------
     experiment_id : str
-    
+
     Returns
     -------
     EventSourceResponse
