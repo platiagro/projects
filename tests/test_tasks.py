@@ -86,21 +86,12 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
 
     @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
-    @mock.patch(
-        "kubernetes.client.CoreV1Api",
-        return_value=util.MOCK_CORE_V1_API,
-    )
-    @mock.patch(
-        "kubernetes.config.load_kube_config",
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
     )
     def test_create_task_not_request_body(
         self,
-        mock_config_load,
-        mock_core_v1_api,
-        mock_custom_objects_api,
+        mock_kfp_client,
     ):
         """
         Should create task successfully.
@@ -108,9 +99,7 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.post("/tasks", json={})
         self.assertEqual(rv.status_code, 200)
 
-        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
-        mock_core_v1_api.assert_any_call()
-        mock_config_load.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
     def test_create_task_given_name_already_exists_error(self):
         """
@@ -124,21 +113,12 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(rv.status_code, 400)
 
     @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
-    @mock.patch(
-        "kubernetes.client.CoreV1Api",
-        return_value=util.MOCK_CORE_V1_API,
-    )
-    @mock.patch(
-        "kubernetes.config.load_kube_config",
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
     )
     def test_create_task_without_name_success(
         self,
-        mock_config_load,
-        mock_core_v1_api,
-        mock_custom_objects_api,
+        mock_kfp_client,
     ):
         """
         Should create and return a task successfully. A task name is auto generated.
@@ -173,26 +153,15 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
-        mock_core_v1_api.assert_any_call()
-        mock_config_load.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
     @mock.patch(
-        "kubernetes.client.CoreV1Api",
-        return_value=util.MOCK_CORE_V1_API,
-    )
-    @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
-    @mock.patch(
-        "kubernetes.config.load_kube_config",
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
     )
     def test_create_task_with_name_success(
         self,
-        mock_config_load,
-        mock_custom_objects_api,
-        mock_core_v1_api,
+        mock_kfp_client,
     ):
         """
         Should create and return a task successfully.
@@ -230,26 +199,15 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_core_v1_api.assert_any_call()
-        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
-        mock_config_load.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
     @mock.patch(
-        "kubernetes.client.CoreV1Api",
-        return_value=util.MOCK_CORE_V1_API,
-    )
-    @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
-    @mock.patch(
-        "kubernetes.config.load_kube_config",
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
     )
     def test_create_task_copy_from_success(
         self,
-        mock_config_load,
-        mock_custom_objects_api,
-        mock_core_v1_api,
+        mock_kfp_client,
     ):
         """
         Should create and return a task successfully. A task name is auto generated.
@@ -284,26 +242,15 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_core_v1_api.assert_any_call()
-        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
-        mock_config_load.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
     @mock.patch(
-        "kubernetes.client.CoreV1Api",
-        return_value=util.MOCK_CORE_V1_API,
-    )
-    @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
-    @mock.patch(
-        "kubernetes.config.load_kube_config",
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
     )
     def test_create_task_with_notebook_success(
         self,
-        mock_config_load,
-        mock_custom_objects_api,
-        mock_core_v1_api,
+        mock_kfp_client,
     ):
         """
         Should create and return a task successfully.
@@ -342,9 +289,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_core_v1_api.assert_any_call()
-        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
-        mock_config_load.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
 
     def test_get_task_not_found(self):
         """
