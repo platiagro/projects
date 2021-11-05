@@ -25,15 +25,25 @@ from projects.kubernetes.notebook import (
 )
 
 PREFIX = "tasks"
+
+CATEGORY_DEFAULT = "DEFAULT"
+CATEGORY_DATASETS = "DATASETS"
+CATEGORY_DESCRIPTIVE_STATISTICS = "DESCRIPTIVE_STATISTICS"
+CATEGORY_FEATURE_ENGINEERING = "FEATURE_ENGINEERING"
+CATEGORY_PREDICTOR = "PREDICTOR"
+CATEGORY_COMPUTER_VISION = "COMPUTER_VISION"
+CATEGORY_NLP = "NLP"
+CATEGORY_MONITORING = "MONITORING"
+
 VALID_CATEGORIES = [
-    "DATASETS",
-    "DEFAULT",
-    "DESCRIPTIVE_STATISTICS",
-    "FEATURE_ENGINEERING",
-    "PREDICTOR",
-    "COMPUTER_VISION",
-    "NLP",
-    "MONITORING",
+    CATEGORY_DEFAULT,
+    CATEGORY_DATASETS,
+    CATEGORY_DESCRIPTIVE_STATISTICS,
+    CATEGORY_FEATURE_ENGINEERING,
+    CATEGORY_PREDICTOR,
+    CATEGORY_COMPUTER_VISION,
+    CATEGORY_NLP,
+    CATEGORY_MONITORING,
 ]
 DEPLOYMENT_NOTEBOOK = json.loads(
     pkgutil.get_data("projects", "config/Deployment.ipynb")
@@ -89,8 +99,8 @@ class TaskController:
 
     def list_tasks(
         self,
-        page: Optional[int] = None,
-        page_size: Optional[int] = None,
+        page: Optional[int] = 1,
+        page_size: Optional[int] = 10,
         order_by: str = Optional[str],
         **filters,
     ):
@@ -125,7 +135,10 @@ class TaskController:
                 getattr(models.Task, column).ilike(f"%{value}%")
             )
 
-        total = query_total.scalar()
+        # BUG
+        # query_total.limit(page_size) didn't work. I'm not sure why...
+        # This solution uses an unoptimized query, and should be improved.
+        total = min(page_size, query_total.scalar())
 
         # Default sort is name in ascending order
         if not order_by:
@@ -192,9 +205,12 @@ class TaskController:
             raise BadRequest("Either provide notebooks or a task to copy from")
 
         if not task.tags:
-            task.tags = ["DEFAULT"]
+            task.tags = [CATEGORY_DEFAULT]
 
         self.task_category_is_not_none(task)
+
+        if not task.category:
+            task.category = CATEGORY_DEFAULT
 
         # check if image is a valid docker image
         self.raise_if_invalid_docker_image(task.image)
@@ -339,8 +355,8 @@ class TaskController:
             )
 
         # update ConfigMap for monitoring tasks
-        if (task.parameters and stored_task.category == "MONITORING") or (
-            task.category == "MONITORING"
+        if (task.parameters and "MONITORING" in stored_task.tags) or (
+            "MONITORING" in task.tags if task.tags else False
         ):
             self.background_tasks.add_task(
                 update_task_config_map,

@@ -9,8 +9,8 @@ from sse_starlette.sse import EventSourceResponse
 from sqlalchemy.orm import Session
 
 import projects.schemas.experiment
+from projects import database
 from projects.controllers import ExperimentController, ProjectController, LogController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments",
@@ -20,8 +20,8 @@ router = APIRouter(
 @router.get("", response_model=projects.schemas.experiment.ExperimentList)
 async def handle_list_experiments(
     project_id: str,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /.
@@ -48,8 +48,8 @@ async def handle_list_experiments(
 async def handle_post_experiments(
     project_id: str,
     experiment: projects.schemas.experiment.ExperimentCreate,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles POST requests to /.
@@ -79,8 +79,8 @@ async def handle_post_experiments(
 async def handle_get_experiment(
     project_id: str,
     experiment_id: str,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /<experiment_id>.
@@ -111,8 +111,8 @@ async def handle_patch_experiment(
     project_id: str,
     experiment_id: str,
     experiment: projects.schemas.experiment.ExperimentUpdate,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles PATCH requests to /<experiment_id>.
@@ -143,8 +143,8 @@ async def handle_patch_experiment(
 async def handle_delete_experiment(
     project_id: str,
     experiment_id: str,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles DELETE requests to /<experiment_id>.

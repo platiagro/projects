@@ -1,460 +1,424 @@
 # -*- coding: utf-8 -*-
-from json import dumps
-from unittest import TestCase
+import unittest
+import unittest.mock as mock
 
 from fastapi.testclient import TestClient
 
 from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
+from projects.database import session_scope
 
+import tests.util as util
+
+app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
-EXPERIMENT_ID = str(uuid_alpha())
-NAME = "foo"
-POSITION = 0
-EXPERIMENT_ID_2 = str(uuid_alpha())
-EXPERIMENT_ID_3 = str(uuid_alpha())
-EXPERIMENT_ID_4 = str(uuid_alpha())
-NAME_2 = "foo 2"
-NAME_3 = "foo 3"
-NAME_4 = "foo 4"
-POSITION_2 = 1
-POSITION_3 = 2
-POSITION_4 = 3
-PROJECT_ID = str(uuid_alpha())
-TEMPLATE_ID = str(uuid_alpha())
-TASK_ID = str(uuid_alpha())
-TASK_ID_2 = str(uuid_alpha())
-TASK_ID_3 = str(uuid_alpha())
-TASK_ID_4 = str(uuid_alpha())
-OPERATOR_ID = str(uuid_alpha())
-OPERATOR_ID_2 = str(uuid_alpha())
-OPERATOR_ID_3 = str(uuid_alpha())
-OPERATOR_ID_4 = str(uuid_alpha())
-OPERATOR_ID_5 = str(uuid_alpha())
-DEPENDENCY_ID = str(uuid_alpha())
-POSITION_X = 0
-POSITION_Y = 0
-IS_ACTIVE = True
-PARAMETERS = {"coef": 0.1}
-PARAMETERS_JSON = dumps(PARAMETERS)
-PARAMETERS_JSON_2 = dumps({})
-DESCRIPTION = "long foo"
-IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
-COMMANDS = None
-ARGUMENTS = None
-TAGS = ["PREDICTOR"]
-CATEGORY = "DEFAULT"
-DATA_IN = ""
-DATA_OUT = ""
-DOCS = ""
-TAGS_2 = ["DATASETS"]
-TAGS_JSON = dumps(TAGS)
-TAGS_JSON_2 = dumps(TAGS_2)
-TASKS_JSON = dumps([
-    {
-        "uuid": OPERATOR_ID,
-        "position_x": 0.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID,
-        "dependencies": []
-    },
-    {
-        "uuid": OPERATOR_ID_2,
-        "position_x": 200.0,
-        "position_y": 0.0,
-        "task_id": TASK_ID_2,
-        "dependencies": [OPERATOR_ID]
-    },
-])
-EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
-EXPERIMENT_NOTEBOOK_PATH_2 = ""
-CREATED_AT = "2000-01-01 00:00:00"
-CREATED_AT_ISO = "2000-01-01T00:00:00"
-UPDATED_AT = "2000-01-01 00:00:00"
-UPDATED_AT_ISO = "2000-01-01T00:00:00"
-NAME_COPYFROM = "test copyFrom"
 
-DEPENDENCIES_EMPTY = []
-DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
-DEPENDENCIES_OP_ID = [OPERATOR_ID]
-DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
-TENANT = "anonymous"
+class TestExperiments(unittest.TestCase):
+    maxDiff = None
 
-
-class TestExperiments(TestCase):
     def setUp(self):
-        self.maxDiff = None
-
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, None, None, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID_2, NAME_2, DESCRIPTION, IMAGE, None, None, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID_3, NAME_3, DESCRIPTION, IMAGE, None, None, CATEGORY, TAGS_JSON_2, DATA_IN, DATA_OUT, DOCS, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID_4, NAME_4, DESCRIPTION, IMAGE, None, None, CATEGORY, TAGS_JSON_2, DATA_IN, DATA_OUT, DOCS, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH_2, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID_2, NAME_2, PROJECT_ID, POSITION_2, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID_3, NAME_3, PROJECT_ID, POSITION_3, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID_4, NAME_4, PROJECT_ID, POSITION_4, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID,
-                     PARAMETERS_JSON, POSITION_X, POSITION_Y, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, TASK_ID,
-                     PARAMETERS_JSON, POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_3, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID_3,
-                     PARAMETERS_JSON_2, POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_4, None, "Unset", None, EXPERIMENT_ID_3, TASK_ID,
-                     PARAMETERS_JSON, POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_5, None, "Unset", None, EXPERIMENT_ID_4, TASK_ID_4,
-                     PARAMETERS_JSON, POSITION_X, POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO templates (uuid, name, tasks, experiment_id, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TEMPLATE_ID, NAME, TASKS_JSON, EXPERIMENT_ID, CREATED_AT, UPDATED_AT, TENANT,))
-        conn.close()
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
     def tearDown(self):
-        conn = engine.connect()
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-        text = f"DELETE FROM templates WHERE uuid = '{TEMPLATE_ID}'"
-        conn.execute(text)
+    def test_list_experiments_project_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = "unk"
 
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_2}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_3}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID_4}'"
-        conn.execute(text)
-
-        text = (
-            f"DELETE FROM operators WHERE experiment_id = "
-            f"(SELECT uuid FROM experiments where name = '{NAME_COPYFROM}')"
-        )
-        conn.execute(text)
-
-        text = f"DELETE FROM experiments WHERE project_id in ('{PROJECT_ID}')"
-        conn.execute(text)
-
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID_4}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID_3}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID_2}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
-        conn.execute(text)
-
-        conn.close()
-
-    def test_list_experiments(self):
-        rv = TEST_CLIENT.get("/projects/unk/experiments")
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments")
         result = rv.json()
+
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments")
+    def test_list_experiments_success(self):
+        """
+        Should return a list of experiments successfully.
+        """
+        project_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments")
         result = rv.json()
-        self.assertIsInstance(result["experiments"], list)
-        self.assertIsInstance(result["total"], int)
+
+        expected = util.MOCK_EXPERIMENT_LIST
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_experiment(self):
-        rv = TEST_CLIENT.post("/projects/unk/experiments", json={
-            "name": NAME,
-        })
+    def test_create_experiment_project_not_found_error(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "unk"
+        experiment_name = "experiment-2"
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments",
+            json={
+                "name": experiment_name,
+            },
+        )
         result = rv.json()
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments", json={})
+    def test_create_experiment_invalid_request_body_error(self):
+        """
+        Should return http status 422 when invalid request body is given.
+        """
+        project_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(f"/projects/{project_id}/experiments", json={})
         self.assertEqual(rv.status_code, 422)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments", json={
-            "name": NAME,
-        })
+    def test_create_experiment_name_already_exists_error(self):
+        """
+        Should return a http error 400 and a message 'experiment with that name already exists'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_name = util.MOCK_EXPERIMENT_NAME_1
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments",
+            json={
+                "name": experiment_name,
+            },
+        )
         result = rv.json()
+
         expected = {"message": "an experiment with that name already exists"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments", json={
-            "name": "test",
-        })
-        result = rv.json()
-        expected = {
-            "name": "test",
-            "projectId": PROJECT_ID,
-            "position": 4,
-            "isActive": IS_ACTIVE,
-            "operators": [],
-        }
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+    def test_create_experiment_success(self):
+        """
+        Should create and return an experiment successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_name = "experiment-3"
 
-        """Copy operators for a given experiment"""
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments", json={
-            "name": f"{NAME_COPYFROM}",
-            "copyFrom": f"{EXPERIMENT_ID}"
-        })
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments",
+            json={
+                "name": experiment_name,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "name": experiment_name,
+            "projectId": project_id,
+            "position": 2,
+            "isActive": True,
+            "operators": [],
+            "createdAt": mock.ANY,
+            "updatedAt": mock.ANY,
+            "uuid": mock.ANY,
+        }
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments", json={
-            "name": f"test copyFrom 2",
-            "copyFrom": f"4555"
-        })
+    def test_create_experiment_with_copy_from_success(self):
+        """
+        Should create and return an experiment successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_name = "experiment-3"
+        copy_from = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments",
+            json={"name": experiment_name, "copyFrom": copy_from},
+        )
+        result = rv.json()
+
+        expected = {
+            "name": experiment_name,
+            "projectId": project_id,
+            "position": 2,
+            "isActive": True,
+            "operators": [
+                {
+                    "uuid": mock.ANY,
+                    "name": util.MOCK_TASK_NAME_1,
+                    "taskId": util.MOCK_UUID_1,
+                    "task": {
+                        "name": util.MOCK_TASK_NAME_1,
+                        "tags": [],
+                        "parameters": [],
+                    },
+                    "dependencies": [],
+                    "parameters": {"dataset": "iris.csv"},
+                    "experimentId": mock.ANY,
+                    "deploymentId": None,
+                    "positionX": 0,
+                    "positionY": 0,
+                    "createdAt": mock.ANY,
+                    "updatedAt": mock.ANY,
+                    "status": "Unset",
+                    "statusMessage": None,
+                },
+                {
+                    "uuid": mock.ANY,
+                    "name": util.MOCK_TASK_NAME_1,
+                    "taskId": util.MOCK_UUID_1,
+                    "task": {
+                        "name": util.MOCK_TASK_NAME_1,
+                        "tags": [],
+                        "parameters": [],
+                    },
+                    "dependencies": [mock.ANY],
+                    "parameters": {},
+                    "experimentId": mock.ANY,
+                    "deploymentId": None,
+                    "positionX": 0,
+                    "positionY": 0,
+                    "createdAt": mock.ANY,
+                    "updatedAt": mock.ANY,
+                    "status": "Unset",
+                    "statusMessage": None,
+                },
+            ],
+            "createdAt": mock.ANY,
+            "updatedAt": mock.ANY,
+            "uuid": mock.ANY,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_create_experiment_source_experiment_error(self):
+        """
+        Should return a http error 400 and a message 'source experiment does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_name = "experiment-3"
+        copy_from = "unk"
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments",
+            json={"name": experiment_name, "copyFrom": copy_from},
+        )
+        result = rv.json()
+
+        expected = {"message": "source experiment does not exist"}
+        self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    def test_get_experiment(self):
-        rv = TEST_CLIENT.get(f"/projects/foo/experiments/{EXPERIMENT_ID}")
+    def test_get_experiment_project_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "unk"
+        experiment_id = "experiment-2"
+
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments/{experiment_id}")
         result = rv.json()
+
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/foo")
+    def test_get_experiment_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified experiment does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "experiment-2"
+
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments/{experiment_id}")
         result = rv.json()
+
         expected = {"message": "The specified experiment does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_2}")
+    def test_get_experiment_success(self):
+        """
+        Should return a experiment successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments/{experiment_id}")
         result = rv.json()
+
         expected = {
-            "uuid": EXPERIMENT_ID_2,
-            "name": NAME_2,
-            "projectId": PROJECT_ID,
-            "position": POSITION_2,
-            "isActive": IS_ACTIVE,
-            "operators": result['operators'],
-            "createdAt": CREATED_AT_ISO,
-            "updatedAt": UPDATED_AT_ISO,
+            "name": util.MOCK_EXPERIMENT_NAME_1,
+            "projectId": project_id,
+            "position": 0,
+            "isActive": True,
+            "operators": [util.MOCK_OPERATOR_1, util.MOCK_OPERATOR_4],
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "updatedAt": util.MOCK_UPDATED_AT_1.isoformat(),
+            "uuid": experiment_id,
         }
         self.assertDictEqual(expected, result)
-        operator = result["operators"][0]
-        self.assertEqual("Unset", operator["status"])
+        self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_3}")
-        result = rv.json()
-        expected = {
-            "uuid": EXPERIMENT_ID_3,
-            "name": NAME_3,
-            "projectId": PROJECT_ID,
-            "position": POSITION_3,
-            "isActive": IS_ACTIVE,
-            "operators": result['operators'],
-            "createdAt": CREATED_AT_ISO,
-            "updatedAt": UPDATED_AT_ISO,
-        }
-        self.assertDictEqual(expected, result)
-        operator = result["operators"][0]
-        self.assertEqual("Unset", operator["status"])
+    def test_update_experiment_project_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "foo"
+        experiment_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID_4}")
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}", json={}
+        )
         result = rv.json()
-        expected = {
-            "uuid": EXPERIMENT_ID_4,
-            "name": NAME_4,
-            "projectId": PROJECT_ID,
-            "position": POSITION_4,
-            "isActive": IS_ACTIVE,
-            "operators": result['operators'],
-            "createdAt": CREATED_AT_ISO,
-            "updatedAt": UPDATED_AT_ISO,
-        }
-        self.assertDictEqual(expected, result)
-        operator = result["operators"][0]
-        self.assertEqual("Unset", operator["status"])
 
-    def test_update_experiment(self):
-        rv = TEST_CLIENT.patch(f"/projects/foo/experiments/{EXPERIMENT_ID}", json={})
-        result = rv.json()
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/foo", json={})
+    def test_update_experiment_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified experiment does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "foo"
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}", json={}
+        )
         result = rv.json()
+
         expected = {"message": "The specified experiment does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
-            "name": NAME_2,
-        })
+    def test_update_experiment_given_name_already_exists(self):
+        """
+        Should return http status 400 and a message 'an experiment with given name already exists'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        experiment_name = util.MOCK_EXPERIMENT_NAME_2
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}",
+            json={"name": experiment_name},
+        )
         result = rv.json()
+
         expected = {"message": "an experiment with that name already exists"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
-            "templateId": "unk",
-        })
+    def test_update_experiment_with_template_id_not_found(self):
+        """
+        Should return http status 400 and a message 'specified template does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        template_id = "unk"
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}",
+            json={
+                "templateId": template_id,
+            },
+        )
         result = rv.json()
+
         expected = {"message": "The specified template does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        # update experiment using the same name
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
-            "name": NAME,
-        })
-        self.assertEqual(rv.status_code, 200)
+    def test_update_experiment_with_template_id_success(self):
+        """
+        Should update and return an experiment successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        template_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
-            "name": "bar",
-        })
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}",
+            json={
+                "templateId": template_id,
+            },
+        )
         result = rv.json()
+
         expected = {
-            "uuid": EXPERIMENT_ID,
-            "name": "bar",
-            "projectId": PROJECT_ID,
-            "position": POSITION,
-            "isActive": IS_ACTIVE,
-            "operators": result['operators'],
-            "createdAt": CREATED_AT_ISO,
+            "name": util.MOCK_EXPERIMENT_NAME_1,
+            "projectId": project_id,
+            "position": 0,
+            "isActive": True,
+            "operators": [
+                {
+                    "createdAt": mock.ANY,
+                    "dependencies": [],
+                    "deploymentId": None,
+                    "experimentId": experiment_id,
+                    "name": util.MOCK_TASK_NAME_1,
+                    "parameters": {},
+                    "positionX": 0,
+                    "positionY": 0,
+                    "status": "Unset",
+                    "statusMessage": None,
+                    "task": {"name": "task-1", "parameters": [], "tags": []},
+                    "taskId": "uuid-1",
+                    "updatedAt": mock.ANY,
+                    "uuid": mock.ANY,
+                }
+            ],
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "updatedAt": util.MOCK_UPDATED_AT_1.isoformat(),
+            "uuid": experiment_id,
         }
-        machine_generated = ["updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}", json={
-            "templateId": TEMPLATE_ID,
-        })
-        result = rv.json()
-        expected = {
-            "uuid": EXPERIMENT_ID,
-            "name": "bar",
-            "projectId": PROJECT_ID,
-            "position": POSITION,
-            "isActive": IS_ACTIVE,
-            "createdAt": CREATED_AT_ISO,
-        }
-        result_operators = result["operators"]
-        machine_generated = ["updatedAt", "operators"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+    def test_delete_experiment_project_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "unk"
+        experiment_id = util.MOCK_UUID_1
 
-    def test_delete_experiment(self):
-        rv = TEST_CLIENT.delete(f"/projects/foo/experiments/{EXPERIMENT_ID}")
+        rv = TEST_CLIENT.delete(f"/projects/{project_id}/experiments/{experiment_id}")
         result = rv.json()
+
         expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/unk")
+    def test_delete_experiment_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified experiment does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+
+        rv = TEST_CLIENT.delete(f"/projects/{project_id}/experiments/{experiment_id}")
         result = rv.json()
+
         expected = {"message": "The specified experiment does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}")
+    def test_delete_experiment_success(self):
+        """
+        Should delete experiment successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.delete(f"/projects/{project_id}/experiments/{experiment_id}")
         result = rv.json()
+
         expected = {"message": "Experiment deleted"}
         self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)

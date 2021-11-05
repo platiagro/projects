@@ -5,9 +5,9 @@ from sse_starlette.sse import EventSourceResponse
 from fastapi import APIRouter, BackgroundTasks, Depends, Header
 from sqlalchemy.orm import Session
 
+from projects import database
 import projects.schemas.deployment
 from projects.controllers import DeploymentController, ProjectController, LogController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments",
@@ -17,8 +17,8 @@ router = APIRouter(
 @router.get("", response_model=projects.schemas.deployment.DeploymentList)
 async def handle_list_deployments(
     project_id: str,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /.
@@ -48,8 +48,8 @@ async def handle_post_deployments(
     project_id: str,
     deployment: projects.schemas.deployment.DeploymentCreate,
     background_tasks: BackgroundTasks,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles POST requests to /.
@@ -80,8 +80,8 @@ async def handle_post_deployments(
 async def handle_get_deployment(
     project_id: str,
     deployment_id: str,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles GET requests to /<deployment_id>.
@@ -112,8 +112,8 @@ async def handle_patch_deployment(
     project_id: str,
     deployment_id: str,
     deployment: projects.schemas.deployment.DeploymentUpdate,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles PATCH requests to /<deployment_id>.
@@ -146,8 +146,8 @@ async def handle_delete_deployment(
     project_id: str,
     deployment_id: str,
     background_tasks: BackgroundTasks,
-    session: Session = Depends(session_scope),
-    kubeflow_userid: Optional[str] = Header("anonymous"),
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
     Handles DELETE requests to /<deployment_id>.

@@ -188,12 +188,17 @@ def create_persistent_volume_claim(name, mount_path):
                     namespace=NOTEBOOK_NAMESPACE,
                     _request_timeout=5,
                 )
+                pod_is_running = pod.status.phase == "Running"
+                containers_are_running = all(
+                    [c.state.running for c in pod.status.container_statuses]
+                )
+                # ToDo
+                # volume_is_mounted = any(
+                #     [v for v in pod.spec.volumes if v.name == f"{name}"]
+                # )
+                volume_is_mounted = True
 
-                if (
-                    pod.status.phase == "Running"
-                    and all([c.state.running for c in pod.status.container_statuses])
-                    and any([v for v in pod.spec.volumes if v.name == f"{name}"])
-                ):
+                if pod_is_running and containers_are_running and volume_is_mounted:
                     warnings.warn(f"Mounted volume {name} in notebook server!")
                     break
             except ApiException:

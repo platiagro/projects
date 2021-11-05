@@ -10,7 +10,6 @@ from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
-from projects.object_storage import remove_objects
 
 NOT_FOUND = NotFound("The specified project does not exist")
 
@@ -92,7 +91,10 @@ class ProjectController:
                 .collate("utf8mb4_bin")
             )
 
-        total = query_total.scalar()
+        # BUG
+        # query_total.limit(page_size) didn't work. I'm not sure why...
+        # This solution uses an unoptimized query, and should be improved.
+        total = min(page_size, query_total.scalar())
 
         # Default sort is name in ascending order
         if not order_by:
@@ -269,9 +271,6 @@ class ProjectController:
         self.session.delete(project)
         self.session.commit()
 
-        prefix = join("experiments", project_id)
-        remove_objects(prefix=prefix)
-
         return schemas.Message(message="Project deleted")
 
     def delete_multiple_projects(self, project_ids):
@@ -296,12 +295,6 @@ class ProjectController:
         if total_elements < 1:
             raise BadRequest("inform at least one project")
 
-        experiments = (
-            self.session.query(models.Experiment)
-            .filter(models.Experiment.project_id.in_(project_ids))
-            .all()
-        )
-
         projects = (
             self.session.query(models.Project)
             .filter(models.Project.uuid.in_(project_ids))
@@ -313,12 +306,5 @@ class ProjectController:
             self.session.delete(project)
 
         self.session.commit()
-
-        for experiment in experiments:
-            prefix = join("experiments", experiment.uuid)
-            try:
-                remove_objects(prefix=prefix)
-            except Exception:
-                pass
 
         return schemas.Message(message="Successfully removed projects")

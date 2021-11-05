@@ -5,8 +5,11 @@ from fastapi import APIRouter, Body, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from projects.controllers import DeploymentController, ResponseController
-from projects.database import session_scope
+from projects import database
+from projects.controllers import (
+    DeploymentController,
+    ResponseController,
+)
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/responses",
@@ -18,7 +21,7 @@ async def handle_post_responses(
     project_id: str,
     deployment_id: str,
     body: dict = Body(...),
-    session: Session = Depends(session_scope),
+    session: Session = Depends(database.session_scope),
 ):
     """
     Handles POST requests to /.
