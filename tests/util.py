@@ -55,8 +55,15 @@ MOCK_STREAM = mock.MagicMock(
     ),
 )
 
+MOCK_POD_METADATA = mock.MagicMock(
+    namespace="anonymous",
+    creation_timestamp=datetime.utcnow(),
+    annotations={"name": "task-name"},
+)
+MOCK_POD_METADATA.name = "server-0"
+
 MOCK_POD = mock.MagicMock(
-    metadata=mock.MagicMock(name="server-0", namespace="anonymous"),
+    metadata=MOCK_POD_METADATA,
     status=mock.MagicMock(
         phase="Running",
         container_statuses=[mock.MagicMock(state=mock.MagicMock(running=True))],
@@ -64,6 +71,12 @@ MOCK_POD = mock.MagicMock(
 )
 
 MOCK_POD.spec = mock.MagicMock(
+    containers=[
+        mock.MagicMock(
+            name="container-name",
+            env=mock.MagicMock(name="TASK_NAME", value="task-name"),
+        )
+    ],
     volumes=[mock.MagicMock(name=mock.ANY)],
 )
 
@@ -79,9 +92,7 @@ MOCK_CORE_V1_API = mock.MagicMock(
             status=mock.MagicMock(phase="Bound"),
         )
     ),
-    read_namespaced_pod=mock.MagicMock(
-        side_effect=lambda name, namespace, **kwargs: MOCK_POD
-    ),
+    read_namespaced_pod=mock.MagicMock(return_value=MOCK_POD),
     connect_get_namespaced_pod_exec=mock.MagicMock(
         __self__=mock.MagicMock(api_client=mock.MagicMock()),
         side_effect=lambda **kwargs: mock.MagicMock(
@@ -115,6 +126,12 @@ MOCK_CORE_V1_API = mock.MagicMock(
             ),
             status=mock.MagicMock(phase="Bound"),
         )
+    ),
+    list_namespaced_pod=mock.MagicMock(
+        side_effect=lambda namespace, **kwargs: mock.MagicMock(items=[MOCK_POD])
+    ),
+    read_namespaced_pod_log=mock.MagicMock(
+        return_value="2021-01-01 00:00:00 ERROR foo\nbar"
     ),
 )
 
@@ -158,7 +175,9 @@ def mock_get_namespaced_custom_object(plural, name, namespace, **kwargs):
 
 
 MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
-    list_namespaced_custom_object=mock.MagicMock(),
+    list_namespaced_custom_object=mock.MagicMock(
+        return_value={"items": [{"metadata": {"name": "experiment-"}}]},
+    ),
     get_namespaced_custom_object=mock.MagicMock(
         side_effect=mock_get_namespaced_custom_object
     ),
@@ -519,24 +538,7 @@ MOCK_OPERATOR_LIST = {
     ],
     "total": 2,
 }
-# {
-# 'createdAt': mock.ANY,
-# 'operators': {
-#     'deployment': {
-#         'parameters': {},
-#         'status': 'Succeeded'
-#     },
-#     MOCK_UUID_3: {
-#         'parameters': {
-#             'dataset': None,
-#             'features_to_filter': ['Vibracao1']
-#         },
-#         'status': 'Succeeded',
-#         'taskId': MOCK_UUID_2
-#     },
-# },
-# 'uuid': 'uuid-1'
-# }
+
 MOCK_DEPLOYMENT_RUN_LIST = {
     "runs": [
         {
@@ -755,6 +757,18 @@ MOCK_TEMPLATE_LIST = {
         MOCK_TEMPLATE_2,
     ],
     "total": 2,
+}
+
+MOCK_LOG_LIST = {
+    "logs": [
+        {
+            "createdAt": mock.ANY,
+            "level": "ERROR",
+            "message": "foo\nbar",
+            "title": "server-0",
+        }
+    ],
+    "total": 1,
 }
 
 MOCK_NOTEBOOK = {

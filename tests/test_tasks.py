@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from projects.models import task
 from json import loads
 import unittest
 import unittest.mock as mock
