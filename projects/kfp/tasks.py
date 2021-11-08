@@ -18,6 +18,7 @@ from projects.kfp.volume import create_volume_op
 
 TASK_VOLUME_MOUNT_PATH = "/home/jovyan/tasks"
 SOURCE_TASK_VOLUME_MOUNT_PATH = "/home/source"
+SOURCE_TASK_VOLUME_MOUNT_CONTENT = "/home/source/*"
 DESTINATION_TASK_VOLUME_MOUNT_PATH = "/home/destination"
 DEFAULT_TIMEOUT_IN_SECONDS = 120
 COMPONENT_DOCKER_IMAGE = "alpine:3.14"
@@ -139,7 +140,7 @@ def create_init_task_container_op(
                 "command": [
                     "cp",
                     "-R",
-                    SOURCE_TASK_VOLUME_MOUNT_PATH,
+                    SOURCE_TASK_VOLUME_MOUNT_CONTENT,
                     DESTINATION_TASK_VOLUME_MOUNT_PATH,
                 ],
             },
