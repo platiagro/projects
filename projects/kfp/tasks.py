@@ -139,7 +139,6 @@ def create_init_task_container_op(
                 "image": COMPONENT_DOCKER_IMAGE,
                 "command": [
                     "cp",
-                    "-R",
                     SOURCE_TASK_VOLUME_MOUNT_CONTENT,
                     DESTINATION_TASK_VOLUME_MOUNT_PATH,
                 ],
