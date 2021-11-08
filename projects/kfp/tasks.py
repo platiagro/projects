@@ -140,7 +140,7 @@ def create_init_task_container_op(
                 "command": [
                     "cp",
                     "-R",
-                    SOURCE_TASK_VOLUME_MOUNT_PATH,
+                    SOURCE_TASK_VOLUME_MOUNT_CONTENT,
                     DESTINATION_TASK_VOLUME_MOUNT_PATH,
                 ],
             },
