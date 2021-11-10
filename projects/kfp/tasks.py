@@ -127,7 +127,6 @@ def create_init_task_container_op(
     -------
     kfp.dsl.ContainerOp
     """
-
     component = {
         "name": "init-task",
         "description": "",
@@ -137,10 +136,9 @@ def create_init_task_container_op(
             "container": {
                 "image": COMPONENT_DOCKER_IMAGE,
                 "command": [
-                    "cp",
-                    "-R",
-                    f"{SOURCE_TASK_VOLUME_MOUNT_PATH}/.",
-                    DESTINATION_TASK_VOLUME_MOUNT_PATH,
+                    "/bin/sh",
+                    "-c",
+                    f"cp -R {SOURCE_TASK_VOLUME_MOUNT_PATH}/* {DESTINATION_TASK_VOLUME_MOUNT_PATH}/",
                 ],
             },
         },
