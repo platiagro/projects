@@ -2584,6 +2584,7 @@ components:
         deploymentId:
           type: string
           format: uuid
+
   requestBodies:
     ComparisonPatch:
       content:
@@ -3269,3 +3270,839 @@ components:
                 example: "The service is unavailable. Try your call again."
             required:
               - message
+
+    ################################################################################
+    # ERROR RESPONSES
+    ################################################################################
+    ComparisonNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "ComparisonNotFound"
+              message:
+                type: string
+                example: "The specified comparision does not exist."
+              status:
+                type: integer
+                example: 404
+
+    DeploymentNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "DeploymentNotFound"
+              message:
+                type: string
+                example: "The specified deployment does not exist."
+              status:
+                type: integer
+                example: 404
+
+    ExperimentNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "ExperimentNotFound"
+              message:
+                type: string
+                example: "The specified experiment does not exist."
+              status:
+                type: integer
+                example: 404
+
+    MonitoringNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MonitoringNotFound"
+              message:
+                type: string
+                example: "The specified monitoring does not exist."
+              status:
+                type: integer
+                example: 404
+
+    OperatorNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "OperatorNotFound"
+              message:
+                type: string
+                example: "The specified operator does not exist."
+              status:
+                type: integer
+                example: 404
+
+    PredictionNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "PredictionNotFound"
+              message:
+                type: string
+                example: "The specified prediction does not exist."
+              status:
+                type: integer
+                example: 404
+
+    ProjectNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "ProjectNotFound"
+              message:
+                type: string
+                example: "The specified project does not exist."
+              status:
+                type: integer
+                example: 404
+
+    RunNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "RunNotFound"
+              message:
+                type: string
+                example: "The specified run does not exist."
+              status:
+                type: integer
+                example: 404
+
+    TaskNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "TaskNotFound"
+              message:
+                type: string
+                example: "The specified task does not exist."
+              status:
+                type: integer
+                example: 404
+
+    TemplateNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "TemplateNotFound"
+              message:
+                type: string
+                example: "The specified template does not exist."
+              status:
+                type: integer
+                example: 404
+
+    InternalError:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InternalError"
+              message:
+                type: string
+                example: "The server encountered an internal error. Please retry the request."
+              status:
+                type: integer
+                example: 500
+
+    CannotConnectToDatabase:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "CannotConnectToDatabase"
+              message:
+                type: string
+                example: "Could not connect to database"
+              status:
+                type: integer
+                example: 500
+
+    MissingRequiredFormDataOrJson:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredFormDataOrJson"
+              message:
+                type: string
+                example: "either form-data or json is required"
+              status:
+                type: integer
+                example: 400
+
+    InvalidDataset:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidDataset"
+              message:
+                type: string
+                example: "a valid dataset is required"
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredDatasetOrFile:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredDatasetOrFile"
+              message:
+                type: string
+                example: "either dataset name or file is required"
+              status:
+                type: integer
+                example: 400
+
+    InvalidOrderBy:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidOrderBy"
+              message:
+                type: string
+                example: "Invalid order argument"
+              status:
+                type: integer
+                example: 400
+
+    ProjectNameExists:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "ProjectNameExists"
+              message:
+                type: string
+                example: "a project with that name already exists"
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredProjectId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredProjectId"
+              message:
+                type: string
+                example: "inform at least one project"
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredTemplateName:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredTemplateName"
+              message:
+                type: string
+                example: "name is required"
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredExperimentIdOrDeploymentId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredExperimentIdOrDeploymentId"
+              message:
+                type: string
+                example: "experimentId or deploymentId needed to create template."
+              status:
+                type: integer
+                example: 400
+
+    TemplateNameExists:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "TemplateNameExists"
+              message:
+                type: string
+                example: "a template with that name already exists"
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredTemplateId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredTemplateId"
+              message:
+                type: string
+                example: "inform at least one template"
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredExperimentsOrTemplateIdOrCopyFrom:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredExperimentsOrTemplateIdOrCopyFrom"
+              message:
+                type: string
+                example: "either experiments, templateId or copyFrom is required"
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredDeploymentName:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredDeploymentName"
+              message:
+                type: string
+                example: "name is required to duplicate deployment"
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredOperatorId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredOperatorId"
+              message:
+                type: string
+                example: "Necessary at least one operator."
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredDataSourceOperatorId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredDataSourceOperatorId"
+              message:
+                type: string
+                example: "Necessary at least one operator that is not a data source."
+              status:
+                type: integer
+                example: 400
+
+    InvalidExperiments:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidExperiments"
+              message:
+                type: string
+                example: "some experiments do not exist"
+              status:
+                type: integer
+                example: 400
+
+    InvalidDeploymentId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidDeploymentId"
+              message:
+                type: string
+                example: "source deployment does not exist"
+              status:
+                type: integer
+                example: 400
+
+    InvalidRunId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidRunId"
+              message:
+                type: string
+                example: "Not a failed run"
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredExperimentName:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredExperimentName"
+              message:
+                type: string
+                example: "name is required"
+              status:
+                type: integer
+                example: 400
+
+    ExperimentNameExists:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "ExperimentNameExists"
+              message:
+                type: string
+                example: "an experiment with that name already exists"
+              status:
+                type: integer
+                example: 400
+
+    InvalidExperimentId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidExperimentId"
+              message:
+                type: string
+                example: "source experiment does not exist"
+              status:
+                type: integer
+                example: 400
+
+    InvalidTemplateId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidTemplateId"
+              message:
+                type: string
+                example: "The specified template does not exist"
+              status:
+                type: integer
+                example: 400
+
+    CannotCreateLogStream:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "CannotConnectToLogStream"
+              message:
+                type: string
+                example: "Unable to create log stream. No active pod available."
+              status:
+                type: integer
+                example: 500
+
+    MissingRequiredTaskId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredTaskId"
+              message:
+                type: string
+                example: "taskId is required"
+              status:
+                type: integer
+                example: 400
+
+    InvalidOperatorRequestBody:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidOperatorRequestBody"
+              message:
+                type: string
+                example: "Operator cannot contain an experiment and a deployment simultaneously"
+              status:
+                type: integer
+                example: 400
+
+    InvalidParameters:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidParameters"
+              message:
+                type: string
+                example: "The specified parameters are not valid"
+              status:
+                type: integer
+                example: 400
+
+    InvalidDependencies:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidDependencies"
+              message:
+                type: string
+                example: "The specified dependencies are not valid."
+              status:
+                type: integer
+                example: 400
+
+    InvalidCyclicalDependencies:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidCyclicalDependencies"
+              message:
+                type: string
+                example: "Cyclical dependencies."
+              status:
+                type: integer
+                example: 400
+
+    MissingRequiredNotebookOrTaskId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "MissingRequiredNotebookOrTaskId"
+              message:
+                type: string
+                example: "Either provide notebooks or a task to copy from"
+              status:
+                type: integer
+                example: 400
+
+    TaskNameExists:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: ""
+              message:
+                type: string
+                example: "a task with that name already exists"
+              status:
+                type: integer
+                example: 400
+
+    InvalidTaskId:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidTaskId"
+              message:
+                type: string
+                example: "source task does not exist"
+              status:
+                type: integer
+                example: 400
+
+    InvalidCategory:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidCategory"
+              message:
+                type: string
+                example: "Invalid category. Choose any of {valid_categories}"
+              status:
+                type: integer
+                example: 400
+
+    InvalidDockerImageName:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "InvalidDockerImageName"
+              message:
+                type: string
+                example: "invalid docker image name"
+              status:
+                type: integer
+                example: 400
+
+    TaskProtectedFromDeletion:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "TaskProtectedFromDeletion"
+              message:
+                type: string
+                example: "Task related to an operator"
+              status:
+                type: integer
+                example: 403
+
+    CannotConnectToCluster:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "CannotConnectToCluster"
+              message:
+                type: string
+                example: "Failed to connect to cluster."
+              status:
+                type: integer
+                example: 400
+
+    CannotCreatePersistentVolumeClaim:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "CannotCreatePersistentVolumeClaim"
+              message:
+                type: string
+                example: "Error while trying to create persistent volume claim: {message}"
+              status:
+                type: integer
+                example: 400
+
+    CannotPatchNotebookServer:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "CannotPatchNotebookServer"
+              message:
+                type: string
+                example: "Error while trying to patch notebook server: {message}"
+              status:
+                type: integer
+                example: 400
+
+    CannotRetrieveContainerLogs:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "CannotRetrieveContainerLogs"
+              message:
+                type: string
+                example: "Error while trying to retrive container's log: {message}"
+              status:
+                type: integer
+                example: 500
