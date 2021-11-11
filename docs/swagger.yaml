@@ -3784,6 +3784,23 @@ components:
                 type: integer
                 example: 400
 
+    DeploymentNameExists:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "DeploymentNameExists"
+              message:
+                type: string
+                example: "a deployment with that name already exists"
+              status:
+                type: integer
+                example: 400
+
     ExperimentNameExists:
       description: ""
       content:
