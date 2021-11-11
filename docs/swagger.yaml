@@ -3286,7 +3286,7 @@ components:
                 example: "ComparisonNotFound"
               message:
                 type: string
-                example: "The specified comparision does not exist."
+                example: "The specified comparison does not exist."
               status:
                 type: integer
                 example: 404
