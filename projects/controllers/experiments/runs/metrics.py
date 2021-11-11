@@ -2,14 +2,16 @@
 """Experiments Metrics controller."""
 import platiagro
 
-from projects.exceptions import NotFound
+from projects.exceptions import InternalServerError
 
 
 class MetricController:
     def __init__(self, session):
         self.session = session
 
-    def list_metrics(self, project_id: str, experiment_id: str, run_id: str, operator_id: str):
+    def list_metrics(
+        self, project_id: str, experiment_id: str, run_id: str, operator_id: str
+    ):
         """
         Lists all metrics from object storage.
 
@@ -27,8 +29,8 @@ class MetricController:
             A list of metrics.
         """
         try:
-            return platiagro.list_metrics(experiment_id=experiment_id,
-                                          operator_id=operator_id,
-                                          run_id=run_id)
-        except FileNotFoundError as e:
-            raise NotFound(str(e))
+            return platiagro.list_metrics(
+                experiment_id=experiment_id, operator_id=operator_id, run_id=run_id
+            )
+        except FileNotFoundError:
+            return []

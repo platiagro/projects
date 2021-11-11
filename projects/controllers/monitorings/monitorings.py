@@ -11,7 +11,9 @@ from projects.controllers.utils import uuid_alpha
 from projects.exceptions import NotFound
 from projects.kfp.monitorings import deploy_monitoring, undeploy_monitoring
 
-NOT_FOUND = NotFound("The specified monitoring does not exist")
+NOT_FOUND = NotFound(
+    code="MonitoringNotFound", message="The specified monitoring does not exist"
+)
 
 
 class MonitoringController:
@@ -57,7 +59,10 @@ class MonitoringController:
         )
 
         if not exists:
-            raise NotFound("The specified monitoring does not exist")
+            raise NotFound(
+                code="MonitoringNotFound",
+                message="The specified monitoring does not exist",
+            )
 
     def list_monitorings(self, deployment_id: str):
         """

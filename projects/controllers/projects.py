@@ -11,7 +11,9 @@ from projects.controllers.experiments import ExperimentController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 
-NOT_FOUND = NotFound("The specified project does not exist")
+NOT_FOUND = NotFound(
+    code="ProjectNotFound", message="The specified project does not exist"
+)
 
 
 class ProjectController:

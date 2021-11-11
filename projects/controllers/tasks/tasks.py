@@ -70,7 +70,7 @@ TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(
 
 EMAIL_MESSAGE_TEMPLATE = pkgutil.get_data("projects", "config/email-template.html")
 
-NOT_FOUND = NotFound("The specified task does not exist")
+NOT_FOUND = NotFound(code="TaskNotFound", message="The specified task does not exist")
 
 
 class TaskController:

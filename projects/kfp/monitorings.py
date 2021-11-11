@@ -183,4 +183,7 @@ def undeploy_monitoring(monitoring_id):
             namespace=trigger_custom_object["metadata"]["namespace"],
         )
     except ApiException:
-        raise NotFound("Monitoring resources do not exist.")
+        raise NotFound(
+            code="MonitoringNotFound",
+            message="The specified monitoring does not exist.",
+        )

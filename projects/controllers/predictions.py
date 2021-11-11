@@ -16,7 +16,9 @@ from projects.controllers.utils import (
 from projects.exceptions import BadRequest, NotFound
 from projects.kubernetes.seldon import get_seldon_deployment_url
 
-NOT_FOUND = NotFound("The specified prediction does not exist")
+NOT_FOUND = NotFound(
+    code="PredictionNotFound", message="The specified prediction does not exist"
+)
 
 
 class PredictionController:

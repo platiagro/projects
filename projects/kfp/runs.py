@@ -132,7 +132,7 @@ def get_run(run_id, experiment_id):
             run_id=run_id,
         )
     except (ApiException, ValueError):
-        raise NotFound("The specified run does not exist")
+        raise NotFound(code="RunNotFound", message="The specified run does not exist")
 
     workflow_manifest = json.loads(kfp_run.pipeline_runtime.workflow_manifest)
 
@@ -231,7 +231,7 @@ def terminate_run(run_id, experiment_id):
             run_id = get_latest_run_id(experiment_id)
         kfp_client().runs.terminate_run(run_id=run_id)
     except (ApiException, ValueError):
-        raise NotFound("The specified run does not exist")
+        raise NotFound(code="RunNotFound", message="The specified run does not exist")
 
     return {"message": "Run terminated"}
 

@@ -13,7 +13,9 @@ from projects.controllers.utils import uuid_alpha
 from projects.controllers.tasks import TaskController
 from projects.exceptions import BadRequest, NotFound
 
-NOT_FOUND = NotFound("The specified deployment does not exist")
+NOT_FOUND = NotFound(
+    code="DeploymentNotFound", message="The specified deployment does not exist"
+)
 
 # Distance on the X axis from the leftmost operator
 DATASET_OPERATOR_DISTANCE = 300

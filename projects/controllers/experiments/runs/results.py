@@ -44,20 +44,12 @@ class ResultController:
             objects_path = f"experiments/{experiment_id}/operators/"
         objects = list_objects(objects_path)
 
-        has_results = False
-
         zip_file = io.BytesIO()
-        with zipfile.ZipFile(zip_file, 'a', zipfile.ZIP_DEFLATED) as z:
+        with zipfile.ZipFile(zip_file, "a", zipfile.ZIP_DEFLATED) as z:
             for object in objects:
                 file = self._download_result(object.object_name, run_id)
                 if file is not None:
                     z.writestr(f"{file['operatorId']}/{file['filename']}", file["data"])
-                    has_results = True
-
-        if not has_results:
-            if operator_id:
-                raise NotFound("The specified operator has no results")
-            raise NotFound("The specified run has no results")
 
         zip_file.seek(0)
 
@@ -72,7 +64,9 @@ class ResultController:
             filename = object_name_splitted[2]
             filename_pattern = re.compile(r"figure-([0-9]{18})\.(png|html)")
             if filename_pattern.match(filename):
-                return {"filename": filename,
-                        "data": get_object(object_name),
-                        "operatorId": object_name_splitted[0]}
+                return {
+                    "filename": filename,
+                    "data": get_object(object_name),
+                    "operatorId": object_name_splitted[0],
+                }
         return None

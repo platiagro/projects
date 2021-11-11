@@ -7,7 +7,9 @@ from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 
-NOT_FOUND = NotFound("The specified template does not exist")
+NOT_FOUND = NotFound(
+    code="TemplateNotFound", message="The specified template does not exist"
+)
 
 
 class TemplateController:
@@ -27,10 +29,13 @@ class TemplateController:
         ------
         NotFound
         """
-        exists = self.session.query(models.Template.uuid) \
-            .filter_by(uuid=template_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
-            .scalar() is not None
+        exists = (
+            self.session.query(models.Template.uuid)
+            .filter_by(uuid=template_id)
+            .filter_by(tenant=self.kubeflow_userid)
+            .scalar()
+            is not None
+        )
 
         if not exists:
             raise NOT_FOUND
@@ -43,11 +48,17 @@ class TemplateController:
         -------
         projects.schemas.template.TemplateList
         """
-        templates = self.session.query(models.Template) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        templates = (
+            self.session.query(models.Template)
+            .filter_by(tenant=self.kubeflow_userid)
             .all()
+        )
         # sort the list in place, using natural sort
-        templates.sort(key=lambda o: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)])
+        templates.sort(
+            key=lambda o: [
+                int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", o.name)
+            ]
+        )
 
         return schemas.TemplateList.from_orm(templates, len(templates))
 
@@ -73,35 +84,53 @@ class TemplateController:
 
         if template.experiment_id:
 
-            exists = self.session.query(models.Experiment.uuid) \
-                .filter_by(uuid=template.experiment_id) \
-                .scalar() is not None
+            exists = (
+                self.session.query(models.Experiment.uuid)
+                .filter_by(uuid=template.experiment_id)
+                .scalar()
+                is not None
+            )
 
             if not exists:
-                raise BadRequest("The specified experiment does not exist")
+                raise BadRequest(
+                    code="ExperimentNotFound",
+                    message="The specified experiment does not exist",
+                )
 
-            operators = self.session.query(models.Operator) \
-                .filter_by(experiment_id=template.experiment_id) \
+            operators = (
+                self.session.query(models.Operator)
+                .filter_by(experiment_id=template.experiment_id)
                 .all()
+            )
         elif template.deployment_id:
 
-            exists = self.session.query(models.Deployment.uuid) \
-                .filter_by(uuid=template.deployment_id) \
-                .scalar() is not None
+            exists = (
+                self.session.query(models.Deployment.uuid)
+                .filter_by(uuid=template.deployment_id)
+                .scalar()
+                is not None
+            )
 
             if not exists:
-                raise BadRequest("The specified deployment does not exist")
+                raise BadRequest(
+                    code="DeploymentNotFound",
+                    message="The specified deployment does not exist",
+                )
 
-            operators = self.session.query(models.Operator) \
-                .filter_by(deployment_id=template.deployment_id) \
+            operators = (
+                self.session.query(models.Operator)
+                .filter_by(deployment_id=template.deployment_id)
                 .all()
+            )
         else:
             raise BadRequest("experimentId or deploymentId needed to create template.")
 
-        stored_template = self.session.query(models.Template) \
-            .filter_by(name=template.name) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        stored_template = (
+            self.session.query(models.Template)
+            .filter_by(name=template.name)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
         if stored_template:
             raise BadRequest("a template with that name already exists")
 
@@ -155,10 +184,12 @@ class TemplateController:
         NotFound
             When template_id does not exist.
         """
-        template = self.session.query(models.Template) \
-            .filter_by(uuid=template_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        template = (
+            self.session.query(models.Template)
+            .filter_by(uuid=template_id)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
 
         if template is None:
             raise NOT_FOUND
@@ -185,26 +216,29 @@ class TemplateController:
         """
         self.raise_if_template_does_not_exist(template_id)
 
-        stored_template = self.session.query(models.Template) \
-            .filter_by(name=template.name) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        stored_template = (
+            self.session.query(models.Template)
+            .filter_by(name=template.name)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
         if stored_template and stored_template.uuid != template_id:
             raise BadRequest("a template with that name already exists")
 
         update_data = template.dict(exclude_unset=True)
         update_data.update({"updated_at": datetime.utcnow()})
 
-        self.session.query(models.Template) \
-            .filter_by(uuid=template_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
-            .update(update_data)
+        self.session.query(models.Template).filter_by(uuid=template_id).filter_by(
+            tenant=self.kubeflow_userid
+        ).update(update_data)
         self.session.commit()
 
-        template = self.session.query(models.Template) \
-            .filter_by(uuid=template_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        template = (
+            self.session.query(models.Template)
+            .filter_by(uuid=template_id)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
 
         return schemas.Template.from_orm(template)
 
@@ -225,10 +259,12 @@ class TemplateController:
         NotFound
             When template_id does not exist.
         """
-        template = self.session.query(models.Template) \
-            .filter_by(uuid=template_id) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        template = (
+            self.session.query(models.Template)
+            .filter_by(uuid=template_id)
+            .filter_by(tenant=self.kubeflow_userid)
             .first()
+        )
 
         if template is None:
             raise NOT_FOUND
@@ -260,10 +296,12 @@ class TemplateController:
         if total_elements < 1:
             raise BadRequest("inform at least one template")
 
-        templates = self.session.query(models.Template) \
-            .filter(models.Template.uuid.in_(template_ids)) \
-            .filter_by(tenant=self.kubeflow_userid) \
+        templates = (
+            self.session.query(models.Template)
+            .filter(models.Template.uuid.in_(template_ids))
+            .filter_by(tenant=self.kubeflow_userid)
             .all()
+        )
 
         for template in templates:
             self.session.delete(template)
