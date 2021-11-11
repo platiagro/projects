@@ -113,7 +113,8 @@ def create_persistent_volume_claim(name, mount_path):
         body = literal_eval(e.body)
         message = body["message"]
         raise InternalServerError(
-            f"Error while trying to create persistent volume claim: {message}"
+            code="CannotCreatePersistentVolumeClaim",
+            message=f"Error while trying to create persistent volume claim: {message}",
         )
 
     try:
@@ -146,7 +147,8 @@ def create_persistent_volume_claim(name, mount_path):
         body = literal_eval(e.body)
         message = body["message"]
         raise InternalServerError(
-            f"Error while trying to patch notebook server: {message}"
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
         )
 
     try:
@@ -211,7 +213,8 @@ def create_persistent_volume_claim(name, mount_path):
         body = literal_eval(e.body)
         message = body["message"]
         raise InternalServerError(
-            f"Error while trying to patch notebook server: {message}"
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
         )
 
 
@@ -246,7 +249,8 @@ def update_persistent_volume_claim(name, mount_path):
         body = literal_eval(e.body)
         message = body["message"]
         raise InternalServerError(
-            f"Error while trying to patch notebook server: {message}"
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
         )
 
     try:
@@ -307,7 +311,8 @@ def update_persistent_volume_claim(name, mount_path):
         body = literal_eval(e.body)
         message = body["message"]
         raise InternalServerError(
-            f"Error while trying to patch notebook server: {message}"
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
         )
 
 
@@ -341,7 +346,8 @@ def remove_persistent_volume_claim(name, mount_path):
         body = literal_eval(e.body)
         message = body["message"]
         raise InternalServerError(
-            f"Error while trying to patch notebook server: {message}"
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
         )
 
     try:
@@ -401,7 +407,8 @@ def remove_persistent_volume_claim(name, mount_path):
         body = literal_eval(e.body)
         message = body["message"]
         raise InternalServerError(
-            f"Error while trying to patch notebook server: {message}"
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
         )
 
 

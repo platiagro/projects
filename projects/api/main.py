@@ -67,15 +67,20 @@ async def handle_errors(request: Request, exception: Exception):
 
     Parameters
     ----------
+    request : Request
     exception : Exception
 
     Returns
     -------
-    str
+    JSONResponse
     """
     return JSONResponse(
-        status_code=exception.code,
-        content={"message": exception.message},
+        status_code=exception.status_code,
+        content={
+            "code": exception.code,
+            "message": exception.message,
+            "status_code": exception.status_code,
+        },
     )
 
 

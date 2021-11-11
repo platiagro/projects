@@ -428,7 +428,9 @@ class TaskController:
             raise NOT_FOUND
 
         if task.operator:
-            raise Forbidden("Task related to an operator")
+            raise Forbidden(
+                code="TaskProtectedFromDeletion", message="Task related to an operator"
+            )
 
         # remove the volume for the task in the notebook server
         self.background_tasks.add_task(

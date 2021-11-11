@@ -26,9 +26,15 @@ def handle_healthcheck(session: Session = Depends(database.session_scope)):
     Returns
     -------
     str
+
+    Raises
+    ------
+    ServiceUnavailable
     """
     try:
         session.query(sqlalchemy.false()).filter(sqlalchemy.false()).all()
     except OperationalError:
-        raise ServiceUnavailable("Could not connect to database")
+        raise ServiceUnavailable(
+            code="CannotConnectToDatabase", message="Could not connect to database"
+        )
     return "Sucessfully connected to db"
