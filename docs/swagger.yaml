@@ -3852,6 +3852,23 @@ components:
                 type: integer
                 example: 500
 
+    CannotCreateNamespacedPod:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "CannotCreateNamespacedPod"
+              message:
+                type: string
+                example: "Error while trying to create pod: {message}"
+              status:
+                type: integer
+                example: 500
+
     MissingRequiredTaskId:
       description: ""
       content:
@@ -4102,7 +4119,7 @@ components:
                 example: "CannotRetrieveContainerLogs"
               message:
                 type: string
-                example: "Error while trying to retrive container's log: {message}"
+                example: "Error while trying to retrieve container's log: {message}"
               status:
                 type: integer
                 example: 500
