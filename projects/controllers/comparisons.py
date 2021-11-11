@@ -115,8 +115,8 @@ class ComparisonController:
             )
             if stored_experiment is None:
                 raise BadRequest(
-                    code="ExperimentNotFound",
-                    message="The specified experiment does not exist",
+                    code="InvalidExperimentId",
+                    message="source experiment does not exist",
                 )
 
         update_data = comparison.dict(exclude_unset=True)

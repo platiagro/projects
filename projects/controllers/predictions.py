@@ -60,10 +60,15 @@ class PredictionController:
             except AttributeError:
                 request = parse_file_buffer_to_seldon_request(file=dataset)
             except FileNotFoundError:
-                raise BadRequest("a valid dataset is required")
+                raise BadRequest(
+                    code="InvalidDataset", message="a valid dataset is required"
+                )
 
         else:
-            raise BadRequest("either dataset name or file is required")
+            raise BadRequest(
+                code="MissingRequiredDatasetOrFile",
+                message="either dataset name or file is required",
+            )
 
         prediction_object = self.create_prediction_database_object(
             prediction_id=str(uuid_alpha()),
@@ -170,7 +175,7 @@ class PredictionController:
         prediction_orm_obj = self.session.query(models.Prediction).get(prediction_id)
 
         if not prediction_orm_obj:
-            raise BadRequest(NOT_FOUND)
+            raise NOT_FOUND
 
         predicton_as_schema = schemas.Prediction.from_orm(prediction_orm_obj)
         return predicton_as_schema

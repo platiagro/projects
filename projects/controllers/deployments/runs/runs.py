@@ -130,8 +130,11 @@ class RunController:
                 deployment_id=deployment.uuid,
                 deployment_name=deployment.name,
             )
-        except ValueError as e:
-            raise BadRequest(str(e))
+        except ValueError:
+            raise BadRequest(
+                code="MissingRequiredOperatorId",
+                message=f"Necessary at least one operator.",
+            )
 
         # Remove the object from the operator session in order not to update the database,
         # Just need to remove the dependencies for the runs.

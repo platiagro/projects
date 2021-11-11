@@ -265,7 +265,7 @@ def retry_run(run_id, experiment_id):
     if kfp_run.run.status == "Failed":
         kfp_client().runs.retry_run(run_id=kfp_run.run.id)
     else:
-        raise BadRequest("Not a failed run")
+        raise BadRequest(code="InvalidRunId", message="Not a failed run")
 
     return {"message": "Run re-initiated successfully"}
 

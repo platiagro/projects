@@ -94,7 +94,9 @@ class ExperimentController:
             When name is already the name of another experiment.
         """
         if not isinstance(experiment.name, str):
-            raise BadRequest("name is required")
+            raise BadRequest(
+                code="MissingRequiredTemplateName", message="name is required"
+            )
 
         stored_experiment = (
             self.session.query(models.Experiment)
@@ -103,7 +105,10 @@ class ExperimentController:
             .first()
         )
         if stored_experiment:
-            raise BadRequest("an experiment with that name already exists")
+            raise BadRequest(
+                code="ExperimentNameExists",
+                message="an experiment with that name already exists",
+            )
 
         if experiment.copy_from:
             experiment = self.copy_experiment(
@@ -185,7 +190,10 @@ class ExperimentController:
             .first()
         )
         if stored_experiment and stored_experiment.uuid != experiment_id:
-            raise BadRequest("an experiment with that name already exists")
+            raise BadRequest(
+                code="InvalidExperimentId",
+                message="an experiment with that name already exists",
+            )
 
         if experiment.template_id:
             return self.update_experiment_from_template(
@@ -281,7 +289,9 @@ class ExperimentController:
         )
 
         if stored_experiment is None:
-            raise BadRequest("source experiment does not exist")
+            raise BadRequest(
+                code="InvalidExperimentId", message="source experiment does not exist"
+            )
 
         experiment = models.Experiment(
             uuid=uuid_alpha(), name=experiment.name, project_id=project_id

@@ -151,7 +151,7 @@ class TaskController:
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Task.__table__.columns.keys()
         except (AssertionError, ValueError):
-            raise BadRequest("Invalid order argument")
+            raise BadRequest(code="InvalidOrderBy", message="Invalid order argument")
 
         if sort.lower() == "asc":
             query = query.order_by(asc(getattr(models.Task, column)))
@@ -177,7 +177,10 @@ class TaskController:
     def task_category_is_not_none(self, task_cat):
         if task_cat.category is not None and task_cat.category not in VALID_CATEGORIES:
             valid_str = ",".join(VALID_CATEGORIES)
-            raise BadRequest(f"Invalid category. Choose any of {valid_str}")
+            raise BadRequest(
+                code="InvalidCategory",
+                message=f"Invalid category. Choose any of {valid_str}",
+            )
 
     def create_task(self, task: schemas.TaskCreate):
         """
@@ -199,7 +202,10 @@ class TaskController:
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
         if task.copy_from and has_notebook:
-            raise BadRequest("Either provide notebooks or a task to copy from")
+            raise BadRequest(
+                code="MissingRequiredNotebookOrTaskId",
+                message="Either provide notebooks or a task to copy from",
+            )
 
         if not task.tags:
             task.tags = [CATEGORY_DEFAULT]
@@ -216,7 +222,9 @@ class TaskController:
             self.session.query(models.Task).filter_by(name=task.name).first()
         )
         if check_comp_name:
-            raise BadRequest("a task with that name already exists")
+            raise BadRequest(
+                code="TaskNameExists", message="a task with that name already exists"
+            )
 
         # creates a task with specified name,
         # but copies notebooks from a source task
@@ -224,7 +232,9 @@ class TaskController:
         if task.copy_from:
             stored_task = self.session.query(models.Task).get(task.copy_from)
             if stored_task is None:
-                raise BadRequest("source task does not exist")
+                raise BadRequest(
+                    code="InvalidTaskId", message="source task does not exist"
+                )
 
             task.image = stored_task.image
             task.commands = stored_task.commands
@@ -331,11 +341,16 @@ class TaskController:
 
         stored_task = self.session.query(models.Task).filter_by(name=task.name).first()
         if stored_task and stored_task.uuid != task_id:
-            raise BadRequest("a task with that name already exists")
+            raise BadRequest(
+                code="TaskNameExists", message="a task with that name already exists"
+            )
 
         if task.category is not None and task.category not in VALID_CATEGORIES:
             valid_str = ",".join(VALID_CATEGORIES)
-            raise BadRequest(f"Invalid category. Choose any of {valid_str}")
+            raise BadRequest(
+                code="InvalidCategory",
+                message=f"Invalid category. Choose any of {valid_str}",
+            )
 
         stored_task = self.session.query(models.Task).get(task_id)
 
@@ -462,7 +477,9 @@ class TaskController:
         pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+){0,1}$")
 
         if image and pattern.match(image) is None:
-            raise BadRequest("invalid docker image name")
+            raise BadRequest(
+                code="InvalidDockerImageName", message="invalid docker image name"
+            )
 
     def copy_notebooks_to_pod(self, task, stored_task):
         """

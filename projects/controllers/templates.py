@@ -80,7 +80,9 @@ class TemplateController:
             When the project attributes are invalid.
         """
         if not isinstance(template.name, str):
-            raise BadRequest("name is required")
+            raise BadRequest(
+                code="MissingRequiredTemplateName", message="name is required"
+            )
 
         if template.experiment_id:
 
@@ -123,7 +125,10 @@ class TemplateController:
                 .all()
             )
         else:
-            raise BadRequest("experimentId or deploymentId needed to create template.")
+            raise BadRequest(
+                code="MissingRequiredExperimentIdOrDeploymentId",
+                message="experimentId or deploymentId needed to create template.",
+            )
 
         stored_template = (
             self.session.query(models.Template)
@@ -132,7 +137,10 @@ class TemplateController:
             .first()
         )
         if stored_template:
-            raise BadRequest("a template with that name already exists")
+            raise BadRequest(
+                code="TemplateNameExists",
+                message="a template with that name already exists",
+            )
 
         # order operators by dependencies
         operators_ordered = []
@@ -223,7 +231,10 @@ class TemplateController:
             .first()
         )
         if stored_template and stored_template.uuid != template_id:
-            raise BadRequest("a template with that name already exists")
+            raise BadRequest(
+                code="TemplateNameExists",
+                message="a template with that name already exists",
+            )
 
         update_data = template.dict(exclude_unset=True)
         update_data.update({"updated_at": datetime.utcnow()})
@@ -294,7 +305,9 @@ class TemplateController:
         """
         total_elements = len(template_ids)
         if total_elements < 1:
-            raise BadRequest("inform at least one template")
+            raise BadRequest(
+                code="MissingRequiredTemplateId", message="inform at least one template"
+            )
 
         templates = (
             self.session.query(models.Template)
