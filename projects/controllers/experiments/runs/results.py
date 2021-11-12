@@ -29,11 +29,6 @@ class ResultController:
         -------
         io.BytesIO
             Zip file of experiment results.
-
-        Raises
-        ------
-        NotFound
-            The specified operator has no results.
         """
         if run_id == "latest":
             run_id = get_latest_run_id(experiment_id)

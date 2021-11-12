@@ -112,10 +112,8 @@ class OperatorController:
 
         try:
             self.task_controller.raise_if_task_does_not_exist(operator.task_id)
-        except NotFound as e:
-            raise BadRequest(
-                code="InvalidTaskId", message=f"source task does not exist: {e.message}"
-            )
+        except NotFound:
+            raise BadRequest(code="InvalidTaskId", message="source task does not exist")
 
         if operator.dependencies is None:
             operator.dependencies = []

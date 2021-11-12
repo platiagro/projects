@@ -8,7 +8,7 @@ from projects import models, schemas
 from projects.controllers.deployments.runs.runs import RunController
 from projects.controllers.tasks import TaskController
 from projects.controllers.utils import uuid_alpha
-from projects.exceptions import NotFound
+from projects.exceptions import BadRequest, NotFound
 from projects.kfp.monitorings import deploy_monitoring, undeploy_monitoring
 
 NOT_FOUND = NotFound(
@@ -101,7 +101,18 @@ class MonitoringController:
         -------
         projects.schemas.monitoring.Monitoring
         """
-        self.task_controller.raise_if_task_does_not_exist(monitoring.task_id)
+        task_exists = (
+            self.session.query(models.Task.uuid)
+            .filter_by(uuid=monitoring.task_id)
+            .scalar()
+            is not None
+        )
+
+        if not task_exists:
+            raise BadRequest(
+                code="InvalidTaskId",
+                message="The specified task does not exist",
+            )
 
         monitoring = models.Monitoring(
             uuid=uuid_alpha(),

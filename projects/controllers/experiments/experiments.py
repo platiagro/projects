@@ -191,7 +191,7 @@ class ExperimentController:
         )
         if stored_experiment and stored_experiment.uuid != experiment_id:
             raise BadRequest(
-                code="InvalidExperimentId",
+                code="ExperimentNameExists",
                 message="an experiment with that name already exists",
             )
 
@@ -351,7 +351,8 @@ class ExperimentController:
 
         if template is None:
             raise BadRequest(
-                code="TemplateNotFound", message="The specified template does not exist"
+                code="InvalidTemplateId",
+                message="The specified template does not exist",
             )
 
         # remove operators
