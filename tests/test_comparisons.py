@@ -37,7 +37,11 @@ class TestComparisons(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/projects/{project_id}/comparisons")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -65,7 +69,11 @@ class TestComparisons(unittest.TestCase):
             json={},
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -107,7 +115,11 @@ class TestComparisons(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -123,7 +135,11 @@ class TestComparisons(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "The specified comparison does not exist"}
+        expected = {
+            "message": "The specified comparison does not exist",
+            "code": "ComparisonNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -169,7 +185,11 @@ class TestComparisons(unittest.TestCase):
         rv = TEST_CLIENT.delete(f"/projects/{project_id}/comparisons/{comparison_id}")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -183,7 +203,11 @@ class TestComparisons(unittest.TestCase):
         rv = TEST_CLIENT.delete(f"/projects/{project_id}/comparisons/{comparison_id}")
         result = rv.json()
 
-        expected = {"message": "The specified comparison does not exist"}
+        expected = {
+            "message": "The specified comparison does not exist",
+            "code": "ComparisonNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

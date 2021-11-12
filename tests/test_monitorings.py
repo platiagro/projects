@@ -39,7 +39,11 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -54,7 +58,11 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings"
         )
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -88,7 +96,11 @@ class TestMonitorings(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -107,7 +119,11 @@ class TestMonitorings(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -126,9 +142,13 @@ class TestMonitorings(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified task does not exist"}
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "InvalidTaskId",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
+        self.assertEqual(rv.status_code, 400)
 
     @mock.patch(
         "kfp.Client",
@@ -176,7 +196,11 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -192,7 +216,11 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}"
         )
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -208,7 +236,11 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}"
         )
         result = rv.json()
-        expected = {"message": "The specified monitoring does not exist"}
+        expected = {
+            "message": "The specified monitoring does not exist",
+            "code": "MonitoringNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

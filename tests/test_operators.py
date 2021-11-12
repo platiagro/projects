@@ -39,7 +39,11 @@ class TestOperators(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/operators"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -54,7 +58,11 @@ class TestOperators(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/operators"
         )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -90,7 +98,11 @@ class TestOperators(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -111,7 +123,11 @@ class TestOperators(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -144,7 +160,11 @@ class TestOperators(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified task does not exist"}
+        expected = {
+            "message": "source task does not exist",
+            "code": "InvalidTaskId",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -374,7 +394,11 @@ class TestOperators(unittest.TestCase):
             json={},
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -391,7 +415,11 @@ class TestOperators(unittest.TestCase):
             json={},
         )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -408,7 +436,11 @@ class TestOperators(unittest.TestCase):
             json={},
         )
         result = rv.json()
-        expected = {"message": "The specified operator does not exist"}
+        expected = {
+            "message": "The specified operator does not exist",
+            "code": "OperatorNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -428,7 +460,11 @@ class TestOperators(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified dependencies are not valid."}
+        expected = {
+            "message": "The specified dependencies are not valid.",
+            "code": "InvalidDependencies",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -448,7 +484,11 @@ class TestOperators(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified dependencies are not valid."}
+        expected = {
+            "message": "The specified dependencies are not valid.",
+            "code": "InvalidDependencies",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -468,7 +508,11 @@ class TestOperators(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "Cyclical dependencies."}
+        expected = {
+            "message": "Cyclical dependencies.",
+            "code": "InvalidCyclicalDependencies",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -602,7 +646,11 @@ class TestOperators(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -618,7 +666,11 @@ class TestOperators(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}"
         )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -634,7 +686,11 @@ class TestOperators(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}"
         )
         result = rv.json()
-        expected = {"message": "The specified operator does not exist"}
+        expected = {
+            "message": "The specified operator does not exist",
+            "code": "OperatorNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

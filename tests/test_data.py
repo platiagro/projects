@@ -36,7 +36,11 @@ class TestExperimentData(unittest.TestCase):
 
         rv = TEST_CLIENT.get(f"/projects/unk/experiments/{experiment_id}/data")
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -48,7 +52,11 @@ class TestExperimentData(unittest.TestCase):
 
         rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments/unk/data")
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

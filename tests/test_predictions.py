@@ -43,7 +43,11 @@ class TestPredictions(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+            "status_code": 404,
+        }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 404)
 
@@ -58,7 +62,11 @@ class TestPredictions(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/predictions"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 404)
 
@@ -73,7 +81,11 @@ class TestPredictions(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/predictions"
         )
         result = rv.json()
-        expected = {"message": "either form-data or json is required"}
+        expected = {
+            "message": "either form-data or json is required",
+            "code": "MissingRequiredFormDataOrJson",
+            "status_code": 400,
+        }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
@@ -88,7 +100,11 @@ class TestPredictions(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/predictions", json={}
         )
         result = rv.json()
-        expected = {"message": "either dataset name or file is required"}
+        expected = {
+            "message": "either dataset name or file is required",
+            "code": "MissingRequiredDatasetOrFile",
+            "status_code": 400,
+        }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
@@ -109,7 +125,11 @@ class TestPredictions(unittest.TestCase):
             json={"dataset": name_dataset},
         )
         result = rv.json()
-        expected = {"message": "a valid dataset is required"}
+        expected = {
+            "message": "a valid dataset is required",
+            "code": "InvalidDataset",
+            "status_code": 400,
+        }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 

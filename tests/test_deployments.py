@@ -39,7 +39,11 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/projects/{project_id}/deployments")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -70,7 +74,11 @@ class TestDeployments(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -83,7 +91,11 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.post(f"/projects/{project_id}/deployments", json={})
         result = rv.json()
 
-        expected = {"message": "either experiments, templateId or copyFrom is required"}
+        expected = {
+            "message": "either experiments, templateId or copyFrom is required",
+            "code": "MissingRequiredExperimentsOrTemplateIdOrCopyFrom",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -101,7 +113,11 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "Necessary at least one operator."}
+        expected = {
+            "message": "Necessary at least one operator.",
+            "code": "MissingRequiredOperatorId",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -333,7 +349,11 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "source deployment does not exist"}
+        expected = {
+            "message": "source deployment does not exist",
+            "code": "InvalidDeploymentId",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -347,7 +367,11 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/projects/{project_id}/deployments/{deployment_id}")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -361,7 +385,11 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/projects/{project_id}/deployments/{deployment_id}")
         result = rv.json()
 
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -391,7 +419,11 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -407,7 +439,11 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -425,7 +461,11 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "a deployment with that name already exists"}
+        expected = {
+            "message": "a deployment with that name already exists",
+            "code": "DeploymentNameExists",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -472,7 +512,11 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.delete(f"/projects/{project_id}/deployments/{deployment_id}")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -486,7 +530,11 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.delete(f"/projects/{project_id}/deployments/{deployment_id}")
         result = rv.json()
 
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

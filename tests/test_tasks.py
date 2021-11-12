@@ -59,7 +59,11 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.get("/tasks?order=name unk")
         result = rv.json()
 
-        expected = {"message": "Invalid order argument"}
+        expected = {
+            "message": "Invalid order argument",
+            "code": "InvalidOrderBy",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -119,7 +123,11 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.post("/tasks", json={"name": util.MOCK_TASK_NAME_1})
         result = rv.json()
 
-        expected = {"message": "a task with that name already exists"}
+        expected = {
+            "message": "a task with that name already exists",
+            "code": "TaskNameExists",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -355,7 +363,11 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/tasks/{task_id}")
         result = rv.json()
 
-        expected = {"message": "The specified task does not exist"}
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "TaskNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -383,7 +395,11 @@ class TestTasks(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified task does not exist"}
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "TaskNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -400,7 +416,11 @@ class TestTasks(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "a task with that name already exists"}
+        expected = {
+            "message": "a task with that name already exists",
+            "code": "TaskNameExists",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -655,7 +675,11 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
         result = rv.json()
 
-        expected = {"message": "The specified task does not exist"}
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "TaskNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

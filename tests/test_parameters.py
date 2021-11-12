@@ -36,7 +36,11 @@ class TestParameters(unittest.TestCase):
 
         rv = TEST_CLIENT.get(f"/tasks/{task_id}/parameters")
         result = rv.json()
-        expected = {"message": "The specified task does not exist"}
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "TaskNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

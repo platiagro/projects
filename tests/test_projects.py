@@ -57,7 +57,11 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.get("/projects?order=name unk")
         result = rv.json()
 
-        expected = {"message": "Invalid order argument"}
+        expected = {
+            "message": "Invalid order argument",
+            "code": "InvalidOrderBy",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -97,7 +101,11 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.post("/projects", json={"name": util.MOCK_PROJECT_NAME_1})
         result = rv.json()
 
-        expected = {"message": "a project with that name already exists"}
+        expected = {
+            "message": "a project with that name already exists",
+            "code": "ProjectNameExists",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -144,7 +152,11 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/projects/{project_id}")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -181,7 +193,11 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={})
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -194,7 +210,11 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"name": project_name})
         result = rv.json()
 
-        expected = {"message": "a project with that name already exists"}
+        expected = {
+            "message": "a project with that name already exists",
+            "code": "ProjectNameExists",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -232,7 +252,11 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.delete(f"/projects/{project_id}")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+            "status_code": 404,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -275,7 +299,11 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.post(f"/projects/deleteprojects", json=[])
         result = rv.json()
 
-        expected = {"message": "inform at least one project"}
+        expected = {
+            "message": "inform at least one project",
+            "code": "MissingRequiredProjectId",
+            "status_code": 400,
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
