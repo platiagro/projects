@@ -3444,6 +3444,23 @@ components:
                 type: integer
                 example: 404
 
+    DatasetNotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "DatasetNotFound"
+              message:
+                type: string
+                example: "The specified run does not contain dataset."
+              status:
+                type: integer
+                example: 404
+
     InternalError:
       description: ""
       content:
