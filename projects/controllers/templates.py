@@ -95,8 +95,8 @@ class TemplateController:
 
             if not exists:
                 raise BadRequest(
-                    code="ExperimentNotFound",
-                    message="The specified experiment does not exist",
+                    code="InvalidExperimentId",
+                    message="source experiment does not exist",
                 )
 
             operators = (
@@ -115,8 +115,8 @@ class TemplateController:
 
             if not exists:
                 raise BadRequest(
-                    code="DeploymentNotFound",
-                    message="The specified deployment does not exist",
+                    code="InvalidDeploymentId",
+                    message="source deployment does not exist",
                 )
 
             operators = (
