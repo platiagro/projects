@@ -90,14 +90,8 @@ class ExperimentController:
         NotFound
             When project_id does not exist.
         BadRequest
-            When name is not a str instance.
             When name is already the name of another experiment.
         """
-        if not isinstance(experiment.name, str):
-            raise BadRequest(
-                code="MissingRequiredTemplateName", message="name is required"
-            )
-
         stored_experiment = (
             self.session.query(models.Experiment)
             .filter(models.Experiment.project_id == project_id)
