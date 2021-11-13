@@ -2,8 +2,6 @@
 """Experiments Metrics controller."""
 import platiagro
 
-from projects.exceptions import InternalServerError
-
 
 class MetricController:
     def __init__(self, session):
