@@ -663,7 +663,7 @@ MOCK_TASK_4 = {
 
 MOCK_TASK_5 = {
     "arguments": None,
-    "category": "DEFAULT",
+    "category": "MONITORING",
     "commands": None,
     "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
     "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
@@ -894,7 +894,7 @@ def create_mocks():
         models.Task(
             uuid=MOCK_UUID_5,
             name=MOCK_TASK_NAME_5,
-            category="DEFAULT",
+            category="MONITORING",
             tags=[],
             created_at=MOCK_CREATED_AT_4,
             updated_at=MOCK_UPDATED_AT_4,

@@ -41,7 +41,29 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
+    def test_list_tasks_filter_name(self):
+        """
+        Should return a list of tasks sorted by name descending.
+        """
+        rv = TEST_CLIENT.get("/tasks?name=task")
+        result = rv.json()
+
+        expected = util.MOCK_TASK_LIST
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
     def test_list_tasks_order_name_asc(self):
+        """
+        Should return a list of tasks sorted by name descending.
+        """
+        rv = TEST_CLIENT.get("/tasks?order=name asc")
+        result = rv.json()
+
+        expected = util.MOCK_TASK_LIST
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_list_tasks_order_name_desc(self):
         """
         Should return a list of tasks sorted by name descending.
         """
@@ -71,7 +93,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks with one element.
         """
-        rv = TEST_CLIENT.get("/tasks?page_size=1&page=1")
+        rv = TEST_CLIENT.get("/tasks?page_size=1")
         result = rv.json()
 
         expected = {"tasks": [util.MOCK_TASK_1], "total": 1}
@@ -100,7 +122,7 @@ class TestTasks(unittest.TestCase):
     @mock.patch(
         "kubernetes.config.load_kube_config",
     )
-    def test_create_task_not_request_body(
+    def test_create_task_empty_request_body_success(
         self,
         mock_config_load,
         mock_core_v1_api,
@@ -126,6 +148,76 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "a task with that name already exists",
             "code": "TaskNameExists",
+            "status_code": 400,
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_notebook_or_task_id_error(self):
+        """
+        Should return http status 400 and a message 'Either provide notebooks or a task to copy from'.
+        """
+        task_id = util.MOCK_UUID_1
+        experiment_notebook = {
+            "cells": [],
+            "metadata": {},
+            "nbformat": 4,
+            "nbformat_minor": 4,
+        }
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "copyFrom": task_id,
+                "experimentNotebook": experiment_notebook,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "Either provide notebooks or a task to copy from",
+            "code": "MissingRequiredNotebookOrTaskId",
+            "status_code": 400,
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_invalid_task_id_error(self):
+        """
+        Should return http status 400 and a message 'source task does not exist'.
+        """
+        task_id = "unk"
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "copyFrom": task_id,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "source task does not exist",
+            "code": "InvalidTaskId",
+            "status_code": 400,
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_invalid_docker_image_error(self):
+        """
+        Should return http status 400 and a message 'invalid docker image name'.
+        """
+        docker_image = "unk"
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "image": docker_image,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "invalid docker image name",
+            "code": "InvalidDockerImageName",
             "status_code": 400,
         }
         self.assertDictEqual(expected, result)
@@ -424,6 +516,29 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
+    def test_update_task_invalid_category_error(self):
+        """
+        Should return a http error 400 and a message 'Invalid category. Choose any of {valid_str}'.
+        """
+        task_id = util.MOCK_UUID_4
+        category = "unk"
+
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "category": category,
+            },
+        )
+        result = rv.json()
+        valid_str = "DEFAULT,DATASETS,DESCRIPTIVE_STATISTICS,FEATURE_ENGINEERING,PREDICTOR,COMPUTER_VISION,NLP,MONITORING"
+        expected = {
+            "message": f"Invalid category. Choose any of {valid_str}",
+            "code": "InvalidCategory",
+            "status_code": 400,
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
     def test_update_task_unk_tags(self):
         """
         Should return a successfully updated task.
@@ -439,7 +554,7 @@ class TestTasks(unittest.TestCase):
         result = rv.json()
         expected = {
             "arguments": None,
-            "category": "DEFAULT",
+            "category": "MONITORING",
             "commands": None,
             "cpuLimit": "2000m",
             "cpuRequest": "100m",
@@ -492,7 +607,7 @@ class TestTasks(unittest.TestCase):
         result = rv.json()
         expected = {
             "arguments": None,
-            "category": "DEFAULT",
+            "category": "MONITORING",
             "commands": None,
             "cpuLimit": "2000m",
             "cpuRequest": "100m",
@@ -540,7 +655,7 @@ class TestTasks(unittest.TestCase):
             "cpuLimit": "2000m",
             "cpuRequest": "100m",
             "arguments": None,
-            "category": "DEFAULT",
+            "category": "MONITORING",
             "tags": ["FEATURE_ENGINEERING"],
             "dataIn": None,
             "dataOut": None,
@@ -592,7 +707,7 @@ class TestTasks(unittest.TestCase):
             "arguments": None,
             "cpuLimit": "2000m",
             "cpuRequest": "100m",
-            "category": "DEFAULT",
+            "category": "MONITORING",
             "tags": [],
             "dataIn": None,
             "dataOut": None,
@@ -682,6 +797,23 @@ class TestTasks(unittest.TestCase):
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
+
+    def test_delete_task_related_to_operator_error(self):
+        """
+        Should return a http error 403 and a message 'Task related to an operator'.
+        """
+        task_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
+        result = rv.json()
+
+        expected = {
+            "message": "Task related to an operator",
+            "code": "TaskProtectedFromDeletion",
+            "status_code": 403,
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 403)
 
     @mock.patch(
         "kubernetes.client.CoreV1Api",
