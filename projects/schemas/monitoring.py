@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Monitoring schema."""
+import pytz
 from datetime import datetime
 from typing import List
 
@@ -9,7 +10,6 @@ from projects.utils import to_camel_case
 
 
 class MonitoringBase(BaseModel):
-
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True
@@ -46,7 +46,7 @@ class Monitoring(MonitoringBase):
             uuid=model.uuid,
             deployment_id=model.deployment_id,
             task_id=model.task_id,
-            created_at=model.created_at,
+            created_at=model.created_at.replace(tzinfo=pytz.UTC),
             task=task,
         )
 

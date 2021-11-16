@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Deployment schema."""
+import pytz
 from datetime import datetime
 from typing import List, Optional
 
@@ -10,7 +11,6 @@ from projects.utils import to_camel_case
 
 
 class DeploymentBase(BaseModel):
-
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True
@@ -56,9 +56,9 @@ class Deployment(DeploymentBase):
             experiment_id=model.experiment_id,
             project_id=model.project_id,
             operators=model.operators,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
-            deployed_at=model.deployed_at
+            created_at=model.created_at.replace(tzinfo=pytz.UTC),
+            updated_at=model.updated_at.replace(tzinfo=pytz.UTC),
+            deployed_at=model.deployed_at.replace(tzinfo=pytz.UTC),
         )
 
 

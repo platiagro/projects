@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Task schema."""
+import pytz
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -102,8 +103,8 @@ class Task(TaskBase):
             cpu_request=model.cpu_request,
             memory_limit=model.memory_limit,
             memory_request=model.memory_request,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
+            created_at=model.created_at.replace(tzinfo=pytz.UTC),
+            updated_at=model.updated_at.replace(tzinfo=pytz.UTC),
             has_notebook=model.has_notebook,
             readiness_probe_initial_delay_seconds=model.readiness_probe_initial_delay_seconds,
         )

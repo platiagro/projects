@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Comparison schema."""
+import pytz
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -9,7 +10,6 @@ from projects.utils import to_camel_case
 
 
 class ComparisonBase(BaseModel):
-
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True
@@ -39,8 +39,8 @@ class Comparison(ComparisonBase):
     def from_orm(cls, model):
         return Comparison(
             uuid=model.uuid,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
+            created_at=model.created_at.replace(tzinfo=pytz.UTC),
+            updated_at=model.updated_at.replace(tzinfo=pytz.UTC),
             project_id=model.project_id,
             experiment_id=model.experiment_id,
             operator_id=model.operator_id,

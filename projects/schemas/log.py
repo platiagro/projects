@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Log schema."""
+import pytz
 from datetime import datetime
 from typing import List, Optional
 
@@ -9,7 +10,6 @@ from projects.utils import to_camel_case
 
 
 class LogBase(BaseModel):
-
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True

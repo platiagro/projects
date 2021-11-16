@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Operator schema."""
+import pytz
 from datetime import datetime
 from typing import Dict, List, Optional, Union
 
@@ -9,7 +10,6 @@ from projects.utils import to_camel_case
 
 
 class OperatorBase(BaseModel):
-
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True
@@ -79,8 +79,8 @@ class Operator(OperatorBase):
             experiment_id=model.experiment_id,
             position_x=model.position_x,
             position_y=model.position_y,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
+            created_at=model.created_at.replace(tzinfo=pytz.UTC),
+            updated_at=model.updated_at.replace(tzinfo=pytz.UTC),
             status=model.status,
             status_message=model.status_message,
         )

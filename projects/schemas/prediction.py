@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Prediction schema."""
-
+import pytz
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -31,6 +31,6 @@ class Prediction(PredictionBase):
             request_body=model.request_body,
             response_body=model.response_body,
             status=model.status,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
+            created_at=model.created_at.replace(tzinfo=pytz.UTC),
+            updated_at=model.updated_at.replace(tzinfo=pytz.UTC),
         )

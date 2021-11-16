@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Project schema."""
+import pytz
 from datetime import datetime
 from typing import List, Optional
 
@@ -11,7 +12,6 @@ from projects.utils import to_camel_case
 
 
 class ProjectBase(BaseModel):
-
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True
@@ -51,8 +51,8 @@ class Project(ProjectBase):
             has_experiment=model.has_experiment,
             has_deployment=model.has_deployment,
             has_pre_deployment=model.has_pre_deployment,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
+            created_at=model.created_at.replace(tzinfo=pytz.UTC),
+            updated_at=model.updated_at.replace(tzinfo=pytz.UTC),
         )
 
 

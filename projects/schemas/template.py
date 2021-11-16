@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Template schema."""
+import pytz
 from datetime import datetime
 from typing import List, Optional
 
@@ -9,7 +10,6 @@ from projects.utils import to_camel_case
 
 
 class TemplateBase(BaseModel):
-
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True
@@ -43,8 +43,8 @@ class Template(TemplateBase):
             tasks=model.tasks,
             experiment_id=model.experiment_id,
             deployment_id=model.deployment_id,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
+            created_at=model.created_at.replace(tzinfo=pytz.UTC),
+            updated_at=model.updated_at.replace(tzinfo=pytz.UTC),
         )
 
 

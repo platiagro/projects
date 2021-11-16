@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Experiment schema."""
+import pytz
 from datetime import datetime
 from typing import List, Optional
 
@@ -47,8 +48,8 @@ class Experiment(ExperimentBase):
             is_active=model.is_active,
             project_id=model.project_id,
             operators=model.operators,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
+            created_at=model.created_at.replace(tzinfo=pytz.UTC),
+            updated_at=model.updated_at.replace(tzinfo=pytz.UTC),
         )
 
 
