@@ -20,7 +20,7 @@ TASK_VOLUME_MOUNT_PATH = "/home/jovyan/tasks"
 SOURCE_TASK_VOLUME_MOUNT_PATH = "/home/source"
 DESTINATION_TASK_VOLUME_MOUNT_PATH = "/home/destination"
 DEFAULT_TIMEOUT_IN_SECONDS = 120
-COMPONENT_DOCKER_IMAGE = "alpine:3.14"
+COMPONENT_DOCKER_IMAGE = "python:3.7"
 
 INIT_TASK_CONTAINER_IMAGE = os.getenv(
     "INIT_TASK_CONTAINER_IMAGE",
@@ -28,6 +28,12 @@ INIT_TASK_CONTAINER_IMAGE = os.getenv(
 )
 TASK_CONFIGMAP = Template(
     pkgutil.get_data("projects", "kfp/resources/TaskConfigMap.yaml").decode()
+)
+
+DEPLOYMENT_NOTEBOOK = json.loads(pkgutil.get_data("projects", "config/Deployment.ipynb")
+)
+EXPERIMENT_NOTEBOOK = json.loads(
+    pkgutil.get_data("projects", "config/Experiment.ipynb")
 )
 
 
@@ -127,22 +133,38 @@ def create_init_task_container_op(
     -------
     kfp.dsl.ContainerOp
     """
+    
+    if copy_from:
+        command = ["/bin/sh", "-c",
+                   f"cp -R {SOURCE_TASK_VOLUME_MOUNT_PATH}/* { DESTINATION_TASK_VOLUME_MOUNT_PATH}"]                ]
+    else:
+        python_script = (
+            f"import json; "
+            "f = open('/home/destination/deployment.ipynb','w'); "
+            f"json.dump({DEPLOYMENT_NOTEBOOK},f); "
+            f"f.close(); "
+           "f = open('/home/destination/deployment.ipynb','w'); "
+            f"json.dump({EXPERIMENT_NOTEBOOK},f); "
+            f"f.close(); "
+ 
+
+ 
+        )
+        command = ["python","-c",python_script]          
+    
     component = {
-        "name": "init-task",
-        "description": "",
-        "inputs": [],
-        "outputs": [],
-        "implementation": {
-            "container": {
-                "image": COMPONENT_DOCKER_IMAGE,
-                "command": [
-                    "/bin/sh",
-                    "-c",
-                    f"cp -R {SOURCE_TASK_VOLUME_MOUNT_PATH}/* {DESTINATION_TASK_VOLUME_MOUNT_PATH}/",
-                ],
+            "name": "init-task",
+            "description": "",
+            "inputs": [],
+            "outputs": [],
+            "implementation": {
+                "container": {
+                    "image": COMPONENT_DOCKER_IMAGE,
+                    "command":command,
+                },
             },
-        },
-    }
+        }
+   
     text = json.dumps(component)
     func = load_component_from_text(text)
     return func()
