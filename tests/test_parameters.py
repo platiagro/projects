@@ -39,7 +39,6 @@ class TestParameters(unittest.TestCase):
         expected = {
             "message": "The specified task does not exist",
             "code": "TaskNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)

@@ -46,7 +46,6 @@ class TestPredictions(unittest.TestCase):
         expected = {
             "message": "The specified deployment does not exist",
             "code": "DeploymentNotFound",
-            "status_code": 404,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 404)
@@ -65,7 +64,6 @@ class TestPredictions(unittest.TestCase):
         expected = {
             "message": "The specified project does not exist",
             "code": "ProjectNotFound",
-            "status_code": 404,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 404)
@@ -84,7 +82,6 @@ class TestPredictions(unittest.TestCase):
         expected = {
             "message": "either form-data or json is required",
             "code": "MissingRequiredFormDataOrJson",
-            "status_code": 400,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
@@ -103,7 +100,6 @@ class TestPredictions(unittest.TestCase):
         expected = {
             "message": "either dataset name or file is required",
             "code": "MissingRequiredDatasetOrFile",
-            "status_code": 400,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
@@ -128,7 +124,6 @@ class TestPredictions(unittest.TestCase):
         expected = {
             "message": "a valid dataset is required",
             "code": "InvalidDataset",
-            "status_code": 400,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)

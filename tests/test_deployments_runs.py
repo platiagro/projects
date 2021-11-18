@@ -59,7 +59,6 @@ class TestDeploymentsRuns(unittest.TestCase):
         expected = {
             "message": "The specified project does not exist",
             "code": "ProjectNotFound",
-            "status_code": 404,
         }
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 404)
@@ -76,7 +75,6 @@ class TestDeploymentsRuns(unittest.TestCase):
         expected = {
             "message": "The specified deployment does not exist",
             "code": "DeploymentNotFound",
-            "status_code": 404,
         }
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 404)

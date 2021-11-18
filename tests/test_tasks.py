@@ -84,7 +84,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "Invalid order argument",
             "code": "InvalidOrderBy",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -148,7 +147,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "a task with that name already exists",
             "code": "TaskNameExists",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -176,7 +174,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "Either provide notebooks or a task to copy from",
             "code": "MissingRequiredNotebookOrTaskId",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -197,7 +194,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "source task does not exist",
             "code": "InvalidTaskId",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -218,7 +214,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "invalid docker image name",
             "code": "InvalidDockerImageName",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -458,7 +453,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "The specified task does not exist",
             "code": "TaskNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -490,7 +484,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "The specified task does not exist",
             "code": "TaskNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -511,7 +504,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "a task with that name already exists",
             "code": "TaskNameExists",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -534,7 +526,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": f"Invalid category. Choose any of {valid_str}",
             "code": "InvalidCategory",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -793,7 +784,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "The specified task does not exist",
             "code": "TaskNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -810,7 +800,6 @@ class TestTasks(unittest.TestCase):
         expected = {
             "message": "Task related to an operator",
             "code": "TaskProtectedFromDeletion",
-            "status_code": 403,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 403)

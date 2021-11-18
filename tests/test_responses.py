@@ -44,7 +44,6 @@ class TestResponses(unittest.TestCase):
         expected = {
             "message": "The specified deployment does not exist",
             "code": "DeploymentNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)

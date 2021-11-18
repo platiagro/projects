@@ -39,7 +39,6 @@ class TestExperimentData(unittest.TestCase):
         expected = {
             "message": "The specified project does not exist",
             "code": "ProjectNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -55,7 +54,6 @@ class TestExperimentData(unittest.TestCase):
         expected = {
             "message": "The specified experiment does not exist",
             "code": "ExperimentNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)

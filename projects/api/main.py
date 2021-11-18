@@ -79,7 +79,6 @@ async def handle_errors(request: Request, exception: Exception):
         content={
             "code": exception.code,
             "message": exception.message,
-            "status_code": exception.status_code,
         },
     )
 

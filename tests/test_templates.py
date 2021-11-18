@@ -61,7 +61,6 @@ class TestTemplates(unittest.TestCase):
         expected = {
             "message": "experimentId or deploymentId needed to create template.",
             "code": "MissingRequiredExperimentIdOrDeploymentId",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -85,7 +84,6 @@ class TestTemplates(unittest.TestCase):
         expected = {
             "message": "a template with that name already exists",
             "code": "TemplateNameExists",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -181,7 +179,6 @@ class TestTemplates(unittest.TestCase):
         expected = {
             "message": "The specified template does not exist",
             "code": "TemplateNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -211,7 +208,6 @@ class TestTemplates(unittest.TestCase):
         expected = {
             "message": "The specified template does not exist",
             "code": "TemplateNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -230,7 +226,6 @@ class TestTemplates(unittest.TestCase):
         expected = {
             "message": "a template with that name already exists",
             "code": "TemplateNameExists",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -279,7 +274,6 @@ class TestTemplates(unittest.TestCase):
         expected = {
             "message": "The specified template does not exist",
             "code": "TemplateNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -306,7 +300,6 @@ class TestTemplates(unittest.TestCase):
         expected = {
             "message": "inform at least one template",
             "code": "MissingRequiredTemplateId",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)

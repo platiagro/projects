@@ -3919,12 +3919,9 @@ components:
           type: string
         message:
           type: string
-        status_code:
-          type: integer
       required:
         - code
         - message
-        - status_code
     Forbidden:
       type: object
       properties:
@@ -3932,12 +3929,9 @@ components:
           type: string
         message:
           type: string
-        status_code:
-          type: integer
       required:
         - code
         - message
-        - status_code
     NotFound:
       type: object
       properties:
@@ -3945,12 +3939,9 @@ components:
           type: string
         message:
           type: string
-        status_code:
-          type: integer
       required:
         - code
         - message
-        - status_code
     InternalServerError:
       type: object
       properties:
@@ -3958,12 +3949,9 @@ components:
           type: string
         message:
           type: string
-        status_code:
-          type: integer
       required:
         - code
         - message
-        - status_code
     ServiceUnavailable:
       type: object
       properties:
@@ -3971,12 +3959,9 @@ components:
           type: string
         message:
           type: string
-        status_code:
-          type: integer
       required:
         - code
         - message
-        - status_code
   requestBodies:
     ComparisonPatch:
       content:
@@ -4597,13 +4582,9 @@ components:
                 type: string
               message:
                 type: string
-              status_code:
-                type: integer
-                example: 400
             required:
               - code
               - message
-              - status_code
     Forbidden:
       description: >
         Forbidden client error status response code indicates that the server
@@ -4617,13 +4598,9 @@ components:
                 type: string
               message:
                 type: string
-              status_code:
-                type: integer
-                example: 403
             required:
               - code
               - message
-              - status_code
     NotFound:
       description: >
         Not Found client error response code indicates that the server can't
@@ -4638,13 +4615,9 @@ components:
                 type: string
               message:
                 type: string
-              status_code:
-                type: integer
-                example: 404
             required:
               - code
               - message
-              - status_code
     InternalServerError:
       description: >
         Internal Server Error server error response code indicates that the
@@ -4660,13 +4633,9 @@ components:
                 type: string
               message:
                 type: string
-              status_code:
-                type: integer
-                example: 500
             required:
               - code
               - message
-              - status_code
     ServiceUnavailable:
       description: >
         Service Unavailable server error response code indicates that the server
@@ -4681,266 +4650,211 @@ components:
                 type: string
               message:
                 type: string
-              status_code:
-                type: integer
-                example: 503
             required:
               - code
               - message
-              - status_code
   examples:
     CannotConnectToDatabase:
       value:
         code: CannotConnectToDatabase
         message: Could not connect to database
-        status_code: 500
     MissingRequiredFormDataOrJson:
       value:
         code: MissingRequiredFormDataOrJson
         message: either form-data or json is required
-        status_code: 400
     InvalidDataset:
       value:
         code: InvalidDataset
         message: a valid dataset is required
-        status_code: 400
     MissingRequiredDatasetOrFile:
       value:
         code: MissingRequiredDatasetOrFile
         message: either dataset name or file is required
-        status_code: 400
     InvalidOrderBy:
       value:
         code: InvalidOrderBy
         message: Invalid order argument
-        status_code: 400
     ProjectNameExists:
       value:
         code: ProjectNameExists
         message: a project with that name already exists
-        status_code: 400
     MissingRequiredProjectId:
       value:
         code: MissingRequiredProjectId
         message: inform at least one project
-        status_code: 400
     MissingRequiredTemplateName:
       value:
         code: MissingRequiredTemplateName
         message: name is required
-        status_code: 400
     MissingRequiredExperimentIdOrDeploymentId:
       value:
         code: MissingRequiredExperimentIdOrDeploymentId
         message: experimentId or deploymentId needed to create template.
-        status_code: 400
     TemplateNameExists:
       value:
         code: TemplateNameExists
         message: a template with that name already exists
-        status_code: 400
     MissingRequiredTemplateId:
       value:
         code: MissingRequiredTemplateId
         message: inform at least one template
-        status_code: 400
     MissingRequiredExperimentsOrTemplateIdOrCopyFrom:
       value:
         code: MissingRequiredExperimentsOrTemplateIdOrCopyFrom
         message: 'either experiments, templateId or copyFrom is required'
-        status_code: 400
     MissingRequiredDeploymentName:
       value:
         code: MissingRequiredDeploymentName
         message: name is required to duplicate deployment
-        status_code: 400
     MissingRequiredOperatorId:
       value:
         code: MissingRequiredOperatorId
         message: Necessary at least one operator.
-        status_code: 400
     MissingRequiredDataSourceOperatorId:
       value:
         code: MissingRequiredDataSourceOperatorId
         message: Necessary at least one operator that is not a data source.
-        status_code: 400
     InvalidExperiments:
       value:
         code: InvalidExperiments
         message: some experiments do not exist
-        status_code: 400
     InvalidDeploymentId:
       value:
         code: InvalidDeploymentId
         message: source deployment does not exist
-        status_code: 400
     InvalidRunId:
       value:
         code: InvalidRunId
         message: Not a failed run
-        status_code: 400
     MissingRequiredExperimentName:
       value:
         code: MissingRequiredExperimentName
         message: name is required
-        status_code: 400
     DeploymentNameExists:
       value:
         code: DeploymentNameExists
         message: a deployment with that name already exists
-        status_code: 400
     ExperimentNameExists:
       value:
         code: ExperimentNameExists
         message: an experiment with that name already exists
-        status_code: 400
     InvalidExperimentId:
       value:
         code: InvalidExperimentId
         message: source experiment does not exist
-        status_code: 400
     InvalidTemplateId:
       value:
         code: InvalidTemplateId
         message: The specified template does not exist
-        status_code: 400
     CannotCreateLogStream:
       value:
         code: CannotCreateLogStream
         message: Unable to create log stream. No active pod available.
-        status_code: 500
     CannotCreateNamespacedPod:
       value:
         code: CannotCreateNamespacedPod
         message: 'Error while trying to create pod: {message}'
-        status_code: 500
     MissingRequiredTaskId:
       value:
         code: MissingRequiredTaskId
         message: taskId is required
-        status_code: 400
     InvalidOperatorRequestBody:
       value:
         code: InvalidOperatorRequestBody
         message: Operator cannot contain an experiment and a deployment simultaneously
-        status_code: 400
     InvalidParameters:
       value:
         code: InvalidParameters
         message: The specified parameters are not valid
-        status_code: 400
     InvalidDependencies:
       value:
         code: InvalidDependencies
         message: The specified dependencies are not valid.
-        status_code: 400
     InvalidCyclicalDependencies:
       value:
         code: InvalidCyclicalDependencies
         message: Cyclical dependencies.
-        status_code: 400
     MissingRequiredNotebookOrTaskId:
       value:
         code: MissingRequiredNotebookOrTaskId
         message: Either provide notebooks or a task to copy from
-        status_code: 400
     TaskNameExists:
       value:
         code: TaskNameExists
         message: a task with that name already exists
-        status_code: 400
     InvalidTaskId:
       value:
         code: InvalidTaskId
         message: source task does not exist
-        status_code: 400
     InvalidCategory:
       value:
         code: InvalidCategory
         message: 'Invalid category. Choose any of {valid_categories}'
-        status_code: 400
     InvalidDockerImageName:
       value:
         code: InvalidDockerImageName
         message: invalid docker image name
-        status_code: 400
     TaskProtectedFromDeletion:
       value:
         code: TaskProtectedFromDeletion
         message: Task related to an operator
-        status_code: 403
     CannotConnectToCluster:
       value:
         code: CannotConnectToCluster
         message: Failed to connect to cluster.
-        status_code: 500
     CannotCreatePersistentVolumeClaim:
       value:
         code: CannotCreatePersistentVolumeClaim
         message: 'Error while trying to create persistent volume claim: {message}'
-        status_code: 500
     CannotPatchNotebookServer:
       value:
         code: CannotPatchNotebookServer
         message: 'Error while trying to patch notebook server: {message}'
-        status_code: 500
     CannotRetrieveContainerLogs:
       value:
         code: CannotRetrieveContainerLogs
         message: 'Error while trying to retrieve container''s log: {message}'
-        status_code: 500
     ComparisonNotFound:
       value:
         code: ComparisonNotFound
         message: The specified comparison does not exist.
-        status_code: 404
     DeploymentNotFound:
       value:
         code: DeploymentNotFound
         message: The specified deployment does not exist.
-        status_code: 404
     ExperimentNotFound:
       value:
         code: ExperimentNotFound
         message: The specified experiment does not exist.
-        status_code: 404
     MonitoringNotFound:
       value:
         code: MonitoringNotFound
         message: The specified monitoring does not exist.
-        status_code: 404
     OperatorNotFound:
       value:
         code: OperatorNotFound
         message: The specified operator does not exist.
-        status_code: 404
     PredictionNotFound:
       value:
         code: PredictionNotFound
         message: The specified prediction does not exist.
-        status_code: 404
     ProjectNotFound:
       value:
         code: ProjectNotFound
         message: The specified project does not exist.
-        status_code: 404
     RunNotFound:
       value:
         code: RunNotFound
         message: The specified run does not exist.
-        status_code: 404
     TaskNotFound:
       value:
         code: TaskNotFound
         message: The specified task does not exist.
-        status_code: 404
     TemplateNotFound:
       value:
         code: TemplateNotFound
         message: The specified template does not exist.
-        status_code: 404
     DatasetNotFound:
       value:
         code: DatasetNotFound
         message: The specified run does not contain dataset.
-        status_code: 404

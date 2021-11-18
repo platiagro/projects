@@ -60,7 +60,6 @@ class TestProjects(unittest.TestCase):
         expected = {
             "message": "Invalid order argument",
             "code": "InvalidOrderBy",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -104,7 +103,6 @@ class TestProjects(unittest.TestCase):
         expected = {
             "message": "a project with that name already exists",
             "code": "ProjectNameExists",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -155,7 +153,6 @@ class TestProjects(unittest.TestCase):
         expected = {
             "message": "The specified project does not exist",
             "code": "ProjectNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -196,7 +193,6 @@ class TestProjects(unittest.TestCase):
         expected = {
             "message": "The specified project does not exist",
             "code": "ProjectNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -213,7 +209,6 @@ class TestProjects(unittest.TestCase):
         expected = {
             "message": "a project with that name already exists",
             "code": "ProjectNameExists",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -255,7 +250,6 @@ class TestProjects(unittest.TestCase):
         expected = {
             "message": "The specified project does not exist",
             "code": "ProjectNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -302,7 +296,6 @@ class TestProjects(unittest.TestCase):
         expected = {
             "message": "inform at least one project",
             "code": "MissingRequiredProjectId",
-            "status_code": 400,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)

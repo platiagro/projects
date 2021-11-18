@@ -57,23 +57,23 @@ ex: `PATCH /resources/{resourceId}`
 - Use mensagens bastante descritivas. Pode usar várias frases sempre que necessário!
 - Para ids inexistentes **INFORMADOS NA URL**:
 ```json
-{"code": "...NotFound", "message": "The specified ... does not exist.", "status_code": 404}
+{"code": "...NotFound", "message": "The specified ... does not exist."}
 ```
 - Para ids inexistentes **INFORMADOS NO REQUEST BODY**:
 ```json
-{"code": "Invalid...", "message": "source ... does not exist", "status_code": 400}
+{"code": "Invalid...", "message": "source ... does not exist"}
 ```
 - Para campos obrigatórios faltantes (não validados pelo pydantic) **INFORMADOS NO REQUEST BODY**:
 ```json
-{"code": "MissingRequired...", "message": "Necessary at least ...", "status_code": 400}
+{"code": "MissingRequired...", "message": "Necessary at least ..."}
 ```
 - Para campos que violam restruções de valor único **INFORMADOS NO REQUEST BODY**:
 ```json
-{"code": "...Exists", "message": "a ... with that ... already exists", "status_code": 400}
+{"code": "...Exists", "message": "a ... with that ... already exists"}
 ```
 - Para erros internos (ex: erro em operações do Kubernetes/Kubeflow):
 ```json
-{"code": "Cannot...", "message": "...", "status_code": 500}
+{"code": "Cannot...", "message": "..."}
 ```
 
 ## Testes Unitários

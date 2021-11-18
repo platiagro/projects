@@ -97,7 +97,6 @@ class TestExperimentsRuns(unittest.TestCase):
         expected = {
             "message": "The specified experiment does not exist",
             "code": "ExperimentNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -142,7 +141,6 @@ class TestExperimentsRuns(unittest.TestCase):
         expected = {
             "message": "The specified run does not exist",
             "code": "RunNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)

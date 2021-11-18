@@ -45,7 +45,6 @@ class TestDatasets(unittest.TestCase):
         expected = {
             "message": "The specified project does not exist",
             "code": "ProjectNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -67,7 +66,6 @@ class TestDatasets(unittest.TestCase):
         expected = {
             "message": "The specified experiment does not exist",
             "code": "ExperimentNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -89,7 +87,6 @@ class TestDatasets(unittest.TestCase):
         expected = {
             "message": "The specified operator does not exist",
             "code": "OperatorNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -120,7 +117,6 @@ class TestDatasets(unittest.TestCase):
         expected = {
             "message": "The specified run does not contain dataset",
             "code": "DatasetNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
@@ -219,7 +215,6 @@ class TestDatasets(unittest.TestCase):
         expected = {
             "message": "The specified run does not contain dataset",
             "code": "DatasetNotFound",
-            "status_code": 404,
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
