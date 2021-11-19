@@ -40,7 +40,10 @@ class TestMonitoringFigures(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}/figures"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -56,7 +59,10 @@ class TestMonitoringFigures(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}/figures"
         )
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -72,7 +78,10 @@ class TestMonitoringFigures(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}/figures"
         )
         result = rv.json()
-        expected = {"message": "The specified monitoring does not exist"}
+        expected = {
+            "message": "The specified monitoring does not exist",
+            "code": "MonitoringNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

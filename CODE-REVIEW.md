@@ -53,6 +53,29 @@ ex: `DELETE /resources/{resourceId}`
 ex: `PATCH /resources/{resourceId}`
 - Em dúvidas? Mantenha uma consistência com as URLs já existem.
 
+### Padrão para códigos e mensagens de erro
+- Use mensagens bastante descritivas. Pode usar várias frases sempre que necessário!
+- Para ids inexistentes **INFORMADOS NA URL**:
+```json
+{"code": "...NotFound", "message": "The specified ... does not exist."}
+```
+- Para ids inexistentes **INFORMADOS NO REQUEST BODY**:
+```json
+{"code": "Invalid...", "message": "source ... does not exist"}
+```
+- Para campos obrigatórios faltantes (não validados pelo pydantic) **INFORMADOS NO REQUEST BODY**:
+```json
+{"code": "MissingRequired...", "message": "Necessary at least ..."}
+```
+- Para campos que violam restruções de valor único **INFORMADOS NO REQUEST BODY**:
+```json
+{"code": "...Exists", "message": "a ... with that ... already exists"}
+```
+- Para erros internos (ex: erro em operações do Kubernetes/Kubeflow):
+```json
+{"code": "Cannot...", "message": "..."}
+```
+
 ## Testes Unitários
 - Todo teste deve ter um docstring descrevendo o que é testado:
 ```python

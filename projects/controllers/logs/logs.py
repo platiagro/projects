@@ -26,16 +26,21 @@ from urllib3.exceptions import ReadTimeoutError
 EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
 LOG_PATTERN = re.compile(r"(.*?)\s(INFO|WARN|WARNING|ERROR|DEBUG)\s*(.*)")
 LOG_LEVELS = {
-    'info': 'INFO',
-    'debug': 'DEBUG',
-    'error': 'ERROR',
-    'warn': 'ERROR',
+    "info": "INFO",
+    "debug": "DEBUG",
+    "error": "ERROR",
+    "warn": "ERROR",
 }
 
 
 class LogController:
-
-    def list_logs(self, project_id: str, run_id: str, experiment_id: Optional[str] = None, deployment_id: Optional[str] = None):
+    def list_logs(
+        self,
+        project_id: str,
+        run_id: str,
+        experiment_id: Optional[str] = None,
+        deployment_id: Optional[str] = None,
+    ):
         """
         Lists logs from a run.
 
@@ -79,7 +84,7 @@ class LogController:
 
         # for now, we don't want log level as 'WARN' so we will change to 'DEBUG'
         for log in logs:
-            log.level = LOG_LEVELS.get(log.level.lower(), 'INFO')
+            log.level = LOG_LEVELS.get(log.level.lower(), "INFO")
 
         # Sorts logs by creation date DESC
         logs = sorted(logs, key=lambda l: l.created_at, reverse=True)
@@ -112,7 +117,10 @@ class LogController:
                     if container.env is None:
                         task_name = pod.metadata.name
                     else:
-                        task_name = next((e.value for e in container.env if e.name == "TASK_NAME"), pod.metadata.name)
+                        task_name = next(
+                            (e.value for e in container.env if e.name == "TASK_NAME"),
+                            pod.metadata.name,
+                        )
 
                     created_at = pod.metadata.creation_timestamp
 
@@ -122,7 +130,9 @@ class LogController:
 
         return logs
 
-    def split_messages(self, raw_logs: str, task_name: str, created_at: datetime.datetime):
+    def split_messages(
+        self, raw_logs: str, task_name: str, created_at: datetime.datetime
+    ):
         """
         Splits raw log text into a list of log schemas.
 
@@ -188,7 +198,9 @@ class LogController:
                 # look for timestamp at the beginning of line.
                 line = re.sub(
                     r"^([0-9]{4}(-[0-9]{2}){2}T[0-9]{2}(:[0-9]{2}){2}.[0-9]+Z\s)",
-                    "", line, 2
+                    "",
+                    line,
+                    2,
                 )
 
                 message_lines.append(line)
@@ -229,7 +241,10 @@ class LogController:
         if container.env is None:
             task_name = pod.metadata.name
         else:
-            task_name = next((e.value for e in container.env if e.name == "TASK_NAME"), pod.metadata.name)
+            task_name = next(
+                (e.value for e in container.env if e.name == "TASK_NAME"),
+                pod.metadata.name,
+            )
         created_at = pod.metadata.creation_timestamp
         try:
             for streamline in w.stream(
@@ -239,10 +254,10 @@ class LogController:
                 container=container_name,
                 pretty="true",
                 tail_lines=0,
-                timestamps=True
+                timestamps=True,
             ):
                 for message in self.split_messages(streamline, task_name, created_at):
-                    yield(message.json())
+                    yield (message.json())
 
         except RuntimeError as e:
             logging.exception(e)
@@ -261,11 +276,13 @@ class LogController:
             Expected behavior if given container does not have any new log on log stream.
             Timeout is needed because if there's no new log, the application blocks in the loop and doesn't handle client disconnection.
             """
-            yield("Log request timed out.", container, pod_name, namespace)
+            yield ("Log request timed out.", container, pod_name, namespace)
             logging("Log request timed out.", container, pod_name, namespace)
             return
 
-    def event_logs(self, deployment_id: Optional[str] = None, experiment_id: Optional[str] = None):
+    def event_logs(
+        self, deployment_id: Optional[str] = None, experiment_id: Optional[str] = None
+    ):
         pods = list()
         run_id = get_latest_run_id(experiment_id or deployment_id)
         if deployment_id is not None:
@@ -288,7 +305,10 @@ class LogController:
         iterators = list()
 
         if not pods:
-            raise BadRequest("Unable to create log stream. No active pod available.")
+            raise BadRequest(
+                code="CannotCreateLogStream",
+                message="Unable to create log stream. No active pod available.",
+            )
 
         for pod in pods:
             for container in pod.spec.containers:

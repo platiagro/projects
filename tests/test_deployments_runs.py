@@ -56,7 +56,10 @@ class TestDeploymentsRuns(unittest.TestCase):
             f"/projects/foo/deployments/{deployment_id}/runs", json={}
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 404)
         self.assertDictEqual(result, expected)
@@ -69,7 +72,10 @@ class TestDeploymentsRuns(unittest.TestCase):
 
         rv = TEST_CLIENT.post(f"/projects/{project_id}/deployments/foo/runs", json={})
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+        }
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 404)
         self.assertDictEqual(result, expected)

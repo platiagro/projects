@@ -70,7 +70,10 @@ async def handle_post_prediction(
         try:
             kwargs = await request.json()
         except JSONDecodeError:
-            raise BadRequest("either form-data or json is required")
+            raise BadRequest(
+                code="MissingRequiredFormDataOrJson",
+                message="either form-data or json is required",
+            )
 
     prediction_controller = PredictionController(session, background_tasks)
     prediction = prediction_controller.create_prediction(

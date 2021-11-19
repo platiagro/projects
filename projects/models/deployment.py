@@ -15,7 +15,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
 
 from projects.database import Base
-from projects.exceptions import NotFound
 from projects.models.monitoring import Monitoring
 from projects.models.operator import Operator
 
