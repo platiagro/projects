@@ -44,7 +44,10 @@ class TestResults(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/results"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -60,45 +63,12 @@ class TestResults(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/results"
         )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
-
-    @mock.patch(
-        "kfp.Client",
-        return_value=util.MOCK_KFP_CLIENT,
-    )
-    @mock.patch.object(MINIO_CLIENT, "make_bucket")
-    @mock.patch.object(
-        MINIO_CLIENT,
-        "list_objects",
-        return_value=[],
-    )
-    def test_get_results_no_results(
-        self, mock_list_objects, mock_make_bucket, mock_kfp_client
-    ):
-        """
-        Should return an http status 404 and an error message.
-        """
-        project_id = util.MOCK_UUID_1
-        experiment_id = util.MOCK_UUID_1
-        run_id = "latest"
-
-        rv = TEST_CLIENT.get(
-            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/results"
-        )
-        result = rv.json()
-        expected = {"message": "The specified run has no results"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
-
-        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
-        mock_make_bucket.assert_any_call(BUCKET_NAME)
-        mock_list_objects.assert_any_call(
-            bucket_name=BUCKET_NAME,
-            prefix=f"experiments/{experiment_id}/operators/",
-            recursive=True,
-        )
 
     @mock.patch(
         "kfp.Client",
@@ -164,7 +134,10 @@ class TestResults(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/results"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -181,7 +154,10 @@ class TestResults(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/results"
         )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -198,46 +174,12 @@ class TestResults(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/results"
         )
         result = rv.json()
-        expected = {"message": "The specified operator does not exist"}
+        expected = {
+            "message": "The specified operator does not exist",
+            "code": "OperatorNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
-
-    @mock.patch(
-        "kfp.Client",
-        return_value=util.MOCK_KFP_CLIENT,
-    )
-    @mock.patch.object(MINIO_CLIENT, "make_bucket")
-    @mock.patch.object(
-        MINIO_CLIENT,
-        "list_objects",
-        return_value=[],
-    )
-    def test_get_operators_results_operator_no_results(
-        self, mock_list_objects, mock_make_bucket, mock_kfp_client
-    ):
-        """
-        Should return an http status 404 and an error message.
-        """
-        project_id = util.MOCK_UUID_1
-        experiment_id = util.MOCK_UUID_1
-        run_id = "latest"
-        operator_id = util.MOCK_UUID_1
-
-        rv = TEST_CLIENT.get(
-            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/results"
-        )
-        result = rv.json()
-        expected = {"message": "The specified operator has no results"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
-
-        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
-        mock_make_bucket.assert_any_call(BUCKET_NAME)
-        mock_list_objects.assert_any_call(
-            bucket_name=BUCKET_NAME,
-            prefix=f"experiments/{experiment_id}/operators/{operator_id}",
-            recursive=True,
-        )
 
     @mock.patch(
         "kfp.Client",

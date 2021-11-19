@@ -18,9 +18,15 @@ from kubernetes import client
 from kubernetes.watch import Watch
 
 
-NOT_FOUND = NotFound("The specified operator does not exist")
-PARAMETERS_EXCEPTION_MSG = "The specified parameters are not valid"
-DEPENDENCIES_EXCEPTION_MSG = "The specified dependencies are not valid."
+NOT_FOUND = NotFound(
+    code="OperatorNotFound", message="The specified operator does not exist"
+)
+INVALID_PARAMETERS = BadRequest(
+    code="InvalidParameters", message="The specified parameters are not valid"
+)
+INVALID_DEPENDENCIES = BadRequest(
+    code="InvalidDependencies", message="The specified dependencies are not valid."
+)
 
 
 class OperatorController:
@@ -100,12 +106,12 @@ class OperatorController:
             When the operator attributes are invalid.
         """
         if not isinstance(operator.task_id, str):
-            raise BadRequest("taskId is required")
+            raise BadRequest(code="MissingRequiredTaskId", message="taskId is required")
 
         try:
             self.task_controller.raise_if_task_does_not_exist(operator.task_id)
-        except NotFound as e:
-            raise BadRequest(e.message)
+        except NotFound:
+            raise BadRequest(code="InvalidTaskId", message="source task does not exist")
 
         if operator.dependencies is None:
             operator.dependencies = []
@@ -120,7 +126,8 @@ class OperatorController:
 
         if experiment_id and deployment_id:
             raise BadRequest(
-                "Operator cannot contain an experiment and a deployment simultaneously"
+                code="InvalidOperatorRequestBody",
+                message="Operator cannot contain an experiment and a deployment simultaneously",
             )
 
         if operator.parameters is None:
@@ -291,13 +298,13 @@ class OperatorController:
             When any parameter value is not str, int, float, bool, list, or dict.
         """
         if not isinstance(parameters, dict):
-            raise BadRequest(PARAMETERS_EXCEPTION_MSG)
+            raise INVALID_PARAMETERS
 
         for key, value in parameters.items():
             if value is not None and not isinstance(
                 value, (str, int, float, bool, list, dict)
             ):
-                raise BadRequest(PARAMETERS_EXCEPTION_MSG)
+                raise INVALID_PARAMETERS
 
     def raise_if_dependencies_are_invalid(
         self,
@@ -328,19 +335,19 @@ class OperatorController:
             When dependencies are cyclic.
         """
         if not isinstance(dependencies, list):
-            raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+            raise INVALID_DEPENDENCIES
 
         # check if dependencies has duplicates
         if len(dependencies) != len(set(dependencies)):
-            raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+            raise INVALID_DEPENDENCIES
 
         for d in dependencies:
             try:
                 self.raise_if_operator_does_not_exist(d)
                 if d == operator_id:
-                    raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+                    raise INVALID_DEPENDENCIES
             except NotFound:
-                raise BadRequest(DEPENDENCIES_EXCEPTION_MSG)
+                raise INVALID_DEPENDENCIES
 
         self.raise_if_has_cycles(
             project_id=project_id,
@@ -393,7 +400,9 @@ class OperatorController:
                 )
                 is True
             ):
-                raise BadRequest("Cyclical dependencies.")
+                raise BadRequest(
+                    code="InvalidCyclicalDependencies", message="Cyclical dependencies."
+                )
         return False
 
     def has_cycles_util(

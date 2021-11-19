@@ -3,11 +3,9 @@ import unittest
 import unittest.mock as mock
 
 from fastapi.testclient import TestClient
-from kfp_server_api.exceptions import ApiException
 
 from projects.api.main import app
 from projects.database import session_scope
-from projects.kfp import KF_PIPELINES_NAMESPACE
 
 import tests.util as util
 
@@ -39,7 +37,10 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/projects/{project_id}/deployments")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -70,7 +71,10 @@ class TestDeployments(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -83,7 +87,10 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.post(f"/projects/{project_id}/deployments", json={})
         result = rv.json()
 
-        expected = {"message": "either experiments, templateId or copyFrom is required"}
+        expected = {
+            "message": "either experiments, templateId or copyFrom is required",
+            "code": "MissingRequiredExperimentsOrTemplateIdOrCopyFrom",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -101,7 +108,72 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "Necessary at least one operator."}
+        expected = {
+            "message": "Necessary at least one operator.",
+            "code": "MissingRequiredOperatorId",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_deployment_experiments_not_exist_error(self):
+        """
+        Should return a http error 400 and a message 'some experiments do not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        deployment_name = "deployment-3"
+        experiments = ["unk"]
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments",
+            json={"name": deployment_name, "experiments": experiments},
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "some experiments do not exist",
+            "code": "InvalidExperiments",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_deployment_name_is_required_error(self):
+        """
+        Should return a http error 400 and a message 'name is required to duplicate deployment'.
+        """
+        project_id = util.MOCK_UUID_1
+        copy_from = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments",
+            json={"copyFrom": copy_from},
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "name is required to duplicate deployment",
+            "code": "MissingRequiredDeploymentName",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_deployment_name_exists_error(self):
+        """
+        Should return a http error 400 and a message 'name is required to duplicate deployment'.
+        """
+        project_id = util.MOCK_UUID_1
+        name = util.MOCK_DEPLOYMENT_NAME_1
+        copy_from = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments",
+            json={"name": name, "copyFrom": copy_from},
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "a deployment with that name already exists",
+            "code": "DeploymentNameExists",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -214,6 +286,10 @@ class TestDeployments(unittest.TestCase):
         mock_load_config.assert_any_call()
 
     @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
@@ -320,9 +396,84 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "source deployment does not exist"}
+        expected = {
+            "message": "source deployment does not exist",
+            "code": "InvalidDeploymentId",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_create_deployment_with_template_id_success(
+        self,
+        mock_load_config,
+        mock_kfp_client,
+        mock_core_v1_api,
+    ):
+        """
+        Should create and return an deployment successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        template_id = util.MOCK_UUID_2
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments",
+            json={"templateId": template_id},
+        )
+        result = rv.json()
+
+        expected = {
+            "deployments": [
+                {
+                    "createdAt": mock.ANY,
+                    "isActive": True,
+                    "deployedAt": None,
+                    "experimentId": None,
+                    "name": util.MOCK_TEMPLATE_NAME_2,
+                    "projectId": project_id,
+                    "position": -1,
+                    "operators": [
+                        {
+                            "createdAt": mock.ANY,
+                            "dependencies": [],
+                            "deploymentId": mock.ANY,
+                            "experimentId": None,
+                            "name": util.MOCK_TASK_NAME_1,
+                            "parameters": {},
+                            "positionX": 0,
+                            "positionY": 0,
+                            "status": "Setted up",
+                            "statusMessage": None,
+                            "task": {"name": "task-1", "parameters": [], "tags": []},
+                            "taskId": util.MOCK_UUID_1,
+                            "updatedAt": mock.ANY,
+                            "uuid": mock.ANY,
+                        },
+                    ],
+                    "status": "Pending",
+                    "updatedAt": mock.ANY,
+                    "uuid": mock.ANY,
+                    "url": None,
+                }
+            ],
+            "total": 1,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+        mock_core_v1_api.assert_any_call()
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_load_config.assert_any_call()
 
     def test_get_deployment_project_not_found(self):
         """
@@ -334,7 +485,10 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/projects/{project_id}/deployments/{deployment_id}")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -348,7 +502,10 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/projects/{project_id}/deployments/{deployment_id}")
         result = rv.json()
 
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -378,7 +535,10 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -394,7 +554,10 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -412,7 +575,10 @@ class TestDeployments(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "a deployment with that name already exists"}
+        expected = {
+            "message": "a deployment with that name already exists",
+            "code": "DeploymentNameExists",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -459,7 +625,10 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.delete(f"/projects/{project_id}/deployments/{deployment_id}")
         result = rv.json()
 
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -473,7 +642,10 @@ class TestDeployments(unittest.TestCase):
         rv = TEST_CLIENT.delete(f"/projects/{project_id}/deployments/{deployment_id}")
         result = rv.json()
 
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

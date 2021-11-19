@@ -59,7 +59,8 @@ class TestTemplates(unittest.TestCase):
         result = rv.json()
 
         expected = {
-            "message": "experimentId or deploymentId needed to create template."
+            "message": "experimentId or deploymentId needed to create template.",
+            "code": "MissingRequiredExperimentIdOrDeploymentId",
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
@@ -80,7 +81,10 @@ class TestTemplates(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "a template with that name already exists"}
+        expected = {
+            "message": "a template with that name already exists",
+            "code": "TemplateNameExists",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -172,7 +176,10 @@ class TestTemplates(unittest.TestCase):
         rv = TEST_CLIENT.get(f"/templates/{template_id}")
         result = rv.json()
 
-        expected = {"message": "The specified template does not exist"}
+        expected = {
+            "message": "The specified template does not exist",
+            "code": "TemplateNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -198,7 +205,10 @@ class TestTemplates(unittest.TestCase):
         rv = TEST_CLIENT.patch(f"/templates/{template_id}", json={})
         result = rv.json()
 
-        expected = {"message": "The specified template does not exist"}
+        expected = {
+            "message": "The specified template does not exist",
+            "code": "TemplateNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -213,7 +223,10 @@ class TestTemplates(unittest.TestCase):
         )
         result = rv.json()
 
-        expected = {"message": "a template with that name already exists"}
+        expected = {
+            "message": "a template with that name already exists",
+            "code": "TemplateNameExists",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
@@ -258,7 +271,10 @@ class TestTemplates(unittest.TestCase):
         rv = TEST_CLIENT.delete(f"/templates/{template_id}")
         result = rv.json()
 
-        expected = {"message": "The specified template does not exist"}
+        expected = {
+            "message": "The specified template does not exist",
+            "code": "TemplateNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -281,7 +297,10 @@ class TestTemplates(unittest.TestCase):
         rv = TEST_CLIENT.post(f"/templates/deletetemplates", json=[])
         result = rv.json()
 
-        expected = {"message": "inform at least one template"}
+        expected = {
+            "message": "inform at least one template",
+            "code": "MissingRequiredTemplateId",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 

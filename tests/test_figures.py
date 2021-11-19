@@ -41,7 +41,10 @@ class TestFigures(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/figures"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -58,7 +61,10 @@ class TestFigures(unittest.TestCase):
             f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/figures"
         )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

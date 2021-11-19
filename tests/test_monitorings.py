@@ -39,7 +39,10 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -54,7 +57,10 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings"
         )
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -88,7 +94,10 @@ class TestMonitorings(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -107,7 +116,10 @@ class TestMonitorings(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -126,9 +138,12 @@ class TestMonitorings(unittest.TestCase):
             },
         )
         result = rv.json()
-        expected = {"message": "The specified task does not exist"}
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "InvalidTaskId",
+        }
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
+        self.assertEqual(rv.status_code, 400)
 
     @mock.patch(
         "kfp.Client",
@@ -176,7 +191,10 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}"
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -192,7 +210,10 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}"
         )
         result = rv.json()
-        expected = {"message": "The specified deployment does not exist"}
+        expected = {
+            "message": "The specified deployment does not exist",
+            "code": "DeploymentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -208,7 +229,10 @@ class TestMonitorings(unittest.TestCase):
             f"/projects/{project_id}/deployments/{deployment_id}/monitorings/{monitoring_id}"
         )
         result = rv.json()
-        expected = {"message": "The specified monitoring does not exist"}
+        expected = {
+            "message": "The specified monitoring does not exist",
+            "code": "MonitoringNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

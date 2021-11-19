@@ -42,7 +42,10 @@ class TestOperatorParameters(unittest.TestCase):
             json={},
         )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -60,7 +63,10 @@ class TestOperatorParameters(unittest.TestCase):
             json={},
         )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -78,7 +84,10 @@ class TestOperatorParameters(unittest.TestCase):
             json={},
         )
         result = rv.json()
-        expected = {"message": "The specified operator does not exist"}
+        expected = {
+            "message": "The specified operator does not exist",
+            "code": "OperatorNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 

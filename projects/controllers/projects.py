@@ -11,7 +11,9 @@ from projects.controllers.experiments import ExperimentController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 
-NOT_FOUND = NotFound("The specified project does not exist")
+NOT_FOUND = NotFound(
+    code="ProjectNotFound", message="The specified project does not exist"
+)
 
 
 class ProjectController:
@@ -106,7 +108,7 @@ class ProjectController:
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Project.__table__.columns.keys()
         except (AssertionError, ValueError):
-            raise BadRequest("Invalid order argument")
+            raise BadRequest(code="InvalidOrderBy", message="Invalid order argument")
 
         if sort.lower() == "asc":
             query = query.order_by(asc(getattr(models.Project, column)))
@@ -143,7 +145,10 @@ class ProjectController:
             .first()
         )
         if store_project:
-            raise BadRequest("a project with that name already exists")
+            raise BadRequest(
+                code="ProjectNameExists",
+                message="a project with that name already exists",
+            )
 
         project = models.Project(
             uuid=uuid_alpha(),
@@ -222,7 +227,10 @@ class ProjectController:
             .first()
         )
         if stored_project and stored_project.uuid != project_id:
-            raise BadRequest("a project with that name already exists")
+            raise BadRequest(
+                code="ProjectNameExists",
+                message="a project with that name already exists",
+            )
 
         update_data = project.dict(exclude_unset=True)
         update_data.update({"updated_at": datetime.utcnow()})
@@ -293,7 +301,9 @@ class ProjectController:
         """
         total_elements = len(project_ids)
         if total_elements < 1:
-            raise BadRequest("inform at least one project")
+            raise BadRequest(
+                code="MissingRequiredProjectId", message="inform at least one project"
+            )
 
         projects = (
             self.session.query(models.Project)

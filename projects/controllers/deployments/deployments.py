@@ -13,7 +13,9 @@ from projects.controllers.utils import uuid_alpha
 from projects.controllers.tasks import TaskController
 from projects.exceptions import BadRequest, NotFound
 
-NOT_FOUND = NotFound("The specified deployment does not exist")
+NOT_FOUND = NotFound(
+    code="DeploymentNotFound", message="The specified deployment does not exist"
+)
 
 # Distance on the X axis from the leftmost operator
 DATASET_OPERATOR_DISTANCE = 300
@@ -113,7 +115,10 @@ class DeploymentController:
             (bool(deployment.experiments) ^ bool(deployment.template_id))
             or (bool(deployment.template_id) ^ bool(deployment.copy_from))
         ):
-            raise BadRequest("either experiments, templateId or copyFrom is required")
+            raise BadRequest(
+                code="MissingRequiredExperimentsOrTemplateIdOrCopyFrom",
+                message="either experiments, templateId or copyFrom is required",
+            )
 
         if deployment.template_id:
             deployments = self.create_deployment_from_template(
@@ -122,7 +127,10 @@ class DeploymentController:
 
         if deployment.copy_from:
             if not isinstance(deployment.name, str):
-                raise BadRequest("name is required to duplicate deployment")
+                raise BadRequest(
+                    code="MissingRequiredDeploymentName",
+                    message="name is required to duplicate deployment",
+                )
 
             stored_deployment = (
                 self.session.query(models.Deployment)
@@ -131,7 +139,10 @@ class DeploymentController:
                 .first()
             )
             if stored_deployment:
-                raise BadRequest("a deployment with that name already exists")
+                raise BadRequest(
+                    code="DeploymentNameExists",
+                    message="a deployment with that name already exists",
+                )
 
             deployments = self.copy_deployment(
                 deployment_id=deployment.copy_from,
@@ -148,13 +159,17 @@ class DeploymentController:
 
         for deployment in deployments:
             if len(deployment.operators) == 0:
-                raise BadRequest("Necessary at least one operator.")
+                raise BadRequest(
+                    code="MissingRequiredOperatorId",
+                    message="Necessary at least one operator.",
+                )
             elif (
                 len(deployment.operators) == 1
                 and deployment.operators[0].task.category == "DATASETS"
             ):
                 raise BadRequest(
-                    "Necessary at least one operator that is not a data source."
+                    code="MissingRequiredDataSourceOperatorId",
+                    message="Necessary at least one operator that is not a data source.",
                 )
 
         for deployment in deployments:
@@ -220,7 +235,10 @@ class DeploymentController:
             .first()
         )
         if stored_deployment and stored_deployment.uuid != deployment_id:
-            raise BadRequest("a deployment with that name already exists")
+            raise BadRequest(
+                code="DeploymentNameExists",
+                message="a deployment with that name already exists",
+            )
 
         update_data = deployment.dict(exclude_unset=True)
         update_data.update({"updated_at": datetime.utcnow()})
@@ -302,7 +320,9 @@ class DeploymentController:
 
         for experiment_id in experiments:
             if experiment_id not in experiments_dict:
-                raise BadRequest("some experiments do not exist")
+                raise BadRequest(
+                    code="InvalidExperiments", message="some experiments do not exist"
+                )
 
         deployments = []
 
@@ -405,7 +425,9 @@ class DeploymentController:
         stored_deployment = self.session.query(models.Deployment).get(deployment_id)
 
         if stored_deployment is None:
-            raise BadRequest("source deployment does not exist")
+            raise BadRequest(
+                code="InvalidDeploymentId", message="source deployment does not exist"
+            )
 
         deployment = models.Deployment(
             uuid=uuid_alpha(),
@@ -486,7 +508,10 @@ class DeploymentController:
         deployment_id : str
         """
         if len(stored_operators) == 0:
-            raise BadRequest("Necessary at least one operator.")
+            raise BadRequest(
+                code="MissingRequiredOperatorId",
+                message="Necessary at least one operator.",
+            )
 
         # Creates a dict to map source operator_id to its copy operator_id.
         # This map will be used to build the dependencies using new operator_ids
