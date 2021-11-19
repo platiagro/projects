@@ -286,10 +286,6 @@ class TestDeployments(unittest.TestCase):
         mock_load_config.assert_any_call()
 
     @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
-    @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
