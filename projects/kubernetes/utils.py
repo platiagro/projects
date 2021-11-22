@@ -231,6 +231,8 @@ async def pop_log_queue(queue, pool):
             queue.task_done()
 
             yield out
+    
+    # Atualmente esses métodos não encerram as threads geradas nessa pool por motivo desconhecido
     except asyncio.CancelledError:
         pool.shutdown(wait=False)
     finally:

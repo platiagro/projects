@@ -336,7 +336,8 @@ class LogController:
         return pop_log_queue(self.queue, self.pool)
 
     def watch_workflow_pods(self, experiment_id: str):
-
+        # Bug conhecido:
+        # Um pod que foi encontrado pelo worker de pods pode não ser encontrado pelo worker de logs no caso de experimentos
         load_kube_config()
         v1 = client.CoreV1Api()
         w = Watch()
