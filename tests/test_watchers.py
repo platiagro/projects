@@ -1,49 +1,52 @@
 # -*- coding: utf-8 -*-
-from json import load
-from unittest import TestCase
+import json
+import unittest
 
-from projects.agent.watchers.deployment import update_seldon_deployment
-from projects.agent.watchers.workflow import update_status
-from projects.database import Session
+from projects.agent.watchers.workflow import update_status, update_seldon_deployment
 
-session = Session()
+import tests.util as util
 
 
-class TestWatchers(TestCase):
+class TestWatchers(unittest.TestCase):
+    maxDiff = None
+
     def setUp(self):
-        self.maxDiff = None
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
     def tearDown(self):
-        pass
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-    def test_workflow_watcher_update(self):
-
-        manifest_file_ref = open('tests/resources/mock_manifest.json')
-        manifest_as_dict = load(manifest_file_ref)
-
-        # testing if it's working
-        try:
-            update_status(manifest_as_dict, session)
-        except Exception as e:
-            self.fail(f'Errors found while running test: {e}')
-
-        # checking error raising if wrong json
-        manifest_as_dict = {"foo": "bar"}
+    def test_update_status_key_error(self):
+        """
+        Should raise a KeyError when workflow_manifest is invalid.
+        """
+        workflow_manifest = {"foo": "bar"}
+        session = next(util.override_session_scope())
         with self.assertRaises(KeyError):
-            update_status(manifest_as_dict, session)
+            update_status(workflow_manifest, session)
 
-    def test_deployment_watcher_update(self):
+    def test_update_status_success(self):
+        """
+        Should update status of an operator successfully.
+        """
+        with open("tests/resources/mock_manifest.json") as manifest_file_ref:
+            manifest_as_dict = json.load(manifest_file_ref)
+        session = next(util.override_session_scope())
 
-        manifest_file_ref = open('tests/resources/deployment_mock_manifest.json')
-        manifest_as_dict = load(manifest_file_ref)
+        update_status(manifest_as_dict, session)
 
-        # testing if it's working
-        try:
-            update_seldon_deployment(manifest_as_dict, session)
-        except Exception as e:
-            self.fail(f'Errors found while running test: {e}')
-
-        # checking error raising if wrong json
-        manifest_as_dict = {"foo": "bar"}
-        with self.assertRaises(KeyError):
-            update_status(manifest_as_dict, session)
+    def test_update_seldon_deployment_success(self):
+        """
+        Should update status of a deployment successfully.
+        """
+        deployment_id = util.MOCK_UUID_1
+        status = "Succeeded"
+        created_at_str = "2021-06-24T14:42:09Z"
+        session = next(util.override_session_scope())
+        update_seldon_deployment(deployment_id, status, created_at_str, session)

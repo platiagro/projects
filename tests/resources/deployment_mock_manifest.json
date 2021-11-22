@@ -1,5 +1,4 @@
 {
-   "object":{
       "apiVersion":"argoproj.io/v1alpha1",
       "kind":"Workflow",
       "metadata":{
@@ -999,4 +998,3 @@
          "startedAt":"2021-06-24T14:42:09Z"
       }
    }
-}

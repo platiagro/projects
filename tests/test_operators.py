@@ -1,606 +1,697 @@
 # -*- coding: utf-8 -*-
-from json import dumps
-from unittest import TestCase
+import unittest
+import unittest.mock as mock
 
 from fastapi.testclient import TestClient
 
 from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
+from projects.database import session_scope
 
+import tests.util as util
+
+app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
-OPERATOR_ID = str(uuid_alpha())
-OPERATOR_ID_2 = str(uuid_alpha())
-OPERATOR_ID_3 = str(uuid_alpha())
-OPERATOR_ID_4 = str(uuid_alpha())
-OPERATOR_ID_5 = str(uuid_alpha())
-OPERATOR_ID_6 = str(uuid_alpha())
-DEPENDENCY_ID = str(uuid_alpha())
-DEPENDENCY_ID_2 = str(uuid_alpha())
-NAME = "foo"
-NAME_2 = "bar"
-DESCRIPTION = "long foo"
-PROJECT_ID = str(uuid_alpha())
-EXPERIMENT_ID = str(uuid_alpha())
-EXPERIMENT_ID_2 = str(uuid_alpha())
-TASK_ID = str(uuid_alpha())
-PARAMETERS = {"coef": 0.1}
-POSITION = 0
-POSITION_2 = 1
-POSITION_X = 0
-POSITION_Y = 0
-PARAMETERS = {}
-IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
-COMMANDS = ["CMD"]
-COMMANDS_JSON = dumps(COMMANDS)
-ARGUMENTS = ["ARG"]
-ARGUMENTS_JSON = dumps(ARGUMENTS)
-TAGS = ["PREDICTOR"]
-CATEGORY = "DEFAULT"
-DATA_IN = ""
-DATA_OUT = ""
-DOCS = ""
-TAGS_JSON = dumps(TAGS)
-PARAMETERS_JSON = dumps(PARAMETERS)
-PARAMETERS_2 = {"foo": "bar"}
-PARAMETERS_JSON_2 = dumps(PARAMETERS_2)
-EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
-CREATED_AT = "2000-01-01 00:00:00"
-CREATED_AT_ISO = "2000-01-01T00:00:00"
-UPDATED_AT = "2000-01-01 00:00:00"
-UPDATED_AT_ISO = "2000-01-01T00:00:00"
 
-DEPENDENCIES_EMPTY = []
-DEPENDENCIES_EMPTY_JSON = dumps(DEPENDENCIES_EMPTY)
-DEPENDENCIES_OP_ID = [OPERATOR_ID]
-DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
-DEPENDENCIES_OP_ID_2 = [OPERATOR_ID_2]
-DEPENDENCIES_OP_ID_2_JSON = dumps(DEPENDENCIES_OP_ID_2)
+class TestOperators(unittest.TestCase):
+    maxDiff = None
 
-TASK_DATASET_ID = str(uuid_alpha())
-TASK_DATASET_TAGS = ["DATASETS"]
-TASK_DATASET_TAGS_JSON = dumps(TASK_DATASET_TAGS)
-TENANT = "anonymous"
-
-
-class TestOperators(TestCase):
     def setUp(self):
-        self.maxDiff = None
-
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID_2, NAME_2, PROJECT_ID, POSITION_2, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, DATA_IN, DATA_IN, DOCS, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, tags, data_in, data_out, docs, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_DATASET_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TASK_DATASET_TAGS_JSON, DATA_IN, DATA_IN, DOCS, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
-                            POSITION_Y, DEPENDENCIES_OP_ID_2_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_2, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
-                            POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_3, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
-                            POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_4, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON,
-                            POSITION_X, POSITION_X, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_5, None, "Unset", None, EXPERIMENT_ID_2, TASK_ID, PARAMETERS_JSON,
-                            POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID_6, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON_2,
-                            POSITION_X, POSITION_X, DEPENDENCIES_EMPTY_JSON, CREATED_AT, UPDATED_AT,))
-
-        conn.close()
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
     def tearDown(self):
-        conn = engine.connect()
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-        text = (
-            f"DELETE FROM operators WHERE experiment_id in"
-            f"(SELECT uuid  FROM experiments where project_id = '{PROJECT_ID}')"
+    def test_list_operators_project_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = "unk"
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators"
         )
-        conn.execute(text)
-
-        text = (
-            f"DELETE FROM operators WHERE experiment_id in"
-            f"(SELECT uuid  FROM experiments where name = '{NAME}')"
-        )
-        conn.execute(text)
-
-        text = f"DELETE FROM tasks WHERE uuid IN ('{TASK_ID}', '{TASK_DATASET_ID}')"
-        conn.execute(text)
-
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-        conn.execute(text)
-        conn.close()
-
-    def test_list_operators(self):
-        rv = TEST_CLIENT.get(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators")
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/unk/operators")
+    def test_list_operators_experiment_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators"
+        )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators")
+    def test_list_operators_success(self):
+        """
+        Should return a list of operators successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators"
+        )
         result = rv.json()
-        self.assertIsInstance(result["operators"], list)
-        self.assertIsInstance(result["total"], int)
+        expected = util.MOCK_OPERATOR_LIST
+        self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_operator(self):
-        rv = TEST_CLIENT.post(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_ID,
-            "positionX": 0,
-            "positionY": 0,
-        })
+    def test_create_operator_project_not_found_error(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "unk"
+        experiment_id = util.MOCK_UUID_1
+        task_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={
+                "taskId": task_id,
+                "positionX": 0,
+                "positionY": 0,
+            },
+        )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/unk/operators", json={
-            "taskId": TASK_ID,
-            "positionX": 0,
-            "positionY": 0,
-        })
+    def test_create_operator_experiment_not_found_error(self):
+        """
+        Should return a http error 404 and a message 'specified experiment does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+        task_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={
+                "taskId": task_id,
+                "positionX": 0,
+                "positionY": 0,
+            },
+        )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={})
-        result = rv.json()
+    def test_create_operator_invalid_request_body_error(self):
+        """
+        Should return http status 422 when invalid request body is given.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators", json={}
+        )
         self.assertEqual(rv.status_code, 422)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": "unk",
-            "positionX": 0,
-            "positionY": 0,
-        })
+    def test_create_operator_task_does_not_exist(self):
+        """
+        Should return a http error 400 and a message 'The specified task does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        task_id = "unk"
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={
+                "taskId": task_id,
+                "positionX": 0,
+                "positionY": 0,
+            },
+        )
         result = rv.json()
-        expected = {"message": "The specified task does not exist"}
+        expected = {
+            "message": "source task does not exist",
+            "code": "InvalidTaskId",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_ID,
-            "dependencies": "unk"  # only lists are accepted
-        })
-        result = rv.json()
+    def test_create_operator_invalid_request_body_error_2(self):
+        """
+        Should return http status 422 when invalid request body is given.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        task_id = util.MOCK_UUID_1
+        dependencies = "unk"
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={
+                "taskId": task_id,
+                "dependencies": dependencies,
+            },  # only lists are accepted
+        )
         self.assertEqual(rv.status_code, 422)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_ID,
-            "dependencies": ["unk"]
-        })
-        result = rv.json()
+    def test_create_operator_invalid_request_body_error_3(self):
+        """
+        Should return http status 422 when invalid request body is given.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        task_id = util.MOCK_UUID_1
+        dependencies = ["unk"]
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={"taskId": task_id, "dependencies": dependencies},
+        )
         self.assertEqual(rv.status_code, 422)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_ID,
-            "dependencies": [OPERATOR_ID, OPERATOR_ID]
-        })
-        result = rv.json()
+    def test_create_operator_invalid_request_body_error_4(self):
+        """
+        Should return http status 422 when invalid request body is given.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        task_id = util.MOCK_UUID_1
+        dependencies = [util.MOCK_UUID_1, util.MOCK_UUID_1]
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={"taskId": task_id, "dependencies": dependencies},
+        )
         self.assertEqual(rv.status_code, 422)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_ID,
-            "positionX": 0,
-            "positionY": 0,
-        })
+    def test_create_operator_success_1(self):
+        """
+        Should create and return an operator successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        task_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={
+                "taskId": task_id,
+                "positionX": 0,
+                "positionY": 0,
+            },
+        )
         result = rv.json()
         expected = {
-            "name": NAME,
-            "experimentId": EXPERIMENT_ID,
-            "taskId": TASK_ID,
+            "uuid": mock.ANY,
+            "name": util.MOCK_TASK_NAME_1,
+            "taskId": util.MOCK_UUID_1,
             "task": {
-                "name": NAME,
-                "tags": TAGS,
+                "name": util.MOCK_TASK_NAME_1,
+                "tags": [],
                 "parameters": [],
             },
             "dependencies": [],
             "parameters": {},
+            "experimentId": experiment_id,
+            "deploymentId": None,
             "positionX": 0,
             "positionY": 0,
+            "createdAt": mock.ANY,
+            "updatedAt": mock.ANY,
             "status": "Unset",
             "statusMessage": None,
-            "deploymentId": None
         }
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_ID,
-            "positionX": 0,
-            "positionY": 0,
-            "parameters": {"coef": None},  # None is allowed!
-        })
-        result = rv.json()
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_ID,
-            "positionX": 0,
-            "positionY": 0,
-            "parameters": {"coef": 1.0}
-        })
+    def test_create_operator_success_2(self):
+        """
+        Should create and return an operator successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        task_id = util.MOCK_UUID_1
+        parameters = {"coef": None}  # None is allowed!
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={
+                "taskId": task_id,
+                "positionX": 0,
+                "positionY": 0,
+                "parameters": parameters,
+            },
+        )
         result = rv.json()
         expected = {
-            "name": NAME,
-            "experimentId": EXPERIMENT_ID,
-            "taskId": TASK_ID,
+            "uuid": mock.ANY,
+            "name": util.MOCK_TASK_NAME_1,
+            "taskId": util.MOCK_UUID_1,
             "task": {
-                "name": NAME,
-                "tags": TAGS,
+                "name": util.MOCK_TASK_NAME_1,
+                "tags": [],
                 "parameters": [],
             },
             "dependencies": [],
-            "parameters": {"coef": 1.0},
+            "parameters": parameters,
+            "experimentId": experiment_id,
+            "deploymentId": None,
             "positionX": 0,
             "positionY": 0,
+            "createdAt": mock.ANY,
+            "updatedAt": mock.ANY,
             "status": "Unset",
             "statusMessage": None,
-            "deploymentId": None
         }
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_ID,
-            "positionX": 0,
-            "positionY": 0,
-            "dependencies": []
-        })
+    def test_create_operator_success_3(self):
+        """
+        Should create and return an operator successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        task_id = util.MOCK_UUID_1
+        parameters = {"coef": 1.0}
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={
+                "taskId": task_id,
+                "positionX": 0,
+                "positionY": 0,
+                "parameters": parameters,
+            },
+        )
         result = rv.json()
         expected = {
-            "name": NAME,
-            "experimentId": EXPERIMENT_ID,
-            "taskId": TASK_ID,
+            "uuid": mock.ANY,
+            "name": util.MOCK_TASK_NAME_1,
+            "taskId": util.MOCK_UUID_1,
             "task": {
-                "name": NAME,
-                "tags": TAGS,
+                "name": util.MOCK_TASK_NAME_1,
+                "tags": [],
                 "parameters": [],
             },
             "dependencies": [],
+            "parameters": parameters,
+            "experimentId": experiment_id,
+            "deploymentId": None,
             "positionX": 0,
             "positionY": 0,
+            "createdAt": mock.ANY,
+            "updatedAt": mock.ANY,
+            "status": "Unset",
+            "statusMessage": None,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_create_operator_success_4(self):
+        """
+        Should create and return an operator successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        task_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators",
+            json={
+                "taskId": task_id,
+                "positionX": 0,
+                "positionY": 0,
+                "dependencies": [],
+            },
+        )
+        result = rv.json()
+        expected = {
+            "uuid": mock.ANY,
+            "name": util.MOCK_TASK_NAME_1,
+            "taskId": util.MOCK_UUID_1,
+            "task": {
+                "name": util.MOCK_TASK_NAME_1,
+                "tags": [],
+                "parameters": [],
+            },
+            "dependencies": [],
             "parameters": {},
-            "status": "Unset",
-            "statusMessage": None,
-            "deploymentId": None
-        }
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-
-        # Test operator status Unset with dataset task without params
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_DATASET_ID,
+            "experimentId": experiment_id,
+            "deploymentId": None,
             "positionX": 0,
             "positionY": 0,
-        })
+            "createdAt": mock.ANY,
+            "updatedAt": mock.ANY,
+            "status": "Unset",
+            "statusMessage": None,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_update_operator_project_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "unk"
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={},
+        )
         result = rv.json()
         expected = {
-            "name": NAME,
-            "experimentId": EXPERIMENT_ID,
-            "taskId": TASK_DATASET_ID,
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+    def test_update_operator_experiment_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified experiment does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={},
+        )
+        result = rv.json()
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+    def test_update_operator_operator_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified operator does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = "unk"
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={},
+        )
+        result = rv.json()
+        expected = {
+            "message": "The specified operator does not exist",
+            "code": "OperatorNotFound",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+    def test_update_operator_dependencies_are_not_valid_error_1(self):
+        """
+        Should return http status 400 and a message 'The specified dependencies are not valid'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_1
+        dependencies = [operator_id]
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={
+                "dependencies": dependencies,
+            },
+        )
+        result = rv.json()
+        expected = {
+            "message": "The specified dependencies are not valid.",
+            "code": "InvalidDependencies",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_operator_dependencies_are_not_valid_error_2(self):
+        """
+        Should return http status 400 and a message 'The specified dependencies are not valid'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_1
+        dependencies = ["unk"]
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={
+                "dependencies": dependencies,
+            },
+        )
+        result = rv.json()
+        expected = {
+            "message": "The specified dependencies are not valid.",
+            "code": "InvalidDependencies",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_operator_cyclical_dependencies_error(self):
+        """
+        Should return http status 400 and a message 'Cyclical dependencies.'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_1
+        dependencies = [util.MOCK_UUID_4]
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={
+                "dependencies": dependencies,
+            },
+        )
+        result = rv.json()
+        expected = {
+            "message": "Cyclical dependencies.",
+            "code": "InvalidCyclicalDependencies",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_operator_with_empty_success(self):
+        """
+        Should update and return an operator successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={},
+        )
+        result = rv.json()
+        expected = {
+            "uuid": operator_id,
+            "name": util.MOCK_TASK_NAME_1,
+            "taskId": util.MOCK_UUID_1,
             "task": {
-                "name": NAME,
-                "tags": ["DATASETS"],
+                "name": util.MOCK_TASK_NAME_1,
+                "tags": [],
                 "parameters": [],
             },
             "dependencies": [],
+            "parameters": {"dataset": util.IRIS_DATASET_NAME},
+            "experimentId": experiment_id,
+            "deploymentId": None,
+            "positionX": 0,
+            "positionY": 0,
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "updatedAt": mock.ANY,
+            "status": "Unset",
+            "statusMessage": None,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_update_operator_with_parameters_success(self):
+        """
+        Should update and return an operator successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_1
+        parameters = {"coef": 0.2}
+        position_x = 100
+        position_y = 200
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={
+                "parameters": parameters,
+                "positionX": position_x,
+                "positionY": position_y,
+            },
+        )
+        result = rv.json()
+        expected = {
+            "uuid": operator_id,
+            "name": util.MOCK_TASK_NAME_1,
+            "taskId": util.MOCK_UUID_1,
+            "task": {
+                "name": util.MOCK_TASK_NAME_1,
+                "tags": [],
+                "parameters": [],
+            },
+            "dependencies": [],
+            "parameters": parameters,
+            "experimentId": experiment_id,
+            "deploymentId": None,
+            "positionX": position_x,
+            "positionY": position_y,
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "updatedAt": mock.ANY,
+            "status": "Setted up",  # Status should change to "Setted up"
+            "statusMessage": None,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_update_operator_with_dependencies_success(self):
+        """
+        Should update and return an operator successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_4
+        dependencies = [util.MOCK_UUID_1]
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}",
+            json={
+                "dependencies": dependencies,
+            },
+        )
+        result = rv.json()
+        expected = {
+            "uuid": operator_id,
+            "name": util.MOCK_TASK_NAME_1,
+            "taskId": util.MOCK_UUID_1,
+            "task": {
+                "name": util.MOCK_TASK_NAME_1,
+                "tags": [],
+                "parameters": [],
+            },
+            "dependencies": dependencies,
             "parameters": {},
+            "experimentId": experiment_id,
+            "deploymentId": None,
             "positionX": 0,
             "positionY": 0,
+            "createdAt": util.MOCK_CREATED_AT_1.isoformat(),
+            "updatedAt": mock.ANY,
             "status": "Unset",
             "statusMessage": None,
-            "deploymentId": None
         }
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
 
-        # Test operator status Setted up with dataset task with param
-        rv = TEST_CLIENT.post(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators", json={
-            "taskId": TASK_DATASET_ID,
-            "positionX": 0,
-            "positionY": 0,
-            "parameters": {"dataset": "iris.csv"}
-        })
+    def test_delete_operator_project_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified project does not exist'.
+        """
+        project_id = "unk"
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.delete(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}"
+        )
         result = rv.json()
         expected = {
-            "name": NAME,
-            "experimentId": EXPERIMENT_ID,
-            "taskId": TASK_DATASET_ID,
-            "task": {
-                "name": NAME,
-                "tags": ["DATASETS"],
-                "parameters": [],
-            },
-            "dependencies": [],
-            "parameters": {"dataset": 'iris.csv'},
-            "positionX": 0,
-            "positionY": 0,
-            "status": "Unset",
-            "statusMessage": None,
-            "deploymentId": None
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
         }
-        # uuid, created_at, updated_at are machine-generated
-        # we assert they exist, but we don't assert their values
-        machine_generated = ["uuid", "createdAt", "updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-
-    def test_update_operator(self):
-        rv = TEST_CLIENT.patch(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={})
-        result = rv.json()
-        expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID}", json={})
-        result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
+    def test_delete_operator_experiment_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified experiment does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+        operator_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/foo", json={})
-        result = rv.json()
-        expected = {"message": "The specified operator does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-            "dependencies": [OPERATOR_ID],
-        })
-        result = rv.json()
-        expected = {"message": "The specified dependencies are not valid."}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-            "dependencies": [str(uuid_alpha())],
-        })
-        result = rv.json()
-        expected = {"message": "The specified dependencies are not valid."}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_2}", json={
-            "dependencies": [OPERATOR_ID],
-        })
-        result = rv.json()
-        expected = {"message": "Cyclical dependencies."}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={})
+        rv = TEST_CLIENT.delete(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}"
+        )
         result = rv.json()
         expected = {
-            "uuid": OPERATOR_ID,
-            "name": NAME,
-            "experimentId": EXPERIMENT_ID,
-            "taskId": TASK_ID,
-            "task": {
-                "name": NAME,
-                "tags": TAGS,
-                "parameters": [],
-            },
-            "dependencies": result['dependencies'],
-            "parameters": PARAMETERS,
-            "positionX": POSITION_X,
-            "positionY": POSITION_Y,
-            "createdAt": CREATED_AT_ISO,
-            "status": "Unset",
-            "statusMessage": None,
-            "deploymentId": None
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
         }
-        machine_generated = ["updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
         self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-            "parameters": {"coef": 0.2},
-            "positionX": 100,
-            "positionY": 200,
-        })
+    def test_delete_operator_operator_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified operator does not exist'.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = "unk"
+
+        rv = TEST_CLIENT.delete(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}"
+        )
         result = rv.json()
         expected = {
-            "uuid": OPERATOR_ID,
-            "name": NAME,
-            "experimentId": EXPERIMENT_ID,
-            "taskId": TASK_ID,
-            "task": {
-                "name": NAME,
-                "tags": TAGS,
-                "parameters": [],
-            },
-            "dependencies": result['dependencies'],
-            "parameters": {"coef": 0.2},
-            "positionX": 100,
-            "positionY": 200,
-            "createdAt": CREATED_AT_ISO,
-            "status": "Setted up",
-            "statusMessage": None,
-            "deploymentId": None
+            "message": "The specified operator does not exist",
+            "code": "OperatorNotFound",
         }
-        machine_generated = ["updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-            "dependencies": [OPERATOR_ID_3],
-        })
-        result = rv.json()
-        expected = {
-            "uuid": OPERATOR_ID,
-            "name": NAME,
-            "experimentId": EXPERIMENT_ID,
-            "taskId": TASK_ID,
-            "task": {
-                "name": NAME,
-                "tags": TAGS,
-                "parameters": [],
-            },
-            "dependencies": [OPERATOR_ID_3],
-            "parameters": {"coef": 0.2},
-            "positionX": 100,
-            "positionY": 200,
-            "createdAt": CREATED_AT_ISO,
-            "status": "Setted up",
-            "statusMessage": None,
-            "deploymentId": None
-        }
-        machine_generated = ["updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}", json={
-            "parameters": {"coef": None},
-        })
-        result = rv.json()
-        self.assertEqual(rv.status_code, 200)  # None is allowed
-
-    def test_delete_operator(self):
-        rv = TEST_CLIENT.delete(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}")
-        result = rv.json()
-        expected = {"message": "The specified project does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID}")
-        result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
+    def test_delete_operator_success(self):
+        """
+        Should delete operator successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        operator_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/unk")
-        result = rv.json()
-        expected = {"message": "The specified operator does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
-
-        rv = TEST_CLIENT.delete(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID}")
+        rv = TEST_CLIENT.delete(
+            f"/projects/{project_id}/experiments/{experiment_id}/operators/{operator_id}"
+        )
         result = rv.json()
         expected = {"message": "Operator deleted"}
         self.assertDictEqual(expected, result)
-
-    def test_patch_parameter(self):
-        rv = TEST_CLIENT.patch(f"/projects/unk/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/foo", json={})
-        result = rv.json()
-        expected = {"message": "The specified project does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/unk/operators/{OPERATOR_ID_6}/parameters/foo", json={})
-        result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/unk/parameters/foo", json={})
-        result = rv.json()
-        expected = {"message": "The specified operator does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)
-
-        rv = TEST_CLIENT.patch(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/operators/{OPERATOR_ID_6}/parameters/foo",
-                               json={"value": "foo"})
-        result = rv.json()
-        expected = "foo"
-        self.assertEqual(expected, result)
         self.assertEqual(rv.status_code, 200)

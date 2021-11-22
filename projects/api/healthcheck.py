@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 
+from projects import database
 from projects.exceptions import ServiceUnavailable
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/healthcheck",
@@ -15,9 +15,26 @@ router = APIRouter(
 
 
 @router.get("")
-def handle_healthcheck(session: Session = Depends(session_scope)):
+def handle_healthcheck(session: Session = Depends(database.session_scope)):
+    """
+    Handles GET request to /.
+
+    Parameters
+    -------
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    str
+
+    Raises
+    ------
+    ServiceUnavailable
+    """
     try:
         session.query(sqlalchemy.false()).filter(sqlalchemy.false()).all()
     except OperationalError:
-        raise ServiceUnavailable("Could not connect to database")
+        raise ServiceUnavailable(
+            code="CannotConnectToDatabase", message="Could not connect to database"
+        )
     return "Sucessfully connected to db"

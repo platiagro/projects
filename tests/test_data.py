@@ -1,87 +1,102 @@
 # -*- coding: utf-8 -*-
-from tests.test_results import TEST_CLIENT
-from unittest import TestCase
-from unittest.mock import patch
+import unittest
+import unittest.mock as mock
 
 from fastapi.testclient import TestClient
 
 from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
+from projects.database import session_scope
 
+import tests.util as util
+
+app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
-PROJECT_ID = str(uuid_alpha())
-EXPERIMENT_ID = str(uuid_alpha())
-NAME = "foo"
-CREATED_AT = "2000-01-01 00:00:00"
-UPDATED_AT = "2000-01-01 00:00:00"
-TENANT = "anonymous"
 
-CONTENT_DISPOSITION = "attachment; filename=results.zip"
-CONTENT_TYPE = "application/x-zip-compressed"
+class TestExperimentData(unittest.TestCase):
+    maxDiff = None
 
-
-class TestExperimentData(TestCase):
     def setUp(self):
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, 1, 1, CREATED_AT, UPDATED_AT))
-        conn.close()
-    
     def tearDown(self):
-        conn = engine.connect()
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
-        conn.execute(text)
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-        conn.execute(text)
-        conn.close()
+    def test_get_data_does_project_exist(self):
+        """
+        Should return an http status 404 and a message "The specified project does not exist".
+        """
+        experiment_id = util.MOCK_UUID_1
 
-    @patch("kubernetes.client.CoreV1Api")
-    @patch("kubernetes.stream.stream")
-    def test_get_data(self, mock_k8s_stream, mock_client):
-        rv = TEST_CLIENT.get(f"/projects/unk/experiments/{EXPERIMENT_ID}/data")
+        rv = TEST_CLIENT.get(f"/projects/unk/experiments/{experiment_id}/data")
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/unk/data")
+    def test_get_data_does_experiment_exist(self):
+        """
+        Should return an http status 404 and a message "The specified experiment does not exist".
+        """
+        project_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments/unk/data")
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        # mock the kubernetes client methods
-        mock_api_instance = mock_client.return_value
-        mock_api_instance.read_namespaced_pod.return_value.status.phase = "Running"
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.stream.stream",
+        return_value=util.MOCK_STREAM,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def teste_get_data(self, mock_load_config, mock_k8s_stream, mock_core_v1_api):
+        """
+        Should load data request successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        content_disposition = util.CONTENT_DISPOSITION
+        content_type = util.CONTENT_TYPE
 
-        # mock kubernetes stream methods
-        mock_container_stream = mock_k8s_stream.return_value
-        # this is needed to break the while loop
-        mock_container_stream.is_open.side_effect = [True, False]
-        mock_container_stream.read_stdout.return_value = "Z2l0aHViLmNvbS9wbGF0aWFncm8vcHJvamVjdHM="
-
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/data")
-        mock_api_instance.create_namespaced_pod.assert_called()
-        mock_api_instance.delete_namespaced_pod.assert_called()
+        rv = TEST_CLIENT.get(f"/projects/{project_id}/experiments/{experiment_id}/data")
         self.assertEqual(rv.status_code, 200)
-        self.assertEqual(
-            rv.headers.get("Content-Disposition"),
-            CONTENT_DISPOSITION
+        self.assertEqual(rv.headers.get("Content-Disposition"), content_disposition)
+        self.assertEqual(rv.headers.get("Content-Type"), content_type)
+        mock_core_v1_api.assert_any_call()
+        mock_k8s_stream.assert_any_call(
+            util.MOCK_CORE_V1_API.connect_get_namespaced_pod_exec,
+            name="download-uuid-1",
+            namespace="anonymous",
+            command=[
+                "/bin/sh",
+                "-c",
+                "apk add zip -q && zip -q -r - /tmp/data | base64",
+            ],
+            container="main",
+            stderr=True,
+            stdin=False,
+            stdout=True,
+            tty=False,
+            _preload_content=False,
         )
-        self.assertEqual(
-            rv.headers.get("Content-Type"),
-            CONTENT_TYPE
-        )
-        
+        mock_load_config.assert_any_call()

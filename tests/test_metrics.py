@@ -1,117 +1,135 @@
 # -*- coding: utf-8 -*-
-from json import dumps
-from unittest import TestCase
+import unittest
+import unittest.mock as mock
 
 from fastapi.testclient import TestClient
 
-import platiagro
-
 from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from projects.database import session_scope
 
+import tests.util as util
+
+app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
-PROJECT_ID = str(uuid_alpha())
-EXPERIMENT_ID = str(uuid_alpha())
-TASK_ID = str(uuid_alpha())
-OPERATOR_ID = str(uuid_alpha())
-RUN_ID = str(uuid_alpha())
-NAME = "foo"
-DESCRIPTION = "long foo"
-TARGET = "col4"
-POSITION = 0
-PARAMETERS = {}
-COMMANDS = ["CMD"]
-COMMANDS_JSON = dumps(COMMANDS)
-ARGUMENTS = ["ARG"]
-ARGUMENTS_JSON = dumps(ARGUMENTS)
-IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
-TAGS = ["PREDICTOR"]
-TAGS_JSON = dumps(TAGS)
-PARAMETERS_JSON = dumps(PARAMETERS)
-EXPERIMENT_NOTEBOOK_PATH = "Experiment.ipynb"
-DEPLOYMENT_NOTEBOOK_PATH = "Deployment.ipynb"
-CREATED_AT = "2000-01-01 00:00:00"
-UPDATED_AT = "2000-01-01 00:00:00"
 
-EXPERIMENT_ID = str(uuid_alpha())
-OPERATOR_ID = str(uuid_alpha())
-RUN_ID = str(uuid_alpha())
-TENANT = "anonymous"
+class TestMetrics(unittest.TestCase):
+    maxDiff = None
 
-
-class TestMetrics(TestCase):
     def setUp(self):
-        self.maxDiff = None
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, tags, parameters, "
-            f"experiment_notebook_path, deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, TAGS_JSON, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, CREATED_AT, UPDATED_AT,))
-        conn.close()
-
-        platiagro.save_metrics(experiment_id=EXPERIMENT_ID,
-                               operator_id=OPERATOR_ID,
-                               run_id=RUN_ID,
-                               accuracy=1.0)
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
     def tearDown(self):
-        prefix = "Experiments/{EXPERIMENT_ID}"
-        for obj in MINIO_CLIENT.list_objects(BUCKET_NAME, prefix=prefix, recursive=True):
-            MINIO_CLIENT.remove_object(BUCKET_NAME, obj.object_name)
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-        conn = engine.connect()
-        text = f"DELETE FROM operators WHERE experiment_id = '{EXPERIMENT_ID}'"
-        conn.execute(text)
+    def test_list_metrics_project_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = "unk"
+        experiment_id = "unk"
+        run_id = "unk"
+        operator_id = "unk"
 
-        text = f"DELETE FROM tasks WHERE uuid = '{TASK_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM experiments WHERE project_id = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-        conn.execute(text)
-        conn.close()
-
-    def test_list_metrics(self):
-        rv = TEST_CLIENT.get(f"/projects/1/experiments/unk/runs/unk/operators/{OPERATOR_ID}/metrics")
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/metrics"
+        )
         result = rv.json()
-        expected = {"message": "The specified project does not exist"}
+        expected = {
+            "message": "The specified project does not exist",
+            "code": "ProjectNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/unk/runs/unk/operators/{OPERATOR_ID}/metrics")
+    def test_list_metrics_experiment_not_found(self):
+        """
+        Should return an http status 404 and an error message.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = "unk"
+        run_id = "unk"
+        operator_id = "unk"
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/metrics"
+        )
         result = rv.json()
-        expected = {"message": "The specified experiment does not exist"}
+        expected = {
+            "message": "The specified experiment does not exist",
+            "code": "ExperimentNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/projects/{PROJECT_ID}/experiments/{EXPERIMENT_ID}/runs/{RUN_ID}/operators/{OPERATOR_ID}/metrics")
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch(
+        "platiagro.list_metrics",
+        side_effect=FileNotFoundError(),
+    )
+    def test_list_metrics_success_1(
+        self,
+        mock_list_metrics,
+        mock_kfp_client,
+    ):
+        """
+        Should return a list of metrics successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/metrics"
+        )
+        result = rv.json()
+        self.assertIsInstance(result, list)
+        self.assertEqual(result, [])
+
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_list_metrics.assert_any_call(
+            experiment_id=experiment_id, operator_id=operator_id, run_id=run_id
+        )
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch(
+        "platiagro.list_metrics",
+        return_value=[{"accuracy": 1.0}],
+    )
+    def test_list_metrics_success_2(
+        self,
+        mock_list_metrics,
+        mock_kfp_client,
+    ):
+        """
+        Should return a list of metrics successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        run_id = "latest"
+        operator_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(
+            f"/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/metrics"
+        )
         result = rv.json()
         self.assertIsInstance(result, list)
         self.assertEqual(result, [{"accuracy": 1.0}])
+
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_list_metrics.assert_any_call(
+            experiment_id=experiment_id, operator_id=operator_id, run_id=run_id
+        )

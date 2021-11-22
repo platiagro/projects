@@ -93,7 +93,8 @@ def get_container_logs(pod, container):
                 return None
 
         raise InternalServerError(
-            f"Error while trying to retrive container's log: {message}"
+            code="CannotRetrieveContainerLogs",
+            message=f"Error while trying to retrieve container's log: {message}",
         )
 
 
@@ -175,7 +176,10 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
         if e.status != 409:
             body = literal_eval(e.body)
             message = body["message"]
-            raise InternalServerError(message)
+            raise InternalServerError(
+                code="CannotCreateNamespacedPod",
+                message=f"Error while trying to create pod: {message}",
+            )
 
     while True:
         resp = api_instance.read_namespaced_pod(name=pod_name, namespace=namespace)
@@ -230,6 +234,16 @@ async def pop_log_queue(queue, pool):
 
             queue.task_done()
 
+    done = 0
+    while True:
+        out = q.get()
+        if out == "":
+            # End of the stream.
+            done += 1
+            if done == len(iters):
+                # When all iters are done, break out.
+                return
+        else:
             yield out
     
     # Atualmente esses métodos não encerram as threads geradas nessa pool por motivo desconhecido

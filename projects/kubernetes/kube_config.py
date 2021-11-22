@@ -30,4 +30,6 @@ def load_kube_config():
     try:
         config.load_incluster_config()
     except Exception:
-        raise InternalServerError("Failed to connect to cluster.")
+        raise InternalServerError(
+            code="CannotConnectToCluster", message="Failed to connect to cluster."
+        )
