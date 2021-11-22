@@ -62,6 +62,7 @@ def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, 
                                                experiment_id=experiment_id,
                                                notebook_path=notebook_path,
                                                dataset=dataset)
+            container_op.add_pod_label("experiment-id", experiment_id)
             containers[operator.uuid] = (operator, container_op)
 
         if deployment_id is not None:

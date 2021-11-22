@@ -3,8 +3,7 @@
 
 from typing import Optional
 
-
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Header
 from sse_starlette.sse import EventSourceResponse
 from sqlalchemy.orm import Session
 
@@ -183,6 +182,7 @@ async def handle_log_deployment(experiment_id: str):
     -------
     EventSourceResponse
     """
+
     controller = LogController()
-    stream = controller.event_logs(experiment_id=experiment_id)
+    stream = controller.experiment_event_logs(experiment_id)
     return EventSourceResponse(stream)
