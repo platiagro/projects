@@ -231,21 +231,9 @@ async def pop_log_queue(queue, pool):
     try:
         while True:
             out = await queue.get()
-
+            yield out
             queue.task_done()
 
-    done = 0
-    while True:
-        out = q.get()
-        if out == "":
-            # End of the stream.
-            done += 1
-            if done == len(iters):
-                # When all iters are done, break out.
-                return
-        else:
-            yield out
-    
     # Atualmente esses métodos não encerram as threads geradas nessa pool por motivo desconhecido
     except asyncio.CancelledError:
         pool.shutdown(wait=False)
