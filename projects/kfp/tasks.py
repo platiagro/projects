@@ -113,7 +113,6 @@ def make_task_creation_job(
 
 
 def create_init_task_container_op(
-    task: models.Task,
     copy_from: Optional[models.Task] = None,
     experiment_notebook: Optional[Dict] = None,
     deployment_notebook: Optional[Dict] = None,
