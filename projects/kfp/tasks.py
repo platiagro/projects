@@ -113,6 +113,7 @@ def make_task_creation_job(
 
 
 def create_init_task_container_op(
+    task: models.Task,
     copy_from: Optional[models.Task] = None,
     experiment_notebook: Optional[Dict] = None,
     deployment_notebook: Optional[Dict] = None,
@@ -143,10 +144,10 @@ def create_init_task_container_op(
     else:
         python_script = (
             f"import json; "
-            "f = open('/home/destination/deployment.ipynb','w'); "
+            f"f = open('{DESTINATION_TASK_VOLUME_MOUNT_PATH}/Deployment.ipynb','w'); "
             f"json.dump({DEPLOYMENT_NOTEBOOK},f); "
             f"f.close(); "
-            "f = open('/home/destination/deployment.ipynb','w'); "
+            f"f = open('{DESTINATION_TASK_VOLUME_MOUNT_PATH}/Experiment.ipynb','w'); "
             f"json.dump({EXPERIMENT_NOTEBOOK},f); "
             f"f.close(); "
         )
