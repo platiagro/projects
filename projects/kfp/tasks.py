@@ -6,7 +6,7 @@ import json
 import os
 import pkgutil
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from jinja2 import Template
 from kfp import dsl
