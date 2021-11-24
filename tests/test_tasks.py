@@ -14,6 +14,8 @@ import tests.util as util
 app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
+HOST_URL = "http://ml-pipeline.kubeflow:8888"
+
 
 class TestTasks(unittest.TestCase):
     maxDiff = None
@@ -124,7 +126,7 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.post("/tasks", json={})
         self.assertEqual(rv.status_code, 200)
 
-        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_kfp_client.assert_any_call(host=HOST_URL)
 
     def test_create_task_given_name_already_exists_error(self):
         """
@@ -248,7 +250,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_kfp_client.assert_any_call(host=HOST_URL)
 
     @mock.patch(
         "kfp.Client",
@@ -294,7 +296,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_kfp_client.assert_any_call(host=HOST_URL)
 
     @mock.patch(
         "kfp.Client",
@@ -337,7 +339,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_kfp_client.assert_any_call(host=HOST_URL)
 
     @mock.patch(
         "kfp.Client",
@@ -384,7 +386,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_kfp_client.assert_any_call(host=HOST_URL)
 
     def test_get_task_not_found(self):
         """
