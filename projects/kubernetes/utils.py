@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utility functions."""
 import time
-
-from queue import Queue
-from threading import Thread
+import asyncio
 
 
 from ast import literal_eval
@@ -219,25 +217,25 @@ def get_volume_from_pod(volume_name, namespace, experiment_id):
     return clean_zip_file_content
 
 
-def consume(q, s):
-    for i in s:
-        q.put(i)
+async def pop_log_queue(queue, pool):
+    """
+    ----------
+    Parameters
+        queue : asyncio.Queue
+        pool : futures.ThreadPoolExecutor
 
-
-def merge(iters):
-    q = Queue()
-    for it in iters:
-        t = Thread(target=consume, args=(q, it))
-        t.start()
-
-    done = 0
-    while True:
-        out = q.get()
-        if out == "":
-            # End of the stream.
-            done += 1
-            if done == len(iters):
-                # When all iters are done, break out.
-                return
-        else:
+    ----------
+    Yields
+        out :  str
+    """
+    try:
+        while True:
+            out = await queue.get()
             yield out
+            queue.task_done()
+
+    # Atualmente esses métodos não encerram as threads geradas nessa pool por motivo desconhecido
+    except asyncio.CancelledError:
+        pool.shutdown(wait=False)
+    finally:
+        pool.shutdown(wait=False)

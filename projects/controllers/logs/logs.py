@@ -6,21 +6,23 @@ import re
 import dateutil.parser
 import logging
 import asyncio
+
+from asyncio import CancelledError
+from concurrent import futures
 from typing import List, Optional
 
+from projects.schemas.log import Log, LogList
 from projects.kfp.runs import get_latest_run_id
+from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.argo import list_workflow_pods
 from projects.kubernetes.seldon import list_deployment_pods
 from projects.kubernetes.utils import get_container_logs
-from projects.kubernetes.utils import merge
-from projects.schemas.log import Log, LogList
-from projects.exceptions import BadRequest
+from projects.kubernetes.utils import pop_log_queue
 from projects.kubernetes.kube_config import load_kube_config
 
 from kubernetes import client
 from kubernetes.watch import Watch
 from kubernetes.client.rest import ApiException
-from urllib3.exceptions import ReadTimeoutError
 
 
 EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
@@ -34,6 +36,11 @@ LOG_LEVELS = {
 
 
 class LogController:
+    def __init__(self):
+        self.queue = asyncio.Queue()
+        self.loop = asyncio.get_running_loop()
+        self.pool = futures.ThreadPoolExecutor()
+
     def list_logs(
         self,
         project_id: str,
@@ -223,6 +230,11 @@ class LogController:
         """
         Generates log stream of given pod's container.
 
+
+        Whenever the event source is called, there's a new thread for each pod that listen for new logs and
+        there's a thread that watches for new pods being created. But there's a limitation within the log generation.
+        When the client disconnects from the event source, the allocated threads aren't deallocated, not releasing the memory and process used.
+
         Parameters
         ----------
             pod: str
@@ -238,14 +250,6 @@ class LogController:
         pod_name = pod.metadata.name
         namespace = pod.metadata.namespace
         container_name = container.name
-        if container.env is None:
-            task_name = pod.metadata.name
-        else:
-            task_name = next(
-                (e.value for e in container.env if e.name == "TASK_NAME"),
-                pod.metadata.name,
-            )
-        created_at = pod.metadata.creation_timestamp
         try:
             for streamline in w.stream(
                 v1.read_namespaced_pod_log,
@@ -256,8 +260,7 @@ class LogController:
                 tail_lines=0,
                 timestamps=True,
             ):
-                for message in self.split_messages(streamline, task_name, created_at):
-                    yield (message.json())
+                self.queue.put_nowait(streamline)
 
         except RuntimeError as e:
             logging.exception(e)
@@ -268,52 +271,88 @@ class LogController:
             return
 
         except ApiException as e:
+            """
+            Expected behavior when trying to connect to a container that isn't ready yet.
+            """
+            logging.exception(e)
+
+        except CancelledError as e:
+            """
+            Expected behavior when trying to cancel task
+            """
             logging.exception(e)
             return
 
-        except ReadTimeoutError:
+    def deployment_event_logs(self, deployment_id: str):
+        """
+        Search for online pods to start log stream
+
+        Parameters
+        ----------
+            deployment_id: str
+
+        Return
+        ------
+            Iterator
+        """
+        self.loop.run_in_executor(self.pool, self.watch_deployment_pods, deployment_id)
+        return pop_log_queue(self.queue, self.pool)
+
+    def watch_deployment_pods(self, deployment_id):
+        load_kube_config()
+        v1 = client.CoreV1Api()
+        w = Watch()
+        try:
+            for pod in w.stream(
+                v1.list_namespaced_pod,
+                namespace=KF_PIPELINES_NAMESPACE,
+                label_selector=f"seldon-deployment-id={deployment_id}",
+            ):
+                if pod["type"] == "ADDED":
+                    pod = pod["object"]
+                    for container in pod.spec.containers:
+                        if container.name not in EXCLUDE_CONTAINERS:
+                            self.loop.run_in_executor(self.pool, self.log_stream, pod, container)
+        except CancelledError:
             """
-            Expected behavior if given container does not have any new log on log stream.
-            Timeout is needed because if there's no new log, the application blocks in the loop and doesn't handle client disconnection.
+            Expected behavior when trying to cancel task
             """
-            yield ("Log request timed out.", container, pod_name, namespace)
-            logging("Log request timed out.", container, pod_name, namespace)
+            w.stop()
             return
 
-    def event_logs(
-        self, deployment_id: Optional[str] = None, experiment_id: Optional[str] = None
-    ):
-        pods = list()
-        run_id = get_latest_run_id(experiment_id or deployment_id)
-        if deployment_id is not None:
-            # Tries to retrieve any pods associated to a seldondeployment
-            pods.extend(
-                list_deployment_pods(deployment_id=deployment_id),
-            )
+    def experiment_event_logs(self, experiment_id: str):
+        """
+        Search for online pods to start log stream
 
-        if len(pods) == 0:
-            # BUG: workflows and pods are deleted after 1 day due to a
-            # "Garbage Collector" feature of Argo workflows/Kubeflow Pipelines.
-            # The link below provide useful information on how to configure log
-            # persistence and where to set the Time-to-live (TTL) for workflows:
-            # https://github.com/kubeflow/pipelines/issues/844#issuecomment-559841627
-            # We can make use of these configurations and fix this bug later.
-            pods.extend(
-                list_workflow_pods(run_id=run_id),
-            )
+        Parameters
+        ----------
+            experiment_id: str
 
-        iterators = list()
+        Return
+        ------
+            Iterator
+        """
+        self.loop.run_in_executor(self.pool, self.watch_workflow_pods, experiment_id)
+        return pop_log_queue(self.queue, self.pool)
 
-        if not pods:
-            raise BadRequest(
-                code="CannotCreateLogStream",
-                message="Unable to create log stream. No active pod available.",
-            )
-
-        for pod in pods:
-            for container in pod.spec.containers:
-
-                if container.name not in EXCLUDE_CONTAINERS:
-                    iterators.append(self.log_stream(pod, container))
-
-        return merge(iterators)
+    def watch_workflow_pods(self, experiment_id: str):
+        # Bug conhecido:
+        # Um pod que foi encontrado pelo worker de pods pode não ser encontrado pelo worker de logs no caso de experimentos
+        load_kube_config()
+        v1 = client.CoreV1Api()
+        w = Watch()
+        try:
+            for pod in w.stream(v1.list_namespaced_pod,
+                                namespace=KF_PIPELINES_NAMESPACE,
+                                label_selector=f"experiment-id={experiment_id}"):
+                if pod["type"] == "ADDED":
+                    pod = pod["object"]
+                    for container in pod.spec.containers:
+                        if container.name not in EXCLUDE_CONTAINERS and "name" in pod.metadata.annotations:
+                            self.loop.run_in_executor(self.pool, self.log_stream, pod, container)
+        except CancelledError:
+            """
+            Expected behavior when trying to cancel task
+            """
+            w.stop()
+            return

@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 """Seldon utility functions."""
+
+
 from kubernetes import client
+
 
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.istio import get_cluster_ip, get_protocol
 from projects.kubernetes.kube_config import load_kube_config
+
+EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
 
 
 def get_seldon_deployment_url(deployment_id, ip=None, protocol=None, external_url=True):
@@ -37,7 +42,7 @@ def get_seldon_deployment_url(deployment_id, ip=None, protocol=None, external_ur
         if not protocol:
             protocol = get_protocol()
 
-        return f'{protocol}://{ip}/seldon/{KF_PIPELINES_NAMESPACE}/{deployment_id}/api/v1.0/predictions'
+        return f"{protocol}://{ip}/seldon/{KF_PIPELINES_NAMESPACE}/{deployment_id}/api/v1.0/predictions"
     else:
         return f"http://{deployment_id}-model.{KF_PIPELINES_NAMESPACE}:8000/api/v1.0/predictions"
 
@@ -63,7 +68,7 @@ def list_deployment_pods(deployment_id):
     core_api = client.CoreV1Api()
     pod_list = core_api.list_namespaced_pod(
         namespace=KF_PIPELINES_NAMESPACE,
-        label_selector=f'seldon-deployment-id={deployment_id}',
+        label_selector=f"seldon-deployment-id={deployment_id}",
     ).items
 
     return pod_list
@@ -86,11 +91,11 @@ def list_project_seldon_deployments(project_id):
     custom_api = client.CustomObjectsApi()
 
     deployments = custom_api.list_namespaced_custom_object(
-            group='machinelearning.seldon.io',
-            version='v1',
-            namespace=KF_PIPELINES_NAMESPACE,
-            plural='seldondeployments',
-            label_selector=f'projectId={project_id}',
+        group="machinelearning.seldon.io",
+        version="v1",
+        namespace=KF_PIPELINES_NAMESPACE,
+        plural="seldondeployments",
+        label_selector=f"projectId={project_id}",
     )["items"]
 
     return deployments
