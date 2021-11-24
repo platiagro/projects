@@ -73,7 +73,7 @@ def make_task_creation_job(
         # And a ContainerOp to initialize task contents
         # Either the contents of other task are copied,
         # or some empty notebooks are copied into the volume
-        container_op = create_init_task_container_op(task=task, copy_from=copy_from)
+        container_op = create_init_task_container_op(copy_from=copy_from)
         container_op.add_pvolumes(
             {DESTINATION_TASK_VOLUME_MOUNT_PATH: volume_op_task.volume}
         )
@@ -113,10 +113,7 @@ def make_task_creation_job(
 
 
 def create_init_task_container_op(
-    task: models.Task,
     copy_from: Optional[models.Task] = None,
-    experiment_notebook: Optional[Dict] = None,
-    deployment_notebook: Optional[Dict] = None,
 ):
     """
     Creates a kfp.ContainerOp that initializes a task.
