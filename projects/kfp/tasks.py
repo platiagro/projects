@@ -132,6 +132,7 @@ def create_init_task_container_op(
     kfp.dsl.ContainerOp
     """
 
+    # getting container command
     if copy_from:
         command = [
             "/bin/sh",
