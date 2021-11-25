@@ -258,12 +258,13 @@ IRIS_HEADERLESS_DATAFRAME = pd.DataFrame(
     IRIS_DATA_ARRAY, columns=IRIS_HEADERLESS_COLUMNS
 )
 
-MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3, MOCK_UUID_4, MOCK_UUID_5 = (
+MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3, MOCK_UUID_4, MOCK_UUID_5, MOCK_UUID_6 = (
     "uuid-1",
     "uuid-2",
     "uuid-3",
     "uuid-4",
     "uuid-5",
+    "uuid-6",
 )
 MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3, MOCK_PROJECT_NAME_4 = (
     "project-1",
@@ -279,12 +280,14 @@ MOCK_DEPLOYMENT_NAME_1, MOCK_DEPLOYMENT_NAME_2 = "deployment-1", "deployment-2"
     MOCK_TASK_NAME_3,
     MOCK_TASK_NAME_4,
     MOCK_TASK_NAME_5,
+    MOCK_TASK_NAME_6,
 ) = (
     "task-1",
     "task-2",
     "task-3",
     "task-4",
     "task-5",
+    "task-6",
 )
 MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
 (
@@ -293,7 +296,9 @@ MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
     MOCK_CREATED_AT_3,
     MOCK_CREATED_AT_4,
     MOCK_CREATED_AT_5,
+    MOCK_CREATED_AT_6,
 ) = (
+    datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
@@ -306,7 +311,9 @@ MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
     MOCK_UPDATED_AT_3,
     MOCK_UPDATED_AT_4,
     MOCK_UPDATED_AT_5,
+    MOCK_UPDATED_AT_6,
 ) = (
+    datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
     datetime.utcnow(),
@@ -898,6 +905,14 @@ def create_mocks():
             tags=[],
             created_at=MOCK_CREATED_AT_4,
             updated_at=MOCK_UPDATED_AT_4,
+        ),
+        models.Task(
+            uuid=MOCK_UUID_6,
+            name=MOCK_TASK_NAME_6,
+            category="DEFAULT",
+            tags=[],
+            created_at=MOCK_CREATED_AT_6,
+            updated_at=MOCK_UPDATED_AT_6,
         ),
     ]
     session.bulk_save_objects(objects)
