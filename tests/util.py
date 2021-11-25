@@ -691,6 +691,29 @@ MOCK_TASK_5 = {
     "uuid": MOCK_UUID_5,
 }
 
+MOCK_TASK_6 = {
+    "arguments": None,
+    "category": "DEFAULT",
+    "commands": None,
+    "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
+    "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
+    "createdAt": mock.ANY,
+    "dataIn": None,
+    "dataOut": None,
+    "description": None,
+    "docs": None,
+    "hasNotebook": False,
+    "image": models.task.TASK_DEFAULT_EXPERIMENT_IMAGE,
+    "memoryLimit": models.task.TASK_DEFAULT_MEMORY_LIMIT,
+    "memoryRequest": models.task.TASK_DEFAULT_MEMORY_REQUEST,
+    "name": MOCK_TASK_NAME_6,
+    "parameters": [],
+    "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
+    "tags": [],
+    "updatedAt": mock.ANY,
+    "uuid": MOCK_UUID_6,
+}
+
 MOCK_TASK_LIST = {
     "tasks": [
         MOCK_TASK_1,
@@ -698,13 +721,14 @@ MOCK_TASK_LIST = {
         MOCK_TASK_3,
         MOCK_TASK_4,
         MOCK_TASK_5,
+        MOCK_TASK_6,
     ],
-    "total": 5,
+    "total": 6,
 }
 
 MOCK_TASK_LIST_SORTED_BY_NAME_DESC = {
     "tasks": MOCK_TASK_LIST["tasks"][::-1],
-    "total": 5,
+    "total": 6,
 }
 
 MOCK_MONITORING_1 = {

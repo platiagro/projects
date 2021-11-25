@@ -9,6 +9,7 @@ from projects import models
 from projects.api.main import app
 from projects.database import session_scope
 from projects.kfp.tasks import make_task_creation_job
+from projects.kfp import KF_PIPELINES_NAMESPACE
 
 import tests.util as util
 
@@ -261,7 +262,12 @@ class TestTasks(unittest.TestCase):
         self,
         mock_kfp_client,
     ):
-        make_task_creation_job
+        task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
+        all_tasks = util.TestingSessionLocal().query(models.Task).all()
+
+        make_task_creation_job(
+            task=task, namespace=KF_PIPELINES_NAMESPACE, all_tasks=all_tasks
+        )
 
     @mock.patch(
         "kfp.Client",
@@ -274,7 +280,7 @@ class TestTasks(unittest.TestCase):
         """
         Should create and return a task successfully.
         """
-        task_name = "task-6"
+        task_name = "task_with_arbitrary_name"
         task_category = "DEFAULT"
 
         rv = TEST_CLIENT.post(
