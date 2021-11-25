@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 
 from projects import __version__, api
+from projects.database import init_db
 from projects.exceptions import (
     BadRequest,
     Forbidden,
@@ -46,6 +47,14 @@ app.include_router(api.parameters.router)
 app.include_router(api.templates.router)
 app.include_router(api.responses.router)
 app.include_router(api.healthcheck.router)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Run before the application starts. Creates tables in the database.
+    """
+    init_db()
 
 
 @app.get("/", response_class=PlainTextResponse)
