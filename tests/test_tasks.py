@@ -265,8 +265,20 @@ class TestTasks(unittest.TestCase):
         task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
         all_tasks = util.TestingSessionLocal().query(models.Task).all()
 
+        # empty task case
         make_task_creation_job(
             task=task, namespace=KF_PIPELINES_NAMESPACE, all_tasks=all_tasks
+        )
+
+        # copied task case
+        source_task = (
+            util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_1)
+        )
+        make_task_creation_job(
+            task=task,
+            namespace=KF_PIPELINES_NAMESPACE,
+            all_tasks=all_tasks,
+            copy_from=source_task,
         )
 
     @mock.patch(
