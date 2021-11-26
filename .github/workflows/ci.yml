@@ -122,3 +122,19 @@ jobs:
     - name: Image digest
       if: ${{ always() }}
       run: echo ${{ steps.docker_build_agent.outputs.digest }}
+
+    - name: Build and push docker image (SHARE TASK) 📦
+      if: ${{ always() }}
+      id: docker_build_share_task
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: docker.io/platiagro/share-task:${{ steps.vars.outputs.TAG }}
+        file: Dockerfile.sharetask
+        build-args: |
+          COMMIT=${{ steps.vars.outputs.COMMIT }}
+          BRANCH=${{ steps.vars.outputs.BRANCH }}
+          BASE_CONTAINER=docker.io/platiagro/projects:${{ steps.vars.outputs.TAG }}
+    - name: Image digest
+      if: ${{ always() }}
+      run: echo ${{ steps.docker_build_share_task.outputs.digest }}
