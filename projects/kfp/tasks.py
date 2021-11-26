@@ -75,6 +75,7 @@ def make_task_creation_job(
         # Either the contents of other task are copied,
         # or some empty notebooks are copied into the volume
         container_op = create_init_task_container_op(copy_from=copy_from)
+
         container_op.add_pvolumes(
             {DESTINATION_TASK_VOLUME_MOUNT_PATH: volume_op_task.volume}
         )
@@ -106,7 +107,7 @@ def make_task_creation_job(
 
     # this will run the pipeline_func, just for test case
     if test_mode:
-        pipeline_func()
+        create_init_task_container_op(copy_from=copy_from)
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
