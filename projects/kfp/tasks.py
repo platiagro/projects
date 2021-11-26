@@ -216,6 +216,7 @@ def patch_notebook_volume_mounts_op(tasks: List[models.Task], namespace: str):
     -------
     kfp.dsl.ResourceOp
     """
+    TEMP_DIR = "/tmp/data"
     k8s_resource = {
         "apiVersion": "kubeflow.org/v1",
         "kind": "Notebook",
@@ -266,7 +267,7 @@ def patch_notebook_volume_mounts_op(tasks: List[models.Task], namespace: str):
                                     "mountPath": "/home/jovyan/experiments",
                                     "name": "vol-experiments",
                                 },
-                                {"mountPath": "/tmp/data", "name": "vol-datasets"},
+                                {"mountPath": TEMP_DIR, "name": "vol-datasets"},
                             ],
                         }
                     ],
