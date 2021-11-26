@@ -267,7 +267,10 @@ class TestTasks(unittest.TestCase):
 
         # empty task case
         make_task_creation_job(
-            task=task, namespace=KF_PIPELINES_NAMESPACE, all_tasks=all_tasks
+            task=task,
+            namespace=KF_PIPELINES_NAMESPACE,
+            all_tasks=all_tasks,
+            test_mode=True,
         )
 
         # copied task case
@@ -279,6 +282,7 @@ class TestTasks(unittest.TestCase):
             namespace=KF_PIPELINES_NAMESPACE,
             all_tasks=all_tasks,
             copy_from=source_task,
+            test_mode=True,
         )
 
     @mock.patch(

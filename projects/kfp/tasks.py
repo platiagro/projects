@@ -43,6 +43,7 @@ def make_task_creation_job(
     all_tasks: List[models.Task],
     namespace: str,
     copy_from: Optional[models.Task] = None,
+    test_mode: Optional[bool] = False,
 ):
     """
     Runs a Kubeflow Pipeline that creates all resources necessary for a new task.
@@ -102,6 +103,10 @@ def make_task_creation_job(
         )
 
     run_name = f"Create Task - {task.name}"
+
+    # this will run the pipeline_func, just for test case
+    if test_mode:
+        pipeline_func()
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
