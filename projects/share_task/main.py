@@ -54,7 +54,7 @@ def run(source: str, emails: List[str]):
 
     body = make_email_message(email_message_template, "")
     message = MessageSchema(
-        subject=f"Arquivos da tarefa ",
+        subject="Arquivos da tarefa",
         recipients=emails,  # List of recipients, as many as you can pass
         body=body,
         attachments=[f"{filename}.zip"],
@@ -62,7 +62,7 @@ def run(source: str, emails: List[str]):
     )
 
     fm = FastMail(CONNECTION_CONFIG)
-    asyncio.create_task(fm.send_message(message)) 
+    asyncio.create_task(fm.send_message(message))
 
     logging.info("Done!")
 

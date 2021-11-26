@@ -55,7 +55,7 @@ def send_email(task: models.Task, namespace: str, email_schema):
         # Creates one ContainerOp to copy task contents
         image = SHARE_TASK_CONTAINER_IMAGE
 
-        command = ["python","-m", "projects.share_task.main","--source", {"inputValue": "tarefa"}, "--emails", {"inputValue": "emails"}]
+        command = ["python", "-m", "projects.share_task.main", "--source", {"inputValue": "tarefa"}, "--emails", {"inputValue": "emails"}]
 
         component = {
             "name": "share-task",
@@ -89,7 +89,7 @@ def send_email(task: models.Task, namespace: str, email_schema):
         email_list_str = "".join(email for email in email_schema.emails)
 
         func = load_component_from_text(text)
-        mount_path = TASK_VOLUME_MOUNT_PATH 
+        mount_path = TASK_VOLUME_MOUNT_PATH
         container_op = func(mount_path, email_list_str)
         container_op.add_pvolumes({TASK_VOLUME_MOUNT_PATH: volume_op_task.volume})
 
