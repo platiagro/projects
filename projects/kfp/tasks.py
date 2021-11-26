@@ -267,7 +267,7 @@ def patch_notebook_volume_mounts_op(tasks: List[models.Task], namespace: str):
                                     "mountPath": "/home/jovyan/experiments",
                                     "name": "vol-experiments",
                                 },
-                                {"mountPath": TEMP_DIR, "name": "vol-datasets"},
+                                {"mountPath": "/tmp/data", "name": "vol-datasets"},
                             ],
                         }
                     ],
