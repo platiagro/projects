@@ -8,7 +8,11 @@ from fastapi.testclient import TestClient
 from projects import models
 from projects.api.main import app
 from projects.database import session_scope
-from projects.kfp.tasks import make_task_creation_job
+from projects.kfp.tasks import (
+    create_init_task_container_op,
+    create_configmap_op,
+    patch_notebook_volume_mounts_op,
+)
 from projects.kfp import KF_PIPELINES_NAMESPACE
 
 import tests.util as util
@@ -254,35 +258,28 @@ class TestTasks(unittest.TestCase):
 
         mock_kfp_client.assert_any_call(host=HOST_URL)
 
-    @mock.patch(
-        "kfp.Client",
-        return_value=util.MOCK_KFP_CLIENT,
-    )
-    def test_task_creation_job_function(
+    # we will test those function by running them, not need to assert their result
+    def test_task_creation_component_functions(
         self,
-        mock_kfp_client,
     ):
         task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
         all_tasks = util.TestingSessionLocal().query(models.Task).all()
-
-        # empty task case
-        make_task_creation_job(
-            task=task,
-            namespace=KF_PIPELINES_NAMESPACE,
-            all_tasks=all_tasks,
-            test_mode=True,
-        )
-
-        # copied task case
         source_task = (
             util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_1)
         )
-        make_task_creation_job(
-            task=task,
-            namespace=KF_PIPELINES_NAMESPACE,
-            all_tasks=all_tasks,
-            copy_from=source_task,
-            test_mode=True,
+
+        # empty task case
+        create_init_task_container_op()
+
+        # copied task case
+        create_init_task_container_op(copy_from=source_task)
+
+        # task cnfig map creation
+        create_configmap_op(task=task, namespace=KF_PIPELINES_NAMESPACE, content="")
+
+        # notebook patching
+        patch_notebook_volume_mounts_op(
+            tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE
         )
 
     @mock.patch(
