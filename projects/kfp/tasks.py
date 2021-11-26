@@ -108,6 +108,7 @@ def make_task_creation_job(
     # this will run the pipeline_func, just for test case
     if test_mode:
         create_init_task_container_op(copy_from=copy_from)
+        create_init_task_container_op()
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
