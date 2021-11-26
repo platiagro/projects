@@ -13,7 +13,9 @@ from fastapi_mail import FastMail, MessageSchema
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
-from projects import __version__, models, schemas
+from projects import __version__, models, schemas, kfp
+from projects.kfp.emails import send_email
+from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import (
@@ -23,7 +25,7 @@ from projects.kubernetes.notebook import (
     update_persistent_volume_claim,
     update_task_config_map,
 )
-
+from projects.share_task.main import run
 PREFIX = "tasks"
 
 CATEGORY_DEFAULT = "DEFAULT"
@@ -562,32 +564,5 @@ class TaskController:
         task = self.session.query(models.Task).get(task_id)
         if task is None:
             raise NOT_FOUND
-
-        # getting file content, which is by the way in base64
-        file_as_b64 = get_files_from_task(task.name)
-
-        # decoding as byte
-        base64_bytes = file_as_b64.encode("ascii")
-        file_as_bytes = base64.b64decode(base64_bytes)
-
-        # using bytes to build the zipfile
-        with tempfile.NamedTemporaryFile(
-            "wb", delete=False, dir=os.path.dirname(__file__), suffix=".zip"
-        ) as f:
-            f.write(file_as_bytes)
-
-        message = MessageSchema(
-            subject=f"Arquivos da tarefa '{task.name}'",
-            recipients=email_schema.dict().get(
-                "emails"
-            ),  # List of recipients, as many as you can pass
-            body=self.make_email_message(EMAIL_MESSAGE_TEMPLATE, task.name),
-            attachments=[f.name],
-            subtype="html",
-        )
-        fm = FastMail(email_schema.conf)
-        self.background_tasks.add_task(fm.send_message, message)
-
-        # removing file after send email
-        os.remove(f.name)
+        send_email(task=task, namespace=KF_PIPELINES_NAMESPACE, email_schema=email_schema)
         return {"message": "email has been sent"}
