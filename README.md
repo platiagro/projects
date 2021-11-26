@@ -55,6 +55,7 @@ environment variables:
   MAIL_SERVER                   hostname of a smtp service (default: ).
   MAIL_USERNAME                 username of a smtp service (default: ).
   MAIL_PASSWORD                 password of a smtp service (default: ).
+  SHARE_TASK_CONTAINER_IMAGE    docker image used in task sharing jobs (default: platiagro/share-task:0.3.0-SNAPSHOT).
   MAIL_SENDER_ADDRESS           sender address for emails sent by the smtp service (default: ).
   SELDON_REST_TIMEOUT           response timeout in milliseconds for seldondeployments (default: 60000)
   SELDON_LOGGER_ENDPOINT        logger service URL that receives seldondeployment responses (default: http://projects.platiagro:8080)
@@ -126,6 +127,46 @@ docker run -it \
   --env "MYSQL_DB_USER=$MYSQL_DB_USER" \
   --env "MYSQL_DB_PASSWORD=$MYSQL_DB_PASSWORD" \
   platiagro/persistence-agent:0.3.0-SNAPSHOT
+```
+## Share Task
+
+Start the Task sharing Job (share by email):
+
+```bash
+python -m projects.share_task.main:app
+```
+
+Arguments:
+
+```bash
+usage: main.py [-h] [--source SOURCE] [--emails EMAILS [EMAILS ...]] [--log-level [{NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}]]
+
+Share Task Job
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --source SOURCE       Source directory
+  --emails EMAILS [EMAILS ...]
+                        List of emails
+  --log-level [{NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+                        Log level
+```
+
+**Using Docker**
+
+```bash
+docker build -t platiagro/share-task:0.3.0-SNAPSHOT -f Dockerfile.sharetask .
+```
+
+Example:
+
+```bash
+docker run -it \
+  -v $(pwd)/source:/app/source \
+  --name init-task \
+  platiagro/share-task:0.3.0-SNAPSHOT \
+  --source /app/source \
+  --emails myemail@example.com anotheremail@example.com
 ```
 
 ## Testing
