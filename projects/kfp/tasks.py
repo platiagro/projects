@@ -109,6 +109,7 @@ def make_task_creation_job(
     if test_mode:
         create_init_task_container_op(copy_from=copy_from)
         create_init_task_container_op()
+        create_configmap_op(task=task, namespace=namespace, content="")
 
     return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
