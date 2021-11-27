@@ -15,18 +15,21 @@ from jinja2 import Template
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 
 
-def run(source: str, emails: List[str]):
+def run(source: str, emails: str, task_name: str, requested_at):
     """
     A job that sends an email with the contents of a task attached.
 
     Parameters
     ----------
     source : str
-    emails : List[str]
+    emails : str
     """
+    emails = emails.split(" ")
     logging.info("Sharing Task.")
     logging.info(f"source = {source}")
     logging.info(f"emails = {emails}")
+    logging.info(f"requested_at = {requested_at}")
+    logging.info(f"task_name = {task_name}")
 
     filename = "task"  # get source folder name (which should be the task name)
     # build the zipfile
@@ -52,7 +55,7 @@ def run(source: str, emails: List[str]):
         USE_CREDENTIALS=True,
     )
 
-    body = make_email_message(email_message_template, "")
+    body = make_email_message(email_message_template, task_name)
     message = MessageSchema(
         subject="Arquivos da tarefa",
         recipients=emails,  # List of recipients, as many as you can pass
@@ -60,9 +63,9 @@ def run(source: str, emails: List[str]):
         attachments=[f"{filename}.zip"],
         subtype="html",
     )
-
     fm = FastMail(CONNECTION_CONFIG)
-    asyncio.create_task(fm.send_message(message))
+    loop = asyncio.get_event_loop()
+    loop.create_task(fm.send_message(message))
 
     logging.info("Done!")
 
@@ -99,7 +102,13 @@ def parse_args(args):
         "--source", type=str, help="Source directory",
     )
     parser.add_argument(
-        "--emails", type=str, nargs="+", default=[], help="List of emails",
+        "--emails", type=str, help="List of emails",
+    )
+    parser.add_argument(
+        "--task-name", type=str, help="Task's name",
+    )
+    parser.add_argument(
+        "--requested-at", type=str, help="Request time",
     )
     parser.add_argument(
         "--log-level",
@@ -118,4 +127,4 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=args.log_level)
 
-    run(source=args.source, emails=args.emails)
+    run(source=args.source, emails=args.emails, task_name=args.task_name, requested_at=args.requested_at)
