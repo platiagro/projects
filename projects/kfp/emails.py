@@ -4,6 +4,7 @@ Utility functions that start email pipelines.
 """
 import json
 import os
+from datetime import datetime
 
 from kfp import dsl
 from kfp.components import load_component_from_text
@@ -54,19 +55,26 @@ def send_email(task: models.Task, namespace: str, email_schema):
 
         # Creates one ContainerOp to copy task contents
         image = SHARE_TASK_CONTAINER_IMAGE
-
-        command = ["python", "-m", "projects.share_task.main", "--source", {"inputValue": "tarefa"}, "--emails", {"inputValue": "emails"}]
+        now = datetime.utcnow().isoformat()
+        command = [
+            "python", "-m", "projects.share_task.main",
+            "--source", {"inputValue": "source"},
+            "--emails", {"inputValue": "emails"},
+            "--task-name", {"inputValue": "task-name"},
+            "--requested-at", {"inputValue": "requested-at"}
+        ]
 
         component = {
-            "name": "share-task",
+            "name": f"share-task-{now}",
             "description": "",
-
+            "outputs": [{"name":"created_at"}],
             "inputs": [
-                {"name": "tarefa", "description": ""},
-                {"name": "emails", "description": ""}
+                {"name": "source", "description": "Mountpath of volume"},
+                {"name": "emails", "description": "Email list"},
+                {"name": "task-name", "description": "Task name"},
+                {"name": "requested-at", "description": "Time of request"},
             ],
 
-            "outputs": [],
             "implementation": {
                 "container": {
                     "image": image,
@@ -86,11 +94,11 @@ def send_email(task: models.Task, namespace: str, email_schema):
             },
         }
         text = json.dumps(component)
-        email_list_str = "".join(email for email in email_schema.emails)
+        email_list_str = " ".join(email for email in email_schema.emails)
 
         func = load_component_from_text(text)
         mount_path = TASK_VOLUME_MOUNT_PATH
-        container_op = func(mount_path, email_list_str)
+        container_op = func(mount_path, email_list_str, task.name,now )
         container_op.add_pvolumes({TASK_VOLUME_MOUNT_PATH: volume_op_task.volume})
 
     run_name = f"Share Task - {task.name}"
@@ -100,4 +108,5 @@ def send_email(task: models.Task, namespace: str, email_schema):
         run_name=run_name,
         experiment_name=task.uuid,
         namespace=namespace,
+        enable_caching=False
     )
