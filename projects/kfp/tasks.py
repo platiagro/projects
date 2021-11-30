@@ -14,7 +14,7 @@ from kfp.components import load_component_from_text
 
 from projects import __version__, models
 from projects.kfp import kfp_client
-from projects.kfp.volume import create_volume_op
+from projects.kfp.volume import create_volume_op, delete_volume_op
 
 TASK_VOLUME_MOUNT_PATH = "/home/jovyan/tasks"
 SOURCE_TASK_VOLUME_MOUNT_PATH = "/home/source"
@@ -110,6 +110,45 @@ def make_task_creation_job(
         run_name=run_name,
         experiment_name=task.uuid,
         namespace=namespace,
+    )
+
+
+def make_task_deletion_jobk(
+    task: models.Task, all_tasks: List[models.Task], namespace: str
+):
+    """
+    Runs a Kubeflow Pipeline that deletes the volume of a task and removes it from JupyterLab.
+    Parameters
+    ----------
+    task : models.Task
+    all_tasks : List[models.Task]
+    namespace : str
+    Returns
+    -------
+    RunPipelineResult
+    """
+
+    @dsl.pipeline(
+        name="Delete Task",
+        description="A pipeline that deletes K8s resources associated with a given task.",
+    )
+    def pipeline_func():
+        # Patches JupyterLab to remove volumeMount
+        resource_op = patch_notebook_volume_mounts_op(
+            tasks=all_tasks, namespace=namespace
+        )
+
+        delete_volume_op(name=f"task-{task.uuid}", namespace=namespace).after(
+            resource_op
+        )
+
+    run_name = f"Delete Task - {task.name}"
+
+    return kfp_client(namespace).create_run_from_pipeline_func(
+        pipeline_func=pipeline_func,
+        arguments={},
+        run_name=run_name,
+        experiment_name=task.uuid,
     )
 
 
