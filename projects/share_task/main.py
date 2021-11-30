@@ -10,6 +10,7 @@ import shutil
 import sys
 import smtplib
 import ssl
+
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -33,7 +34,7 @@ def run(source: str, emails: str, task_name: str, requested_at):
     logging.info(f"emails = {emails}")
     logging.info(f"requested_at = {requested_at}")
     logging.info(f"task_name = {task_name}")
-    filename = "task"  # get source folder name (which should be the task name)
+    filename = "task"
 
     # build the zipfile
     shutil.make_archive(filename, "zip", source)
@@ -65,6 +66,7 @@ def run(source: str, emails: str, task_name: str, requested_at):
     )
     message.attach(part)
     message.attach(text)
+    message["Subject"] = f"Conteúdo da task {task_name}"
 
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
