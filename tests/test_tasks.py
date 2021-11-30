@@ -9,8 +9,10 @@ from projects import models
 from projects.api.main import app
 from projects.database import session_scope
 from projects.kfp.tasks import (
+    make_task_creation_job,
     create_init_task_container_op,
     create_configmap_op,
+    make_task_creation_job,
     patch_notebook_volume_mounts_op,
 )
 from projects.kfp import KF_PIPELINES_NAMESPACE
@@ -258,15 +260,21 @@ class TestTasks(unittest.TestCase):
 
         mock_kfp_client.assert_any_call(host=HOST_URL)
 
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )    
     # we will test those function by running them, not need to assert their result
     def test_task_creation_component_functions(
-        self,
+        self,mock_kfp_client
     ):
         task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
         all_tasks = util.TestingSessionLocal().query(models.Task).all()
         source_task = (
             util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_1)
         )
+        
+        make_task_creation_job(task=task, all_tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE)
 
         # empty task case
         create_init_task_container_op()
