@@ -8,11 +8,12 @@ from datetime import datetime
 
 from kfp import dsl
 from kfp.components import load_component_from_text
-
 from projects import __version__, models
 from projects.kfp import kfp_client
 from projects.kfp.volume import create_volume_op
+from projects.exceptions import ServiceUnavailable
 
+from kfp_server_api.exceptions import ApiException
 TASK_VOLUME_MOUNT_PATH = "/home/jovyan"
 SHARE_TASK_CONTAINER_IMAGE = os.getenv(
     "INIT_TASK_CONTAINER_IMAGE",
@@ -67,7 +68,7 @@ def send_email(task: models.Task, namespace: str, email_schema):
         component = {
             "name": f"share-task-{now}",
             "description": "",
-            "outputs": [{"name":"created_at"}],
+            "outputs": [],
             "inputs": [
                 {"name": "source", "description": "Mountpath of volume"},
                 {"name": "emails", "description": "Email list"},
@@ -98,15 +99,19 @@ def send_email(task: models.Task, namespace: str, email_schema):
 
         func = load_component_from_text(text)
         mount_path = TASK_VOLUME_MOUNT_PATH
-        container_op = func(mount_path, email_list_str, task.name,now )
+        container_op = func(mount_path, email_list_str, task.name, now)
         container_op.add_pvolumes({TASK_VOLUME_MOUNT_PATH: volume_op_task.volume})
 
     run_name = f"Share Task - {task.name}"
-    return kfp_client().create_run_from_pipeline_func(
-        pipeline_func=pipeline_func,
-        arguments={},
-        run_name=run_name,
-        experiment_name=task.uuid,
-        namespace=namespace,
-        enable_caching=False
-    )
+    try:
+        return kfp_client().create_run_from_pipeline_func(
+            pipeline_func=pipeline_func,
+            arguments={},
+            run_name=run_name,
+            experiment_name=task.uuid,
+            namespace=namespace,
+            enable_caching=False
+        )
+    except ApiException as e:
+        # Happens when there's no health upstream for kubeflow pipelines
+        raise ServiceUnavailable(e.status, e.reason)
