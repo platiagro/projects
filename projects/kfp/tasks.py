@@ -192,9 +192,7 @@ def create_init_task_container_op(
         "name": "init-task",
         "description": "",
         "inputs": [
-            {"name": "source-task", "description": "Mountpath of volume"},
-            {"name": "emails", "description": "Email list"},
-            {"name": "task-name", "description": "Task name"},
+            {"name": "source_task", "description": "Source task"},
             {"name": "requested-at", "description": "Time of request"},
         ],
         "outputs": [],
@@ -206,9 +204,11 @@ def create_init_task_container_op(
         },
     }
 
+    source_task = copy_from.name if copy_from else "Empty task"
+
     text = json.dumps(component)
     func = load_component_from_text(text)
-    return func()
+    return func(source_task, datetime.utcnow().isoformat())
 
 
 def create_configmap_op(task: models.Task, namespace: str, content: str):
