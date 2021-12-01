@@ -1,8 +1,9 @@
 import unittest
 from datetime import datetime
 import pytest
+import pkgutil
 
-from projects.share_task.main import parse_args
+from projects.share_task.main import parse_args, make_email_message
 
 
 class TestShareTask(unittest.TestCase):
@@ -34,3 +35,14 @@ class TestShareTask(unittest.TestCase):
             args.append("--log-level")
             args.append("info")
             parse_args(args)
+
+    def test_make_email_message_success(self):
+        email_message_template = pkgutil.get_data("projects", "config/email-template.html")
+        html_string = make_email_message(email_message_template, "task_name")
+        self.assertIsInstance(html_string, str)
+
+    def test_make_email_message_fail(self):
+        with pytest.raises(TypeError):
+            email_message_template = "test"
+            html_string = make_email_message(email_message_template, "task_name")
+            self.assertIsInstance(html_string, str)
