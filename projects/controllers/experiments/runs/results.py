@@ -4,7 +4,6 @@ import io
 import re
 import zipfile
 
-from projects.exceptions import NotFound
 from projects.kfp.runs import get_latest_run_id
 from projects.object_storage import list_objects, get_object
 

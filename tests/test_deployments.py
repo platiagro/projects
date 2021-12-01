@@ -178,10 +178,6 @@ class TestDeployments(unittest.TestCase):
         self.assertEqual(rv.status_code, 400)
 
     @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
-    @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
@@ -197,7 +193,6 @@ class TestDeployments(unittest.TestCase):
         mock_load_config,
         mock_kfp_client,
         mock_core_v1_api,
-        mock_custom_objects_api,
     ):
         """
         Should create and return an deployment successfully.
@@ -286,15 +281,10 @@ class TestDeployments(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_core_v1_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_load_config.assert_any_call()
 
-    @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
     @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
@@ -311,7 +301,6 @@ class TestDeployments(unittest.TestCase):
         mock_load_config,
         mock_kfp_client,
         mock_core_v1_api,
-        mock_custom_objects_api,
     ):
         """
         Should create and return an deployment successfully.
@@ -385,7 +374,6 @@ class TestDeployments(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_core_v1_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_load_config.assert_any_call()
