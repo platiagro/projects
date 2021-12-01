@@ -123,10 +123,7 @@ def create_init_task_container_op(
 
     Parameters
     ----------
-    task : model.Task
     copy_from : model.Task, optional
-    experiment_notebook : Dict, optional
-    deployment_notebook : Dict, optional
 
     Returns
     -------
@@ -155,7 +152,12 @@ def create_init_task_container_op(
     component = {
         "name": "init-task",
         "description": "",
-        "inputs": [],
+        "inputs": [
+            {"name": "source-task", "description": "Mountpath of volume"},
+            {"name": "emails", "description": "Email list"},
+            {"name": "task-name", "description": "Task name"},
+            {"name": "requested-at", "description": "Time of request"},
+        ],
         "outputs": [],
         "implementation": {
             "container": {
