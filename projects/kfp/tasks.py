@@ -69,12 +69,12 @@ def make_task_creation_job(
     def pipeline_func():
         # Creates a volume for this task
         volume_op_task = create_volume_op(name=f"task-{task.uuid}", namespace=namespace)
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 
         # And a ContainerOp to initialize task contents
         # Either the contents of other task are copied,
         # or some empty notebooks are copied into the volume
         container_op = create_init_task_container_op(copy_from=copy_from)
+
         container_op.add_pvolumes(
             {DESTINATION_TASK_VOLUME_MOUNT_PATH: volume_op_task.volume}
         )
