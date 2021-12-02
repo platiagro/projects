@@ -132,3 +132,6 @@ dmypy.json
 # Docker volumes
 /data
 /data-minio
+
+# Testing related files
+test.db
