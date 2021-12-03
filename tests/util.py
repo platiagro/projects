@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest import mock
 from kfp_server_api.rest import ApiException
 import json
@@ -286,6 +286,8 @@ MOCK_DEPLOYMENT_NAME_1, MOCK_DEPLOYMENT_NAME_2 = "deployment-1", "deployment-2"
     "task-4",
     "task-5",
 )
+now = datetime.utcnow()
+now = now.replace(tzinfo=timezone.utc)
 MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
 (
     MOCK_CREATED_AT_1,
@@ -294,11 +296,11 @@ MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
     MOCK_CREATED_AT_4,
     MOCK_CREATED_AT_5,
 ) = (
-    datetime.utcnow(),
-    datetime.utcnow(),
-    datetime.utcnow(),
-    datetime.utcnow(),
-    datetime.utcnow(),
+    now,
+    now,
+    now,
+    now,
+    now,
 )
 (
     MOCK_UPDATED_AT_1,
@@ -307,11 +309,11 @@ MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
     MOCK_UPDATED_AT_4,
     MOCK_UPDATED_AT_5,
 ) = (
-    datetime.utcnow(),
-    datetime.utcnow(),
-    datetime.utcnow(),
-    datetime.utcnow(),
-    datetime.utcnow(),
+    now,
+    now,
+    now,
+    now,
+    now,
 )
 
 MOCK_OPERATOR_1 = {
