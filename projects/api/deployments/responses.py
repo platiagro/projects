@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 """Deployments Responses API Router."""
-from typing import Optional
 
-from fastapi import APIRouter, Body, Depends, Header
+from fastapi import APIRouter, Body, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from projects import database
 from projects.controllers import (
     DeploymentController,
-    ProjectController,
     ResponseController,
 )
 

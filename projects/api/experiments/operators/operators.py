@@ -14,7 +14,6 @@ from projects.controllers import (
     ProjectController,
 )
 
-
 router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/operators",
 )

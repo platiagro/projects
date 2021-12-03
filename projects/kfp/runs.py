@@ -288,7 +288,7 @@ def get_task_id(template):
     for var in template["inputs"]["parameters"]:
         name = var["name"]
         if name.startswith(prefix):
-            return name[len(prefix) : len(name) - len(suffix)]
+            return name[len(prefix): len(name) - len(suffix)]
 
 
 def get_parameters(template):
@@ -311,7 +311,7 @@ def get_parameters(template):
         value = var.get("value")
 
         if name.startswith(prefix):
-            name = name[len(prefix) :]
+            name = name[len(prefix):]
 
             if value is not None:
                 value = json.loads(value)

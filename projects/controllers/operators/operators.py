@@ -2,8 +2,7 @@
 """Operator controller."""
 from datetime import datetime
 from typing import Dict, List, Optional
-import logging
-import asyncio
+
 import time
 
 from projects import models, schemas
@@ -17,7 +16,6 @@ from projects.kfp.runs import get_latest_run_id
 
 from kubernetes import client
 from kubernetes.watch import Watch
-from kubernetes.client.rest import ApiException
 
 
 NOT_FOUND = NotFound(

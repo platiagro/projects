@@ -54,7 +54,6 @@ async def handle_list_tasks(
 @router.post("", response_model=projects.schemas.task.Task)
 async def handle_post_tasks(
     task: projects.schemas.task.TaskCreate,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(database.session_scope),
 ):
     """
@@ -63,14 +62,13 @@ async def handle_post_tasks(
     Parameters
     ----------
     task : projects.schemas.task.TaskCreate
-    background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
 
     Returns
     -------
     projects.schemas.task.Task
     """
-    task_controller = TaskController(session, background_tasks)
+    task_controller = TaskController(session)
     task = task_controller.create_task(task=task)
     return task
 
