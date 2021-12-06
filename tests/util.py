@@ -305,6 +305,7 @@ MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
     now,
     now,
     now,
+    now
 )
 (
     MOCK_UPDATED_AT_1,
@@ -319,6 +320,7 @@ MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
     now,
     now,
     now,
+    now
 )
 
 MOCK_OPERATOR_1 = {
