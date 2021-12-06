@@ -6,6 +6,7 @@ from urllib.parse import parse_qsl
 from datetime import datetime, timezone
 import sqlalchemy as sa
 
+
 def to_camel_case(snake_str):
     """
     Transforms a snake_case string into camelCase.
@@ -76,6 +77,7 @@ def format_query_params(query_params):
 
 class TimeStamp(sa.types.TypeDecorator):
     impl = sa.types.DateTime
+
     def process_bind_param(self, value: datetime, dialect):
         if value.tzinfo is None:
             value = value.astimezone(timezone.utc)
@@ -87,3 +89,7 @@ class TimeStamp(sa.types.TypeDecorator):
             return value.replace(tzinfo=timezone.utc)
 
         return value.astimezone(timezone.utc)
+
+
+def now():
+    return datetime.utcnow().replace(tzinfo=timezone.utc)

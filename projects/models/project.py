@@ -10,7 +10,7 @@ from projects.database import Base
 from projects.models.deployment import Deployment
 from projects.models.experiment import Experiment
 from projects.models.comparison import Comparison
-from projects.utils import TimeStamp
+from projects.utils import TimeStamp, now
 
 
 CASCADE_BEHAVIOR = "all, delete-orphan"
@@ -20,9 +20,8 @@ class Project(Base):
     __tablename__ = "projects"
     uuid = Column(String(255), primary_key=True)
     name = Column(Text, nullable=False)
-    now = datetime.utcnow().replace(tzinfo=timezone.utc)
-    created_at = Column(TimeStamp(), nullable=False, default=now)
-    updated_at = Column(TimeStamp(), nullable=False, default=now)
+    created_at = Column(TimeStamp(), nullable=False, default=now())
+    updated_at = Column(TimeStamp(), nullable=False, default=now())
     description = Column(Text)
     experiments = relationship("Experiment",
                                primaryjoin=uuid == Experiment.project_id,
