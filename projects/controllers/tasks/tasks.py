@@ -16,6 +16,7 @@ from sqlalchemy import asc, desc, func
 from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
+from projects.kfp.kfp import kfp_client
 from projects.kubernetes.notebook import (
     copy_file_to_pod,
     get_files_from_task,
@@ -23,7 +24,9 @@ from projects.kubernetes.notebook import (
     update_persistent_volume_claim,
     update_task_config_map,
 )
-from projects.kfp.tasks import make_task_creation_job
+from projects.kfp.tasks import make_task_creation_job, make_task_deletion_job
+from projects.kfp import KF_PIPELINES_NAMESPACE
+
 
 PREFIX = "tasks"
 
@@ -201,7 +204,6 @@ class TaskController:
         """
         # for now we need import here to avoid circular import
         # from projects.kfp.tasks import make_task_creation_job
-        from projects.kfp import KF_PIPELINES_NAMESPACE
 
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
@@ -450,10 +452,10 @@ class TaskController:
 
         # remove the volume for the task in the notebook server
         all_tasks = self.session.query(models.Task).all()
-        kfp.delete_task(
+        make_task_deletion_job(
             task=task,
             all_tasks=all_tasks,
-            namespace=self.kubeflow_userid,
+            namespace=KF_PIPELINES_NAMESPACE,
         )
 
         return schemas.Message(message="Task deleted")
