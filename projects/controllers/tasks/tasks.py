@@ -23,6 +23,7 @@ from projects.kubernetes.notebook import (
     update_persistent_volume_claim,
     update_task_config_map,
 )
+from projects.kfp.tasks import make_task_creation_job
 
 PREFIX = "tasks"
 
@@ -199,7 +200,7 @@ class TaskController:
             When task attributes are invalid.
         """
         # for now we need import here to avoid circular import
-        from projects.kfp.tasks import make_task_creation_job
+        # from projects.kfp.tasks import make_task_creation_job
         from projects.kfp import KF_PIPELINES_NAMESPACE
 
         has_notebook = task.experiment_notebook or task.deployment_notebook
@@ -425,15 +426,12 @@ class TaskController:
     def delete_task(self, task_id: str):
         """
         Delete a task in our database.
-
         Parameters
         ----------
         task_id : str
-
         Returns
         -------
         projects.schemas.message.Message
-
         Raises
         ------
         NotFound
@@ -445,19 +443,19 @@ class TaskController:
             raise NOT_FOUND
 
         if task.operator:
-            raise Forbidden(
-                code="TaskProtectedFromDeletion", message="Task related to an operator"
-            )
-
-        # remove the volume for the task in the notebook server
-        self.background_tasks.add_task(
-            remove_persistent_volume_claim,
-            name=f"vol-task-{task_id}",
-            mount_path=f"/home/jovyan/tasks/{task.name}",
-        )
+            raise Forbidden("Task related to an operator")
 
         self.session.delete(task)
         self.session.commit()
+
+        # remove the volume for the task in the notebook server
+        all_tasks = self.session.query(models.Task).all()
+        kfp.delete_task(
+            task=task,
+            all_tasks=all_tasks,
+            namespace=self.kubeflow_userid,
+        )
+
         return schemas.Message(message="Task deleted")
 
     def raise_if_invalid_docker_image(self, image):
