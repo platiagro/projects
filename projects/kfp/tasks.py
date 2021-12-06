@@ -113,7 +113,7 @@ def make_task_creation_job(
     )
 
 
-def make_task_deletion_jobk(
+def make_task_deletion_job(
     task: models.Task, all_tasks: List[models.Task], namespace: str
 ):
     """
@@ -144,7 +144,7 @@ def make_task_deletion_jobk(
 
     run_name = f"Delete Task - {task.name}"
 
-    return kfp_client(namespace).create_run_from_pipeline_func(
+    return kfp_client().create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={},
         run_name=run_name,
