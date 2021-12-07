@@ -15,7 +15,7 @@ from sqlalchemy import asc, desc, func
 
 from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
-from projects.exceptions import BadRequest, Forbidden, NotFound
+from projects.exceptions import BadRequest, Forbidden, InternalServerError, NotFound
 from projects.kfp.kfp import kfp_client
 from projects.kubernetes.notebook import (
     copy_file_to_pod,
@@ -445,18 +445,25 @@ class TaskController:
             raise NOT_FOUND
 
         if task.operator:
-            raise Forbidden("Task related to an operator")
-
-        self.session.delete(task)
-        self.session.commit()
+            raise Forbidden(
+                code="TaskProtectedFromDeletion", message="Task related to an operator"
+            )
 
         # remove the volume for the task in the notebook server
         all_tasks = self.session.query(models.Task).all()
-        make_task_deletion_job(
-            task=task,
-            all_tasks=all_tasks,
-            namespace=KF_PIPELINES_NAMESPACE,
-        )
+        try:
+            make_task_deletion_job(
+                task=task,
+                all_tasks=all_tasks,
+                namespace=KF_PIPELINES_NAMESPACE,
+            )
+            self.session.delete(task)
+            self.session.commit()
+        except Exception as e:
+            raise InternalServerError(
+                code="DeletionJobError",
+                message=f"Error while trying to make deletion container job: {e}",
+            )
 
         return schemas.Message(message="Task deleted")
 
