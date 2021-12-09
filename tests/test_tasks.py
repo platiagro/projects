@@ -14,8 +14,10 @@ from projects.kfp.tasks import (
     create_configmap_op,
     make_task_creation_job,
     patch_notebook_volume_mounts_op,
+    delete_volume_op
 )
 from projects.kfp import KF_PIPELINES_NAMESPACE
+from projects.kfp.volume import delete_volume_op
 
 import tests.util as util
 
@@ -807,3 +809,6 @@ class TestTasks(unittest.TestCase):
 
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
+
+    def test_deletion_component_functions_from(self,):
+        delete_volume_op(name=f"task-{util.MOCK_UUID_4}", namespace=KF_PIPELINES_NAMESPACE)
