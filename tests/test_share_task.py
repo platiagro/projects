@@ -1,12 +1,30 @@
 import unittest
+import unittest.mock as mock
 from datetime import datetime
 import pytest
 import pkgutil
 
+from projects import models
 from projects.share_task.main import parse_args, make_email_message
+from projects.kfp.emails import send_email
+from projects.schemas.mailing import EmailSchema
+from projects.kfp import KF_PIPELINES_NAMESPACE
+import tests.util as util
 
 
 class TestShareTask(unittest.TestCase):
+
+    def setUp(self):
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
+
+    def tearDown(self):
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
     def test_parse_args_success(self):
         args = list()
@@ -46,3 +64,13 @@ class TestShareTask(unittest.TestCase):
             email_message_template = "test"
             html_string = make_email_message(email_message_template, "task_name")
             self.assertIsInstance(html_string, str)
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    def test_task_creation_component_functions(
+        self, mock_kfp_client
+    ):
+        task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
+        send_email(task,email_schema=EmailSchema,namespace= KF_PIPELINES_NAMESPACE)
