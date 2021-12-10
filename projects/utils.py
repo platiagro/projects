@@ -3,6 +3,8 @@
 import re
 from itertools import chain
 from urllib.parse import parse_qsl
+from datetime import datetime, timezone
+import sqlalchemy as sa
 
 
 def to_camel_case(snake_str):
@@ -71,3 +73,23 @@ def format_query_params(query_params):
     dict
     """
     return dict(parse_qsl(query_params))
+
+
+class TimeStamp(sa.types.TypeDecorator):
+    impl = sa.types.DateTime
+
+    def process_bind_param(self, value: datetime, dialect):
+        if value.tzinfo is None:
+            value = value.astimezone(timezone.utc)
+
+        return value.astimezone(timezone.utc)
+
+    def process_result_value(self, value, dialect):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+
+        return value.astimezone(timezone.utc)
+
+
+def now():
+    return datetime.utcnow().replace(tzinfo=timezone.utc)

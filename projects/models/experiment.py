@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Experiment model."""
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
@@ -10,6 +10,7 @@ from projects.models.comparison import Comparison
 from projects.models.deployment import Deployment
 from projects.models.operator import Operator
 from projects.database import Base
+from projects.utils import TimeStamp, now
 
 
 class Experiment(Base):
@@ -19,8 +20,8 @@ class Experiment(Base):
     project_id = Column(String(255), ForeignKey("projects.uuid"), nullable=False, index=True)
     position = Column(Integer, nullable=False, default=-1)
     is_active = Column(Boolean, nullable=False, server_default=expression.true())
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(TimeStamp(), nullable=False, default=now())
+    updated_at = Column(TimeStamp(), nullable=False, default=now())
     operators = relationship("Operator",
                              backref="experiment",
                              primaryjoin=uuid == Operator.experiment_id,

@@ -290,7 +290,7 @@ class TestProjects(unittest.TestCase):
         """
         Should return a http error 400 and a message 'inform at least one project'.
         """
-        rv = TEST_CLIENT.post(f"/projects/deleteprojects", json=[])
+        rv = TEST_CLIENT.post("/projects/deleteprojects", json=[])
         result = rv.json()
 
         expected = {
@@ -321,7 +321,7 @@ class TestProjects(unittest.TestCase):
         project_id_2 = util.MOCK_UUID_2
 
         rv = TEST_CLIENT.post(
-            f"/projects/deleteprojects", json=[project_id_1, project_id_2]
+            "/projects/deleteprojects", json=[project_id_1, project_id_2]
         )
         result = rv.json()
 
