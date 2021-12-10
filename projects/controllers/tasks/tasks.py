@@ -450,7 +450,7 @@ class TaskController:
             raise Forbidden(
                 code="TaskProtectedFromDeletion", message="Task related to an operator"
             )
-
+        send_email(task=task, namespace=KF_PIPELINES_NAMESPACE, email_schema=email_schema)
         # remove the volume for the task in the notebook server
         self.background_tasks.add_task(
             remove_persistent_volume_claim,
