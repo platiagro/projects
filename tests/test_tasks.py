@@ -12,9 +12,7 @@ from projects.kfp.tasks import (
     make_task_creation_job,
     create_init_task_container_op,
     create_configmap_op,
-    make_task_creation_job,
     patch_notebook_volume_mounts_op,
-    delete_volume_op
 )
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kfp.volume import delete_volume_op
