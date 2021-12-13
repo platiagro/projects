@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Tasks controller."""
-import base64
 import json
 import os
 import pkgutil
@@ -9,23 +8,20 @@ import tempfile
 from datetime import datetime
 from typing import Optional
 
-from fastapi_mail import FastMail, MessageSchema
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
-from projects import __version__, models, schemas, kfp
+from projects import __version__, models, schemas
 from projects.kfp.emails import send_email
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import (
     copy_file_to_pod,
-    get_files_from_task,
     remove_persistent_volume_claim,
     update_persistent_volume_claim,
     update_task_config_map,
 )
-from projects.share_task.main import run
 PREFIX = "tasks"
 
 CATEGORY_DEFAULT = "DEFAULT"
@@ -450,7 +446,7 @@ class TaskController:
             raise Forbidden(
                 code="TaskProtectedFromDeletion", message="Task related to an operator"
             )
-        send_email(task=task, namespace=KF_PIPELINES_NAMESPACE, email_schema=email_schema)
+
         # remove the volume for the task in the notebook server
         self.background_tasks.add_task(
             remove_persistent_volume_claim,
