@@ -16,11 +16,9 @@ from sqlalchemy import asc, desc, func
 from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, InternalServerError, NotFound
-from projects.kfp.kfp import kfp_client
 from projects.kubernetes.notebook import (
     copy_file_to_pod,
     get_files_from_task,
-    remove_persistent_volume_claim,
     update_persistent_volume_claim,
     update_task_config_map,
 )
