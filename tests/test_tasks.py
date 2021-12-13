@@ -268,6 +268,7 @@ class TestTasks(unittest.TestCase):
     )
     # we will test those function by running them, not need to assert their result
     def test_task_creation_component_functions(self, mock_kfp_client):
+        
         task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
         all_tasks = util.TestingSessionLocal().query(models.Task).all()
         source_task = (
@@ -336,7 +337,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    #  mock_kfp_client.assert_any_call(host=HOST_URL)
+        mock_kfp_client.assert_any_call(host=HOST_URL)
 
     @mock.patch(
         "kfp.Client",
@@ -810,5 +811,6 @@ class TestTasks(unittest.TestCase):
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
 
+    # we will test those function by running them, not need to assert their result
     def test_deletion_component_functions_from(self,):
         delete_volume_op(name=f"task-{util.MOCK_UUID_4}", namespace=KF_PIPELINES_NAMESPACE)
