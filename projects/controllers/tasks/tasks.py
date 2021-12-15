@@ -99,14 +99,13 @@ class TaskController:
 
     def list_tasks(
         self,
-        page: Optional[int] = 1,
-        page_size: Optional[int] = 10,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
         order_by: str = Optional[str],
         **filters,
     ):
         """
         Lists tasks. Supports pagination, and sorting.
-
         Parameters
         ----------
         page : int
@@ -116,11 +115,9 @@ class TaskController:
         order_by : str
             Order by instruction. Format is "column [asc|desc]".
         **filters : dict
-
         Returns
         -------
         projects.schemas.task.TaskList
-
         Raises
         ------
         BadRequest
@@ -135,10 +132,7 @@ class TaskController:
                 getattr(models.Task, column).ilike(f"%{value}%")
             )
 
-        # BUG
-        # query_total.limit(page_size) didn't work. I'm not sure why...
-        # This solution uses an unoptimized query, and should be improved.
-        total = min(page_size, query_total.scalar())
+        total = query_total.scalar()
 
         # Default sort is name in ascending order
         if not order_by:
@@ -150,7 +144,7 @@ class TaskController:
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Task.__table__.columns.keys()
         except (AssertionError, ValueError):
-            raise BadRequest(code="InvalidOrderBy", message="Invalid order argument")
+            raise BadRequest("Invalid order argument")
 
         if sort.lower() == "asc":
             query = query.order_by(asc(getattr(models.Task, column)))
