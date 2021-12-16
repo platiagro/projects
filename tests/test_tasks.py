@@ -12,10 +12,10 @@ from projects.kfp.tasks import (
     make_task_creation_job,
     create_init_task_container_op,
     create_configmap_op,
-    make_task_creation_job,
     patch_notebook_volume_mounts_op,
 )
 from projects.kfp import KF_PIPELINES_NAMESPACE
+from projects.kfp.volume import delete_volume_op
 
 import tests.util as util
 
@@ -263,18 +263,19 @@ class TestTasks(unittest.TestCase):
     @mock.patch(
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
-    )    
+    )
     # we will test those function by running them, not need to assert their result
-    def test_task_creation_component_functions(
-        self,mock_kfp_client
-    ):
+    def test_task_creation_component_functions(self, mock_kfp_client):
+        
         task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
         all_tasks = util.TestingSessionLocal().query(models.Task).all()
         source_task = (
             util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_1)
         )
-        
-        make_task_creation_job(task=task, all_tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE)
+
+        make_task_creation_job(
+            task=task, all_tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE
+        )
 
         # empty task case
         create_init_task_container_op()
@@ -334,7 +335,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    #  mock_kfp_client.assert_any_call(host=HOST_URL)
+        mock_kfp_client.assert_any_call(host=HOST_URL)
 
     @mock.patch(
         "kfp.Client",
@@ -790,21 +791,12 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(rv.status_code, 403)
 
     @mock.patch(
-        "kubernetes.client.CoreV1Api",
-        return_value=util.MOCK_CORE_V1_API,
-    )
-    @mock.patch(
-        "kubernetes.client.CustomObjectsApi",
-        return_value=util.MOCK_CUSTOM_OBJECTS_API,
-    )
-    @mock.patch(
-        "kubernetes.config.load_kube_config",
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
     )
     def test_delete_task_success(
         self,
-        mock_config_load,
-        mock_custom_objects_api,
-        mock_core_v1_api,
+        mock_kfp_client,
     ):
         """
         Should delete task successfully.
@@ -817,6 +809,6 @@ class TestTasks(unittest.TestCase):
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
 
-        mock_core_v1_api.assert_any_call()
-        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
-        mock_config_load.assert_any_call()
+    # we will test those function by running them, not need to assert their result
+    def test_deletion_component_functions_from(self,):
+        delete_volume_op(name=f"task-{util.MOCK_UUID_4}", namespace=KF_PIPELINES_NAMESPACE)
