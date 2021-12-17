@@ -194,9 +194,6 @@ class TaskController:
         BadRequest
             When task attributes are invalid.
         """
-        # for now we need import here to avoid circular import
-        # from projects.kfp.tasks import make_task_creation_job
-
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
         if task.copy_from and has_notebook:
