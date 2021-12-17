@@ -98,6 +98,17 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
+    def test_list_tasks_page_size_1_page_3(self):
+        """
+        Should return a list of tasks with one element.
+        """
+        rv = TEST_CLIENT.get("/tasks?page_size=1&page=3")
+        result = rv.json()
+        total = util.TestingSessionLocal().query(models.Task).count()
+        expected = {"tasks": [util.MOCK_TASK_3], "total": total}
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
     @mock.patch(
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
@@ -244,8 +255,10 @@ class TestTasks(unittest.TestCase):
     )
     # we will test those function by running them, not need to assert their result
     def test_task_creation_component_functions(self, mock_kfp_client):
+
         task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
         all_tasks = util.TestingSessionLocal().query(models.Task).all()
+
         source_task = (
             util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_1)
         )
