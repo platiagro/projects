@@ -12,7 +12,6 @@ from projects.kfp.tasks import (
     make_task_creation_job,
     create_init_task_container_op,
     create_configmap_op,
-    make_task_creation_job,
     patch_notebook_volume_mounts_op,
 )
 from projects.kfp import KF_PIPELINES_NAMESPACE
@@ -97,28 +96,6 @@ class TestTasks(unittest.TestCase):
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
-
-    def test_list_tasks_page_size_1(self):
-        """
-        Should return a list of tasks with one element.
-        """
-        rv = TEST_CLIENT.get("/tasks?page_size=1")
-        result = rv.json()
-
-        expected = {"tasks": [util.MOCK_TASK_1], "total": 1}
-        self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 200)
-
-    def test_list_tasks_page_size_1_page_3(self):
-        """
-        Should return a list of tasks with one element.
-        """
-        rv = TEST_CLIENT.get("/tasks?page_size=1&page=3")
-        result = rv.json()
-
-        expected = {"tasks": [util.MOCK_TASK_3], "total": 1}
-        self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 200)
 
     @mock.patch(
         "kfp.Client",
@@ -263,18 +240,18 @@ class TestTasks(unittest.TestCase):
     @mock.patch(
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
-    )    
+    )
     # we will test those function by running them, not need to assert their result
-    def test_task_creation_component_functions(
-        self,mock_kfp_client
-    ):
+    def test_task_creation_component_functions(self, mock_kfp_client):
         task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
         all_tasks = util.TestingSessionLocal().query(models.Task).all()
         source_task = (
             util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_1)
         )
-        
-        make_task_creation_job(task=task, all_tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE)
+
+        make_task_creation_job(
+            task=task, all_tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE
+        )
 
         # empty task case
         create_init_task_container_op()
