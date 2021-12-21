@@ -19,31 +19,35 @@ ATTACHMENT_FILE_NAME = "taskfiles.zip"
 
 
 @router.get("", response_model=projects.schemas.task.TaskList)
-async def handle_list_tasks(request: Request,
-                            session: Session = Depends(database.session_scope)):
+async def handle_list_tasks(
+    request: Request, session: Session = Depends(database.session_scope)
+):
     """
     Handles GET requests to /.
+
     Parameters
     ----------
     request : fastapi.Request
     session : sqlalchemy.orm.session.Session
+
     Returns
     -------
     projects.schemas.task.TaskList
     """
-    task_controller = TaskController(session)
     filters = format_query_params(str(request.query_params))
+
     order_by = filters.pop("order", None)
-    page = filters.pop("page", None)
-    if page:
-        page = int(page)
+
+    page = filters.pop("page", 1)
+    page = int(page) if page else 1
+
     page_size = filters.pop("page_size", None)
-    if page_size:
-        page_size = int(page_size)
-    tasks = task_controller.list_tasks(page=page,
-                                       page_size=page_size,
-                                       order_by=order_by,
-                                       **filters)
+    page_size = int(page_size) if page_size else 10
+
+    task_controller = TaskController(session)
+    tasks = task_controller.list_tasks(
+        page=page, page_size=page_size, order_by=order_by, **filters
+    )
     return tasks
 
 
