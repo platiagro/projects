@@ -20,7 +20,7 @@ ATTACHMENT_FILE_NAME = "taskfiles.zip"
 
 @router.get("", response_model=projects.schemas.task.TaskList)
 async def handle_list_tasks(request: Request,
-                            session: Session = Depends(session_scope)):
+                            session: Session = Depends(database.session_scope)):
     """
     Handles GET requests to /.
     Parameters
