@@ -1,12 +1,9 @@
 import unittest
-import pytest
-
 
 from projects import utils
 
 
 class TestUtils(unittest.TestCase):
-
     def test_to_camel_case(self):
         snake = "test_to_camel_case"
         camel = "testToCamelCase"

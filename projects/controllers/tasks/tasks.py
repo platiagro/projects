@@ -101,14 +101,13 @@ class TaskController:
 
     def list_tasks(
         self,
-        page: Optional[int] = 1,
-        page_size: Optional[int] = 10,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
         order_by: str = Optional[str],
         **filters,
     ):
         """
         Lists tasks. Supports pagination, and sorting.
-
         Parameters
         ----------
         page : int
@@ -118,11 +117,9 @@ class TaskController:
         order_by : str
             Order by instruction. Format is "column [asc|desc]".
         **filters : dict
-
         Returns
         -------
         projects.schemas.task.TaskList
-
         Raises
         ------
         BadRequest
@@ -137,10 +134,7 @@ class TaskController:
                 getattr(models.Task, column).ilike(f"%{value}%")
             )
 
-        # BUG
-        # query_total.limit(page_size) didn't work. I'm not sure why...
-        # This solution uses an unoptimized query, and should be improved.
-        total = min(page_size, query_total.scalar())
+        total = query_total.scalar()
 
         # Default sort is name in ascending order
         if not order_by:
@@ -200,9 +194,6 @@ class TaskController:
         BadRequest
             When task attributes are invalid.
         """
-        # for now we need import here to avoid circular import
-        # from projects.kfp.tasks import make_task_creation_job
-
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
         if task.copy_from and has_notebook:
