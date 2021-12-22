@@ -439,9 +439,9 @@ class TaskController:
             )
 
         # remove the volume for the task in the notebook server
-        all_tasks = self.session.query(models.Task).all()
         self.session.delete(task)
         self.session.commit()
+        all_tasks = self.session.query(models.Task).all()
         try:
             make_task_deletion_job(
                 task=task,
