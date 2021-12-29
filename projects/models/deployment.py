@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Deployment model."""
-from datetime import datetime, timezone
-
 from sqlalchemy import (
     Boolean,
     Column,

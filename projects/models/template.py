@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Template model."""
-from datetime import datetime, timezone
-
-from sqlalchemy import Column, DateTime, JSON, String, Text
+from sqlalchemy import Column, JSON, String, Text
 
 from projects.database import Base
 from projects.utils import TimeStamp, now

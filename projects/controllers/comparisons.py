@@ -6,6 +6,8 @@ from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
+from projects.utils import now
+
 
 NOT_FOUND = NotFound(
     code="ComparisonNotFound", message="The specified comparison does not exist"
@@ -77,7 +79,10 @@ class ComparisonController:
         -------
         projects.schemas.comparison.Comparison
         """
-        comparison = models.Comparison(uuid=uuid_alpha(), project_id=project_id)
+        comparison = models.Comparison(uuid=uuid_alpha(),
+                                       project_id=project_id,
+                                       created_at=now(),
+                                       updated_at=now())
         self.session.add(comparison)
         self.session.commit()
         self.session.refresh(comparison)
