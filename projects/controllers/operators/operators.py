@@ -13,6 +13,7 @@ from projects.kubernetes.kube_config import load_kube_config
 from projects.agent.utils import list_resource_version
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kfp.runs import get_latest_run_id
+from projects.utils import now
 
 from kubernetes import client
 from kubernetes.watch import Watch
@@ -146,6 +147,8 @@ class OperatorController:
             parameters=operator.parameters,
             position_x=operator.position_x,
             position_y=operator.position_y,
+            created_at=now(),
+            updated_at=now()
         )
         self.session.add(operator)
         self.session.commit()

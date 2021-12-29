@@ -8,7 +8,7 @@ from projects import models, schemas
 from projects.controllers.operators import OperatorController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
-
+from projects.utils import now
 
 NOT_FOUND = NotFound(
     code="ExperimentNotFound", message="The specified experiment does not exist"
@@ -110,7 +110,11 @@ class ExperimentController:
             )
         else:
             experiment = models.Experiment(
-                uuid=uuid_alpha(), name=experiment.name, project_id=project_id
+                uuid=uuid_alpha(),
+                name=experiment.name,
+                project_id=project_id,
+                created_at=now(),
+                updated_at=now()
             )
             self.session.add(experiment)
             self.session.flush()

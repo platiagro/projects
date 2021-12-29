@@ -12,6 +12,8 @@ from projects.controllers.templates import TemplateController
 from projects.controllers.utils import uuid_alpha
 from projects.controllers.tasks import TaskController
 from projects.exceptions import BadRequest, NotFound
+from projects.utils import now
+
 
 NOT_FOUND = NotFound(
     code="DeploymentNotFound", message="The specified deployment does not exist"
@@ -122,7 +124,8 @@ class DeploymentController:
 
         if deployment.template_id:
             deployments = self.create_deployment_from_template(
-                template_id=deployment.template_id, project_id=project_id
+                template_id=deployment.template_id,
+                project_id=project_id
             )
 
         if deployment.copy_from:
@@ -333,6 +336,8 @@ class DeploymentController:
                 experiment_id=experiment_id,
                 name=experiment.name,
                 project_id=project_id,
+                created_at=now(),
+                updated_at=now()
             )
             self.session.add(deployment)
             self.session.flush()
@@ -367,7 +372,11 @@ class DeploymentController:
         """
         template = self.template_controller.get_template(template_id)
         deployment = models.Deployment(
-            uuid=uuid_alpha(), name=template.name, project_id=project_id
+            uuid=uuid_alpha(),
+            name=template.name,
+            project_id=project_id,
+            created_at=now(),
+            updated_at=now()
         )
         self.session.add(deployment)
         self.session.flush()
@@ -434,6 +443,8 @@ class DeploymentController:
             experiment_id=stored_deployment.experiment_id,
             name=name,
             project_id=project_id,
+            created_at=now(),
+            updated_at=now()
         )
 
         self.session.add(deployment)

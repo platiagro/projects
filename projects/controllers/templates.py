@@ -6,6 +6,8 @@ from datetime import datetime
 from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
+from projects.utils import now
+
 
 NOT_FOUND = NotFound(
     code="TemplateNotFound", message="The specified template does not exist"
@@ -168,6 +170,8 @@ class TemplateController:
             experiment_id=template.experiment_id,
             deployment_id=template.deployment_id,
             tenant=self.kubeflow_userid,
+            created_at=now(),
+            updated_at=now()
         )
         self.session.add(template)
         self.session.commit()
