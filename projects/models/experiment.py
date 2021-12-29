@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Experiment model."""
-from datetime import datetime, timezone
-
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
 
