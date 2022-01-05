@@ -19,6 +19,9 @@ from email import encoders
 from jinja2 import Template
 
 
+logging.basicConfig(level="INFO")
+
+
 def run(source: str, emails: str, task_name: str, requested_at):
     """
     A job that sends an email with the contents of a task attached.
@@ -132,7 +135,5 @@ def parse_args(args):
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
-
-    logging.basicConfig(level=args.log_level)
 
     run(source=args.source, emails=args.emails, task_name=args.task_name, requested_at=args.requested_at)
