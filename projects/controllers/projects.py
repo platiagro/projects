@@ -10,7 +10,7 @@ from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
-
+from projects.utils import now
 NOT_FOUND = NotFound(
     code="ProjectNotFound", message="The specified project does not exist"
 )
@@ -155,6 +155,8 @@ class ProjectController:
             name=project.name,
             description=project.description,
             tenant=self.kubeflow_userid,
+            created_at=now(),
+            updated_at=now()
         )
         self.session.add(project)
         self.session.flush()

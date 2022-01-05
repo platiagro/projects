@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Project model."""
-from datetime import datetime, timezone
-
-from sqlalchemy import Column, DateTime, String, Text
+from sqlalchemy import Column, String, Text
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 

@@ -15,13 +15,17 @@ from projects import __version__, models, schemas
 from projects.kfp.emails import send_email
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.controllers.utils import uuid_alpha
-from projects.exceptions import BadRequest, Forbidden, NotFound
+from projects.exceptions import BadRequest, Forbidden, InternalServerError, NotFound
 from projects.kubernetes.notebook import (
     copy_file_to_pod,
-    remove_persistent_volume_claim,
+    get_files_from_task,
     update_persistent_volume_claim,
     update_task_config_map,
 )
+from projects.kfp.tasks import make_task_creation_job, make_task_deletion_job
+from projects.kfp import KF_PIPELINES_NAMESPACE
+
+
 PREFIX = "tasks"
 
 CATEGORY_DEFAULT = "DEFAULT"
@@ -97,14 +101,13 @@ class TaskController:
 
     def list_tasks(
         self,
-        page: Optional[int] = 1,
-        page_size: Optional[int] = 10,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
         order_by: str = Optional[str],
         **filters,
     ):
         """
         Lists tasks. Supports pagination, and sorting.
-
         Parameters
         ----------
         page : int
@@ -114,11 +117,9 @@ class TaskController:
         order_by : str
             Order by instruction. Format is "column [asc|desc]".
         **filters : dict
-
         Returns
         -------
         projects.schemas.task.TaskList
-
         Raises
         ------
         BadRequest
@@ -133,10 +134,7 @@ class TaskController:
                 getattr(models.Task, column).ilike(f"%{value}%")
             )
 
-        # BUG
-        # query_total.limit(page_size) didn't work. I'm not sure why...
-        # This solution uses an unoptimized query, and should be improved.
-        total = min(page_size, query_total.scalar())
+        total = query_total.scalar()
 
         # Default sort is name in ascending order
         if not order_by:
@@ -196,10 +194,6 @@ class TaskController:
         BadRequest
             When task attributes are invalid.
         """
-        # for now we need import here to avoid circular import
-        from projects.kfp.tasks import make_task_creation_job
-        from projects.kfp import KF_PIPELINES_NAMESPACE
-
         has_notebook = task.experiment_notebook or task.deployment_notebook
 
         if task.copy_from and has_notebook:
@@ -423,15 +417,12 @@ class TaskController:
     def delete_task(self, task_id: str):
         """
         Delete a task in our database.
-
         Parameters
         ----------
         task_id : str
-
         Returns
         -------
         projects.schemas.message.Message
-
         Raises
         ------
         NotFound
@@ -448,14 +439,21 @@ class TaskController:
             )
 
         # remove the volume for the task in the notebook server
-        self.background_tasks.add_task(
-            remove_persistent_volume_claim,
-            name=f"vol-task-{task_id}",
-            mount_path=f"/home/jovyan/tasks/{task.name}",
-        )
-
         self.session.delete(task)
         self.session.commit()
+        all_tasks = self.session.query(models.Task).all()
+        try:
+            make_task_deletion_job(
+                task=task,
+                all_tasks=all_tasks,
+                namespace=KF_PIPELINES_NAMESPACE,
+            )
+        except Exception as e:
+            raise InternalServerError(
+                code="DeletionJobError",
+                message=f"Error while trying to make deletion container job: {e}",
+            )
+
         return schemas.Message(message="Task deleted")
 
     def raise_if_invalid_docker_image(self, image):

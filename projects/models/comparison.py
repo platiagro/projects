@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Comparison model."""
-from datetime import datetime, timezone
-
-from sqlalchemy import Column, DateTime, ForeignKey, JSON, String
+from sqlalchemy import Column, ForeignKey, JSON, String
 
 from projects.database import Base
 from projects.utils import TimeStamp, now
