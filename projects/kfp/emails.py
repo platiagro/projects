@@ -5,13 +5,14 @@ Utility functions that start email pipelines.
 import json
 import os
 from datetime import datetime
+from urllib3.exceptions import MaxRetryError
 
 from kfp import dsl
 from kfp.components import load_component_from_text
 from projects import __version__, models
 from projects.kfp import kfp_client
 from projects.kfp.volume import create_volume_op
-from projects.exceptions import ServiceUnavailable
+from projects.exceptions import ServiceUnavailable, Forbidden, NotFound
 
 from kfp_server_api.exceptions import ApiException
 TASK_VOLUME_MOUNT_PATH = "/home/jovyan"
@@ -114,4 +115,12 @@ def send_email(task: models.Task, namespace: str, email_schema):
         )
     except ApiException as e:
         # Happens when there's no health upstream for kubeflow pipelines
-        raise ServiceUnavailable(e.status, e.reason)
+        if e.status == 404:
+            raise NotFound(e.status, e.reason)
+        if e.status == 403:
+            raise Forbidden(e.status, e.reason)
+        else:
+            raise ServiceUnavailable(e.status, e.reason)
+    except MaxRetryError as e:
+        # Happens when there's no connection available for kubeflow pipelines
+        raise ServiceUnavailable("NoConnectionKFP", "there's no connection available for kubeflow pipelines")
