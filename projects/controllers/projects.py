@@ -54,7 +54,6 @@ class ProjectController:
     ):
         """
         Lists projects. Supports pagination, and sorting.
-
         Parameters
         ----------
         page : int
@@ -64,11 +63,9 @@ class ProjectController:
         order_by : str
             Order by instruction. Format is "column [asc|desc]".
         **filters : dict
-
         Returns
         -------
         projects.schemas.project.ProjectList
-
         Raises
         ------
         BadRequest
@@ -93,10 +90,7 @@ class ProjectController:
                 .collate("utf8mb4_bin")
             )
 
-        # BUG
-        # query_total.limit(page_size) didn't work. I'm not sure why...
-        # This solution uses an unoptimized query, and should be improved.
-        total = min(page_size, query_total.scalar())
+        total = query_total.scalar()
 
         # Default sort is name in ascending order
         if not order_by:
@@ -108,7 +102,7 @@ class ProjectController:
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Project.__table__.columns.keys()
         except (AssertionError, ValueError):
-            raise BadRequest(code="InvalidOrderBy", message="Invalid order argument")
+            raise BadRequest("Invalid order argument")
 
         if sort.lower() == "asc":
             query = query.order_by(asc(getattr(models.Project, column)))
