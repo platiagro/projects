@@ -102,7 +102,7 @@ class ProjectController:
             assert sort.lower() in ["asc", "desc"]
             assert column in models.Project.__table__.columns.keys()
         except (AssertionError, ValueError):
-            raise BadRequest("Invalid order argument")
+            raise BadRequest(code="InvalidOrderBy", message="Invalid order argument")
 
         if sort.lower() == "asc":
             query = query.order_by(asc(getattr(models.Project, column)))
