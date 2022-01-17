@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Projects controller."""
 from datetime import datetime
-from os.path import join
 from typing import Optional
 
 from sqlalchemy import asc, desc, func

@@ -14,6 +14,7 @@ router = APIRouter(
     prefix="/projects",
 )
 
+
 @router.get("", response_model=projects.schemas.project.ProjectList)
 async def handle_list_projects(
     request: Request,
