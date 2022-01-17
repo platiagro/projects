@@ -65,7 +65,6 @@ class TestProjects(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-
     def test_list_projects_page_size_1_page_3(self):
         """
         Should return a list of projects with one element.
@@ -76,7 +75,6 @@ class TestProjects(unittest.TestCase):
         expected = {"projects": [util.MOCK_PROJECT_3], "total": total}
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
-
 
     def test_create_project_invalid_request_body(self):
         """
