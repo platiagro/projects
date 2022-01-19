@@ -160,7 +160,7 @@ async def handle_task_email_sender(
     message: str
 
     """
-    task_controller = TaskController(session, background_tasks)
+    task_controller = TaskController(session)
     result = task_controller.send_emails(email_schema, task_id=task_id)
 
     return result
