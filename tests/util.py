@@ -12,7 +12,6 @@ from sqlalchemy.orm import sessionmaker
 
 from projects.database import DB_TENANT, Base
 from projects import models
-from projects.exceptions import ServiceUnavailable
 
 MOCK_SET_USER_NAMESPACE = mock.MagicMock()
 MOCK_RUNS = mock.MagicMock()
