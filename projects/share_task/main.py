@@ -19,9 +19,6 @@ from email import encoders
 from jinja2 import Template
 
 
-logging.basicConfig(level="INFO")
-
-
 def run(source: str, emails: str, task_name: str, requested_at):
     """
     A job that sends an email with the contents of a task attached.
@@ -46,7 +43,6 @@ def run(source: str, emails: str, task_name: str, requested_at):
     mail_password = os.getenv("MAIL_PASSWORD", "")
     mail_server = os.getenv("MAIL_SERVER", "")
     mail_port = int(os.getenv("MAIL_PORT", 465))
-
     email_message_template = pkgutil.get_data("projects", "config/email-template.html")
     html_string = make_email_message(email_message_template, task_name)
     text = MIMEText(html_string, "html")
@@ -70,16 +66,19 @@ def run(source: str, emails: str, task_name: str, requested_at):
     message.attach(part)
     message.attach(text)
     message["Subject"] = f"Conteúdo da task {task_name}"
-
-    context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
-        server.login(mail_sender_address, mail_password)
-        for email in emails:
-            server.sendmail(
-                mail_sender_address, email, message.as_string()
-            )
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(mail_server, mail_port, context=context) as server:
+            server.login(mail_sender_address, mail_password)
+            for email in emails:
+                server.sendmail(
+                    mail_sender_address, email, message.as_string()
+                )
+    except smtplib.SMTPAuthenticationError:
+        logging.error("Error authenticating email.")
+        return False
     logging.info("Done!")
-
+    return True
 
 def make_email_message(html_file_content, task_name):
     """
@@ -135,5 +134,7 @@ def parse_args(args):
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
+
+    logging.basicConfig(level=args.log_level)
 
     run(source=args.source, emails=args.emails, task_name=args.task_name, requested_at=args.requested_at)
