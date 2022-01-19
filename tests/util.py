@@ -174,6 +174,11 @@ def mock_get_namespaced_custom_object(plural, name, namespace, **kwargs):
         }
 
 
+MOCK_SEND_EMAIL = mock.MagicMock(
+    login=mock.MagicMock(return_value=True),
+    send=mock.MagicMock(return_value=True),
+)
+
 MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
     list_namespaced_custom_object=mock.MagicMock(
         return_value={"items": [{"metadata": {"name": "experiment-"}}]},

@@ -5,7 +5,7 @@ import pytest
 import pkgutil
 
 from projects import models
-from projects.share_task.main import parse_args, make_email_message
+from projects.share_task.main import parse_args, make_email_message, run
 from projects.kfp.emails import send_email
 from projects.schemas.mailing import EmailSchema
 from projects.kfp import KF_PIPELINES_NAMESPACE
@@ -73,4 +73,10 @@ class TestShareTask(unittest.TestCase):
         self, mock_kfp_client
     ):
         task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
-        send_email(task,email_schema=EmailSchema,namespace= KF_PIPELINES_NAMESPACE)
+        send_email(task, email_schema=EmailSchema, namespace=KF_PIPELINES_NAMESPACE)
+
+    @mock.patch("ssl.create_default_context")
+    @mock.patch("smtplib.SMTP_SSL", return_value = util.MOCK_SEND_EMAIL)
+    def test_send_email(self, mock_ssl_context, mock_server):
+        path = "./tests/resources/folder_send_email"
+        run(path, "dviana@cpqd.com.br", "teste", str(datetime.now()))
