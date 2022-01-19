@@ -5,12 +5,22 @@ import pytest
 import os
 import pkgutil
 
+from fastapi.testclient import TestClient
+
 from projects import models
+from projects.api.main import app
+from projects.database import session_scope
 from projects.share_task.main import parse_args, make_email_message, run
 from projects.kfp.emails import send_email
 from projects.schemas.mailing import EmailSchema
 from projects.kfp import KF_PIPELINES_NAMESPACE
 import tests.util as util
+
+
+app.dependency_overrides[session_scope] = util.override_session_scope
+TEST_CLIENT = TestClient(app)
+
+HOST_URL = "http://ml-pipeline.kubeflow:8888"
 
 
 class TestShareTask(unittest.TestCase):
@@ -81,7 +91,65 @@ class TestShareTask(unittest.TestCase):
 
     @mock.patch("ssl.create_default_context")
     @mock.patch("shutil.make_archive")
-    @mock.patch("smtplib.SMTP_SSL", return_value = util.MOCK_SEND_EMAIL)
-    def test_send_email(self, mock_ssl_context, mock_zip,mock_server):
+    @mock.patch("smtplib.SMTP_SSL", return_value=util.MOCK_SEND_EMAIL)
+    def test_send_email(self, mock_ssl_context, mock_zip, mock_server):
         path = "/path/to/file"
         self.assertTrue(run(path, "teste@teste.com.br", "teste", str(datetime.now())))
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch("ssl.create_default_context")
+    @mock.patch("shutil.make_archive")
+    @mock.patch("smtplib.SMTP_SSL", return_value=util.MOCK_SEND_EMAIL)
+    def test_send_email_api(self, mock_kfp_client, mock_ssl_context, mock_zip, mock_server):
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.post(
+            f"/tasks/{task_id}/emails",
+            json={"emails": ["test@test.com.br"]}
+        )
+        result = rv.json()
+        expected = {"message": "email has been sent"}
+        self.assertDictEqual(expected, result)
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch("ssl.create_default_context")
+    @mock.patch("shutil.make_archive")
+    @mock.patch("smtplib.SMTP_SSL", return_value=util.MOCK_SEND_EMAIL)
+    def test_send_email_api_not_found(self, mock_kfp_client, mock_ssl_context, mock_zip, mock_server):
+        task_id = "invalid"
+
+        rv = TEST_CLIENT.post(
+            f"/tasks/{task_id}/emails",
+            json={"emails": ["test@test.com.br"]}
+        )
+        result = rv.json()
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "TaskNotFound",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
+    @mock.patch("ssl.create_default_context")
+    @mock.patch("shutil.make_archive")
+    @mock.patch("smtplib.SMTP_SSL", return_value=util.MOCK_SEND_EMAIL)
+    def test_send_email_api_invalid_email(self, mock_kfp_client, mock_ssl_context, mock_zip, mock_server):
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.post(
+            f"/tasks/{task_id}/emails",
+            json={"emails": ["testtest.com.br"]}
+        )
+        result = rv.json()
+
+        self.assertEqual(rv.status_code, 422)
