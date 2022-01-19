@@ -141,7 +141,6 @@ class TestShareTask(unittest.TestCase):
             f"/tasks/{task_id}/emails",
             json={"emails": ["testtest.com.br"]}
         )
-        result = rv.json()
 
         self.assertEqual(rv.status_code, 422)
 
@@ -156,10 +155,9 @@ class TestShareTask(unittest.TestCase):
             f"/tasks/{task_id}/emails",
             json={"emails": ["test@test.com.br"]}
         )
-        result = rv.json()
 
         self.assertEqual(rv.status_code, 404)
-    
+
     @mock.patch(
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT_EXCEPT_403,
@@ -171,7 +169,6 @@ class TestShareTask(unittest.TestCase):
             f"/tasks/{task_id}/emails",
             json={"emails": ["test@test.com.br"]}
         )
-        result = rv.json()
 
         self.assertEqual(rv.status_code, 403)
 
@@ -186,11 +183,10 @@ class TestShareTask(unittest.TestCase):
             f"/tasks/{task_id}/emails",
             json={"emails": ["test@test.com.br"]}
         )
-        result = rv.json()
 
         self.assertEqual(rv.status_code, 503)
         self.assertEqual(rv.reason, "Service Unavailable")
-    
+
     @mock.patch(
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT_EXCEPT_MAX_RETRY,
@@ -202,6 +198,5 @@ class TestShareTask(unittest.TestCase):
             f"/tasks/{task_id}/emails",
             json={"emails": ["test@test.com.br"]}
         )
-        result = rv.json()
 
         self.assertEqual(rv.status_code, 503)
