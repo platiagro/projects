@@ -14,6 +14,8 @@ from sqlalchemy import asc, desc, func
 from projects import __version__, models, schemas
 from projects.kfp.emails import send_email
 from projects.kfp import KF_PIPELINES_NAMESPACE
+from projects.kfp.tasks import make_task_creation_job, make_task_deletion_job
+from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, InternalServerError, NotFound
 from projects.kubernetes.notebook import (
@@ -22,8 +24,7 @@ from projects.kubernetes.notebook import (
     update_persistent_volume_claim,
     update_task_config_map,
 )
-from projects.kfp.tasks import make_task_creation_job, make_task_deletion_job
-from projects.kfp import KF_PIPELINES_NAMESPACE
+from projects.utils import check_email
 
 
 PREFIX = "tasks"
@@ -558,5 +559,9 @@ class TaskController:
         task = self.session.query(models.Task).get(task_id)
         if task is None:
             raise NOT_FOUND
+        for email in email_schema.emails:
+            if not check_email(email):
+                raise BadRequest("InvalidEmail", "The inserted email is invalid.")
         send_email(task=task, namespace=KF_PIPELINES_NAMESPACE, email_schema=email_schema)
+
         return {"message": "email has been sent"}
