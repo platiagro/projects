@@ -100,10 +100,7 @@ class TestShareTask(unittest.TestCase):
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
     )
-    @mock.patch("ssl.create_default_context")
-    @mock.patch("shutil.make_archive")
-    @mock.patch("smtplib.SMTP_SSL", return_value=util.MOCK_SEND_EMAIL)
-    def test_send_email_api(self, mock_kfp_client, mock_ssl_context, mock_zip, mock_server):
+    def test_send_email_api(self, mock_kfp_client):
         task_id = util.MOCK_UUID_4
 
         rv = TEST_CLIENT.post(
@@ -118,10 +115,7 @@ class TestShareTask(unittest.TestCase):
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
     )
-    @mock.patch("ssl.create_default_context")
-    @mock.patch("shutil.make_archive")
-    @mock.patch("smtplib.SMTP_SSL", return_value=util.MOCK_SEND_EMAIL)
-    def test_send_email_api_not_found(self, mock_kfp_client, mock_ssl_context, mock_zip, mock_server):
+    def test_send_email_api_not_found(self, mock_kfp_client):
         task_id = "invalid"
 
         rv = TEST_CLIENT.post(
@@ -140,10 +134,7 @@ class TestShareTask(unittest.TestCase):
         "kfp.Client",
         return_value=util.MOCK_KFP_CLIENT,
     )
-    @mock.patch("ssl.create_default_context")
-    @mock.patch("shutil.make_archive")
-    @mock.patch("smtplib.SMTP_SSL", return_value=util.MOCK_SEND_EMAIL)
-    def test_send_email_api_invalid_email(self, mock_kfp_client, mock_ssl_context, mock_zip, mock_server):
+    def test_send_email_api_invalid_email(self, mock_kfp_client):
         task_id = util.MOCK_UUID_4
 
         rv = TEST_CLIENT.post(
@@ -153,3 +144,64 @@ class TestShareTask(unittest.TestCase):
         result = rv.json()
 
         self.assertEqual(rv.status_code, 422)
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT_EXCEPT_404,
+    )
+    def test_kfp_client_not_found(self, mock_kfp_client):
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.post(
+            f"/tasks/{task_id}/emails",
+            json={"emails": ["test@test.com.br"]}
+        )
+        result = rv.json()
+
+        self.assertEqual(rv.status_code, 404)
+    
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT_EXCEPT_403,
+    )
+    def test_kfp_client_forbidden(self, mock_kfp_client):
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.post(
+            f"/tasks/{task_id}/emails",
+            json={"emails": ["test@test.com.br"]}
+        )
+        result = rv.json()
+
+        self.assertEqual(rv.status_code, 403)
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT_EXCEPT_SERVICE_UNAVAILABLE,
+    )
+    def test_kfp_client_service_unavailable_bad_upstream(self, mock_kfp_client):
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.post(
+            f"/tasks/{task_id}/emails",
+            json={"emails": ["test@test.com.br"]}
+        )
+        result = rv.json()
+
+        self.assertEqual(rv.status_code, 503)
+        self.assertEqual(rv.reason, "Service Unavailable")
+    
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT_EXCEPT_MAX_RETRY,
+    )
+    def test_kfp_client_service_unavailable_max_retry(self, mock_kfp_client):
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.post(
+            f"/tasks/{task_id}/emails",
+            json={"emails": ["test@test.com.br"]}
+        )
+        result = rv.json()
+
+        self.assertEqual(rv.status_code, 503)
