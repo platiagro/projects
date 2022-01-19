@@ -16,7 +16,7 @@ from kfp.components import load_component_from_text
 from projects import __version__, models
 from projects.kfp import kfp_client
 from projects.kfp.volume import create_volume_op, delete_volume_op
-from projects.exceptions import ServiceUnavailable, NotFound
+from projects.exceptions import ServiceUnavailable, NotFound, Forbidden
 
 from kfp_server_api.exceptions import ApiException
 TASK_VOLUME_MOUNT_PATH = "/home/jovyan/tasks"
@@ -118,6 +118,8 @@ def make_task_creation_job(
         # Happens when there's no health upstream for kubeflow pipelines
         if e.status == 404:
             raise NotFound(e.status, e.reason)
+        if e.status == 403:
+            raise Forbidden(e.status, e.reason)
         else:
             raise ServiceUnavailable(e.status, e.reason)
     except MaxRetryError as e:
