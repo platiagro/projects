@@ -2,6 +2,7 @@ import unittest
 import unittest.mock as mock
 from datetime import datetime
 import pytest
+import os
 import pkgutil
 
 from projects import models
@@ -18,12 +19,15 @@ class TestShareTask(unittest.TestCase):
         """
         Sets up the test before running it.
         """
+        test_file = open("task.zip", "w+")
+        test_file.close()
         util.create_mocks()
 
     def tearDown(self):
         """
         Deconstructs the test after running it.
         """
+        os.remove("task.zip")
         util.delete_mocks()
 
     def test_parse_args_success(self):
@@ -76,7 +80,8 @@ class TestShareTask(unittest.TestCase):
         send_email(task, email_schema=EmailSchema, namespace=KF_PIPELINES_NAMESPACE)
 
     @mock.patch("ssl.create_default_context")
+    @mock.patch("shutil.make_archive")
     @mock.patch("smtplib.SMTP_SSL", return_value = util.MOCK_SEND_EMAIL)
-    def test_send_email(self, mock_ssl_context, mock_server):
-        path = "./tests/resources/folder_send_email"
-        run(path, "dviana@cpqd.com.br", "teste", str(datetime.now()))
+    def test_send_email(self, mock_ssl_context, mock_zip,mock_server):
+        path = "/path/to/file"
+        self.assertTrue(run(path, "teste@teste.com.br", "teste", str(datetime.now())))
