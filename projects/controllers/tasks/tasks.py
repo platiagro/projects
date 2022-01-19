@@ -24,7 +24,6 @@ from projects.kubernetes.notebook import (
     update_persistent_volume_claim,
     update_task_config_map,
 )
-from projects.utils import check_email
 
 
 PREFIX = "tasks"
@@ -559,9 +558,5 @@ class TaskController:
         task = self.session.query(models.Task).get(task_id)
         if task is None:
             raise NOT_FOUND
-        for email in email_schema.emails:
-            if not check_email(email):
-                raise BadRequest("InvalidEmail", "The inserted email is invalid.")
         send_email(task=task, namespace=KF_PIPELINES_NAMESPACE, email_schema=email_schema)
-
         return {"message": "email has been sent"}
