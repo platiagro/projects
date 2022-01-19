@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Projects controller."""
 from datetime import datetime
-from os.path import join
 from typing import Optional
 
 from sqlalchemy import asc, desc, func
@@ -54,7 +53,6 @@ class ProjectController:
     ):
         """
         Lists projects. Supports pagination, and sorting.
-
         Parameters
         ----------
         page : int
@@ -64,11 +62,9 @@ class ProjectController:
         order_by : str
             Order by instruction. Format is "column [asc|desc]".
         **filters : dict
-
         Returns
         -------
         projects.schemas.project.ProjectList
-
         Raises
         ------
         BadRequest
@@ -93,10 +89,7 @@ class ProjectController:
                 .collate("utf8mb4_bin")
             )
 
-        # BUG
-        # query_total.limit(page_size) didn't work. I'm not sure why...
-        # This solution uses an unoptimized query, and should be improved.
-        total = min(page_size, query_total.scalar())
+        total = query_total.scalar()
 
         # Default sort is name in ascending order
         if not order_by:

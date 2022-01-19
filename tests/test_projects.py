@@ -4,6 +4,7 @@ import unittest.mock as mock
 
 from fastapi.testclient import TestClient
 
+from projects import models
 from projects.api.main import app
 from projects.database import session_scope
 
@@ -64,25 +65,14 @@ class TestProjects(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    def test_list_projects_page_size_1(self):
-        """
-        Should return a list of projects with one element.
-        """
-        rv = TEST_CLIENT.get("/projects?page_size=1")
-        result = rv.json()
-
-        expected = {"projects": [util.MOCK_PROJECT_1], "total": 1}
-        self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 200)
-
     def test_list_projects_page_size_1_page_3(self):
         """
         Should return a list of projects with one element.
         """
         rv = TEST_CLIENT.get("/projects?page_size=1&page=3")
         result = rv.json()
-
-        expected = {"projects": [util.MOCK_PROJECT_3], "total": 1}
+        total = util.TestingSessionLocal().query(models.Project).count()
+        expected = {"projects": [util.MOCK_PROJECT_3], "total": total}
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
