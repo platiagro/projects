@@ -28,7 +28,7 @@ MAIL_SERVER = os.getenv("MAIL_SERVER", "")
 MAIL_PORT = str(os.getenv("MAIL_PORT", 587))
 MAIL_TLS = str(os.getenv("MAIL_TLS", True))
 MAIL_SSL = str(os.getenv("MAIL_SSL", False))
-
+LOG_LEVEL= "INFO"
 
 def send_email(task: models.Task, namespace: str, email_schema):
     """
@@ -88,6 +88,7 @@ def send_email(task: models.Task, namespace: str, email_schema):
                         "MAIL_SERVER": MAIL_SERVER,
                         "MAIL_TLS": MAIL_TLS,
                         "MAIL_SSL": MAIL_SSL,
+                        "LOG_LEVEL": LOG_LEVEL
                     },
                     "command": command,
 
