@@ -81,12 +81,12 @@ class ProjectController:
             query = query.filter(
                 getattr(models.Project, column)
                 .ilike(f"%{value}%")
-                .collate("utf8mb4_bin")
+                .collate("utf8_unicode_ci")
             )
             query_total = query_total.filter(
                 getattr(models.Project, column)
                 .ilike(f"%{value}%")
-                .collate("utf8mb4_bin")
+                .collate("utf8_unicode_ci")
             )
 
         total = query_total.scalar()
