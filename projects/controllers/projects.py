@@ -70,23 +70,24 @@ class ProjectController:
         BadRequest
             When order_by is invalid.
         """
-        query = self.session.query(models.Project).filter_by(
-            tenant=self.kubeflow_userid
-        )
-        query_total = self.session.query(func.count(models.Project.uuid)).filter_by(
-            tenant=self.kubeflow_userid
-        )
+        query = self.session.query(models.Project)
+        query_total = self.session.query(func.count(models.Project.uuid))
 
+        # that's necessary, otherwise mysql won't interpretate special characters 
+        def escaped_format(string):
+            return f"\{string}"
+        
         for column, value in filters.items():
+            value = escaped_format(value)
             query = query.filter(
                 getattr(models.Project, column)
                 .ilike(f"%{value}%")
-                .collate("utf8_unicode_ci")
+                .collate("utf8mb4_bin")
             )
             query_total = query_total.filter(
                 getattr(models.Project, column)
                 .ilike(f"%{value}%")
-                .collate("utf8_unicode_ci")
+                
             )
 
         total = query_total.scalar()
