@@ -135,6 +135,5 @@ def parse_args(args):
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
 
-    logging.basicConfig(os.getenv("LOG_LEVEL"))
 
     run(source=args.source, emails=args.emails, task_name=args.task_name, requested_at=args.requested_at)
