@@ -7,6 +7,7 @@ import os
 import pkgutil
 from datetime import datetime
 from typing import List, Optional
+from urllib3.exceptions import MaxRetryError
 
 from jinja2 import Template
 from kfp import dsl
@@ -15,7 +16,9 @@ from kfp.components import load_component_from_text
 from projects import __version__, models
 from projects.kfp import kfp_client
 from projects.kfp.volume import create_volume_op, delete_volume_op
+from projects.exceptions import ServiceUnavailable, NotFound, Forbidden
 
+from kfp_server_api.exceptions import ApiException
 TASK_VOLUME_MOUNT_PATH = "/home/jovyan/tasks"
 SOURCE_TASK_VOLUME_MOUNT_PATH = "/home/source"
 DESTINATION_TASK_VOLUME_MOUNT_PATH = "/home/destination"
@@ -103,14 +106,25 @@ def make_task_creation_job(
         )
 
     run_name = f"Create Task - {task.name}"
-
-    return kfp_client().create_run_from_pipeline_func(
-        pipeline_func=pipeline_func,
-        arguments={},
-        run_name=run_name,
-        experiment_name=task.uuid,
-        namespace=namespace,
-    )
+    try:
+        return kfp_client().create_run_from_pipeline_func(
+            pipeline_func=pipeline_func,
+            arguments={},
+            run_name=run_name,
+            experiment_name=task.uuid,
+            namespace=namespace,
+        )
+    except ApiException as e:
+        # Happens when there's no health upstream for kubeflow pipelines
+        if e.status == 404:
+            raise NotFound(e.status, e.reason)
+        if e.status == 403:
+            raise Forbidden(e.status, e.reason)
+        else:
+            raise ServiceUnavailable(e.status, e.reason)
+    except MaxRetryError as e:
+        # Happens when there's no connection available for kubeflow pipelines
+        raise ServiceUnavailable("NoConnectionKFP", "there's no connection available for kubeflow pipelines")
 
 
 def make_task_deletion_job(

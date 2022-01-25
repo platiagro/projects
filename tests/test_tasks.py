@@ -806,3 +806,36 @@ class TestTasks(unittest.TestCase):
         delete_volume_op(
             name=f"task-{util.MOCK_UUID_4}", namespace=KF_PIPELINES_NAMESPACE
         )
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT_EXCEPT_404,
+    )
+    def test_kfp_client_not_found(self, mock_kfp_client):
+        rv = TEST_CLIENT.post("/tasks", json={})
+        self.assertEqual(rv.status_code, 404)
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT_EXCEPT_403,
+    )
+    def test_kfp_client_forbidden(self, mock_kfp_client):
+        rv = TEST_CLIENT.post("/tasks", json={})
+        self.assertEqual(rv.status_code, 403)
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT_EXCEPT_SERVICE_UNAVAILABLE,
+    )
+    def test_kfp_client_service_unavailable_bad_upstream(self, mock_kfp_client):
+        rv = TEST_CLIENT.post("/tasks", json={})
+        self.assertEqual(rv.status_code, 503)
+        self.assertEqual(rv.reason, "Service Unavailable")
+
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT_EXCEPT_MAX_RETRY,
+    )
+    def test_kfp_client_service_unavailable_max_retry(self, mock_kfp_client):
+        rv = TEST_CLIENT.post("/tasks", json={})
+        self.assertEqual(rv.status_code, 503)

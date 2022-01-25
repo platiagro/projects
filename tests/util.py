@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timezone
 from unittest import mock
+from urllib3.exceptions import MaxRetryError
 from kfp_server_api.rest import ApiException
 import json
+import urllib3
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -47,7 +49,50 @@ MOCK_KFP_CLIENT = mock.MagicMock(
     create_experiment=MOCK_CREATE_EXPERIMENT,
     experiments=MOCK_EXPERIMENTS,
 )
-
+MOCK_KFP_CLIENT_EXCEPT_403 = mock.MagicMock(
+    set_user_namespace=MOCK_SET_USER_NAMESPACE,
+    runs=MOCK_RUNS,
+    list_runs=MOCK_LIST_RUNS,
+    get_run=MOCK_GET_RUN,
+    create_run_from_pipeline_func=mock.MagicMock(side_effect=ApiException(status=403, reason="mocked_reason")),
+    run_pipeline=MOCK_RUN_PIPELINE,
+    get_experiment=MOCK_GET_EXPERIMENT,
+    create_experiment=MOCK_CREATE_EXPERIMENT,
+    experiments=MOCK_EXPERIMENTS,
+)
+MOCK_KFP_CLIENT_EXCEPT_404 = mock.MagicMock(
+    set_user_namespace=MOCK_SET_USER_NAMESPACE,
+    runs=MOCK_RUNS,
+    list_runs=MOCK_LIST_RUNS,
+    get_run=MOCK_GET_RUN,
+    create_run_from_pipeline_func=mock.MagicMock(side_effect=ApiException(status=404, reason="mocked reason")),
+    run_pipeline=MOCK_RUN_PIPELINE,
+    get_experiment=MOCK_GET_EXPERIMENT,
+    create_experiment=MOCK_CREATE_EXPERIMENT,
+    experiments=MOCK_EXPERIMENTS,
+)
+MOCK_KFP_CLIENT_EXCEPT_SERVICE_UNAVAILABLE = mock.MagicMock(
+    set_user_namespace=MOCK_SET_USER_NAMESPACE,
+    runs=MOCK_RUNS,
+    list_runs=MOCK_LIST_RUNS,
+    get_run=MOCK_GET_RUN,
+    create_run_from_pipeline_func=mock.MagicMock(side_effect=ApiException(status=503, reason="mocked message")),
+    run_pipeline=MOCK_RUN_PIPELINE,
+    get_experiment=MOCK_GET_EXPERIMENT,
+    create_experiment=MOCK_CREATE_EXPERIMENT,
+    experiments=MOCK_EXPERIMENTS,
+)
+MOCK_KFP_CLIENT_EXCEPT_MAX_RETRY = mock.MagicMock(
+    set_user_namespace=MOCK_SET_USER_NAMESPACE,
+    runs=MOCK_RUNS,
+    list_runs=MOCK_LIST_RUNS,
+    get_run=MOCK_GET_RUN,
+    create_run_from_pipeline_func=mock.MagicMock(side_effect=MaxRetryError(urllib3.connectionpool.HTTPConnectionPool, url="test.com")),
+    run_pipeline=MOCK_RUN_PIPELINE,
+    get_experiment=MOCK_GET_EXPERIMENT,
+    create_experiment=MOCK_CREATE_EXPERIMENT,
+    experiments=MOCK_EXPERIMENTS,
+)
 MOCK_STREAM = mock.MagicMock(
     is_open=mock.MagicMock(side_effect=[True, False]),
     read_stdout=mock.MagicMock(
@@ -173,6 +218,11 @@ def mock_get_namespaced_custom_object(plural, name, namespace, **kwargs):
             "spec": {},
         }
 
+
+MOCK_SEND_EMAIL = mock.MagicMock(
+    login=mock.MagicMock(return_value=True),
+    send=mock.MagicMock(return_value=True),
+)
 
 MOCK_CUSTOM_OBJECTS_API = mock.MagicMock(
     list_namespaced_custom_object=mock.MagicMock(

@@ -1,0 +1,15 @@
+ARG BASE_CONTAINER=platiagro/projects:0.3.0-SNAPSHOT
+FROM $BASE_CONTAINER
+
+LABEL maintainer="fabiol@cpqd.com.br"
+
+# Stamps the commit SHA into the labels and ENV vars
+ARG BRANCH="master"
+ARG COMMIT=""
+LABEL branch=${BRANCH}
+LABEL commit=${COMMIT}
+ENV COMMIT=${COMMIT}
+ENV BRANCH=${BRANCH}
+
+ENTRYPOINT ["python", "-m", "projects.share_task.main"]
+CMD []
