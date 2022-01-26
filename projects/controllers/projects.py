@@ -76,21 +76,11 @@ class ProjectController:
         query_total = self.session.query(func.count(models.Project.uuid)).filter_by(
             tenant=self.kubeflow_userid
         )
-
-        # that's necessary, otherwise mysql won't interpretate special characters
-        def escaped_format(string):
-            return f"\{string}"
-
         for column, value in filters.items():
-            
-            # mysql needs escape special characters
-            # maybe this could be refactored in future
-            if "mysql" in DB_HOST:
-                value = escaped_format(value)
-            
+ 
             query = query.filter(
                 getattr(models.Project, column)
-                .ilike(f"%{value}%")
+                .ilike(f"%{value}%", escape= "\ ")
                 .collate("utf8mb4_bin")
             )
             query_total = query_total.filter(
