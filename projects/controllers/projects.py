@@ -6,6 +6,7 @@ from typing import Optional
 from sqlalchemy import asc, desc, func
 
 from projects import models, schemas
+from projects.database import DB_HOST
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
@@ -71,9 +72,7 @@ class ProjectController:
         BadRequest
             When order_by is invalid.
         """
-        query = self.session.query(models.Project).filter_by(
-            tenant=self.kubeflow_userid
-        )
+        query = self.session.query(models.Project)
         query_total = self.session.query(func.count(models.Project.uuid)).filter_by(
             tenant=self.kubeflow_userid
         )
@@ -83,7 +82,12 @@ class ProjectController:
             return f"\{string}"
 
         for column, value in filters.items():
-            value = escaped_format(value)
+            
+            # mysql needs escape special characters
+            # maybe this could be refactored in future
+            if "mysql" in DB_HOST:
+                value = escaped_format(value)
+            
             query = query.filter(
                 getattr(models.Project, column)
                 .ilike(f"%{value}%")
