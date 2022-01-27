@@ -6,7 +6,6 @@ from typing import Optional
 from sqlalchemy import asc, desc, func
 
 from projects import models, schemas
-from projects.database import DB_HOST
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
@@ -78,15 +77,15 @@ class ProjectController:
         query_total = self.session.query(func.count(models.Project.uuid)).filter_by(
             tenant=self.kubeflow_userid
         )
-        
-        # This is necessary to mysql consider special character 
+
+        # This is necessary to mysql consider special character
         def escaped_format(string):
             escaped_string = ""
             # to avoid the trouble of identify every special character we will escape all!
             for character in string:
-                escaped_string = escaped_string + "\\" + character 
-            return escaped_string    
-        
+                escaped_string = escaped_string + "\\" + character
+            return escaped_string
+
         for column, value in filters.items():
             value = escaped_format(value)
             query = query.filter(
