@@ -78,9 +78,8 @@ class ProjectController:
             tenant=self.kubeflow_userid
         )
 
-        import re
-
         # This is necessary to mysql consider special character
+        # maybe we can refactor this!
         def escaped_format(string):
             escaped_string = ""
             # to avoid the trouble of identify every special character we gonna escape all!
@@ -89,8 +88,7 @@ class ProjectController:
             return escaped_string
 
         for column, value in filters.items():
-            # value = escaped_format(value)
-            value = re.escape(value)
+            value = escaped_format(value)
             query = query.filter(
                 getattr(models.Project, column)
                 .ilike(f"%{value}%")
