@@ -72,7 +72,9 @@ class ProjectController:
         BadRequest
             When order_by is invalid.
         """
-        query = self.session.query(models.Project)
+        query = self.session.query(models.Project).filter_by(
+            tenant=self.kubeflow_userid
+        )
         query_total = self.session.query(func.count(models.Project.uuid)).filter_by(
             tenant=self.kubeflow_userid
         )
@@ -80,7 +82,7 @@ class ProjectController:
  
             query = query.filter(
                 getattr(models.Project, column)
-                .ilike(f"%{value}%", escape= "\ ")
+                .ilike(f"%{value}%", escape= "\\")
                 .collate("utf8mb4_bin")
             )
             query_total = query_total.filter(
