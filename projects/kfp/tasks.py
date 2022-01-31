@@ -124,7 +124,7 @@ def make_task_creation_job(
             raise ServiceUnavailable(e.status, e.reason)
     except MaxRetryError:
         # Happens when there's no connection available for kubeflow pipelines
-        raise ServiceUnavailable("NoConnectionKFP", "there's no connection available for kubeflow pipelines")
+        raise ServiceUnavailable("NoConnectionKFP", "There's no  connection available for kubeflow pipelines")
 
 
 def make_task_deletion_job(
@@ -175,7 +175,7 @@ def make_task_deletion_job(
             raise ServiceUnavailable(e.status, e.reason)
     except MaxRetryError:
         # Happens when there's no connection available for kubeflow pipelines
-        raise ServiceUnavailable("NoConnectionKFP", "there's no connection available for kubeflow pipelines")
+        raise ServiceUnavailable("NoConnectionKFP", "There's no  connection available for kubeflow pipelines")
 
 
 def create_init_task_container_op(

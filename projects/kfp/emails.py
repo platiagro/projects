@@ -125,4 +125,4 @@ def send_email(task: models.Task, namespace: str, email_schema):
             raise ServiceUnavailable(e.status, e.reason)
     except MaxRetryError:
         # Happens when there's no connection available for kubeflow pipelines
-        raise ServiceUnavailable("NoConnectionKFP", "there's no connection available for kubeflow pipelines")
+        raise ServiceUnavailable("NoConnectionKFP", "There's no connection available for kubeflow pipelines")
