@@ -28,7 +28,8 @@ MAIL_SERVER = os.getenv("MAIL_SERVER", "")
 MAIL_PORT = str(os.getenv("MAIL_PORT", 587))
 MAIL_TLS = str(os.getenv("MAIL_TLS", True))
 MAIL_SSL = str(os.getenv("MAIL_SSL", False))
-LOG_LEVEL= "INFO"
+LOG_LEVEL = "INFO"
+
 
 def send_email(task: models.Task, namespace: str, email_schema):
     """
@@ -122,6 +123,6 @@ def send_email(task: models.Task, namespace: str, email_schema):
             raise Forbidden(e.status, e.reason)
         else:
             raise ServiceUnavailable(e.status, e.reason)
-    except MaxRetryError as e:
+    except MaxRetryError:
         # Happens when there's no connection available for kubeflow pipelines
-        raise ServiceUnavailable("NoConnectionKFP", "there's no connection available for kubeflow pipelines")
+        raise ServiceUnavailable("NoConnectionKFP", "There's no connection available for kubeflow pipelines")

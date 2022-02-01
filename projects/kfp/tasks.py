@@ -122,9 +122,9 @@ def make_task_creation_job(
             raise Forbidden(e.status, e.reason)
         else:
             raise ServiceUnavailable(e.status, e.reason)
-    except MaxRetryError as e:
+    except MaxRetryError:
         # Happens when there's no connection available for kubeflow pipelines
-        raise ServiceUnavailable("NoConnectionKFP", "there's no connection available for kubeflow pipelines")
+        raise ServiceUnavailable("NoConnectionKFP", "There's no  connection available for kubeflow pipelines")
 
 
 def make_task_deletion_job(
@@ -158,12 +158,24 @@ def make_task_deletion_job(
 
     run_name = f"Delete Task - {task.name}"
 
-    return kfp_client().create_run_from_pipeline_func(
-        pipeline_func=pipeline_func,
-        arguments={},
-        run_name=run_name,
-        experiment_name=task.uuid,
-    )
+    try:
+        return kfp_client().create_run_from_pipeline_func(
+            pipeline_func=pipeline_func,
+            arguments={},
+            run_name=run_name,
+            experiment_name=task.uuid,
+        )
+    except ApiException as e:
+        # Happens when there's no health upstream for kubeflow pipelines
+        if e.status == 404:
+            raise NotFound(e.status, e.reason)
+        if e.status == 403:
+            raise Forbidden(e.status, e.reason)
+        else:
+            raise ServiceUnavailable(e.status, e.reason)
+    except MaxRetryError:
+        # Happens when there's no connection available for kubeflow pipelines
+        raise ServiceUnavailable("NoConnectionKFP", "There's no  connection available for kubeflow pipelines")
 
 
 def create_init_task_container_op(

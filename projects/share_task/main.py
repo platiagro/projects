@@ -80,6 +80,7 @@ def run(source: str, emails: str, task_name: str, requested_at):
     logging.info("Done!")
     return True
 
+
 def make_email_message(html_file_content, task_name):
     """
     Build an email body message for a specific task.
@@ -134,6 +135,5 @@ def parse_args(args):
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
-
 
     run(source=args.source, emails=args.emails, task_name=args.task_name, requested_at=args.requested_at)

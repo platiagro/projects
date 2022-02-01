@@ -442,17 +442,11 @@ class TaskController:
         self.session.delete(task)
         self.session.commit()
         all_tasks = self.session.query(models.Task).all()
-        try:
-            make_task_deletion_job(
-                task=task,
-                all_tasks=all_tasks,
-                namespace=KF_PIPELINES_NAMESPACE,
-            )
-        except Exception as e:
-            raise InternalServerError(
-                code="DeletionJobError",
-                message=f"Error while trying to make deletion container job: {e}",
-            )
+        make_task_deletion_job(
+            task=task,
+            all_tasks=all_tasks,
+            namespace=KF_PIPELINES_NAMESPACE,
+        )
 
         return schemas.Message(message="Task deleted")
 
