@@ -88,17 +88,9 @@ class ProjectController:
             return escaped_string
 
         for column, value in filters.items():
-            value = escaped_format(value)
-            query = query.filter(
-                getattr(models.Project, column)
-                .ilike(f"%{value}%")
-                .collate("utf8mb4_bin")
-            )
-            query_total = query_total.filter(
-                getattr(models.Project, column)
-                .ilike(f"%{value}%")
-                .collate("utf8mb4_bin")
-            )
+            #value = escaped_format(value)
+            query = query.filter(getattr(models.Project, column).ilike(f"%{value}%"))
+            query_total = query_total.filter(getattr(models.Project, column).ilike(f"%{value}%"))
 
         total = query_total.scalar()
 
