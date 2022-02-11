@@ -9,6 +9,15 @@ import uuid
 import filetype
 import pandas
 
+ESCAPE_STRING = "\\"
+ALLOWED_SPECIAL_CHARACTERS_LIST = ["-", "_", " "]
+ALLOWED_SPECIAL_CHARACTERS_REGEX = "[-_\s]"
+FORBIDDEN_CHARACTERS_REGEX =  "[^A-Za-z0-9-_\s]"
+ESCAPE_MAP = {
+        "-":"\-",
+        "_": "\_",
+        " ": " "
+    }
 
 def uuid_alpha():
     """
@@ -109,3 +118,39 @@ def parse_file_buffer_to_seldon_request(file):
     except csv.Error:
         file.seek(0)
         return {"strData": file.read().decode("utf-8")}
+
+
+def escaped_format(string):
+    escaped_string = string
+    for character in ALLOWED_SPECIAL_CHARACTERS_LIST:
+        escaped_string = escaped_string.replace(character, ESCAPE_MAP.get(character)) 
+    return escaped_string
+
+def has_special_character(allowed_special_character_regex, string):
+    if re.findall(allowed_special_character_regex, string):
+        return True
+    else:
+        return False
+
+def has_forbidden_character(forbidden_special_character_regex, string):
+    if re.findall(forbidden_special_character_regex, string):
+        return True
+    else:
+        return False
+
+def process_filter_value(value, column):
+    
+    # actually this rule is only applied in column name
+    if column == 'name':
+        if has_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, value):
+            is_valid = False
+            return ("Filter contains not allowed characters",is_valid)
+        elif has_special_character(ALLOWED_SPECIAL_CHARACTERS_REGEX, value):
+            is_valid = True
+            return (escaped_format(value), is_valid)
+        else:
+            is_valid = True
+            return (value, is_valid)
+    else:
+        is_valid = True
+        return (value, is_valid)

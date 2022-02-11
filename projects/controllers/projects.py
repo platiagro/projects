@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """Projects controller."""
 from datetime import datetime
+from http.client import FORBIDDEN
 from typing import Optional
 
 from sqlalchemy import asc, desc, func
 
+import re
+
 from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
-from projects.controllers.utils import uuid_alpha
+from projects.controllers.utils import uuid_alpha, process_filter_value
 from projects.exceptions import BadRequest, NotFound
 from projects.utils import now
 
@@ -71,24 +74,21 @@ class ProjectController:
         BadRequest
             When order_by is invalid.
         """
-        query = self.session.query(models.Project).filter_by(
-            tenant=self.kubeflow_userid
-        )
-        query_total = self.session.query(func.count(models.Project.uuid)).filter_by(
-            tenant=self.kubeflow_userid
-        )
-
-        # This is necessary to mysql consider special character
-        # maybe we can refactor this!
-        def escaped_format(string):
-            escaped_string = ""
-            # to avoid the trouble of identify every special character we gonna escape all!
-            for character in string:
-                escaped_string = escaped_string + "\\" + character
-            return escaped_string
-
+        # query = self.session.query(models.Project).filter_by(
+        #     tenant=self.kubeflow_userid
+        # )
+        # query_total = self.session.query(func.count(models.Project.uuid)).filter_by(
+        #     tenant=self.kubeflow_userid
+        # )
+        
+        query = self.session.query(models.Project)
+        query_total = self.session.query(func.count(models.Project.uuid))
+        
         for column, value in filters.items():
-            value = escaped_format(value)
+            value, is_value_valid  = process_filter_value(value, column)
+            if not is_value_valid:
+                raise BadRequest(code="NotAllowedChar", message="Not allowed character in search field")
+                
             query = query.filter(
                 getattr(models.Project, column)
                 .ilike(f"%{value}%")
