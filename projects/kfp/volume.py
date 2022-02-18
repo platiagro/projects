@@ -77,8 +77,6 @@ def unmount_volume(
         "--namespace",namespace,
         str(pod_name), "-- umount", mount_path
     ]
-    if namespace:
-        command.extend(["--namespace", str(namespace)])
     result = dsl.ContainerOp(
         name="kubernetes_unmount_volume",
         image="gcr.io/cloud-builders/kubectl",
