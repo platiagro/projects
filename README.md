@@ -152,22 +152,12 @@ optional arguments:
                         Log level
 ```
 
-**Using Docker**
+**Building Docker Image**
 
 ```bash
 docker build -t platiagro/share-task:0.3.0-SNAPSHOT -f Dockerfile.sharetask .
 ```
 
-Example:
-
-```bash
-docker run -it \
-  -v $(pwd)/source:/app/source \
-  --name init-task \
-  platiagro/share-task:0.3.0-SNAPSHOT \
-  --source /app/source \
-  --emails myemail@example.com anotheremail@example.com
-```
 
 ## Testing
 
