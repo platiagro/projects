@@ -4,7 +4,7 @@ A module that provides functions that handle volume operations.
 """
 from kfp import dsl
 from kfp.dsl._resource_op import kubernetes_resource_delete_op
-from kubernetes.client.models import V1PersistentVolumeClaim, ContainerOp
+from kubernetes.client.models import V1PersistentVolumeClaim
 
 # TODO ajustar tamanho do volume dependendo do tipo da task
 
@@ -70,7 +70,7 @@ def unmount_volume(
     mount_path: str,
     pod_name: str,
     namespace: str = "anonymous",
-) -> ContainerOp:
+):
     """Operation that deletes a Kubernetes resource.
 
       Outputs:
@@ -83,7 +83,7 @@ def unmount_volume(
     ]
     if namespace:
         command.extend(["--namespace", str(namespace)])
-    result = ContainerOp(
+    result = dsl.ContainerOp(
         name="kubernetes_unmount_volume",
         image="gcr.io/cloud-builders/kubectl",
         command=command,
