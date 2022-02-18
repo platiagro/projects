@@ -71,14 +71,10 @@ def unmount_volume(
     pod_name: str,
     namespace: str = "anonymous",
 ):
-    """Operation that deletes a Kubernetes resource.
-
-      Outputs:
-        name: The name of the deleted resource
-      """
 
     command = [
         "kubectl", "exec",
+        "--namespace",namespace,
         str(pod_name), "-- umount", mount_path
     ]
     if namespace:
