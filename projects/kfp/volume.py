@@ -4,7 +4,7 @@ A module that provides functions that handle volume operations.
 """
 from kfp import dsl
 from kfp.dsl._resource_op import kubernetes_resource_delete_op
-from kubernetes.client.models import V1PersistentVolumeClaim
+from kubernetes.client.models import V1PersistentVolumeClaim, ContainerOp
 
 # TODO ajustar tamanho do volume dependendo do tipo da task
 
