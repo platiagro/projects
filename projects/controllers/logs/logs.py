@@ -266,10 +266,6 @@ class LogController:
             logging.exception(e)
             return
 
-        except asyncio.CancelledError as e:
-            logging.exception(e)
-            return
-
         except ApiException as e:
             """
             Expected behavior when trying to connect to a container that isn't ready yet.
