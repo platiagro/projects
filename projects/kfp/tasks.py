@@ -15,7 +15,7 @@ from kfp.components import load_component_from_text
 
 from projects import __version__, models
 from projects.kfp import kfp_client
-from projects.kfp.volume import create_volume_op, delete_volume_op
+from projects.kfp.volume import create_volume_op, delete_volume_op, unmount_volume
 from projects.exceptions import ServiceUnavailable, NotFound, Forbidden
 
 from kfp_server_api.exceptions import ApiException
@@ -23,6 +23,7 @@ TASK_VOLUME_MOUNT_PATH = "/home/jovyan/tasks"
 SOURCE_TASK_VOLUME_MOUNT_PATH = "/home/source"
 DESTINATION_TASK_VOLUME_MOUNT_PATH = "/home/destination"
 DEFAULT_TIMEOUT_IN_SECONDS = 120
+JUPYTER_LAB_POD_NAME = "server-0"
 COMPONENT_DOCKER_IMAGE = "python:3.7"
 
 INIT_TASK_CONTAINER_IMAGE = os.getenv(
@@ -151,7 +152,7 @@ def make_task_deletion_job(
         resource_op = patch_notebook_volume_mounts_op(
             tasks=all_tasks, namespace=namespace
         )
-
+        unmount_volume(TASK_VOLUME_MOUNT_PATH, JUPYTER_LAB_POD_NAME)
         delete_volume_op(name=f"task-{task.uuid}", namespace=namespace).after(
             resource_op
         )
@@ -200,17 +201,19 @@ def create_init_task_container_op(
         command = [
             "/bin/sh",
             "-c",
-            f"cp -R {SOURCE_TASK_VOLUME_MOUNT_PATH}/* { DESTINATION_TASK_VOLUME_MOUNT_PATH}",
+            f"cp -R {SOURCE_TASK_VOLUME_MOUNT_PATH}/* { DESTINATION_TASK_VOLUME_MOUNT_PATH} && umount {DESTINATION_TASK_VOLUME_MOUNT_PATH}",
         ]
     else:
         python_script = (
             f"import json; "
+            f"import subprocess; "
             f"f = open('{DESTINATION_TASK_VOLUME_MOUNT_PATH}/Deployment.ipynb','w'); "
             f"json.dump({DEPLOYMENT_NOTEBOOK},f); "
             f"f.close(); "
             f"f = open('{DESTINATION_TASK_VOLUME_MOUNT_PATH}/Experiment.ipynb','w'); "
             f"json.dump({EXPERIMENT_NOTEBOOK},f); "
             f"f.close(); "
+            f"proc = subprocess.Popen(['umount','{DESTINATION_TASK_VOLUME_MOUNT_PATH}'], shell=True); "
         )
         command = ["python", "-c", python_script]
 

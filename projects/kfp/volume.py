@@ -6,8 +6,10 @@ from kfp import dsl
 from kfp.dsl._resource_op import kubernetes_resource_delete_op
 from kubernetes.client.models import V1PersistentVolumeClaim
 
+# TODO ajustar tamanho do volume dependendo do tipo da task
 
-def create_volume_op(name: str, namespace: str, storage: str = "10Gi"):
+
+def create_volume_op(name: str, namespace: str, storage: str = "1Gi"):
     """
     Creates a kfp.dsl.VolumeOp container.
 
@@ -62,3 +64,28 @@ def delete_volume_op(name: str, namespace: str):
         kind=kind,
         namespace=namespace,
     )
+
+
+def unmount_volume(
+    mount_path: str,
+    pod_name: str,
+    namespace: str = "anonymous",
+) -> ContainerOp:
+    """Operation that deletes a Kubernetes resource.
+
+      Outputs:
+        name: The name of the deleted resource
+      """
+
+    command = [
+        "kubectl", "exec",
+        str(pod_name), "-- umount", mount_path
+    ]
+    if namespace:
+        command.extend(["--namespace", str(namespace)])
+    result = ContainerOp(
+        name="kubernetes_unmount_volume",
+        image="gcr.io/cloud-builders/kubectl",
+        command=command,
+    )
+    return result
