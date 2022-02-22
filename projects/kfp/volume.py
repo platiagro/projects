@@ -74,12 +74,13 @@ def unmount_volume(
 
     command = [
         "kubectl", "exec",
-        "--namespace",namespace,
-        str(pod_name), "-- umount", mount_path
+        "--namespace", namespace,
+        str(pod_name)
     ]
     result = dsl.ContainerOp(
         name="kubernetes_unmount_volume",
         image="gcr.io/cloud-builders/kubectl",
         command=command,
+        arguments=["-- umount", mount_path]
     )
     return result

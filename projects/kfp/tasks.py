@@ -152,7 +152,7 @@ def make_task_deletion_job(
         resource_op = patch_notebook_volume_mounts_op(
             tasks=all_tasks, namespace=namespace
         )
-        unmount_volume(TASK_VOLUME_MOUNT_PATH, JUPYTER_LAB_POD_NAME)
+        unmount_volume(f"{TASK_VOLUME_MOUNT_PATH}/'{task.name}'", JUPYTER_LAB_POD_NAME)
         delete_volume_op(name=f"task-{task.uuid}", namespace=namespace).after(
             resource_op
         )
