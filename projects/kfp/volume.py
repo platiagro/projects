@@ -9,7 +9,7 @@ from kubernetes.client.models import V1PersistentVolumeClaim
 # TODO ajustar tamanho do volume dependendo do tipo da task
 
 
-def create_volume_op(name: str, namespace: str, storage: str = "1Gi"):
+def create_volume_op(name: str, namespace: str, storage: str = "10Gi"):
     """
     Creates a kfp.dsl.VolumeOp container.
 
