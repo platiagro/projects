@@ -689,6 +689,23 @@ def copy_file_to_pod(filepath, destination_path):
 
     # The following command extracts the contents of STDIN to /home/jovyan/tasks
     exec_command = ["tar", "xvf", "-", "-C", "/home/jovyan/tasks"]
+    while True:
+        try:
+            pod = api_instance.read_namespaced_pod(
+                name=NOTEBOOK_POD_NAME,
+                namespace=NOTEBOOK_NAMESPACE,
+                _request_timeout=5,
+            )
+            if not pod.status.container_statuses:
+                continue
+            pod_is_running = pod.status.phase == "Running"
+            containers_are_running = all(
+                [c.state.running for c in pod.status.container_statuses]
+            )
+            if pod_is_running and containers_are_running:
+                break
+        except ApiException:
+            pass
 
     container_stream = stream(
         api_instance.connect_get_namespaced_pod_exec,

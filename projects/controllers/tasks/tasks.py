@@ -12,15 +12,16 @@ from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
 from projects import __version__, models, schemas
-from projects.kfp.emails import send_email
-from projects.kfp import KF_PIPELINES_NAMESPACE
-from projects.kfp.tasks import make_task_creation_job, make_task_deletion_job
-from projects.kfp import KF_PIPELINES_NAMESPACE
+# from projects.kfp.emails import send_email
+# from projects.kfp import KF_PIPELINES_NAMESPACE
+# from projects.kfp.tasks import make_task_creation_job, make_task_deletion_job
+# from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, InternalServerError, NotFound
 from projects.kubernetes.notebook import (
     copy_file_to_pod,
     get_files_from_task,
+    handle_task_creation,
     update_persistent_volume_claim,
     update_task_config_map,
 )
@@ -180,15 +181,12 @@ class TaskController:
     def create_task(self, task: schemas.TaskCreate):
         """
         Creates a new task in our database and a volume claim in the cluster.
-
         Parameters
         ----------
         task: projects.schemas.task.TaskCreate
-
         Returns
         -------
         projects.schemas.task.Task
-
         Raises
         ------
         BadRequest
@@ -223,7 +221,7 @@ class TaskController:
 
         # creates a task with specified name,
         # but copies notebooks from a source task
-        stored_task = None
+        stored_task_name = None
         if task.copy_from:
             stored_task = self.session.query(models.Task).get(task.copy_from)
             if stored_task is None:
@@ -235,6 +233,7 @@ class TaskController:
             task.commands = stored_task.commands
             task.arguments = stored_task.arguments
             task.parameters = stored_task.parameters
+            stored_task_name = stored_task.name
             experiment_notebook_path = stored_task.experiment_notebook_path
             deployment_notebook_path = stored_task.deployment_notebook_path
             task.cpu_limit = stored_task.cpu_limit
@@ -261,6 +260,15 @@ class TaskController:
 
         task_id = str(uuid_alpha())
 
+        self.background_tasks.add_task(
+            handle_task_creation,
+            task=task,
+            task_id=task_id,
+            experiment_notebook_path=experiment_notebook_path,
+            deployment_notebook_path=deployment_notebook_path,
+            copy_name=stored_task_name,
+        )
+
         task_dict = task.dict(exclude_unset=True)
         task_dict.pop("copy_from", None)
         task_dict.pop("experiment_notebook", None)
@@ -275,15 +283,6 @@ class TaskController:
         self.session.add(task)
         self.session.commit()
         self.session.refresh(task)
-
-        all_tasks = self.session.query(models.Task).all()
-
-        make_task_creation_job(
-            task=task,
-            namespace=KF_PIPELINES_NAMESPACE,
-            all_tasks=all_tasks,
-            copy_from=stored_task,
-        )
 
         return schemas.Task.from_orm(task)
 
