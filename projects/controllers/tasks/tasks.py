@@ -22,6 +22,7 @@ from projects.kubernetes.notebook import (
     copy_file_to_pod,
     get_files_from_task,
     handle_task_creation,
+    remove_persistent_volume_claim,
     update_persistent_volume_claim,
     update_task_config_map,
 )
@@ -438,15 +439,14 @@ class TaskController:
             )
 
         # remove the volume for the task in the notebook server
-        self.session.delete(task)
-        self.session.commit()
-        all_tasks = self.session.query(models.Task).all()
-        make_task_deletion_job(
-            task=task,
-            all_tasks=all_tasks,
-            namespace=KF_PIPELINES_NAMESPACE,
+        self.background_tasks.add_task(
+            remove_persistent_volume_claim,
+            name=f"vol-task-{task_id}",
+            mount_path=f"/home/jovyan/tasks/{task.name}",
         )
 
+        self.session.delete(task)
+        self.session.commit()
         return schemas.Message(message="Task deleted")
 
     def raise_if_invalid_docker_image(self, image):
