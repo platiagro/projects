@@ -144,6 +144,7 @@ async def handle_delete_task(
 async def handle_task_email_sender(
     task_id: str,
     email_schema: EmailSchema,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(database.session_scope),
 ):
     """
@@ -161,7 +162,7 @@ async def handle_task_email_sender(
     message: str
 
     """
-    task_controller = TaskController(session)
+    task_controller = TaskController(session, background_tasks)
     result = task_controller.send_emails(email_schema, task_id=task_id)
 
     return result
