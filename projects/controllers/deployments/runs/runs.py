@@ -133,7 +133,7 @@ class RunController:
         except ValueError:
             raise BadRequest(
                 code="MissingRequiredOperatorId",
-                message=f"Necessary at least one operator.",
+                message="Necessary at least one operator.",
             )
 
         # Remove the object from the operator session in order not to update the database,
