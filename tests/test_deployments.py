@@ -181,17 +181,17 @@ class TestDeployments(unittest.TestCase):
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
     @mock.patch(
         "kubernetes.config.load_kube_config",
     )
     def test_create_deployment_with_experiments_success(
         self,
         mock_load_config,
-        # mock_kfp_client,
+        mock_kfp_client,
         mock_core_v1_api,
     ):
         """
@@ -289,17 +289,17 @@ class TestDeployments(unittest.TestCase):
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
     @mock.patch(
         "kubernetes.config.load_kube_config",
     )
     def test_create_deployment_with_copy_from_success(
         self,
         mock_load_config,
-        # mock_kfp_client,
+        mock_kfp_client,
         mock_core_v1_api,
     ):
         """
@@ -375,7 +375,7 @@ class TestDeployments(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
 
         mock_core_v1_api.assert_any_call()
-        # mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_load_config.assert_any_call()
 
     def test_create_deployment_source_deployment_error(self):
@@ -403,17 +403,17 @@ class TestDeployments(unittest.TestCase):
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
     )
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
     @mock.patch(
         "kubernetes.config.load_kube_config",
     )
     def test_create_deployment_with_template_id_success(
         self,
         mock_load_config,
-        # mock_kfp_client,
+        mock_kfp_client,
         mock_core_v1_api,
     ):
         """
@@ -649,17 +649,17 @@ class TestDeployments(unittest.TestCase):
         "kubernetes.client.CustomObjectsApi",
         return_value=util.MOCK_CUSTOM_OBJECTS_API,
     )
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
+    @mock.patch(
+        "kfp.Client",
+        return_value=util.MOCK_KFP_CLIENT,
+    )
     @mock.patch(
         "kubernetes.config.load_kube_config",
     )
     def test_delete_deployment_success(
         self,
         mock_load_config,
-        # mock_kfp_client,
+        mock_kfp_client,
         mock_custom_objects_api,
     ):
         """
