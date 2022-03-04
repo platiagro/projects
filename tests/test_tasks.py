@@ -249,37 +249,37 @@ class TestTasks(unittest.TestCase):
 
         # mock_kfp_client.assert_any_call(host=HOST_URL)
 
-    @mock.patch(
-        "kfp.Client",
-        return_value=util.MOCK_KFP_CLIENT,
-    )
-    # we will test those function by running them, not need to assert their result
-    def test_task_creation_component_functions(self, mock_kfp_client):
+    # @mock.patch(
+    #     "kfp.Client",
+    #     return_value=util.MOCK_KFP_CLIENT,
+    # )
+    # # we will test those function by running them, not need to assert their result
+    # def test_task_creation_component_functions(self, mock_kfp_client):
 
-        task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
-        all_tasks = util.TestingSessionLocal().query(models.Task).all()
+    #     task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
+    #     all_tasks = util.TestingSessionLocal().query(models.Task).all()
 
-        source_task = (
-            util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_1)
-        )
+    #     source_task = (
+    #         util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_1)
+    #     )
 
-        make_task_creation_job(
-            task=task, all_tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE
-        )
+    #     make_task_creation_job(
+    #         task=task, all_tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE
+    #     )
 
-        # empty task case
-        create_init_task_container_op()
+    #     # empty task case
+    #     create_init_task_container_op()
 
-        # copied task case
-        create_init_task_container_op(copy_from=source_task)
+    #     # copied task case
+    #     create_init_task_container_op(copy_from=source_task)
 
-        # task cnfig map creation
-        create_configmap_op(task=task, namespace=KF_PIPELINES_NAMESPACE, content="")
+    #     # task cnfig map creation
+    #     create_configmap_op(task=task, namespace=KF_PIPELINES_NAMESPACE, content="")
 
-        # notebook patching
-        patch_notebook_volume_mounts_op(
-            tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE
-        )
+    #     # notebook patching
+    #     patch_notebook_volume_mounts_op(
+    #         tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE
+    #     )
 
     # @mock.patch(
     #     "kfp.Client",
@@ -800,12 +800,12 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
 
     # we will test those function by running them, not need to assert their result
-    def test_deletion_component_functions_from(
-        self,
-    ):
-        delete_volume_op(
-            name=f"task-{util.MOCK_UUID_4}", namespace=KF_PIPELINES_NAMESPACE
-        )
+    # def test_deletion_component_functions_from(
+    #     self,
+    # ):
+    #     delete_volume_op(
+    #         name=f"task-{util.MOCK_UUID_4}", namespace=KF_PIPELINES_NAMESPACE
+    #     )
 
     # @mock.patch(
     #     "kfp.Client",
