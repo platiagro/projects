@@ -790,13 +790,15 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 403)
 
-    @mock.patch(
-        "kfp.Client",
-        return_value=util.MOCK_KFP_CLIENT,
-    )
+    # @mock.patch(
+    #     "kfp.Client",
+    #     return_value=util.MOCK_KFP_CLIENT,
+    # )
+    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_delete_task_success(
         self,
-        mock_kfp_client,
+        mock_background_tasks
+        # mock_kfp_client,
     ):
         """
         Should delete task successfully.
