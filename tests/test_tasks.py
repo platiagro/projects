@@ -6,6 +6,7 @@ import unittest.mock as mock
 from fastapi.testclient import TestClient
 
 from projects import models
+from projects.controllers import TaskController
 from projects.api.main import app
 from projects.database import session_scope
 from projects.kfp.tasks import (
@@ -16,7 +17,6 @@ from projects.kfp.tasks import (
 )
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kfp.volume import delete_volume_op
-
 import tests.util as util
 
 app.dependency_overrides[session_scope] = util.override_session_scope
@@ -113,8 +113,10 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
+    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_empty_request_body_success(
         self,
+        mock_background_tasks,
         # mock_kfp_client,
     ):
         """
@@ -210,8 +212,10 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
+    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_without_name_success(
         self,
+        mock_background_tasks
         # mock_kfp_client,
     ):
         """
@@ -285,8 +289,10 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
+    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_with_name_success(
         self,
+        mock_background_tasks
         # mock_kfp_client,
     ):
         """
@@ -331,8 +337,10 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
+    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_copy_from_success(
         self,
+        mock_background_tasks
         # mock_kfp_client,
     ):
         """
@@ -374,8 +382,10 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
+    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_with_notebook_success(
         self,
+        mock_background_tasks
         # mock_kfp_client,
     ):
         """

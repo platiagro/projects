@@ -75,6 +75,7 @@ NOT_FOUND = NotFound(code="TaskNotFound", message="The specified task does not e
 
 
 class TaskController:
+    background_tasks = None
     def __init__(self, session, background_tasks=None):
         self.session = session
         self.background_tasks = background_tasks

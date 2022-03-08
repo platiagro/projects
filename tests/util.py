@@ -26,6 +26,7 @@ MOCK_WORKFLOW_MANIFEST = open(
 MOCK_NOT_GET_RUN = mock.MagicMock(
     runs=mock.MagicMock(terminate_run=mock.MagicMock(side_effect=ApiException()))
 )
+MOCK_BACKGROUND_TASKS = mock.MagicMock(add_task=mock.MagicMock(return_value=True))
 MOCK_GET_RUN = mock.MagicMock(
     return_value=mock.MagicMock(
         run=mock.MagicMock(id="uuid-1", created_at=datetime.utcnow()),
