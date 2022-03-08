@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tasks controller."""
+import base64
 import json
 import os
 import pkgutil
@@ -8,19 +9,18 @@ import tempfile
 from datetime import datetime
 from typing import Optional
 
+from fastapi_mail import FastMail, MessageSchema
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
 from projects import __version__, models, schemas
-from projects.kfp.emails import send_email
-from projects.kfp import KF_PIPELINES_NAMESPACE
-from projects.kfp.tasks import make_task_creation_job, make_task_deletion_job
-from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.controllers.utils import uuid_alpha
-from projects.exceptions import BadRequest, Forbidden, InternalServerError, NotFound
+from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import (
     copy_file_to_pod,
     get_files_from_task,
+    handle_task_creation,
+    remove_persistent_volume_claim,
     update_persistent_volume_claim,
     update_task_config_map,
 )
@@ -75,6 +75,7 @@ NOT_FOUND = NotFound(code="TaskNotFound", message="The specified task does not e
 
 
 class TaskController:
+    background_tasks = None
     def __init__(self, session, background_tasks=None):
         self.session = session
         self.background_tasks = background_tasks
@@ -180,15 +181,12 @@ class TaskController:
     def create_task(self, task: schemas.TaskCreate):
         """
         Creates a new task in our database and a volume claim in the cluster.
-
         Parameters
         ----------
         task: projects.schemas.task.TaskCreate
-
         Returns
         -------
         projects.schemas.task.Task
-
         Raises
         ------
         BadRequest
@@ -223,7 +221,7 @@ class TaskController:
 
         # creates a task with specified name,
         # but copies notebooks from a source task
-        stored_task = None
+        stored_task_name = None
         if task.copy_from:
             stored_task = self.session.query(models.Task).get(task.copy_from)
             if stored_task is None:
@@ -235,6 +233,7 @@ class TaskController:
             task.commands = stored_task.commands
             task.arguments = stored_task.arguments
             task.parameters = stored_task.parameters
+            stored_task_name = stored_task.name
             experiment_notebook_path = stored_task.experiment_notebook_path
             deployment_notebook_path = stored_task.deployment_notebook_path
             task.cpu_limit = stored_task.cpu_limit
@@ -261,6 +260,15 @@ class TaskController:
 
         task_id = str(uuid_alpha())
 
+        self.background_tasks.add_task(
+            handle_task_creation,
+            task=task,
+            task_id=task_id,
+            experiment_notebook_path=experiment_notebook_path,
+            deployment_notebook_path=deployment_notebook_path,
+            copy_name=stored_task_name,
+        )
+
         task_dict = task.dict(exclude_unset=True)
         task_dict.pop("copy_from", None)
         task_dict.pop("experiment_notebook", None)
@@ -275,15 +283,6 @@ class TaskController:
         self.session.add(task)
         self.session.commit()
         self.session.refresh(task)
-
-        all_tasks = self.session.query(models.Task).all()
-
-        make_task_creation_job(
-            task=task,
-            namespace=KF_PIPELINES_NAMESPACE,
-            all_tasks=all_tasks,
-            copy_from=stored_task,
-        )
 
         return schemas.Task.from_orm(task)
 
@@ -439,15 +438,14 @@ class TaskController:
             )
 
         # remove the volume for the task in the notebook server
-        self.session.delete(task)
-        self.session.commit()
-        all_tasks = self.session.query(models.Task).all()
-        make_task_deletion_job(
-            task=task,
-            all_tasks=all_tasks,
-            namespace=KF_PIPELINES_NAMESPACE,
+        self.background_tasks.add_task(
+            remove_persistent_volume_claim,
+            name=f"vol-task-{task_id}",
+            mount_path=f"/home/jovyan/tasks/{task.name}",
         )
 
+        self.session.delete(task)
+        self.session.commit()
         return schemas.Message(message="Task deleted")
 
     def raise_if_invalid_docker_image(self, image):
@@ -537,20 +535,44 @@ class TaskController:
     def send_emails(self, email_schema, task_id):
         """
         Handles mailing of contents of task
-
         Parameters
         ----------
         task_id : str
         email_schema: projects.schemas.mailing.EmailSchema
-
         Returns
         -------
         message: str
-
         """
 
         task = self.session.query(models.Task).get(task_id)
         if task is None:
             raise NOT_FOUND
-        send_email(task=task, namespace=KF_PIPELINES_NAMESPACE, email_schema=email_schema)
+
+        # getting file content, which is by the way in base64
+        file_as_b64 = get_files_from_task(task.name)
+
+        # decoding as byte
+        base64_bytes = file_as_b64.encode("ascii")
+        file_as_bytes = base64.b64decode(base64_bytes)
+
+        # using bytes to build the zipfile
+        with tempfile.NamedTemporaryFile(
+            "wb", delete=False, dir=os.path.dirname(__file__), suffix=".zip"
+        ) as f:
+            f.write(file_as_bytes)
+
+        message = MessageSchema(
+            subject=f"Arquivos da tarefa '{task.name}'",
+            recipients=email_schema.dict().get(
+                "emails"
+            ),  # List of recipients, as many as you can pass
+            body=self.make_email_message(EMAIL_MESSAGE_TEMPLATE, task.name),
+            attachments=[f.name],
+            subtype="html",
+        )
+        fm = FastMail(email_schema.conf)
+        self.background_tasks.add_task(fm.send_message, message)
+
+        # removing file after send email
+        os.remove(f.name)
         return {"message": "email has been sent"}
