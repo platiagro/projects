@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from projects.api.main import app
 from projects.database import session_scope
+from projects.controllers import TaskController
 
 import tests.util as util
 
@@ -177,6 +178,7 @@ class TestDeployments(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
+    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
@@ -190,6 +192,7 @@ class TestDeployments(unittest.TestCase):
     )
     def test_create_deployment_with_experiments_success(
         self,
+        mock_background_tasks,
         mock_load_config,
         mock_kfp_client,
         mock_core_v1_api,
@@ -283,8 +286,9 @@ class TestDeployments(unittest.TestCase):
 
         mock_core_v1_api.assert_any_call()
         # mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
-        mock_load_config.assert_any_call()
+        # mock_load_config.assert_any_call()
 
+    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
@@ -298,6 +302,7 @@ class TestDeployments(unittest.TestCase):
     )
     def test_create_deployment_with_copy_from_success(
         self,
+        mock_background_tasks,
         mock_load_config,
         mock_kfp_client,
         mock_core_v1_api,
@@ -375,8 +380,8 @@ class TestDeployments(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
 
         mock_core_v1_api.assert_any_call()
-        mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
-        mock_load_config.assert_any_call()
+        # mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
+        # mock_load_config.assert_any_call()
 
     def test_create_deployment_source_deployment_error(self):
         """
