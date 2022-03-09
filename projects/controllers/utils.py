@@ -9,6 +9,11 @@ import uuid
 import filetype
 import pandas
 
+ESCAPE_STRING = "\\"
+ALLOWED_SPECIAL_CHARACTERS_LIST = ["-", "_", " "]
+ALLOWED_SPECIAL_CHARACTERS_REGEX = "[-_\s]"
+ESCAPE_MAP = {"-": "\-", "_": "\_", " ": " "}
+
 
 def uuid_alpha():
     """
@@ -109,3 +114,31 @@ def parse_file_buffer_to_seldon_request(file):
     except csv.Error:
         file.seek(0)
         return {"strData": file.read().decode("utf-8")}
+
+
+def escaped_format(string, allowed_special_characters_list, escape_map):
+    escaped_string = string
+    for character in allowed_special_characters_list:
+        escaped_string = escaped_string.replace(character, escape_map.get(character))
+    return escaped_string
+
+
+def has_special_character(allowed_special_character_regex, string):
+    if re.findall(allowed_special_character_regex, string):
+        return True
+    else:
+        return False
+
+
+def has_forbidden_character(string, forbidden_special_character_regex):
+    if re.findall(forbidden_special_character_regex, string):
+        return True
+    else:
+        return False
+
+
+def has_exceed_characters_amount(string, max_chars_allowed):
+    if len(string) > max_chars_allowed:
+        return True
+    else:
+        return False
