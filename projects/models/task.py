@@ -10,6 +10,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from projects import __version__
 from projects.database import Base
+from projects.utils import TimeStamp
 
 TASK_DEFAULT_EXPERIMENT_IMAGE = os.getenv(
     "TASK_DEFAULT_EXPERIMENT_IMAGE",
@@ -49,8 +50,8 @@ class Task(Base):
                                                    nullable=False,
                                                    default=TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS)
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(TimeStamp(), nullable=False, default=datetime.utcnow)
+    updated_at = Column(TimeStamp(), nullable=False, default=datetime.utcnow)
 
     @hybrid_property
     def has_notebook(self):

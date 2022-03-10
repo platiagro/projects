@@ -24,7 +24,7 @@ from projects.kubernetes.notebook import (
     update_persistent_volume_claim,
     update_task_config_map,
 )
-
+from projects.utils import now
 
 PREFIX = "tasks"
 
@@ -279,6 +279,8 @@ class TaskController:
 
         # saves task info to the database
         task = models.Task(**task_dict)
+        task.updated_at = now()
+        task.created_at = now()
 
         self.session.add(task)
         self.session.commit()
@@ -374,7 +376,7 @@ class TaskController:
         update_data = task.dict(exclude_unset=True)
         update_data.pop("experiment_notebook", None)
         update_data.pop("deployment_notebook", None)
-        update_data.update({"updated_at": datetime.utcnow()})
+        update_data.update({"updated_at": now()})
 
         self.session.query(models.Task).filter_by(uuid=task_id).update(update_data)
         self.session.commit()
