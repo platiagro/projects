@@ -19,7 +19,7 @@ import tests.util as util
 
 app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
-
+TEST_EMAIL = "test@test.com.br"
 HOST_URL = "http://ml-pipeline.kubeflow:8888"
 
 
@@ -105,7 +105,7 @@ class TestShareTask(unittest.TestCase):
 
         rv = TEST_CLIENT.post(
             f"/tasks/{task_id}/emails",
-            json={"emails": ["test@test.com.br"]}
+            json={"emails": [TEST_EMAIL]}
         )
         result = rv.json()
         expected = {"message": "email has been sent"}
@@ -120,7 +120,7 @@ class TestShareTask(unittest.TestCase):
 
         rv = TEST_CLIENT.post(
             f"/tasks/{task_id}/emails",
-            json={"emails": ["test@test.com.br"]}
+            json={"emails": [TEST_EMAIL]}
         )
         result = rv.json()
         expected = {
@@ -153,7 +153,7 @@ class TestShareTask(unittest.TestCase):
 
         rv = TEST_CLIENT.post(
             f"/tasks/{task_id}/emails",
-            json={"emails": ["test@test.com.br"]}
+            json={"emails": [TEST_EMAIL]}
         )
 
         self.assertEqual(rv.status_code, 404)
@@ -167,7 +167,7 @@ class TestShareTask(unittest.TestCase):
 
         rv = TEST_CLIENT.post(
             f"/tasks/{task_id}/emails",
-            json={"emails": ["test@test.com.br"]}
+            json={"emails": [TEST_EMAIL]}
         )
 
         self.assertEqual(rv.status_code, 403)
@@ -181,7 +181,7 @@ class TestShareTask(unittest.TestCase):
 
         rv = TEST_CLIENT.post(
             f"/tasks/{task_id}/emails",
-            json={"emails": ["test@test.com.br"]}
+            json={"emails": [TEST_EMAIL]}
         )
 
         self.assertEqual(rv.status_code, 503)
@@ -196,7 +196,7 @@ class TestShareTask(unittest.TestCase):
 
         rv = TEST_CLIENT.post(
             f"/tasks/{task_id}/emails",
-            json={"emails": ["test@test.com.br"]}
+            json={"emails": [TEST_EMAIL]}
         )
 
         self.assertEqual(rv.status_code, 503)
