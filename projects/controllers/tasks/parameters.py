@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Parameters controller."""
 from projects import models
-from projects.exceptions import NotFound
 
 
 class ParameterController:
