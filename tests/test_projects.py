@@ -76,6 +76,16 @@ class TestProjects(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
+    def test_list_projects_with_filter(self):
+        """
+        Don't forget to write this!!!!!!.
+        """
+        rv = TEST_CLIENT.get(f"/projects?name={util.MOCK_PROJECT_NAME_1}")
+        result = rv.json()
+        expected = util.MOCK_PROJECT_LIST_FILTERED
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
     def test_create_project_invalid_request_body(self):
         """
         Should return http status 422 when invalid request body is given.

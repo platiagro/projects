@@ -169,7 +169,7 @@ def process_filter_value(
         elif has_special_character(value, allowed_special_characters_regex):
             is_valid = True
             return (
-                escaped_format(value, ALLOWED_SPECIAL_CHARACTERS_LIST, ESCAPE_MAP),
+                escaped_format(value),
                 is_valid,
             )
 

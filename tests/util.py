@@ -575,6 +575,11 @@ MOCK_PROJECT_LIST_SORTED_BY_NAME_DESC = {
     "total": 3,
 }
 
+MOCK_PROJECT_LIST_FILTERED = {
+    "projects":[MOCK_PROJECT_1],
+    "total": 1,
+}
+
 MOCK_EXPERIMENT_LIST = {
     "experiments": [
         MOCK_EXPERIMENT_1,
