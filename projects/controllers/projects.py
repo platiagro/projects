@@ -7,13 +7,7 @@ from sqlalchemy import asc, desc, func
 
 from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
-from projects.controllers.utils import (
-    uuid_alpha,
-    has_exceed_characters_amount,
-    has_forbidden_character,
-    has_special_character,
-    escaped_format,
-)
+from projects.controllers.utils import uuid_alpha, process_filter_value
 from projects.exceptions import BadRequest, NotFound
 from projects.utils import now
 
@@ -21,8 +15,7 @@ NOT_FOUND = NotFound(
     code="ProjectNotFound", message="The specified project does not exist"
 )
 
-MAX_CHARS_ALLOWED = 50
-FORBIDDEN_CHARACTERS_REGEX = "[!*'();:@&=+$,/?%#[]]"
+FORBIDDEN_CHARACTERS_REGEX = "[[!*'();:@&=+$,\/?%#\[\]]"
 ESCAPE_STRING = "\\"
 ALLOWED_SPECIAL_CHARACTERS_LIST = ["-", "_", " "]
 ALLOWED_SPECIAL_CHARACTERS_REGEX = "[-_\s]"
@@ -91,29 +84,6 @@ class ProjectController:
             tenant=self.kubeflow_userid
         )
 
-        def process_filter_value(
-            value, column, forbidden_characters_regex, allowed_special_characters_regex
-        ):
-            # actually this rule is only applied in column name!!
-            if column == "name":
-                if has_forbidden_character(value, forbidden_characters_regex):
-                    is_valid = False
-                    return ("Filter contains not allowed characters", is_valid)
-                elif has_special_character(value, ALLOWED_SPECIAL_CHARACTERS_REGEX):
-                    is_valid = True
-                    return (
-                        escaped_format(
-                            value, ALLOWED_SPECIAL_CHARACTERS_REGEX, ESCAPE_MAP
-                        ),
-                        is_valid,
-                    )
-                else:
-                    is_valid = True
-                    return (value, is_valid)
-            else:
-                is_valid = True
-                return (value, is_valid)
-
         for column, value in filters.items():
             value, is_value_valid = process_filter_value(
                 value,
@@ -121,6 +91,7 @@ class ProjectController:
                 FORBIDDEN_CHARACTERS_REGEX,
                 ALLOWED_SPECIAL_CHARACTERS_REGEX,
             )
+
             if not is_value_valid:
                 raise BadRequest(
                     code="NotAllowedChar",

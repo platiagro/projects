@@ -13,6 +13,7 @@ ESCAPE_STRING = "\\"
 ALLOWED_SPECIAL_CHARACTERS_LIST = ["-", "_", " "]
 ALLOWED_SPECIAL_CHARACTERS_REGEX = "[-_\s]"
 ESCAPE_MAP = {"-": "\-", "_": "\_", " ": " "}
+MAX_CHARS_ALLOWED = 50
 
 
 def uuid_alpha():
@@ -116,10 +117,14 @@ def parse_file_buffer_to_seldon_request(file):
         return {"strData": file.read().decode("utf-8")}
 
 
-def escaped_format(string, allowed_special_characters_list, escape_map):
-    escaped_string = string
-    for character in allowed_special_characters_list:
-        escaped_string = escaped_string.replace(character, escape_map.get(character))
+# This is necessary to mysql consider special character
+# maybe this logic won't work on another database
+# maybe we can refactor this!
+def escaped_format(string):
+    escaped_string = ""
+    # to avoid the trouble of identify every special character we gonna escape all!
+    for character in string:
+        escaped_string = escaped_string + "\\" + character
     return escaped_string
 
 
@@ -142,3 +147,35 @@ def has_exceed_characters_amount(string, max_chars_allowed):
         return True
     else:
         return False
+
+
+def process_filter_value(
+    value, column, forbidden_characters_regex, allowed_special_characters_regex
+):
+    # actually this rule is only applied in column name!!
+    if column == "name":
+
+        if has_forbidden_character(
+            value,
+            forbidden_characters_regex,
+        ):
+            is_valid = False
+            return ("Filter contains not allowed characters", is_valid)
+
+        elif has_exceed_characters_amount(value, MAX_CHARS_ALLOWED):
+            is_valid = False
+            return ("Filter exceed maximum characters amount", is_valid)
+
+        elif has_special_character(value, allowed_special_characters_regex):
+            is_valid = True
+            return (
+                escaped_format(value, ALLOWED_SPECIAL_CHARACTERS_LIST, ESCAPE_MAP),
+                is_valid,
+            )
+
+        else:
+            is_valid = True
+            return (value, is_valid)
+    else:
+        is_valid = True
+        return (value, is_valid)
