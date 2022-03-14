@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from projects import models
 from projects.api.main import app
 from projects.database import session_scope
+from projects.controllers.projects import FORBIDDEN_CHARACTERS_REGEX
 
 import tests.util as util
 
@@ -77,6 +78,17 @@ class TestProjects(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
 
     def test_list_projects_with_filter(self):
+        """
+        Don't forget to write this!!!!!!.
+        """
+        rv = TEST_CLIENT.get(f"/projects?name={util.MOCK_PROJECT__TO_BE_FILTERED_NAME}")
+        result = rv.json()
+        print(result)
+        expected = util.MOCK_PROJECT_LIST_FILTERED
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_list_projects_with_forbidden_characters(self):
         """
         Don't forget to write this!!!!!!.
         """

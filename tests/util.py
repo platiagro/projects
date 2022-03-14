@@ -55,7 +55,9 @@ MOCK_KFP_CLIENT_EXCEPT_403 = mock.MagicMock(
     runs=MOCK_RUNS,
     list_runs=MOCK_LIST_RUNS,
     get_run=MOCK_GET_RUN,
-    create_run_from_pipeline_func=mock.MagicMock(side_effect=ApiException(status=403, reason="mocked_reason")),
+    create_run_from_pipeline_func=mock.MagicMock(
+        side_effect=ApiException(status=403, reason="mocked_reason")
+    ),
     run_pipeline=MOCK_RUN_PIPELINE,
     get_experiment=MOCK_GET_EXPERIMENT,
     create_experiment=MOCK_CREATE_EXPERIMENT,
@@ -66,7 +68,9 @@ MOCK_KFP_CLIENT_EXCEPT_404 = mock.MagicMock(
     runs=MOCK_RUNS,
     list_runs=MOCK_LIST_RUNS,
     get_run=MOCK_GET_RUN,
-    create_run_from_pipeline_func=mock.MagicMock(side_effect=ApiException(status=404, reason="mocked reason")),
+    create_run_from_pipeline_func=mock.MagicMock(
+        side_effect=ApiException(status=404, reason="mocked reason")
+    ),
     run_pipeline=MOCK_RUN_PIPELINE,
     get_experiment=MOCK_GET_EXPERIMENT,
     create_experiment=MOCK_CREATE_EXPERIMENT,
@@ -77,7 +81,9 @@ MOCK_KFP_CLIENT_EXCEPT_SERVICE_UNAVAILABLE = mock.MagicMock(
     runs=MOCK_RUNS,
     list_runs=MOCK_LIST_RUNS,
     get_run=MOCK_GET_RUN,
-    create_run_from_pipeline_func=mock.MagicMock(side_effect=ApiException(status=503, reason="mocked message")),
+    create_run_from_pipeline_func=mock.MagicMock(
+        side_effect=ApiException(status=503, reason="mocked message")
+    ),
     run_pipeline=MOCK_RUN_PIPELINE,
     get_experiment=MOCK_GET_EXPERIMENT,
     create_experiment=MOCK_CREATE_EXPERIMENT,
@@ -88,7 +94,11 @@ MOCK_KFP_CLIENT_EXCEPT_MAX_RETRY = mock.MagicMock(
     runs=MOCK_RUNS,
     list_runs=MOCK_LIST_RUNS,
     get_run=MOCK_GET_RUN,
-    create_run_from_pipeline_func=mock.MagicMock(side_effect=MaxRetryError(urllib3.connectionpool.HTTPConnectionPool, url="test.com")),
+    create_run_from_pipeline_func=mock.MagicMock(
+        side_effect=MaxRetryError(
+            urllib3.connectionpool.HTTPConnectionPool, url="test.com"
+        )
+    ),
     run_pipeline=MOCK_RUN_PIPELINE,
     get_experiment=MOCK_GET_EXPERIMENT,
     create_experiment=MOCK_CREATE_EXPERIMENT,
@@ -309,19 +319,35 @@ IRIS_HEADERLESS_DATAFRAME = pd.DataFrame(
     IRIS_DATA_ARRAY, columns=IRIS_HEADERLESS_COLUMNS
 )
 
-MOCK_UUID_1, MOCK_UUID_2, MOCK_UUID_3, MOCK_UUID_4, MOCK_UUID_5, MOCK_UUID_6 = (
+(
+    MOCK_UUID_1,
+    MOCK_UUID_2,
+    MOCK_UUID_3,
+    MOCK_UUID_4,
+    MOCK_UUID_5,
+    MOCK_UUID_6,
+    MOCK_UUID_FROM_PROJECT_TO_BE_FILTERED,
+) = (
     "uuid-1",
     "uuid-2",
     "uuid-3",
     "uuid-4",
     "uuid-5",
     "uuid-6",
+    "uuid-filtered",
 )
-MOCK_PROJECT_NAME_1, MOCK_PROJECT_NAME_2, MOCK_PROJECT_NAME_3, MOCK_PROJECT_NAME_4 = (
+(
+    MOCK_PROJECT_NAME_1,
+    MOCK_PROJECT_NAME_2,
+    MOCK_PROJECT_NAME_3,
+    MOCK_PROJECT_NAME_4,
+    MOCK_PROJECT__TO_BE_FILTERED_NAME,
+) = (
     "project-1",
     "project-2",
     "project-3",
     "project-4",
+    "project1",
 )
 MOCK_EXPERIMENT_NAME_1, MOCK_EXPERIMENT_NAME_2 = "experiment-1", "experiment-2"
 MOCK_DEPLOYMENT_NAME_1, MOCK_DEPLOYMENT_NAME_2 = "deployment-1", "deployment-2"
@@ -350,14 +376,8 @@ MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
     MOCK_CREATED_AT_4,
     MOCK_CREATED_AT_5,
     MOCK_CREATED_AT_6,
-) = (
-    now,
-    now,
-    now,
-    now,
-    now,
-    now
-)
+    MOCK_TO_BE_FILTERED_CREATED_AT,
+) = (now, now, now, now, now, now, now)
 (
     MOCK_UPDATED_AT_1,
     MOCK_UPDATED_AT_2,
@@ -365,14 +385,8 @@ MOCK_TEMPLATE_NAME_1, MOCK_TEMPLATE_NAME_2 = "template-1", "template-2"
     MOCK_UPDATED_AT_4,
     MOCK_UPDATED_AT_5,
     MOCK_UPDATED_AT_6,
-) = (
-    now,
-    now,
-    now,
-    now,
-    now,
-    now
-)
+    MOCK_TO_BE_FILTERED_UPDATED_AT,
+) = (now, now, now, now, now, now, now)
 
 MOCK_OPERATOR_1 = {
     "uuid": MOCK_UUID_1,
@@ -549,6 +563,19 @@ MOCK_PROJECT_3 = {
     "uuid": MOCK_UUID_3,
 }
 
+MOCK_PROJECT_TO_BE_FILTERED = {
+    "createdAt": MOCK_TO_BE_FILTERED_CREATED_AT.isoformat(),
+    "deployments": [],
+    "description": None,
+    "experiments": [],
+    "hasDeployment": False,
+    "hasExperiment": False,
+    "hasPreDeployment": False,
+    "name": MOCK_PROJECT__TO_BE_FILTERED_NAME,
+    "updatedAt": MOCK_TO_BE_FILTERED_UPDATED_AT.isoformat(),
+    "uuid": MOCK_UUID_FROM_PROJECT_TO_BE_FILTERED,
+}
+
 MOCK_COMPARISON_1 = {
     "activeTab": "1",
     "createdAt": MOCK_CREATED_AT_1.isoformat(),
@@ -566,17 +593,18 @@ MOCK_PROJECT_LIST = {
         MOCK_PROJECT_1,
         MOCK_PROJECT_2,
         MOCK_PROJECT_3,
+        MOCK_PROJECT_TO_BE_FILTERED,
     ],
-    "total": 3,
+    "total": 4,
 }
 
 MOCK_PROJECT_LIST_SORTED_BY_NAME_DESC = {
     "projects": MOCK_PROJECT_LIST["projects"][::-1],
-    "total": 3,
+    "total": 4,
 }
 
 MOCK_PROJECT_LIST_FILTERED = {
-    "projects":[MOCK_PROJECT_1],
+    "projects": [MOCK_PROJECT_TO_BE_FILTERED],
     "total": 1,
 }
 
@@ -940,6 +968,13 @@ def create_mocks():
             name=MOCK_PROJECT_NAME_3,
             created_at=MOCK_CREATED_AT_3,
             updated_at=MOCK_UPDATED_AT_3,
+            tenant=DB_TENANT,
+        ),
+        models.Project(
+            uuid=MOCK_UUID_FROM_PROJECT_TO_BE_FILTERED,
+            name=MOCK_PROJECT__TO_BE_FILTERED_NAME,
+            created_at=MOCK_TO_BE_FILTERED_CREATED_AT,
+            updated_at=MOCK_TO_BE_FILTERED_UPDATED_AT,
             tenant=DB_TENANT,
         ),
     ]

@@ -15,10 +15,10 @@ NOT_FOUND = NotFound(
     code="ProjectNotFound", message="The specified project does not exist"
 )
 
-FORBIDDEN_CHARACTERS_REGEX = "[[!*'();:@&=+$,\/?%#\[\]]"
+FORBIDDEN_CHARACTERS_REGEX = "[!*'();:@&=+$,\/?%#\[\]]"
 ESCAPE_STRING = "\\"
 ALLOWED_SPECIAL_CHARACTERS_LIST = ["-", "_", " "]
-ALLOWED_SPECIAL_CHARACTERS_REGEX = "[-_\s]"
+ALLOWED_SPECIAL_CHARACTERS_REGEX = "[^A-Za-z0-9!*'();:@&=+$,\/?%#\[\]]"
 ESCAPE_MAP = {"-": "\-", "_": "\_", " ": " "}
 
 
@@ -77,12 +77,8 @@ class ProjectController:
         BadRequest
             When order_by is invalid.
         """
-        query = self.session.query(models.Project).filter_by(
-            tenant=self.kubeflow_userid
-        )
-        query_total = self.session.query(func.count(models.Project.uuid)).filter_by(
-            tenant=self.kubeflow_userid
-        )
+        query = self.session.query(models.Project)
+        query_total = self.session.query(func.count(models.Project.uuid))
 
         for column, value in filters.items():
             value, is_value_valid = process_filter_value(
@@ -94,8 +90,8 @@ class ProjectController:
 
             if not is_value_valid:
                 raise BadRequest(
-                    code="NotAllowedChar",
-                    message="Not allowed character in search field",
+                    code="NotAllowedCharOrExceeded",
+                    message=value,
                 )
             query = query.filter(
                 getattr(models.Project, column)

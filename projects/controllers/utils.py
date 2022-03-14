@@ -10,9 +10,6 @@ import filetype
 import pandas
 
 ESCAPE_STRING = "\\"
-ALLOWED_SPECIAL_CHARACTERS_LIST = ["-", "_", " "]
-ALLOWED_SPECIAL_CHARACTERS_REGEX = "[-_\s]"
-ESCAPE_MAP = {"-": "\-", "_": "\_", " ": " "}
 MAX_CHARS_ALLOWED = 50
 
 
@@ -121,6 +118,19 @@ def parse_file_buffer_to_seldon_request(file):
 # maybe this logic won't work on another database
 # maybe we can refactor this!
 def escaped_format(string):
+    """
+    This function will escape string so mysql database be able to read special characters.
+    Be aware that we could escape only the special characters, but to avoid the trouble to
+    identify special characters, we will escape all the characters. Alphanumeric can be read
+    with or without "\" before, but special characters can ONLY be read with "\" before.
+
+    Parameters
+    ----------
+    string : str
+    Returns
+    -------
+    str
+    """
     escaped_string = ""
     # to avoid the trouble of identify every special character we gonna escape all!
     for character in string:
@@ -128,7 +138,21 @@ def escaped_format(string):
     return escaped_string
 
 
-def has_special_character(allowed_special_character_regex, string):
+def has_special_character(string, allowed_special_character_regex):
+    """
+    Identifies if string has special character based in some regex
+
+    Parameters
+    ----------
+    string: str
+
+    allowed_special_character_regex : str
+        string symbolizing a regex pattern to identify special characters
+
+    Returns
+    -------
+    bool
+    """
     if re.findall(allowed_special_character_regex, string):
         return True
     else:
@@ -136,13 +160,43 @@ def has_special_character(allowed_special_character_regex, string):
 
 
 def has_forbidden_character(string, forbidden_special_character_regex):
+    """
+    Identifies if string has forbidden character based in some regex
+
+    Parameters
+    ----------
+    string: str
+
+    forbidden_special_character_regex : str
+        string symbolizing a regex pattern to identify the forbidden regex
+
+    Returns
+    -------
+    bool
+    """
     if re.findall(forbidden_special_character_regex, string):
         return True
     else:
         return False
 
 
-def has_exceed_characters_amount(string, max_chars_allowed):
+def has_exceeded_characters_amount(string, max_chars_allowed):
+    """
+    Identifies if string has more character than maximum characters allowed
+
+    Parameters
+    ----------
+    string: str
+
+    max_chars_allowed: str
+        string symbolizing a regex pattern to identify the forbidden regex
+
+
+    Returns
+    -------
+    bool
+    """
+
     if len(string) > max_chars_allowed:
         return True
     else:
@@ -162,9 +216,9 @@ def process_filter_value(
             is_valid = False
             return ("Filter contains not allowed characters", is_valid)
 
-        elif has_exceed_characters_amount(value, MAX_CHARS_ALLOWED):
+        elif has_exceeded_characters_amount(value, MAX_CHARS_ALLOWED):
             is_valid = False
-            return ("Filter exceed maximum characters amount", is_valid)
+            return ("Filter exceeded maximum characters amount", is_valid)
 
         elif has_special_character(value, allowed_special_characters_regex):
             is_valid = True
