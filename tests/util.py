@@ -598,7 +598,12 @@ MOCK_OPERATOR_LIST = {
     ],
     "total": 2,
 }
-
+MOCK_OPERATOR_LIST_DEPLOYMENTS = {
+    "operators": [
+        MOCK_OPERATOR_2,
+    ],
+    "total": 1,
+}
 MOCK_DEPLOYMENT_RUN_LIST = {
     "runs": [
         {
