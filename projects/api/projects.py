@@ -2,13 +2,12 @@
 """Projects API Router."""
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.project
 from projects import database
 from projects.controllers import ProjectController
-from projects.utils import format_query_params
 
 router = APIRouter(
     prefix="/projects",
@@ -34,21 +33,11 @@ async def handle_list_projects(
     """
 
     request_as_dict = request_schema.dict()
-    # filters = format_query_params(str(request.query_params))
 
     filters = request_as_dict.get("filters")
     order_by = request_as_dict.get("order")
-    print(order_by)
     page = request_as_dict.get("page")
     page_size = request_as_dict.get("page_size")
-
-    # order_by = filters.pop("order", None)
-
-    # page = filters.pop("page", 1)
-    # page = int(page) if page else 1
-
-    # page_size = filters.pop("page_size", None)
-    # page_size = int(page_size) if page_size else 10
 
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     projects = project_controller.list_projects(

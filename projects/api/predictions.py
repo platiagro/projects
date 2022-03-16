@@ -14,7 +14,6 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from projects import database
 from projects.controllers import (
     DeploymentController,
     PredictionController,

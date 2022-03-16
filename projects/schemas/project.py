@@ -2,10 +2,10 @@
 """Project schema."""
 import re
 from datetime import datetime
-from typing import List, Optional, Literal
+from typing import List, Optional
 
 from pydantic import BaseModel, validator
-from projects.exceptions import BadRequest, NotFound
+from projects.exceptions import BadRequest
 
 from projects.schemas.deployment import Deployment
 from projects.schemas.experiment import Experiment

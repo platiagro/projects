@@ -7,7 +7,7 @@ from sqlalchemy import asc, desc, func
 
 from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
-from projects.controllers.utils import uuid_alpha, process_filter_value
+from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
 from projects.utils import now
 
