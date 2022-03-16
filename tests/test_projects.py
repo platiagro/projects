@@ -7,12 +7,32 @@ from fastapi.testclient import TestClient
 from projects import models
 from projects.api.main import app
 from projects.database import session_scope
-from projects.controllers.projects import FORBIDDEN_CHARACTERS_REGEX
 
 import tests.util as util
 
 app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
+FORBIDDEN_CHARACTERS_LIST = [
+    "!",
+    "*",
+    "'",
+    "(",
+    ")",
+    ";",
+    ":",
+    "@",
+    "&",
+    "=",
+    "+",
+    "$",
+    ",",
+    "/",
+    "?",
+    "%",
+    "#",
+    "[",
+    "]",
+]
 
 
 class TestProjects(unittest.TestCase):
@@ -92,11 +112,16 @@ class TestProjects(unittest.TestCase):
         """
         Don't forget to write this!!!!!!.
         """
-        rv = TEST_CLIENT.get(f"/projects?name={util.MOCK_PROJECT_NAME_1}")
-        result = rv.json()
-        expected = util.MOCK_PROJECT_LIST_FILTERED
-        self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 200)
+        for char in FORBIDDEN_CHARACTERS_LIST:
+            rv = TEST_CLIENT.get(f"/projects?name={char}")
+            result = rv.json()
+            print(char)
+            expected = {
+                "code": "NotAllowedCharOrExceeded",
+                "message": "Filter contains not allowed characters",
+            }
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
 
     def test_create_project_invalid_request_body(self):
         """

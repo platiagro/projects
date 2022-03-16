@@ -15,9 +15,9 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=projects.schemas.project.ProjectList)
+@router.post("/listprojects", response_model=projects.schemas.project.ProjectList)
 async def handle_list_projects(
-    request: Request,
+    request_schema: projects.schemas.project.ProjectListRequest,
     session: Session = Depends(database.session_scope),
     kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
@@ -32,15 +32,23 @@ async def handle_list_projects(
     -------
     projects.schemas.project.ProjectList
     """
-    filters = format_query_params(str(request.query_params))
 
-    order_by = filters.pop("order", None)
+    request_as_dict = request_schema.dict()
+    # filters = format_query_params(str(request.query_params))
 
-    page = filters.pop("page", 1)
-    page = int(page) if page else 1
+    filters = request_as_dict.get("filters")
+    order_by = request_as_dict.get("order")
+    print(order_by)
+    page = request_as_dict.get("page")
+    page_size = request_as_dict.get("page_size")
 
-    page_size = filters.pop("page_size", None)
-    page_size = int(page_size) if page_size else 10
+    # order_by = filters.pop("order", None)
+
+    # page = filters.pop("page", 1)
+    # page = int(page) if page else 1
+
+    # page_size = filters.pop("page_size", None)
+    # page_size = int(page_size) if page_size else 10
 
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     projects = project_controller.list_projects(
