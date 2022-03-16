@@ -54,18 +54,18 @@ class TestProjects(unittest.TestCase):
         """
         Should return an empty list.
         """
-        rv = TEST_CLIENT.get("/projects")
+        rv = TEST_CLIENT.post("/projects/listprojects", json={})
         result = rv.json()
 
         expected = util.MOCK_PROJECT_LIST
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    def test_list_projects_order_name_asc(self):
+    def test_list_projects_order_name_desc(self):
         """
         Should return a list of projects sorted by name descending.
         """
-        rv = TEST_CLIENT.get("/projects?order=name desc")
+        rv = TEST_CLIENT.post("/projects/listprojects", json={"order": "name desc"})
         result = rv.json()
 
         expected = util.MOCK_PROJECT_LIST_SORTED_BY_NAME_DESC
@@ -76,7 +76,7 @@ class TestProjects(unittest.TestCase):
         """
         Should return a http error 400 and a message 'invalid order argument'.
         """
-        rv = TEST_CLIENT.get("/projects?order=name unk")
+        rv = TEST_CLIENT.post("/projects/listprojects", json={"order": "name foo"})
         result = rv.json()
 
         expected = {
@@ -90,7 +90,9 @@ class TestProjects(unittest.TestCase):
         """
         Should return a list of projects with one element.
         """
-        rv = TEST_CLIENT.get("/projects?page_size=1&page=3")
+        rv = TEST_CLIENT.post(
+            "/projects/listprojects", json={"page_size": 1, "page": 3}
+        )
         result = rv.json()
         total = util.TestingSessionLocal().query(models.Project).count()
         expected = {"projects": [util.MOCK_PROJECT_3], "total": total}
@@ -101,7 +103,10 @@ class TestProjects(unittest.TestCase):
         """
         Don't forget to write this!!!!!!.
         """
-        rv = TEST_CLIENT.get(f"/projects?name={util.MOCK_PROJECT__TO_BE_FILTERED_NAME}")
+        rv = TEST_CLIENT.post(
+            "/projects/listprojects",
+            json={"filters": {"name": util.MOCK_PROJECT__TO_BE_FILTERED_NAME}},
+        )
         result = rv.json()
         print(result)
         expected = util.MOCK_PROJECT_LIST_FILTERED
@@ -113,12 +118,14 @@ class TestProjects(unittest.TestCase):
         Don't forget to write this!!!!!!.
         """
         for char in FORBIDDEN_CHARACTERS_LIST:
-            rv = TEST_CLIENT.get(f"/projects?name={char}")
+            rv = TEST_CLIENT.post(
+                "/projects/listprojects",
+                json={"filters": {"name": char}},
+            )
             result = rv.json()
-            print(char)
             expected = {
-                "code": "NotAllowedCharOrExceeded",
-                "message": "Filter contains not allowed characters",
+                "code": "NotAllowedChar",
+                "message": "Not allowed char in search field",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)

@@ -347,7 +347,7 @@ IRIS_HEADERLESS_DATAFRAME = pd.DataFrame(
     "project-2",
     "project-3",
     "project-4",
-    "project1",
+    "projectWithAverySpecificName",
 )
 MOCK_EXPERIMENT_NAME_1, MOCK_EXPERIMENT_NAME_2 = "experiment-1", "experiment-2"
 MOCK_DEPLOYMENT_NAME_1, MOCK_DEPLOYMENT_NAME_2 = "deployment-1", "deployment-2"

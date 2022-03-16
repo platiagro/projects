@@ -74,8 +74,8 @@ class ProjectList(BaseModel):
 
 class ProjectListRequest(BaseModel):
     filters: Optional[dict] = {}
-    page: Optional[int]
-    page_size: Optional[int]
+    page: Optional[int] = 1
+    page_size: Optional[int] = 10
     order: Optional[str]
 
     @validator("filters")
