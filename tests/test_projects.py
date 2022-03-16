@@ -108,7 +108,6 @@ class TestProjects(unittest.TestCase):
             json={"filters": {"name": util.MOCK_PROJECT__TO_BE_FILTERED_NAME}},
         )
         result = rv.json()
-        print(result)
         expected = util.MOCK_PROJECT_LIST_FILTERED
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
@@ -129,6 +128,26 @@ class TestProjects(unittest.TestCase):
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
+
+    def test_list_projects_exceeded_amount_characters(self):
+        """
+        Don't forget to write this!!!!!!.
+        """
+        rv = TEST_CLIENT.post(
+            "/projects/listprojects",
+            json={
+                "filters": {
+                    "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                }
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
 
     def test_create_project_invalid_request_body(self):
         """

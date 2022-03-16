@@ -121,7 +121,7 @@ class ProjectListRequest(BaseModel):
 
         if v.get("name") and len(v.get("name")) > MAX_CHARS_ALLOWED:
             raise BadRequest(
-                code="Exceeded",
+                code="ExceededACharAmount",
                 message="Char quantity exceeded maximum allowed",
             )
         return v
