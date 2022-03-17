@@ -15,6 +15,7 @@ NOT_FOUND = NotFound(
     code="ProjectNotFound", message="The specified project does not exist"
 )
 
+
 class ProjectController:
     def __init__(self, session, kubeflow_userid=None):
         self.session = session

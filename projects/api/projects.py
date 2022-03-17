@@ -21,7 +21,7 @@ async def handle_list_projects(
     kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
-    Handles GET requests to /.
+    Handles POST requests to /listprojects.
     Parameters
     ----------
     request : fastapi.Request
