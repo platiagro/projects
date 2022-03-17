@@ -9,9 +9,6 @@ import uuid
 import filetype
 import pandas
 
-ESCAPE_STRING = "\\"
-MAX_CHARS_ALLOWED = 50
-
 
 def uuid_alpha():
     """

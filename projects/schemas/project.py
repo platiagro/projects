@@ -85,14 +85,13 @@ class ProjectListRequest(BaseModel):
 
         Parameters
         ----------
-        string: str
-
-        forbidden_special_character_regex : str
-            string symbolizing a regex pattern to identify the forbidden regex
+        v: dict
+            dict that has all collumns (keys) and values
 
         Returns
         -------
-        bool
+        dict
+            returns the same dict that was entered
         """
         if v.get("name") and re.findall(FORBIDDEN_CHARACTERS_REGEX, v.get("name")):
             raise BadRequest(
@@ -108,15 +107,13 @@ class ProjectListRequest(BaseModel):
 
         Parameters
         ----------
-        string: str
-
-        max_chars_allowed: str
-            string symbolizing a regex pattern to identify the forbidden regex
-
+        v: dict
+            dict that has all collumns (keys) and values
 
         Returns
         -------
-        bool
+        dict
+            returns the same dict that was entered
         """
 
         if v.get("name") and len(v.get("name")) > MAX_CHARS_ALLOWED:
@@ -136,10 +133,13 @@ class ProjectListRequest(BaseModel):
 
         Parameters
         ----------
-        string : str
+        v: dict
+            dict that has all collumns (keys) and values
+
         Returns
         -------
-        str
+        dict
+            returns the same dict that was entered, with escaped characters in v['name']
         """
         escaped_string = ""
         # to avoid the trouble of identify every special character we gonna escape all!

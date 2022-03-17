@@ -15,13 +15,6 @@ NOT_FOUND = NotFound(
     code="ProjectNotFound", message="The specified project does not exist"
 )
 
-FORBIDDEN_CHARACTERS_REGEX = "[!*'():;@&=+$,\/?%#\[\]]"
-ESCAPE_STRING = "\\"
-ALLOWED_SPECIAL_CHARACTERS_LIST = ["-", "_", " "]
-ALLOWED_SPECIAL_CHARACTERS_REGEX = "[^A-Za-z0-9!*'();:@&=+$,\/?%#\[\]]"
-ESCAPE_MAP = {"-": "\-", "_": "\_", " ": " "}
-
-
 class ProjectController:
     def __init__(self, session, kubeflow_userid=None):
         self.session = session
