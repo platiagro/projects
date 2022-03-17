@@ -105,7 +105,7 @@ class TestProjects(unittest.TestCase):
         """
         rv = TEST_CLIENT.post(
             "/projects/listprojects",
-            json={"filters": {"name": util.MOCK_PROJECT__TO_BE_FILTERED_NAME}},
+            json={"filters": {"name": util.MOCK_PROJECT_TO_BE_FILTERED_NAME}},
         )
         result = rv.json()
         expected = util.MOCK_PROJECT_LIST_FILTERED

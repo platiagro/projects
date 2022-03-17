@@ -341,7 +341,7 @@ IRIS_HEADERLESS_DATAFRAME = pd.DataFrame(
     MOCK_PROJECT_NAME_2,
     MOCK_PROJECT_NAME_3,
     MOCK_PROJECT_NAME_4,
-    MOCK_PROJECT__TO_BE_FILTERED_NAME,
+    MOCK_PROJECT_TO_BE_FILTERED_NAME,
 ) = (
     "project-1",
     "project-2",
@@ -571,7 +571,7 @@ MOCK_PROJECT_TO_BE_FILTERED = {
     "hasDeployment": False,
     "hasExperiment": False,
     "hasPreDeployment": False,
-    "name": MOCK_PROJECT__TO_BE_FILTERED_NAME,
+    "name": MOCK_PROJECT_TO_BE_FILTERED_NAME,
     "updatedAt": MOCK_TO_BE_FILTERED_UPDATED_AT.isoformat(),
     "uuid": MOCK_UUID_FROM_PROJECT_TO_BE_FILTERED,
 }
@@ -972,7 +972,7 @@ def create_mocks():
         ),
         models.Project(
             uuid=MOCK_UUID_FROM_PROJECT_TO_BE_FILTERED,
-            name=MOCK_PROJECT__TO_BE_FILTERED_NAME,
+            name=MOCK_PROJECT_TO_BE_FILTERED_NAME,
             created_at=MOCK_TO_BE_FILTERED_CREATED_AT,
             updated_at=MOCK_TO_BE_FILTERED_UPDATED_AT,
             tenant=DB_TENANT,
