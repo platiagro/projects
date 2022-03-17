@@ -101,7 +101,7 @@ class TestProjects(unittest.TestCase):
 
     def test_list_projects_with_filter(self):
         """
-        Don't forget to write this!!!!!!.
+        Should return a list of projects compatible with some filter.
         """
         rv = TEST_CLIENT.post(
             "/projects/listprojects",
@@ -114,7 +114,7 @@ class TestProjects(unittest.TestCase):
 
     def test_list_projects_with_forbidden_characters(self):
         """
-        Don't forget to write this!!!!!!.
+        Should return http status 400 if project name contains any forbidden char
         """
         for char in FORBIDDEN_CHARACTERS_LIST:
             rv = TEST_CLIENT.post(
@@ -131,7 +131,7 @@ class TestProjects(unittest.TestCase):
 
     def test_list_projects_exceeded_amount_characters(self):
         """
-        Don't forget to write this!!!!!!.
+        Should return http status 400 when project name has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
             "/projects/listprojects",
