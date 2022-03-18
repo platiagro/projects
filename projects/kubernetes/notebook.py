@@ -30,7 +30,6 @@ NOTEBOOK_NAMESPACE = "anonymous"
 NOTEBOOK_POD_NAME = "server-0"
 NOTEBOOK_CONTAINER_NAME = "server"
 NOTEBOOK_WAITING_MSG = "Waiting for notebook server to be ready..."
-
 MAX_RETRY = 5
 
 
@@ -192,7 +191,7 @@ def create_persistent_volume_claim(name, mount_path):
                 )
                 pod_is_running = pod.status.phase == "Running"
                 containers_are_running = all(
-                    [c.state.running for c in pod.status.container_statuses]
+                    [c.ready for c in pod.status.container_statuses]
                 )
                 # TODO Check if the volume is mounted
                 volume_is_mounted = True
@@ -285,7 +284,7 @@ def update_persistent_volume_claim(name, mount_path):
                 pod_volume_mounts = pod.spec.containers[0].volume_mounts
                 if (
                     pod.status.phase == "Running"
-                    and all([c.state.running for c in pod.status.container_statuses])
+                    and all([c.ready for c in pod.status.container_statuses])
                     and any(
                         [
                             vm
@@ -389,7 +388,7 @@ def remove_persistent_volume_claim(name, mount_path):
                 )
                 if (
                     pod.status.phase == "Running"
-                    and all([c.state.running for c in pod.status.container_statuses])
+                    and all([c.ready for c in pod.status.container_statuses])
                     and not [v for v in pod.spec.volumes if v.name == f"{name}"]
                 ):
                     warnings.warn(f"Removed volume {name} in notebook server!")
@@ -697,13 +696,12 @@ def copy_file_to_pod(filepath, destination_path):
                 continue
             pod_is_running = pod.status.phase == "Running"
             containers_are_running = all(
-                [c.state.running for c in pod.status.container_statuses]
+                [c.ready for c in pod.status.container_statuses]
             )
             if pod_is_running and containers_are_running:
                 break
         except ApiException:
             pass
-
     container_stream = stream(
         api_instance.connect_get_namespaced_pod_exec,
         name=NOTEBOOK_POD_NAME,
