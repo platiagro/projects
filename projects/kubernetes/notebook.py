@@ -98,7 +98,7 @@ def create_persistent_volume_claim(name, mount_path):
                 ],
                 "resources": {
                     "requests": {
-                        "storage": "10Gi",
+                        "storage": "1Gi",
                     },
                 },
             },
