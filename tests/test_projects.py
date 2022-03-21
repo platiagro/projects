@@ -12,27 +12,6 @@ import tests.util as util
 
 app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
-FORBIDDEN_CHARACTERS_LIST = [
-    "!",
-    "*",
-    "'",
-    "(",
-    ")",
-    ";",
-    ":",
-    "@",
-    "&",
-    "=",
-    "+",
-    "$",
-    ",",
-    "/",
-    "?",
-    "%",
-    "#",
-    "[",
-    "]",
-]
 
 
 class TestProjects(unittest.TestCase):
@@ -116,7 +95,7 @@ class TestProjects(unittest.TestCase):
         """
         Should return http status 400 if project name contains any forbidden char
         """
-        for char in FORBIDDEN_CHARACTERS_LIST:
+        for char in util.FORBIDDEN_CHARACTERS_LIST:
             rv = TEST_CLIENT.post(
                 "/projects/listprojects",
                 json={"filters": {"name": char}},

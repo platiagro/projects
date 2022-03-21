@@ -922,6 +922,28 @@ MOCK_NOTEBOOK = {
     "nbformat_minor": 4,
 }
 
+FORBIDDEN_CHARACTERS_LIST = [
+    "!",
+    "*",
+    "'",
+    "(",
+    ")",
+    ";",
+    ":",
+    "@",
+    "&",
+    "=",
+    "+",
+    "$",
+    ",",
+    "/",
+    "?",
+    "%",
+    "#",
+    "[",
+    "]",
+]
+
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
 engine = create_engine(
