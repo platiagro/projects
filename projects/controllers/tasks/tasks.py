@@ -16,6 +16,7 @@ from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import (
+    copy_files_to_pod,
     get_files_from_task,
     handle_task_creation,
     remove_persistent_volume_claim,
