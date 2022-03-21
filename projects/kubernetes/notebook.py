@@ -702,19 +702,24 @@ def copy_file_to_pod(filepath, destination_path):
                 break
         except ApiException:
             pass
-    container_stream = stream(
-        api_instance.connect_get_namespaced_pod_exec,
-        name=NOTEBOOK_POD_NAME,
-        namespace=NOTEBOOK_NAMESPACE,
-        command=exec_command,
-        container=NOTEBOOK_CONTAINER_NAME,
-        stderr=True,
-        stdin=True,
-        stdout=True,
-        tty=False,
-        _preload_content=False,
-    )
-
+    while True:
+        try:
+            container_stream = stream(
+                api_instance.connect_get_namespaced_pod_exec,
+                name=NOTEBOOK_POD_NAME,
+                namespace=NOTEBOOK_NAMESPACE,
+                command=exec_command,
+                container=NOTEBOOK_CONTAINER_NAME,
+                stderr=True,
+                stdin=True,
+                stdout=True,
+                tty=False,
+                _preload_content=False,
+            )
+            break
+        except ApiException:
+            pass
+    
     with TemporaryFile() as tar_buffer:
         # Prepares an uncompressed tarfile that will be written to STDIN
         with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
