@@ -443,7 +443,23 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    def test_update_task_unk_tags(self):
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_unk_tags(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api
+    ):
         """
         Should return a successfully updated task.
         """
@@ -538,7 +554,23 @@ class TestTasks(unittest.TestCase):
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_config_load.assert_any_call()
 
-    def test_update_task_tags(self):
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_tags(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api
+    ):
         """
         Should return a successfully updated task.
         """
