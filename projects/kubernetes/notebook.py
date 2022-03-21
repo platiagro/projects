@@ -448,8 +448,24 @@ def handle_task_creation(
         destination_path = f"{JUPYTER_WORKSPACE}/{task.name}/"
         copy_files_in_pod(source_path, destination_path)
     else:
+        if task.experiment_notebook and task.deployment_notebook:
+            experiment_path = f"{task.name}/Experiment.ipynb"
+            with NamedTemporaryFile("w", delete=False) as f1:
+                json.dump(task.experiment_notebook, f1)
 
-        if task.experiment_notebook:
+            filepath1 = f1.name
+
+            deployment_path = f"{task.name}/Deployment.ipynb"
+            with NamedTemporaryFile("w", delete=False) as f2:
+                json.dump(task.deployment_notebook, f2)
+
+            filepath2 = f2.name
+
+            copy_files_to_pod([filepath1, filepath2], [experiment_path, deployment_path])
+            os.remove(filepath1)
+            os.remove(filepath2)
+        
+        elif task.experiment_notebook and not task.deployment_notebook:
             experiment_path = f"{task.name}/Experiment.ipynb"
             # copies experiment notebook file to pod
             with NamedTemporaryFile("w", delete=False) as f:
@@ -459,7 +475,7 @@ def handle_task_creation(
             copy_file_to_pod(filepath, experiment_path)
             os.remove(filepath)
 
-        if task.deployment_notebook:
+        elif task.deployment_notebook and not task.experiment_notebook:
             deployment_path = f"{task.name}/Deployment.ipynb"
             # copies deployment notebook file to pod
             with NamedTemporaryFile("w", delete=False) as f:
@@ -719,7 +735,7 @@ def copy_file_to_pod(filepath, destination_path):
             break
         except ApiException:
             pass
-    
+
     with TemporaryFile() as tar_buffer:
         # Prepares an uncompressed tarfile that will be written to STDIN
         with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
@@ -731,6 +747,72 @@ def copy_file_to_pod(filepath, destination_path):
         handle_container_stream(container_stream=container_stream, buffer=tar_buffer)
 
     warnings.warn(f"Copied '{filepath}' to '{destination_path}'!")
+
+
+def copy_files_to_pod(filepaths, destination_path):
+    """
+    Copies a local file to a pod in notebook server.
+    Based on this example:
+    https://github.com/prafull01/Kubernetes-Utilities/blob/master/kubectl_cp_as_python_client.py
+
+    Parameters
+    ----------
+    filepath : str
+    destination_path : str
+    """
+    warnings.warn(f"Copying '{filepaths[0]} and {filepaths[1]}' to '{destination_path}'...")
+    load_kube_config()
+    api_instance = client.CoreV1Api()
+
+    # The following command extracts the contents of STDIN to /home/jovyan/tasks
+    exec_command = ["tar", "xvf", "-", "-C", "/home/jovyan/tasks"]
+    while True:
+        try:
+            pod = api_instance.read_namespaced_pod(
+                name=NOTEBOOK_POD_NAME,
+                namespace=NOTEBOOK_NAMESPACE,
+                _request_timeout=5,
+            )
+            if not pod.status.container_statuses:
+                continue
+            pod_is_running = pod.status.phase == "Running"
+            containers_are_running = all(
+                [c.ready for c in pod.status.container_statuses]
+            )
+            if pod_is_running and containers_are_running:
+                break
+        except ApiException:
+            pass
+    while True:
+        try:
+            container_stream = stream(
+                api_instance.connect_get_namespaced_pod_exec,
+                name=NOTEBOOK_POD_NAME,
+                namespace=NOTEBOOK_NAMESPACE,
+                command=exec_command,
+                container=NOTEBOOK_CONTAINER_NAME,
+                stderr=True,
+                stdin=True,
+                stdout=True,
+                tty=False,
+                _preload_content=False,
+            )
+            break
+        except ApiException:
+            pass
+
+    with TemporaryFile() as tar_buffer:
+        # Prepares an uncompressed tarfile that will be written to STDIN
+        with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
+            tar.add(filepaths[0], arcname=destination_path[0])
+            tar.add(filepaths[1], arcname=destination_path[1])
+
+        # Rewinds to beggining of tarfile
+        tar_buffer.seek(0)
+
+        handle_container_stream(container_stream=container_stream, buffer=tar_buffer)
+
+    warnings.warn(f"Copied '{filepaths[0]} and {filepaths[1]}' to '{destination_path[0]} and {destination_path[1]}'!")
 
 
 def copy_files_in_pod(source_path, destination_path):
