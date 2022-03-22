@@ -14,6 +14,43 @@ from projects.utils import to_camel_case
 FORBIDDEN_CHARACTERS_REGEX = "[!*'():;@&=+$,\/?%#\[\]]"
 MAX_CHARS_ALLOWED = 50
 
+def raise_if_exceeded(max_chars_allowed, value):
+    if len(value) > max_chars_allowed:
+        raise BadRequest(
+            code="ExceededACharAmount",
+            message="Char quantity exceeded maximum allowed",
+            )
+   
+def raise_if_forbidden_character(forbidden_char_regex, value):
+        if re.findall(forbidden_char_regex, value):
+            raise BadRequest(
+                code="NotAllowedChar",
+                message="Not allowed char in search field",
+            )
+
+# This is necessary to mysql consider special character
+# maybe this logic won't work on another database
+# maybe we can refactor this!            
+def escaped_format(value):
+        """
+        This function will escape string so mysql database be able to read special characters.
+
+        Parameters
+        ----------
+        value: str
+        Returns
+        -------
+        str
+            string escaped
+        """
+        escaped_string = ""
+        # to avoid the trouble of identify every special character we gonna escape all!
+        for character in value:
+            if character.isalnum():
+                escaped_string = escaped_string + character
+            else:
+                escaped_string = escaped_string + "\\" + character
+        return escaped_string            
 
 class ProjectBase(BaseModel):
     class Config:
@@ -21,16 +58,21 @@ class ProjectBase(BaseModel):
         allow_population_by_field_name = True
         orm_mode = True
 
-
+#Request
 class ProjectCreate(ProjectBase):
     name: str
     description: Optional[str]
-
-
+    
+    @validator("name")
+    def validate_name(cls, v):
+        raise_if_exceeded(MAX_CHARS_ALLOWED,v)
+        raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX,v)
+        return v
+        
+#Request
 class ProjectUpdate(ProjectBase):
     name: Optional[str]
     description: Optional[str]
-
 
 class Project(ProjectBase):
     uuid: str
@@ -79,75 +121,10 @@ class ProjectListRequest(BaseModel):
     order: Optional[str]
 
     @validator("filters")
-    def name_has_forbidden_character(cls, v):
-        """
-        Identifies if string has forbidden character based in some regex
-
-        Parameters
-        ----------
-        v: dict
-            dict that has all collumns (keys) and values
-
-        Returns
-        -------
-        dict
-            returns the same dict that was entered
-        """
-        if v.get("name") and re.findall(FORBIDDEN_CHARACTERS_REGEX, v.get("name")):
-            raise BadRequest(
-                code="NotAllowedChar",
-                message="Not allowed char in search field",
-            )
-        return v
-
-    @validator("filters")
-    def name_exceeded_max_amount_chars(cls, v):
-        """
-        Identifies if string has more character than maximum characters allowed
-
-        Parameters
-        ----------
-        v: dict
-            dict that has all collumns (keys) and values
-
-        Returns
-        -------
-        dict
-            returns the same dict that was entered
-        """
-
-        if v.get("name") and len(v.get("name")) > MAX_CHARS_ALLOWED:
-            raise BadRequest(
-                code="ExceededACharAmount",
-                message="Char quantity exceeded maximum allowed",
-            )
-        return v
-
-    # This is necessary to mysql consider special character
-    # maybe this logic won't work on another database
-    # maybe we can refactor this!
-    @validator("filters")
-    def escaped_format(cls, v):
-        """
-        This function will escape string so mysql database be able to read special characters.
-
-        Parameters
-        ----------
-        v: dict
-            dict that has all collumns (keys) and values
-
-        Returns
-        -------
-        dict
-            returns the same dict that was entered, with escaped characters in v['name']
-        """
-        escaped_string = ""
-        # to avoid the trouble of identify every special character we gonna escape all!
+    def validate_name_in_filters(cls, v):
         if v.get("name"):
-            for character in v.get("name"):
-                if character.isalnum():
-                    escaped_string = escaped_string + character
-                else:
-                    escaped_string = escaped_string + "\\" + character
-                v["name"] = escaped_string
+            name = v.get("name")
+            raise_if_exceeded(MAX_CHARS_ALLOWED, name)
+            raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
+            v['name'] = escaped_format(name)
         return v
