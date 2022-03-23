@@ -6,7 +6,6 @@ import os
 import pkgutil
 import re
 import tempfile
-from datetime import datetime
 from typing import Optional
 
 from fastapi_mail import FastMail, MessageSchema

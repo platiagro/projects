@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """Project schema."""
-import re
 from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, validator
 
+from projects.schemas import validators
 from projects.schemas.deployment import Deployment
 from projects.schemas.experiment import Experiment
-from projects.schemas import validators
 from projects.utils import to_camel_case
 
 FORBIDDEN_CHARACTERS_REGEX = "[!*'():;@&=+$,\/?%#\[\]]"
 MAX_CHARS_ALLOWED = 50
 MAX_CHARS_ALLOWED_DESCRIPTION = 300
+
 
 class ProjectBase(BaseModel):
     class Config:
@@ -21,26 +21,27 @@ class ProjectBase(BaseModel):
         allow_population_by_field_name = True
         orm_mode = True
 
-#Request
+
 class ProjectCreate(ProjectBase):
     name: str
     description: Optional[str]
-    
+
     @validator("name")
     def validate_name(cls, v):
-        validators.raise_if_exceeded(MAX_CHARS_ALLOWED,v)
-        validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX,v)
+        validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
+        validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, v)
         return v
-   
+
     @validator("description")
     def validate_description(cls, v):
         validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DESCRIPTION, v)
         return v
-        
-#Request
+
+
 class ProjectUpdate(ProjectBase):
     name: Optional[str]
     description: Optional[str]
+
 
 class Project(ProjectBase):
     uuid: str
@@ -94,5 +95,5 @@ class ProjectListRequest(BaseModel):
             name = v.get("name")
             validators.raise_if_exceeded(MAX_CHARS_ALLOWED, name)
             validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
-            v['name'] = validators.escaped_format(name)
+            v["name"] = validators.escaped_format(name)
         return v
