@@ -2,27 +2,26 @@
 """Projects API Router."""
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.project
 from projects import database
 from projects.controllers import ProjectController
-from projects.utils import format_query_params
 
 router = APIRouter(
     prefix="/projects",
 )
 
 
-@router.get("", response_model=projects.schemas.project.ProjectList)
+@router.post("/listprojects", response_model=projects.schemas.project.ProjectList)
 async def handle_list_projects(
-    request: Request,
+    request_schema: projects.schemas.project.ProjectListRequest,
     session: Session = Depends(database.session_scope),
     kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
-    Handles GET requests to /.
+    Handles POST requests to /listprojects.
     Parameters
     ----------
     request : fastapi.Request
@@ -32,15 +31,13 @@ async def handle_list_projects(
     -------
     projects.schemas.project.ProjectList
     """
-    filters = format_query_params(str(request.query_params))
 
-    order_by = filters.pop("order", None)
+    request_as_dict = request_schema.dict()
 
-    page = filters.pop("page", 1)
-    page = int(page) if page else 1
-
-    page_size = filters.pop("page_size", None)
-    page_size = int(page_size) if page_size else 10
+    filters = request_as_dict.get("filters")
+    order_by = request_as_dict.get("order")
+    page = request_as_dict.get("page")
+    page_size = request_as_dict.get("page_size")
 
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     projects = project_controller.list_projects(

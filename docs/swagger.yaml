@@ -356,51 +356,6 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /projects:
-    get:
-      summary: 'List projects. Supports pagination, and sorting.'
-      tags:
-        - Projects
-      parameters:
-        - in: query
-          name: name
-          schema:
-            type: string
-          description: Name filter
-        - in: query
-          name: page
-          schema:
-            type: integer
-          description: Page number
-        - in: query
-          name: page_size
-          schema:
-            type: integer
-          description: Page size
-        - in: query
-          name: order
-          schema:
-            type: string
-          example: name asc
-      responses:
-        '200':
-          $ref: '#/components/responses/Projects'
-        '400':
-          description: >
-            Bad Request response status code indicates that the server cannot or
-            will not process the request due to something that is perceived to
-            be a client error. A common cause is that the client has sent
-            invalid request values.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BadRequest'
-              examples:
-                InvalidOrderBy:
-                  $ref: '#/components/examples/InvalidOrderBy'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
     post:
       summary: Create a new project.
       tags:
@@ -423,6 +378,33 @@ paths:
               examples:
                 ProjectNameExists:
                   $ref: '#/components/examples/ProjectNameExists'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/listprojects:
+    post:
+      summary: 'List projects. Supports pagination, and sorting.'
+      tags:
+        - Projects
+      requestBody:
+        $ref: '#/components/requestBodies/ListProjects'
+      responses:
+        '200':
+          $ref: '#/components/responses/Projects'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidOrderBy:
+                  $ref: '#/components/examples/InvalidOrderBy'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
@@ -4203,6 +4185,23 @@ components:
                 type: string
               description:
                 type: string
+    ListProjects:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              filters:
+                type: object
+                properties:
+                  name:
+                    type: string
+              order:
+                type: string
+              page:
+                type: integer
+              page_size:
+                type: integer
     Deleteprojects:
       content:
         application/json:
