@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, validator
 
-from projects.schemas import validators
+from projects import validators
 from projects.schemas.deployment import Deployment
 from projects.schemas.experiment import Experiment
 from projects.utils import to_camel_case
