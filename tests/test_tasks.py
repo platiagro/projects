@@ -18,6 +18,8 @@ TEST_CLIENT = TestClient(app)
 
 HOST_URL = "http://ml-pipeline.kubeflow:8888"
 
+TASK_ROUTE = "/tasks"
+EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
 
 class TestTasks(unittest.TestCase):
     maxDiff = None
@@ -38,7 +40,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return an empty list.
         """
-        rv = TEST_CLIENT.get("/tasks")
+        rv = TEST_CLIENT.get(TASK_ROUTE)
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -111,14 +113,14 @@ class TestTasks(unittest.TestCase):
         """
         Should create task successfully.
         """
-        rv = TEST_CLIENT.post("/tasks", json={})
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={})
         self.assertEqual(rv.status_code, 200)
 
     def test_create_task_given_name_already_exists_error(self):
         """
         Should return http status 400 and a message 'a task with given name already exists'.
         """
-        rv = TEST_CLIENT.post("/tasks", json={"name": util.MOCK_TASK_NAME_1})
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={"name": util.MOCK_TASK_NAME_1})
         result = rv.json()
 
         expected = {
@@ -140,7 +142,7 @@ class TestTasks(unittest.TestCase):
             "nbformat_minor": 4,
         }
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "copyFrom": task_id,
                 "experimentNotebook": experiment_notebook,
@@ -161,7 +163,7 @@ class TestTasks(unittest.TestCase):
         """
         task_id = "unk"
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "copyFrom": task_id,
             },
@@ -181,7 +183,7 @@ class TestTasks(unittest.TestCase):
         """
         docker_image = "unk"
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "image": docker_image,
             },
@@ -205,7 +207,7 @@ class TestTasks(unittest.TestCase):
         """
         task_category = "DEFAULT"
 
-        rv = TEST_CLIENT.post("/tasks", json={"category": task_category})
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={"category": task_category})
         result = rv.json()
 
         expected = {
@@ -245,7 +247,7 @@ class TestTasks(unittest.TestCase):
         task_category = "DEFAULT"
 
         rv = TEST_CLIENT.post(
-            "/tasks", json={"name": task_name, "category": task_category}
+            TASK_ROUTE, json={"name": task_name, "category": task_category}
         )
         result = rv.json()
 
@@ -284,7 +286,7 @@ class TestTasks(unittest.TestCase):
         """
         task_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.post("/tasks", json={"copyFrom": task_id})
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={"copyFrom": task_id})
         result = rv.json()
 
         expected = {
@@ -321,7 +323,7 @@ class TestTasks(unittest.TestCase):
         Should create and return a task successfully.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "experimentNotebook": util.MOCK_NOTEBOOK,
                 "deploymentNotebook": util.MOCK_NOTEBOOK,
@@ -484,7 +486,7 @@ class TestTasks(unittest.TestCase):
             "description": None,
             "docs": None,
             "hasNotebook": False,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "name": "task-5",
@@ -537,7 +539,7 @@ class TestTasks(unittest.TestCase):
             "description": None,
             "docs": None,
             "hasNotebook": False,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "name": "name foo",
@@ -597,7 +599,7 @@ class TestTasks(unittest.TestCase):
             "dataOut": None,
             "docs": None,
             "hasNotebook": False,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "parameters": [],
@@ -649,7 +651,7 @@ class TestTasks(unittest.TestCase):
             "dataOut": None,
             "docs": None,
             "hasNotebook": True,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "parameters": [],
@@ -700,7 +702,7 @@ class TestTasks(unittest.TestCase):
             "dataOut": None,
             "docs": None,
             "hasNotebook": True,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "parameters": [],
