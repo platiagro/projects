@@ -3,6 +3,18 @@ from projects.exceptions import BadRequest
 
 
 def raise_if_exceeded(max_chars_allowed, value):
+    """
+    Function that raises if len(value) is greater than maximum
+    char amount
+
+    Parameters
+    ----------
+    max_chars_allowed: int
+    value: str
+    Returns
+    -------
+    None
+    """
     if len(value) > max_chars_allowed:
         raise BadRequest(
             code="ExceededACharAmount",
@@ -11,6 +23,18 @@ def raise_if_exceeded(max_chars_allowed, value):
 
 
 def raise_if_forbidden_character(forbidden_char_regex, value):
+    """
+    Function that raises if value contains any forbidden char
+
+    Parameters
+    ----------
+    forbidden_char_regex: str
+        regex pattern with all non-allowed chars
+    value: str
+    Returns
+    -------
+    None
+    """
     if re.findall(forbidden_char_regex, value):
         raise BadRequest(
             code="NotAllowedChar",
