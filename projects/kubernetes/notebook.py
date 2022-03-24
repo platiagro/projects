@@ -30,7 +30,6 @@ NOTEBOOK_NAMESPACE = "anonymous"
 NOTEBOOK_POD_NAME = "server-0"
 NOTEBOOK_CONTAINER_NAME = "server"
 NOTEBOOK_WAITING_MSG = "Waiting for notebook server to be ready..."
-
 MAX_RETRY = 5
 
 
@@ -99,7 +98,7 @@ def create_persistent_volume_claim(name, mount_path):
                 ],
                 "resources": {
                     "requests": {
-                        "storage": "10Gi",
+                        "storage": "1Gi",
                     },
                 },
             },
@@ -192,12 +191,9 @@ def create_persistent_volume_claim(name, mount_path):
                 )
                 pod_is_running = pod.status.phase == "Running"
                 containers_are_running = all(
-                    [c.state.running for c in pod.status.container_statuses]
+                    [c.ready for c in pod.status.container_statuses]
                 )
-                # ToDo
-                # volume_is_mounted = any(
-                #     [v for v in pod.spec.volumes if v.name == f"{name}"]
-                # )
+                # TODO Check if the volume is mounted
                 volume_is_mounted = True
 
                 if pod_is_running and containers_are_running and volume_is_mounted:
@@ -288,7 +284,7 @@ def update_persistent_volume_claim(name, mount_path):
                 pod_volume_mounts = pod.spec.containers[0].volume_mounts
                 if (
                     pod.status.phase == "Running"
-                    and all([c.state.running for c in pod.status.container_statuses])
+                    and all([c.ready for c in pod.status.container_statuses])
                     and any(
                         [
                             vm
@@ -392,7 +388,7 @@ def remove_persistent_volume_claim(name, mount_path):
                 )
                 if (
                     pod.status.phase == "Running"
-                    and all([c.state.running for c in pod.status.container_statuses])
+                    and all([c.ready for c in pod.status.container_statuses])
                     and not [v for v in pod.spec.volumes if v.name == f"{name}"]
                 ):
                     warnings.warn(f"Removed volume {name} in notebook server!")
@@ -452,6 +448,7 @@ def handle_task_creation(
         destination_path = f"{JUPYTER_WORKSPACE}/{task.name}/"
         copy_files_in_pod(source_path, destination_path)
     else:
+        filepaths = list()
 
         if task.experiment_notebook:
             experiment_path = f"{task.name}/Experiment.ipynb"
@@ -460,8 +457,7 @@ def handle_task_creation(
                 json.dump(task.experiment_notebook, f)
 
             filepath = f.name
-            copy_file_to_pod(filepath, experiment_path)
-            os.remove(filepath)
+            filepaths.append((filepath, experiment_path))
 
         if task.deployment_notebook:
             deployment_path = f"{task.name}/Deployment.ipynb"
@@ -470,8 +466,11 @@ def handle_task_creation(
                 json.dump(task.deployment_notebook, f)
 
             filepath = f.name
-            copy_file_to_pod(filepath, deployment_path)
-            os.remove(filepath)
+            filepaths.append((filepath, deployment_path))
+
+        copy_files_to_pod(filepaths)
+        for path in filepaths:
+            os.remove(path[0])
 
     # create ConfigMap for monitoring tasks
     if MONITORING_TAG in task.tags:
@@ -672,7 +671,7 @@ def handle_container_stream(container_stream, buffer=None):
             warnings.warn("Kubernetes API Error: %s" % e.reason)
 
 
-def copy_file_to_pod(filepath, destination_path):
+def copy_files_to_pod(filepaths):
     """
     Copies a local file to a pod in notebook server.
     Based on this example:
@@ -680,15 +679,13 @@ def copy_file_to_pod(filepath, destination_path):
 
     Parameters
     ----------
-    filepath : str
-    destination_path : str
+    filepath : list
     """
-    warnings.warn(f"Copying '{filepath}' to '{destination_path}'...")
     load_kube_config()
     api_instance = client.CoreV1Api()
 
     # The following command extracts the contents of STDIN to /home/jovyan/tasks
-    exec_command = ["tar", "xvf", "-", "-C", "/home/jovyan/tasks"]
+    exec_command = ["tar", "xvf", "-", "-C", JUPYTER_WORKSPACE]
     while True:
         try:
             pod = api_instance.read_namespaced_pod(
@@ -700,37 +697,40 @@ def copy_file_to_pod(filepath, destination_path):
                 continue
             pod_is_running = pod.status.phase == "Running"
             containers_are_running = all(
-                [c.state.running for c in pod.status.container_statuses]
+                [c.ready for c in pod.status.container_statuses]
             )
             if pod_is_running and containers_are_running:
                 break
         except ApiException:
             pass
-
-    container_stream = stream(
-        api_instance.connect_get_namespaced_pod_exec,
-        name=NOTEBOOK_POD_NAME,
-        namespace=NOTEBOOK_NAMESPACE,
-        command=exec_command,
-        container=NOTEBOOK_CONTAINER_NAME,
-        stderr=True,
-        stdin=True,
-        stdout=True,
-        tty=False,
-        _preload_content=False,
-    )
+    while True:
+        try:
+            container_stream = stream(
+                api_instance.connect_get_namespaced_pod_exec,
+                name=NOTEBOOK_POD_NAME,
+                namespace=NOTEBOOK_NAMESPACE,
+                command=exec_command,
+                container=NOTEBOOK_CONTAINER_NAME,
+                stderr=True,
+                stdin=True,
+                stdout=True,
+                tty=False,
+                _preload_content=False,
+            )
+            break
+        except ApiException:
+            pass
 
     with TemporaryFile() as tar_buffer:
         # Prepares an uncompressed tarfile that will be written to STDIN
         with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
-            tar.add(filepath, arcname=destination_path)
+            for path in filepaths:
+                tar.add(path[0], arcname=path[1])
 
         # Rewinds to beggining of tarfile
         tar_buffer.seek(0)
 
         handle_container_stream(container_stream=container_stream, buffer=tar_buffer)
-
-    warnings.warn(f"Copied '{filepath}' to '{destination_path}'!")
 
 
 def copy_files_in_pod(source_path, destination_path):

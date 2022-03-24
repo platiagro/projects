@@ -16,7 +16,7 @@ from projects import __version__, models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import (
-    copy_file_to_pod,
+    copy_files_to_pod,
     get_files_from_task,
     handle_task_creation,
     remove_persistent_volume_claim,
@@ -482,6 +482,8 @@ class TaskController:
         task : projects.schemas.task.TaskUpdate
         stored_task : projects.models.task.Task
         """
+        filepaths = list()
+
         if task.experiment_notebook:
             with tempfile.NamedTemporaryFile("w", delete=False) as f:
                 json.dump(task.experiment_notebook, f)
@@ -493,8 +495,7 @@ class TaskController:
 
             filepath = f.name
             destination_path = f"{stored_task.name}/{task.experiment_notebook_path}"
-            copy_file_to_pod(filepath, destination_path)
-            os.remove(filepath)
+            filepaths.append((filepath, destination_path))
 
         if task.deployment_notebook:
             with tempfile.NamedTemporaryFile("w", delete=False) as f:
@@ -507,8 +508,11 @@ class TaskController:
 
             filepath = f.name
             destination_path = f"{stored_task.name}/{task.deployment_notebook_path}"
-            copy_file_to_pod(filepath, destination_path)
-            os.remove(filepath)
+            filepaths.append((filepath, destination_path))
+
+        copy_files_to_pod(filepaths)
+        for path in filepaths:
+            os.remove(path[0])
 
     def make_email_message(self, html_file_content, task_name):
         """

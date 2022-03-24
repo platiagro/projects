@@ -9,7 +9,7 @@ import urllib3
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
+from kubernetes.client.rest import ApiException as K8_ApiException
 from projects.database import DB_TENANT, Base
 from projects import models
 
@@ -171,6 +171,111 @@ MOCK_CORE_V1_API = mock.MagicMock(
                 )
             ),
         ),
+    ),
+    create_namespaced_persistent_volume_claim=mock.MagicMock(
+        side_effect=lambda namespace, body: mock.MagicMock(
+            api_version="v1",
+            kind="PersistentVolumeClaim",
+            metadata=mock.MagicMock(
+                name=f"vol-{body['metadata']['name']}",
+                namespace=namespace,
+            ),
+            status=mock.MagicMock(phase="Bound"),
+        )
+    ),
+    list_namespaced_pod=mock.MagicMock(
+        side_effect=lambda namespace, **kwargs: mock.MagicMock(items=[MOCK_POD])
+    ),
+    read_namespaced_pod_log=mock.MagicMock(
+        return_value="2021-01-01 00:00:00 ERROR foo\nbar"
+    ),
+)
+MOCK_CORE_V1_API_NOT_BOUND = mock.MagicMock(
+    read_namespaced_persistent_volume_claim=mock.MagicMock(
+        side_effect=lambda name, namespace: mock.MagicMock(
+            api_version="v1",
+            kind="PersistentVolumeClaim",
+            metadata=mock.MagicMock(
+                name=f"vol-{name}",
+                namespace=namespace,
+            ),
+            status=mock.MagicMock(phase="NotBound"),
+        )
+    ),
+    read_namespaced_pod=mock.MagicMock(return_value=MOCK_POD),
+    connect_get_namespaced_pod_exec=mock.MagicMock(
+        __self__=mock.MagicMock(api_client=mock.MagicMock()),
+        side_effect=lambda **kwargs: mock.MagicMock(
+            is_open=mock.MagicMock(return_value=False),
+            close=mock.MagicMock(),
+        ),
+    ),
+    read_namespaced_service=mock.MagicMock(
+        side_effect=lambda name, namespace: mock.MagicMock(
+            api_version="v1",
+            metadata=mock.MagicMock(
+                name=name,
+                namespace=namespace,
+            ),
+            status=mock.MagicMock(
+                load_balancer=mock.MagicMock(
+                    ingress=[
+                        mock.MagicMock(ip="10.10.10.10:8000", hostname="anonymous")
+                    ]
+                )
+            ),
+        ),
+    ),
+    create_namespaced_persistent_volume_claim=mock.MagicMock(
+        side_effect=lambda namespace, body: mock.MagicMock(
+            api_version="v1",
+            kind="PersistentVolumeClaim",
+            metadata=mock.MagicMock(
+                name=f"vol-{body['metadata']['name']}",
+                namespace=namespace,
+            ),
+            status=mock.MagicMock(phase="Bound"),
+        )
+    ),
+    list_namespaced_pod=mock.MagicMock(
+        side_effect=lambda namespace, **kwargs: mock.MagicMock(items=[MOCK_POD])
+    ),
+    read_namespaced_pod_log=mock.MagicMock(
+        return_value="2021-01-01 00:00:00 ERROR foo\nbar"
+    ),
+)
+MOCK_CORE_V1_API_EXCEPT = mock.MagicMock(
+    read_namespaced_persistent_volume_claim=mock.MagicMock(
+        side_effect=K8_ApiException()
+    ),
+    read_namespaced_pod=mock.MagicMock(return_value=MOCK_POD),
+    connect_get_namespaced_pod_exec=mock.MagicMock(
+        __self__=mock.MagicMock(api_client=mock.MagicMock()),
+        side_effect=lambda **kwargs: mock.MagicMock(
+            is_open=mock.MagicMock(return_value=False),
+            close=mock.MagicMock(),
+        ),
+    ),
+    read_namespaced_service=mock.MagicMock(
+        side_effect=lambda name, namespace: mock.MagicMock(
+            api_version="v1",
+            metadata=mock.MagicMock(
+                name=name,
+                namespace=namespace,
+            ),
+            status=mock.MagicMock(
+                load_balancer=mock.MagicMock(
+                    ingress=[
+                        mock.MagicMock(ip="10.10.10.10:8000", hostname="anonymous")
+                    ]
+                )
+            ),
+        ),
+    ),
+    create_namespaced_pod=mock.MagicMock(
+        side_effect=K8_ApiException(
+            http_resp=mock.MagicMock(status=500, reason="test exception", data='{"message":"test"}', getheaders=mock.MagicMock(return_value=None))
+        )
     ),
     create_namespaced_persistent_volume_claim=mock.MagicMock(
         side_effect=lambda namespace, body: mock.MagicMock(
@@ -631,7 +736,12 @@ MOCK_OPERATOR_LIST = {
     ],
     "total": 2,
 }
-
+MOCK_OPERATOR_LIST_DEPLOYMENTS = {
+    "operators": [
+        MOCK_OPERATOR_2,
+    ],
+    "total": 1,
+}
 MOCK_DEPLOYMENT_RUN_LIST = {
     "runs": [
         {
