@@ -3,7 +3,7 @@
 import os
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text
+from sqlalchemy import Boolean, Column, Integer, JSON, String, Text
 from sqlalchemy.sql import expression
 
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -20,10 +20,12 @@ TASK_DEFAULT_CPU_LIMIT = os.getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
 TASK_DEFAULT_CPU_REQUEST = os.getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
 TASK_DEFAULT_MEMORY_LIMIT = os.getenv("TASK_DEFAULT_MEMORY_LIMIT", "10Gi")
 TASK_DEFAULT_MEMORY_REQUEST = os.getenv("TASK_DEFAULT_MEMORY_REQUEST", "2Gi")
-TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(os.getenv(
-    "TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS",
-    "60",
-))
+TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS = int(
+    os.getenv(
+        "TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS",
+        "60",
+    )
+)
 
 
 class Task(Base):
@@ -44,11 +46,15 @@ class Task(Base):
     deployment_notebook_path = Column(String(255), nullable=True)
     cpu_limit = Column(String(255), nullable=False, default=TASK_DEFAULT_CPU_LIMIT)
     cpu_request = Column(String(255), nullable=False, default=TASK_DEFAULT_CPU_REQUEST)
-    memory_limit = Column(String(255), nullable=False, default=TASK_DEFAULT_MEMORY_LIMIT)
-    memory_request = Column(String(255), nullable=False, default=TASK_DEFAULT_MEMORY_REQUEST)
-    readiness_probe_initial_delay_seconds = Column(Integer,
-                                                   nullable=False,
-                                                   default=TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS)
+    memory_limit = Column(
+        String(255), nullable=False, default=TASK_DEFAULT_MEMORY_LIMIT
+    )
+    memory_request = Column(
+        String(255), nullable=False, default=TASK_DEFAULT_MEMORY_REQUEST
+    )
+    readiness_probe_initial_delay_seconds = Column(
+        Integer, nullable=False, default=TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS
+    )
     is_default = Column(Boolean, nullable=False, server_default=expression.false())
     created_at = Column(TimeStamp(), nullable=False, default=datetime.utcnow)
     updated_at = Column(TimeStamp(), nullable=False, default=datetime.utcnow)

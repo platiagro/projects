@@ -24,7 +24,7 @@ async def handle_list_projects(
     Handles POST requests to /listprojects.
     Parameters
     ----------
-    request : fastapi.Request
+    request_schema : projects.schemas.project.ProjectListRequest
     session : sqlalchemy.orm.session.Session
     kubeflow_userid : fastapi.Header
     Returns
