@@ -103,7 +103,7 @@ class TestProjects(unittest.TestCase):
             result = rv.json()
             expected = {
                 "code": "NotAllowedChar",
-                "message": "Not allowed char in search field",
+                "message": "Not allowed char",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
@@ -147,6 +147,65 @@ class TestProjects(unittest.TestCase):
             "code": "ProjectNameExists",
         }
         self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_project_with_forbidden_characters(self):
+        """
+        Should return http status 400 if name contains any forbidden char.
+        """
+        for char in util.FORBIDDEN_CHARACTERS_LIST:
+            rv = TEST_CLIENT.post(
+                "/projects",
+                json={"name": char},
+            )
+            result = rv.json()
+            expected = {
+                "code": "NotAllowedChar",
+                "message": "Not allowed char",
+            }
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
+
+    def test_create_projects_exceeded_amount_characters(self):
+        """
+        Should return http status 400 when project name has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/projects",
+            json={
+                "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_projects_exceeded_amount_characters_in_description(self):
+        """
+        Should return http status 400 when project name has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/projects",
+            json={
+                "description": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
     def test_create_project_success(self):

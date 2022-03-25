@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """Project schema."""
-import re
 from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, validator
-from projects.exceptions import BadRequest
 
+from projects import validators
 from projects.schemas.deployment import Deployment
 from projects.schemas.experiment import Experiment
 from projects.utils import to_camel_case
 
 FORBIDDEN_CHARACTERS_REGEX = "[!*'():;@&=+$,\/?%#\[\]]"
 MAX_CHARS_ALLOWED = 50
+MAX_CHARS_ALLOWED_DESCRIPTION = 300
 
 
 class ProjectBase(BaseModel):
@@ -25,6 +25,17 @@ class ProjectBase(BaseModel):
 class ProjectCreate(ProjectBase):
     name: str
     description: Optional[str]
+
+    @validator("name")
+    def validate_name(cls, v):
+        validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
+        validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, v)
+        return v
+
+    @validator("description")
+    def validate_description(cls, v):
+        validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DESCRIPTION, v)
+        return v
 
 
 class ProjectUpdate(ProjectBase):
@@ -79,75 +90,10 @@ class ProjectListRequest(BaseModel):
     order: Optional[str]
 
     @validator("filters")
-    def name_has_forbidden_character(cls, v):
-        """
-        Identifies if string has forbidden character based in some regex
-
-        Parameters
-        ----------
-        v: dict
-            dict that has all collumns (keys) and values
-
-        Returns
-        -------
-        dict
-            returns the same dict that was entered
-        """
-        if v.get("name") and re.findall(FORBIDDEN_CHARACTERS_REGEX, v.get("name")):
-            raise BadRequest(
-                code="NotAllowedChar",
-                message="Not allowed char in search field",
-            )
-        return v
-
-    @validator("filters")
-    def name_exceeded_max_amount_chars(cls, v):
-        """
-        Identifies if string has more character than maximum characters allowed
-
-        Parameters
-        ----------
-        v: dict
-            dict that has all collumns (keys) and values
-
-        Returns
-        -------
-        dict
-            returns the same dict that was entered
-        """
-
-        if v.get("name") and len(v.get("name")) > MAX_CHARS_ALLOWED:
-            raise BadRequest(
-                code="ExceededACharAmount",
-                message="Char quantity exceeded maximum allowed",
-            )
-        return v
-
-    # This is necessary to mysql consider special character
-    # maybe this logic won't work on another database
-    # maybe we can refactor this!
-    @validator("filters")
-    def escaped_format(cls, v):
-        """
-        This function will escape string so mysql database be able to read special characters.
-
-        Parameters
-        ----------
-        v: dict
-            dict that has all collumns (keys) and values
-
-        Returns
-        -------
-        dict
-            returns the same dict that was entered, with escaped characters in v['name']
-        """
-        escaped_string = ""
-        # to avoid the trouble of identify every special character we gonna escape all!
+    def validate_name_in_filters(cls, v):
         if v.get("name"):
-            for character in v.get("name"):
-                if character.isalnum():
-                    escaped_string = escaped_string + character
-                else:
-                    escaped_string = escaped_string + "\\" + character
-                v["name"] = escaped_string
+            name = v.get("name")
+            validators.raise_if_exceeded(MAX_CHARS_ALLOWED, name)
+            validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
+            v["name"] = validators.escaped_format(name)
         return v
