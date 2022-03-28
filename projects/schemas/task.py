@@ -3,9 +3,14 @@
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
+from projects import validators
 from projects.utils import to_camel_case
+
+
+FORBIDDEN_CHARACTERS_REGEX = "[!*'():;@&=+$,\/?%#\[\]]"
+MAX_CHARS_ALLOWED = 50
 
 
 class TaskBase(BaseModel):
@@ -119,3 +124,19 @@ class TaskList(BaseModel):
             tasks=[Task.from_orm(model) for model in models],
             total=total,
         )
+
+
+class TaskListRequest(BaseModel):
+    filters: Optional[dict] = {}
+    page: Optional[int] = 1
+    page_size: Optional[int] = 10
+    order: Optional[str]
+
+    @validator("filters")
+    def validate_name_in_filters(cls, v):
+        if v.get("name"):
+            name = v.get("name")
+            validators.raise_if_exceeded(MAX_CHARS_ALLOWED, name)
+            validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
+            v["name"] = validators.escaped_format(name)
+        return v
