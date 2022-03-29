@@ -6,6 +6,10 @@ from urllib.parse import parse_qsl
 from datetime import datetime, timezone
 import sqlalchemy as sa
 
+FORBIDDEN_CHARACTERS_REGEX = "[!*'():;@&=+$,\/?%#\[\]]"
+MAX_CHARS_ALLOWED = 50
+MAX_CHARS_ALLOWED_DESCRIPTION = 300
+
 
 def to_camel_case(snake_str):
     """
