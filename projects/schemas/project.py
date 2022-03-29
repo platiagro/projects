@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, validator
 
-from projects import validators
+from projects import generic_validators
 from projects.schemas.deployment import Deployment
 from projects.schemas.experiment import Experiment
 from projects.utils import to_camel_case
@@ -28,13 +28,13 @@ class ProjectCreate(ProjectBase):
 
     @validator("name")
     def validate_name(cls, v):
-        validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
-        validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, v)
+        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
+        generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, v)
         return v
 
     @validator("description")
     def validate_description(cls, v):
-        validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DESCRIPTION, v)
+        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DESCRIPTION, v)
         return v
 
 
@@ -93,7 +93,7 @@ class ProjectListRequest(BaseModel):
     def validate_name_in_filters(cls, v):
         if v.get("name"):
             name = v.get("name")
-            validators.raise_if_exceeded(MAX_CHARS_ALLOWED, name)
-            validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
-            v["name"] = validators.escaped_format(name)
+            generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, name)
+            generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
+            v["name"] = generic_validators.escaped_format(name)
         return v

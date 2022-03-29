@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
 """Task schema."""
+import validators
+
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, validator
+from pydantic import AnyUrl, BaseModel, validator
 
-from projects import validators
+from projects import generic_validators
 from projects.utils import to_camel_case
+from projects.exceptions import BadRequest
 
 
 FORBIDDEN_CHARACTERS_REGEX = "[!*'():;@&=+$,\/?%#\[\]]"
 MAX_CHARS_ALLOWED = 50
+MAX_CHARS_ALLOWED_DESCRIPTION = 300
+MAX_CHARS_ALLOWED_DATA = 300
+MAX_TAGS_ALLOWED = 5
 
 
 class TaskBase(BaseModel):
@@ -42,7 +48,50 @@ class TaskCreate(TaskBase):
     memory_limit: Optional[str]
     memory_request: Optional[str]
     is_default: Optional[bool]
+    
+    @validator("name")
+    def validate_name(cls, v):
+        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
+        generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, v)
+        return v
 
+    @validator("description")
+    def validate_description(cls, v):
+        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DESCRIPTION, v)
+        return v
+    
+    @validator("tags")
+    def validate_tags(cls, v):
+        if len(v) > MAX_TAGS_ALLOWED:
+            raise BadRequest(
+            code="ExceededTagAmount",
+            message="Tag quantity exceeded maximum allowed",
+            )
+ 
+        for tag in v:
+            generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, tag)
+            generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, tag)
+        
+        return v
+    
+    # @validator("data_in")
+    # def validate_data_in(cls, v):
+    #     validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DATA, v)
+    #     return v   
+
+    # @validator("data_out")
+    # def validate_data_out(cls, v, allow_reuse=True):
+    #     validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DATA, v)
+    #     return v
+    
+    @validator("docs")
+    def validate_data_out(cls, v):
+        if validators.url(v):
+            raise BadRequest(
+            code="NotValidUrl",
+            message="Input is not a valid URL",
+            )
+        return v
 
 class TaskUpdate(TaskBase):
     name: Optional[str]
@@ -87,7 +136,8 @@ class Task(TaskBase):
     updated_at: datetime
     has_notebook: bool
     readiness_probe_initial_delay_seconds: Optional[int]
-
+    
+   
     @classmethod
     def from_orm(cls, model):
         return Task(
@@ -136,7 +186,7 @@ class TaskListRequest(BaseModel):
     def validate_name_in_filters(cls, v):
         if v.get("name"):
             name = v.get("name")
-            validators.raise_if_exceeded(MAX_CHARS_ALLOWED, name)
-            validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
-            v["name"] = validators.escaped_format(name)
+            generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, name)
+            generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
+            v["name"] = generic_validators.escaped_format(name)
         return v
