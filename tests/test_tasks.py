@@ -40,7 +40,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return an empty list.
         """
-        rv = TEST_CLIENT.get(TASK_ROUTE)
+        rv = TEST_CLIENT.post("/tasks/listtasks", json={})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
