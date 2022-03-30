@@ -2,14 +2,16 @@
 import io
 import unittest
 import unittest.mock as mock
+import pytest
 
+from minio.error import S3Error
 from fastapi.testclient import TestClient
 from minio.datatypes import Object
 from urllib3.response import HTTPResponse
 
 from projects.api.main import app
 from projects.database import session_scope
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from projects.object_storage import BUCKET_NAME, MINIO_CLIENT, make_bucket, remove_object, remove_objects
 
 import tests.util as util
 
@@ -232,3 +234,32 @@ class TestResults(unittest.TestCase):
             bucket_name=BUCKET_NAME,
             object_name=f"experiments/{experiment_id}/operators/{operator_id}/{util.MOCK_RUN_ID}/figure-202110281200000000.png",
         )
+
+    @mock.patch.object(MINIO_CLIENT, "make_bucket", side_effect=S3Error(500, "test", "resource", 0, 10, "response"))
+    def test_make_bucket_s3error(self, mock_make_bucket):
+        with pytest.raises(S3Error):
+            make_bucket("name")
+
+    @mock.patch.object(MINIO_CLIENT, "make_bucket")
+    @mock.patch.object(
+        MINIO_CLIENT,
+        "remove_object", return_value=True)
+    def test_remove_object(self, mock_make_bucket, mock_remove_object):
+        self.assertIsNone(remove_object("object_name"), True)
+
+    @mock.patch.object(MINIO_CLIENT, "make_bucket")
+    @mock.patch.object(
+        MINIO_CLIENT,
+        "list_objects",
+        return_value=[
+            Object(
+                BUCKET_NAME,
+                f"experiments/{util.MOCK_UUID_1}/operators/{util.MOCK_UUID_1}/{util.MOCK_RUN_ID}/figure-202110281200000000.png",
+            )
+        ],
+    )
+    @mock.patch.object(
+        MINIO_CLIENT,
+        "remove_object", return_value=True)
+    def test_remove_objects(self, mock_make_bucket, mock_list_objects, mock_remove_objects):
+        self.assertIsNone(remove_objects("object_name"), True)

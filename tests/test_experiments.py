@@ -458,3 +458,47 @@ class TestExperiments(unittest.TestCase):
         expected = {"message": "Experiment deleted"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
+
+    def test_create_experiment_forbidden_character(self):
+        """
+        Should create and return an experiment successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_name = "experiment-3;"
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments",
+            json={
+                "name": experiment_name,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "code": "NotAllowedChar",
+            "message": "Not allowed char"
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_experiment_too_many_char(self):
+        """
+        Should create and return an experiment successfully.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_name = "experimentexperimentexperimentexperimentexperimentexperimentexperiment"
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/experiments",
+            json={
+                "name": experiment_name,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            'code': 'ExceededACharAmount',
+            'message': 'Char quantity exceeded maximum allowed'
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)

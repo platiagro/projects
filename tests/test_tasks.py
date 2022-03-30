@@ -9,12 +9,6 @@ from projects import models
 from projects.controllers import TaskController
 from projects.api.main import app
 from projects.database import session_scope
-from projects.kfp.tasks import (
-    make_task_creation_job,
-    create_init_task_container_op,
-    create_configmap_op,
-    patch_notebook_volume_mounts_op,
-)
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kfp.volume import delete_volume_op
 import tests.util as util
@@ -24,6 +18,8 @@ TEST_CLIENT = TestClient(app)
 
 HOST_URL = "http://ml-pipeline.kubeflow:8888"
 
+TASK_ROUTE = "/tasks"
+EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
 
 class TestTasks(unittest.TestCase):
     maxDiff = None
@@ -44,7 +40,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return an empty list.
         """
-        rv = TEST_CLIENT.post("/tasks/listtasks", json={})
+        rv = TEST_CLIENT.get(TASK_ROUTE)
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -109,34 +105,22 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
-    @mock.patch.object(
-        TaskController,
-        "background_tasks",
-        new_callable=mock.PropertyMock,
-        return_value=util.MOCK_BACKGROUND_TASKS,
-    )
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_empty_request_body_success(
         self,
         mock_background_tasks,
-        # mock_kfp_client,
     ):
         """
         Should create task successfully.
         """
-        rv = TEST_CLIENT.post("/tasks", json={})
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={})
         self.assertEqual(rv.status_code, 200)
-
-        # mock_kfp_client.assert_any_call(host=HOST_URL)
 
     def test_create_task_given_name_already_exists_error(self):
         """
         Should return http status 400 and a message 'a task with given name already exists'.
         """
-        rv = TEST_CLIENT.post("/tasks", json={"name": util.MOCK_TASK_NAME_1})
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={"name": util.MOCK_TASK_NAME_1})
         result = rv.json()
 
         expected = {
@@ -341,7 +325,7 @@ class TestTasks(unittest.TestCase):
             "nbformat_minor": 4,
         }
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "copyFrom": task_id,
                 "experimentNotebook": experiment_notebook,
@@ -362,7 +346,7 @@ class TestTasks(unittest.TestCase):
         """
         task_id = "unk"
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "copyFrom": task_id,
             },
@@ -382,7 +366,7 @@ class TestTasks(unittest.TestCase):
         """
         docker_image = "unk"
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "image": docker_image,
             },
@@ -396,27 +380,18 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
-    @mock.patch.object(
-        TaskController,
-        "background_tasks",
-        new_callable=mock.PropertyMock,
-        return_value=util.MOCK_BACKGROUND_TASKS,
-    )
+
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_without_name_success(
         self,
         mock_background_tasks
-        # mock_kfp_client,
     ):
         """
         Should create and return a task successfully. A task name is auto generated.
         """
         task_category = "DEFAULT"
 
-        rv = TEST_CLIENT.post("/tasks", json={"category": task_category})
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={"category": task_category})
         result = rv.json()
 
         expected = {
@@ -444,54 +419,11 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        # mock_kfp_client.assert_any_call(host=HOST_URL)
 
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
-    # # we will test those function by running them, not need to assert their result
-    # def test_task_creation_component_functions(self, mock_kfp_client):
-
-    #     task = util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_6)
-    #     all_tasks = util.TestingSessionLocal().query(models.Task).all()
-
-    #     source_task = (
-    #         util.TestingSessionLocal().query(models.Task).get(util.MOCK_UUID_1)
-    #     )
-
-    #     make_task_creation_job(
-    #         task=task, all_tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE
-    #     )
-
-    #     # empty task case
-    #     create_init_task_container_op()
-
-    #     # copied task case
-    #     create_init_task_container_op(copy_from=source_task)
-
-    #     # task cnfig map creation
-    #     create_configmap_op(task=task, namespace=KF_PIPELINES_NAMESPACE, content="")
-
-    #     # notebook patching
-    #     patch_notebook_volume_mounts_op(
-    #         tasks=all_tasks, namespace=KF_PIPELINES_NAMESPACE
-    #     )
-
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
-    @mock.patch.object(
-        TaskController,
-        "background_tasks",
-        new_callable=mock.PropertyMock,
-        return_value=util.MOCK_BACKGROUND_TASKS,
-    )
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_with_name_success(
         self,
         mock_background_tasks
-        # mock_kfp_client,
     ):
         """
         Should create and return a task successfully.
@@ -500,7 +432,7 @@ class TestTasks(unittest.TestCase):
         task_category = "DEFAULT"
 
         rv = TEST_CLIENT.post(
-            "/tasks", json={"name": task_name, "category": task_category}
+            TASK_ROUTE, json={"name": task_name, "category": task_category}
         )
         result = rv.json()
 
@@ -529,29 +461,18 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        # mock_kfp_client.assert_any_call(host=HOST_URL)
 
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
-    @mock.patch.object(
-        TaskController,
-        "background_tasks",
-        new_callable=mock.PropertyMock,
-        return_value=util.MOCK_BACKGROUND_TASKS,
-    )
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_copy_from_success(
         self,
         mock_background_tasks
-        # mock_kfp_client,
     ):
         """
         Should create and return a task successfully. A task name is auto generated.
         """
         task_id = util.MOCK_UUID_1
 
-        rv = TEST_CLIENT.post("/tasks", json={"copyFrom": task_id})
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={"copyFrom": task_id})
         result = rv.json()
 
         expected = {
@@ -579,28 +500,17 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        # mock_kfp_client.assert_any_call(host=HOST_URL)
 
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
-    @mock.patch.object(
-        TaskController,
-        "background_tasks",
-        new_callable=mock.PropertyMock,
-        return_value=util.MOCK_BACKGROUND_TASKS,
-    )
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_with_notebook_success(
         self,
         mock_background_tasks
-        # mock_kfp_client,
     ):
         """
         Should create and return a task successfully.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "experimentNotebook": util.MOCK_NOTEBOOK,
                 "deploymentNotebook": util.MOCK_NOTEBOOK,
@@ -632,8 +542,6 @@ class TestTasks(unittest.TestCase):
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
-
-        # mock_kfp_client.assert_any_call(host=HOST_URL)
 
     def test_get_task_not_found(self):
         """
@@ -724,7 +632,23 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    def test_update_task_unk_tags(self):
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_unk_tags(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api
+    ):
         """
         Should return a successfully updated task.
         """
@@ -749,7 +673,7 @@ class TestTasks(unittest.TestCase):
             "description": None,
             "docs": None,
             "hasNotebook": False,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "name": "task-5",
@@ -802,7 +726,7 @@ class TestTasks(unittest.TestCase):
             "description": None,
             "docs": None,
             "hasNotebook": False,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "name": "name foo",
@@ -819,7 +743,23 @@ class TestTasks(unittest.TestCase):
         mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
         mock_config_load.assert_any_call()
 
-    def test_update_task_tags(self):
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_tags(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api
+    ):
         """
         Should return a successfully updated task.
         """
@@ -846,7 +786,7 @@ class TestTasks(unittest.TestCase):
             "dataOut": None,
             "docs": None,
             "hasNotebook": False,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "parameters": [],
@@ -898,7 +838,7 @@ class TestTasks(unittest.TestCase):
             "dataOut": None,
             "docs": None,
             "hasNotebook": True,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "parameters": [],
@@ -949,7 +889,7 @@ class TestTasks(unittest.TestCase):
             "dataOut": None,
             "docs": None,
             "hasNotebook": True,
-            "image": "platiagro/platiagro-experiment-image:0.3.0",
+            "image": EXPERIMENT_IMAGE,
             "memoryLimit": "10Gi",
             "memoryRequest": "2Gi",
             "parameters": [],
@@ -998,20 +938,11 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 403)
 
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT,
-    # )
-    @mock.patch.object(
-        TaskController,
-        "background_tasks",
-        new_callable=mock.PropertyMock,
-        return_value=util.MOCK_BACKGROUND_TASKS,
-    )
+
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_delete_task_success(
         self,
         mock_background_tasks
-        # mock_kfp_client,
     ):
         """
         Should delete task successfully.
@@ -1023,85 +954,3 @@ class TestTasks(unittest.TestCase):
 
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
-
-    # we will test those function by running them, not need to assert their result
-    # def test_deletion_component_functions_from(
-    #     self,
-    # ):
-    #     delete_volume_op(
-    #         name=f"task-{util.MOCK_UUID_4}", namespace=KF_PIPELINES_NAMESPACE
-    #     )
-
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT_EXCEPT_404,
-    # )
-    # def test_kfp_client_not_found(self, mock_kfp_client):
-    #     rv = TEST_CLIENT.post("/tasks", json={})
-    #     self.assertEqual(rv.status_code, 404)
-
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT_EXCEPT_403,
-    # )
-    # def test_kfp_client_forbidden(self, mock_kfp_client):
-    #     rv = TEST_CLIENT.post("/tasks", json={})
-    #     self.assertEqual(rv.status_code, 403)
-
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT_EXCEPT_SERVICE_UNAVAILABLE,
-    # )
-    # def test_kfp_client_service_unavailable_bad_upstream(self, mock_kfp_client):
-    #     rv = TEST_CLIENT.post("/tasks", json={})
-    #     self.assertEqual(rv.status_code, 503)
-    #     self.assertEqual(rv.reason, "Service Unavailable")
-
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT_EXCEPT_MAX_RETRY,
-    # )
-    # def test_kfp_client_service_unavailable_max_retry(self, mock_kfp_client):
-    #     rv = TEST_CLIENT.post("/tasks", json={})
-    #     self.assertEqual(rv.status_code, 503)
-
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT_EXCEPT_404,
-    # )
-    # def test_delete_task_kfp_client_not_found(self, mock_kfp_client):
-    #     task_id = util.MOCK_UUID_4
-
-    #     rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
-    #     self.assertEqual(rv.status_code, 404)
-
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT_EXCEPT_403,
-    # )
-    # def test_delete_task_kfp_client_forbidden(self, mock_kfp_client):
-    #     task_id = util.MOCK_UUID_4
-
-    #     rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
-    #     self.assertEqual(rv.status_code, 403)
-
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT_EXCEPT_SERVICE_UNAVAILABLE,
-    # )
-    # def test_delete_task_kfp_client_service_unavailable_bad_upstream(self, mock_kfp_client):
-    #     task_id = util.MOCK_UUID_4
-
-    #     rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
-    #     self.assertEqual(rv.status_code, 503)
-    #     self.assertEqual(rv.reason, "Service Unavailable")
-
-    # @mock.patch(
-    #     "kfp.Client",
-    #     return_value=util.MOCK_KFP_CLIENT_EXCEPT_MAX_RETRY,
-    # )
-    # def test_delete_task_kfp_client_service_unavailable_max_retry(self, mock_kfp_client):
-    #     task_id = util.MOCK_UUID_4
-
-    #     rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
-    #     self.assertEqual(rv.status_code, 503)
