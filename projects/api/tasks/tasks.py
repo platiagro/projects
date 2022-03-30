@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tasks API Router."""
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 
 import projects.schemas.message
@@ -9,7 +9,6 @@ import projects.schemas.task
 from projects import database
 from projects.controllers import TaskController
 from projects.schemas.mailing import EmailSchema
-from projects.utils import format_query_params
 
 router = APIRouter(
     prefix="/tasks",

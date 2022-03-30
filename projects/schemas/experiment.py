@@ -7,7 +7,7 @@ from pydantic import BaseModel, validator
 
 from projects import generic_validators
 from projects.schemas.operator import Operator
-from projects.utils import to_camel_case, MAX_CHARS_ALLOWED, FORBIDDEN_CHARACTERS_REGEX, MAX_CHARS_ALLOWED_DESCRIPTION
+from projects.utils import to_camel_case, MAX_CHARS_ALLOWED, FORBIDDEN_CHARACTERS_REGEX
 
 
 class ExperimentBase(BaseModel):

@@ -5,7 +5,7 @@ import validators
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from pydantic import AnyUrl, BaseModel, validator
+from pydantic import BaseModel, validator
 
 from projects import generic_validators
 from projects.utils import to_camel_case
