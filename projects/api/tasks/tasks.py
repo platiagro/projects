@@ -17,7 +17,7 @@ router = APIRouter(
 ATTACHMENT_FILE_NAME = "taskfiles.zip"
 
 
-@router.post("/list_tasks", response_model=projects.schemas.task.TaskList)
+@router.post("/list-tasks", response_model=projects.schemas.task.TaskList)
 async def handle_list_tasks(
     request_schema: projects.schemas.task.TaskListRequest,
     session: Session = Depends(database.session_scope),
