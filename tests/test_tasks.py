@@ -44,7 +44,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return an empty list.
         """
-        rv = TEST_CLIENT.get("/tasks")
+        rv = TEST_CLIENT.post("/tasks/listtasks", json={})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -55,7 +55,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks sorted by name descending.
         """
-        rv = TEST_CLIENT.get("/tasks?name=task")
+        rv = TEST_CLIENT.post("/tasks/listtasks", json={"filters": {"name": "task"}})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -66,7 +66,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks sorted by name descending.
         """
-        rv = TEST_CLIENT.get("/tasks?order=name asc")
+        rv = TEST_CLIENT.post("/tasks/listtasks", json={"order": "name asc"})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -77,7 +77,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks sorted by name descending.
         """
-        rv = TEST_CLIENT.get("/tasks?order=name desc")
+        rv = TEST_CLIENT.post("/tasks/listtasks", json={"order": "name desc"})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST_SORTED_BY_NAME_DESC
@@ -88,7 +88,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a http error 400 and a message 'invalid order argument'.
         """
-        rv = TEST_CLIENT.get("/tasks?order=name unk")
+        rv = TEST_CLIENT.post("/tasks/listtasks", json={"order": "name unk"})
         result = rv.json()
 
         expected = {
@@ -102,7 +102,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks with one element.
         """
-        rv = TEST_CLIENT.get("/tasks?page_size=1&page=3")
+        rv = TEST_CLIENT.post("/tasks/listtasks", json={"page": 3, "page_size": 1})
         result = rv.json()
         total = util.TestingSessionLocal().query(models.Task).count()
         expected = {"tasks": [util.MOCK_TASK_3], "total": total}
@@ -313,6 +313,19 @@ class TestTasks(unittest.TestCase):
             "code": "ExceededACharAmount",
             "message": "Char quantity exceeded maximum allowed",
         }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_docs_not_invalid_url(self):
+        """
+        Should return http status 400 when task doc is not a valid url .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={"docs": "notAValidUrl"},
+        )
+        result = rv.json()
+        expected = {"code": "NotValidUrl", "message": "Input is not a valid URL"}
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
