@@ -48,7 +48,7 @@ class TaskCreate(TaskBase):
     memory_limit: Optional[str]
     memory_request: Optional[str]
     is_default: Optional[bool]
-    
+
     @validator("name")
     def validate_name(cls, v):
         generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
@@ -59,39 +59,37 @@ class TaskCreate(TaskBase):
     def validate_description(cls, v):
         generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DESCRIPTION, v)
         return v
-    
+
     @validator("tags")
     def validate_tags(cls, v):
         if len(v) > MAX_TAGS_ALLOWED:
             raise BadRequest(
-            code="ExceededTagAmount",
-            message="Tag quantity exceeded maximum allowed",
+                code="ExceededTagAmount",
+                message="Tag quantity exceeded maximum allowed",
             )
- 
+
         for tag in v:
             generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, tag)
-            generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, tag)
-        
-        return v
-    
-    # @validator("data_in")
-    # def validate_data_in(cls, v):
-    #     validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DATA, v)
-    #     return v   
+            generic_validators.raise_if_forbidden_character(
+                FORBIDDEN_CHARACTERS_REGEX, tag
+            )
 
-    # @validator("data_out")
-    # def validate_data_out(cls, v, allow_reuse=True):
-    #     validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DATA, v)
-    #     return v
-    
+        return v
+
+    @validator("data_in", "data_out", each_item=True)
+    def validate_data_in(cls, v):
+        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DATA, v)
+        return v
+
     @validator("docs")
     def validate_data_out(cls, v):
-        if validators.url(v):
+        if not validators.url(v):
             raise BadRequest(
-            code="NotValidUrl",
-            message="Input is not a valid URL",
+                code="NotValidUrl",
+                message="Input is not a valid URL",
             )
         return v
+
 
 class TaskUpdate(TaskBase):
     name: Optional[str]
@@ -136,8 +134,7 @@ class Task(TaskBase):
     updated_at: datetime
     has_notebook: bool
     readiness_probe_initial_delay_seconds: Optional[int]
-    
-   
+
     @classmethod
     def from_orm(cls, model):
         return Task(
@@ -187,6 +184,8 @@ class TaskListRequest(BaseModel):
         if v.get("name"):
             name = v.get("name")
             generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, name)
-            generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
+            generic_validators.raise_if_forbidden_character(
+                FORBIDDEN_CHARACTERS_REGEX, name
+            )
             v["name"] = generic_validators.escaped_format(name)
         return v

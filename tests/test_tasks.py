@@ -113,7 +113,12 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
-    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    @mock.patch.object(
+        TaskController,
+        "background_tasks",
+        new_callable=mock.PropertyMock,
+        return_value=util.MOCK_BACKGROUND_TASKS,
+    )
     def test_create_task_empty_request_body_success(
         self,
         mock_background_tasks,
@@ -139,6 +144,176 @@ class TestTasks(unittest.TestCase):
             "code": "TaskNameExists",
         }
         self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_with_forbidden_characters(self):
+        """
+        Should return http status 400 if name contains any forbidden char.
+        """
+        for char in util.FORBIDDEN_CHARACTERS_LIST:
+            rv = TEST_CLIENT.post(
+                "/tasks",
+                json={"name": char},
+            )
+            result = rv.json()
+            expected = {
+                "code": "NotAllowedChar",
+                "message": "Not allowed char",
+            }
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters(self):
+        """
+        Should return http status 400 when task name has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_description(self):
+        """
+        Should return http status 400 when task description has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "description": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_dataIn(self):
+        """
+        Should return http status 400 when task data_in has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_dataOut(self):
+        """
+        Should return http status 400 when task data_out has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_tags(self):
+        """
+        Should return http status 400 when task has more tags than maximum allowed.
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks", json={"tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]}
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededTagAmount",
+            "message": "Tag quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_tags_with_forbidden_char(self):
+        """
+        Should return http status 400 when task tag has any forbidden char.
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                    "tag@",
+                ]
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "NotAllowedChar",
+            "message": "Not allowed char",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_tag(self):
+        """
+        Should return http status 400 when task tag has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                    "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc",
+                ]
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task_notebook_or_task_id_error(self):
@@ -212,7 +387,12 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
-    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    @mock.patch.object(
+        TaskController,
+        "background_tasks",
+        new_callable=mock.PropertyMock,
+        return_value=util.MOCK_BACKGROUND_TASKS,
+    )
     def test_create_task_without_name_success(
         self,
         mock_background_tasks
@@ -289,7 +469,12 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
-    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    @mock.patch.object(
+        TaskController,
+        "background_tasks",
+        new_callable=mock.PropertyMock,
+        return_value=util.MOCK_BACKGROUND_TASKS,
+    )
     def test_create_task_with_name_success(
         self,
         mock_background_tasks
@@ -337,7 +522,12 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
-    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    @mock.patch.object(
+        TaskController,
+        "background_tasks",
+        new_callable=mock.PropertyMock,
+        return_value=util.MOCK_BACKGROUND_TASKS,
+    )
     def test_create_task_copy_from_success(
         self,
         mock_background_tasks
@@ -382,7 +572,12 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
-    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    @mock.patch.object(
+        TaskController,
+        "background_tasks",
+        new_callable=mock.PropertyMock,
+        return_value=util.MOCK_BACKGROUND_TASKS,
+    )
     def test_create_task_with_notebook_success(
         self,
         mock_background_tasks
@@ -794,7 +989,12 @@ class TestTasks(unittest.TestCase):
     #     "kfp.Client",
     #     return_value=util.MOCK_KFP_CLIENT,
     # )
-    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    @mock.patch.object(
+        TaskController,
+        "background_tasks",
+        new_callable=mock.PropertyMock,
+        return_value=util.MOCK_BACKGROUND_TASKS,
+    )
     def test_delete_task_success(
         self,
         mock_background_tasks

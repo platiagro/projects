@@ -186,7 +186,7 @@ class TestProjects(unittest.TestCase):
 
     def test_create_projects_exceeded_amount_characters_in_description(self):
         """
-        Should return http status 400 when project name has a exceeded amount of char .
+        Should return http status 400 when project description has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
             "/projects",
