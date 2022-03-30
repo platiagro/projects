@@ -41,7 +41,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return an empty list.
         """
-        rv = TEST_CLIENT.post("/tasks/listtasks", json={})
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -52,7 +52,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks sorted by name descending.
         """
-        rv = TEST_CLIENT.post("/tasks/listtasks", json={"filters": {"name": "task"}})
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"filters": {"name": "task"}})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -65,7 +65,7 @@ class TestTasks(unittest.TestCase):
         """
         for char in util.FORBIDDEN_CHARACTERS_LIST:
             rv = TEST_CLIENT.post(
-                "/tasks/listtasks",
+                "/tasks/list-tasks",
                 json={"filters": {"name": char}},
             )
             result = rv.json()
@@ -81,7 +81,7 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task name has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
-            "/tasks/listtasks",
+            "/tasks/list-tasks",
             json={
                 "filters": {
                     "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
@@ -100,7 +100,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks sorted by name descending.
         """
-        rv = TEST_CLIENT.post("/tasks/listtasks", json={"order": "name asc"})
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name asc"})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -111,7 +111,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks sorted by name descending.
         """
-        rv = TEST_CLIENT.post("/tasks/listtasks", json={"order": "name desc"})
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name desc"})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST_SORTED_BY_NAME_DESC
@@ -122,7 +122,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a http error 400 and a message 'invalid order argument'.
         """
-        rv = TEST_CLIENT.post("/tasks/listtasks", json={"order": "name unk"})
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name unk"})
         result = rv.json()
 
         expected = {
@@ -136,7 +136,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks with one element.
         """
-        rv = TEST_CLIENT.post("/tasks/listtasks", json={"page": 3, "page_size": 1})
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"page": 3, "page_size": 1})
         result = rv.json()
         total = util.TestingSessionLocal().query(models.Task).count()
         expected = {"tasks": [util.MOCK_TASK_3], "total": total}
