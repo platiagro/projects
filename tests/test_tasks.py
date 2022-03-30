@@ -21,6 +21,7 @@ HOST_URL = "http://ml-pipeline.kubeflow:8888"
 TASK_ROUTE = "/tasks"
 EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
 
+
 class TestTasks(unittest.TestCase):
     maxDiff = None
 
@@ -57,6 +58,43 @@ class TestTasks(unittest.TestCase):
         expected = util.MOCK_TASK_LIST
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
+
+    def test_list_tasks_with_forbidden_characters(self):
+        """
+        Should return http status 400 if task name contains any forbidden char
+        """
+        for char in util.FORBIDDEN_CHARACTERS_LIST:
+            rv = TEST_CLIENT.post(
+                "/tasks/listtasks",
+                json={"filters": {"name": char}},
+            )
+            result = rv.json()
+            expected = {
+                "code": "NotAllowedChar",
+                "message": "Not allowed char",
+            }
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
+
+    def test_list_tasks_exceeded_amount_characters(self):
+        """
+        Should return http status 400 when task name has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks/listtasks",
+            json={
+                "filters": {
+                    "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                }
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
 
     def test_list_tasks_order_name_asc(self):
         """
@@ -380,7 +418,6 @@ class TestTasks(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-
     @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_without_name_success(
         self,
@@ -418,7 +455,6 @@ class TestTasks(unittest.TestCase):
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
-
 
     @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_with_name_success(
@@ -461,7 +497,6 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-
     @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_copy_from_success(
         self,
@@ -499,7 +534,6 @@ class TestTasks(unittest.TestCase):
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
-
 
     @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_create_task_with_notebook_success(
@@ -937,7 +971,6 @@ class TestTasks(unittest.TestCase):
         }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 403)
-
 
     @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     def test_delete_task_success(
