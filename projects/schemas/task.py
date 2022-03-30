@@ -77,7 +77,7 @@ class TaskCreate(TaskBase):
         return v
 
     @validator("data_in", "data_out", each_item=True)
-    def validate_data_in(cls, v):
+    def validate_data_in_out(cls, v):
         generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DATA, v)
         return v
 
