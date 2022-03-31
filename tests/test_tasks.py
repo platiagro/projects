@@ -21,6 +21,7 @@ HOST_URL = "http://ml-pipeline.kubeflow:8888"
 TASK_ROUTE = "/tasks"
 EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
 
+
 class TestTasks(unittest.TestCase):
     maxDiff = None
 
@@ -40,7 +41,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return an empty list.
         """
-        rv = TEST_CLIENT.get(TASK_ROUTE)
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -51,18 +52,55 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks sorted by name descending.
         """
-        rv = TEST_CLIENT.get("/tasks?name=task")
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"filters": {"name": "task"}})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
+    def test_list_tasks_with_forbidden_characters(self):
+        """
+        Should return http status 400 if task name contains any forbidden char
+        """
+        for char in util.FORBIDDEN_CHARACTERS_LIST:
+            rv = TEST_CLIENT.post(
+                "/tasks/list-tasks",
+                json={"filters": {"name": char}},
+            )
+            result = rv.json()
+            expected = {
+                "code": "NotAllowedChar",
+                "message": "Not allowed char",
+            }
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
+
+    def test_list_tasks_exceeded_amount_characters(self):
+        """
+        Should return http status 400 when task name has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks/list-tasks",
+            json={
+                "filters": {
+                    "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                }
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
     def test_list_tasks_order_name_asc(self):
         """
         Should return a list of tasks sorted by name descending.
         """
-        rv = TEST_CLIENT.get("/tasks?order=name asc")
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name asc"})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST
@@ -73,7 +111,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks sorted by name descending.
         """
-        rv = TEST_CLIENT.get("/tasks?order=name desc")
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name desc"})
         result = rv.json()
 
         expected = util.MOCK_TASK_LIST_SORTED_BY_NAME_DESC
@@ -84,7 +122,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a http error 400 and a message 'invalid order argument'.
         """
-        rv = TEST_CLIENT.get("/tasks?order=name unk")
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name unk"})
         result = rv.json()
 
         expected = {
@@ -98,7 +136,7 @@ class TestTasks(unittest.TestCase):
         """
         Should return a list of tasks with one element.
         """
-        rv = TEST_CLIENT.get("/tasks?page_size=1&page=3")
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"page": 3, "page_size": 1})
         result = rv.json()
         total = util.TestingSessionLocal().query(models.Task).count()
         expected = {"tasks": [util.MOCK_TASK_3], "total": total}
@@ -128,6 +166,189 @@ class TestTasks(unittest.TestCase):
             "code": "TaskNameExists",
         }
         self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_with_forbidden_characters(self):
+        """
+        Should return http status 400 if name contains any forbidden char.
+        """
+        for char in util.FORBIDDEN_CHARACTERS_LIST:
+            rv = TEST_CLIENT.post(
+                "/tasks",
+                json={"name": char},
+            )
+            result = rv.json()
+            expected = {
+                "code": "NotAllowedChar",
+                "message": "Not allowed char",
+            }
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters(self):
+        """
+        Should return http status 400 when task name has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_description(self):
+        """
+        Should return http status 400 when task description has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "description": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_dataIn(self):
+        """
+        Should return http status 400 when task data_in has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_dataOut(self):
+        """
+        Should return http status 400 when task data_out has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_tags(self):
+        """
+        Should return http status 400 when task has more tags than maximum allowed.
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks", json={"tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]}
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededTagAmount",
+            "message": "Tag quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_tags_with_forbidden_char(self):
+        """
+        Should return http status 400 when task tag has any forbidden char.
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                    "tag@",
+                ]
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "NotAllowedChar",
+            "message": "Not allowed char",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_tag(self):
+        """
+        Should return http status 400 when task tag has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                    "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc",
+                ]
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_docs_not_invalid_url(self):
+        """
+        Should return http status 400 when task doc is not a valid url .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={"docs": "notAValidUrl"},
+        )
+        result = rv.json()
+        expected = {"code": "NotValidUrl", "message": "Input is not a valid URL"}
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task_notebook_or_task_id_error(self):

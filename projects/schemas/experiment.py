@@ -5,9 +5,9 @@ from typing import List, Optional
 
 from pydantic import BaseModel, validator
 
-from projects import validators
+from projects import generic_validators
 from projects.schemas.operator import Operator
-from projects.utils import to_camel_case, MAX_CHARS_ALLOWED, FORBIDDEN_CHARACTERS_REGEX, MAX_CHARS_ALLOWED_DESCRIPTION
+from projects.utils import to_camel_case, MAX_CHARS_ALLOWED, FORBIDDEN_CHARACTERS_REGEX
 
 
 class ExperimentBase(BaseModel):
@@ -23,8 +23,8 @@ class ExperimentCreate(ExperimentBase):
 
     @validator("name")
     def validate_name(cls, v):
-        validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
-        validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, v)
+        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
+        generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, v)
         return v
 
 
