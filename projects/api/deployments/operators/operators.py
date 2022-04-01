@@ -85,7 +85,6 @@ async def handle_patch_operator(
     operator_controller = OperatorController(session)
     operator = operator_controller.update_operator(
         operator_id=operator_id,
-        project_id=project_id,
         deployment_id=deployment_id,
         operator=operator,
     )

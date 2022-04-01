@@ -84,7 +84,7 @@ async def handle_post_operator(
 
     operator_controller = OperatorController(session)
     operator = operator_controller.create_operator(
-        project_id=project_id, experiment_id=experiment_id, operator=operator
+        experiment_id=experiment_id, operator=operator
     )
     return operator
 
@@ -123,7 +123,6 @@ async def handle_patch_operator(
     operator_controller = OperatorController(session)
     operator = operator_controller.update_operator(
         operator_id=operator_id,
-        project_id=project_id,
         experiment_id=experiment_id,
         operator=operator,
     )
@@ -161,7 +160,7 @@ async def handle_delete_operator(
 
     operator_controller = OperatorController(session)
     operator = operator_controller.delete_operator(
-        operator_id=operator_id, project_id=project_id, experiment_id=experiment_id
+        operator_id=operator_id, experiment_id=experiment_id
     )
     return operator
 

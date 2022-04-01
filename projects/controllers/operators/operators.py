@@ -81,7 +81,6 @@ class OperatorController:
     def create_operator(
         self,
         operator: schemas.OperatorCreate,
-        project_id: str,
         experiment_id: Optional[str] = None,
         deployment_id: Optional[str] = None,
     ):
@@ -91,7 +90,6 @@ class OperatorController:
         Parameters
         ----------
         operator: projects.schemas.operator.OperatorCreate
-        project_id : str
         experiment_id : str or None
         deployment_id : str or None
 
@@ -156,7 +154,6 @@ class OperatorController:
     def update_operator(
         self,
         operator: schemas.OperatorUpdate,
-        project_id: str,
         operator_id: str,
         experiment_id: Optional[str] = None,
         deployment_id: Optional[str] = None,
@@ -167,7 +164,6 @@ class OperatorController:
         Parameters
         ----------
         operator: projects.schemas.operator.OperatorUpdate
-        project_id  :str
         experiment_id : str or None
         deployment_id : str or None
         operator_id : str
@@ -223,7 +219,6 @@ class OperatorController:
 
     def delete_operator(
         self,
-        project_id: str,
         operator_id: str,
         experiment_id: Optional[str] = None,
         deployment_id: Optional[str] = None,
@@ -233,7 +228,6 @@ class OperatorController:
 
         Parameters
         ----------
-        project_id : str
         experiment_id : str or None
         deployment_id : str or None
         operator_id : str
@@ -271,7 +265,6 @@ class OperatorController:
                     dependencies=dependencies,
                 )
                 self.update_operator(
-                    project_id=project_id,
                     experiment_id=experiment_id,
                     deployment_id=deployment_id,
                     operator_id=op.uuid,
