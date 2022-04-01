@@ -54,7 +54,6 @@ async def handle_list_metrics(
 
     metric_controller = MetricController(session)
     metrics = metric_controller.list_metrics(
-        project_id=project_id,
         experiment_id=experiment_id,
         operator_id=operator_id,
         run_id=run_id,
