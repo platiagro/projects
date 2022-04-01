@@ -90,7 +90,7 @@ class ComparisonController:
         return schemas.Comparison.from_orm(comparison)
 
     def update_comparison(
-        self, comparison: schemas.ComparisonUpdate, project_id: str, comparison_id: str
+        self, comparison: schemas.ComparisonUpdate, comparison_id: str
     ):
         """
         Updates a comparison in our database.
@@ -98,7 +98,6 @@ class ComparisonController:
         Parameters
         ----------
         comparison: projects.schemas.comparison.ComparisonUpdate
-        project_id : str
         comparison_id : str
 
         Returns
@@ -136,13 +135,12 @@ class ComparisonController:
 
         return schemas.Comparison.from_orm(comparison)
 
-    def delete_comparison(self, project_id: str, comparison_id: str):
+    def delete_comparison(self, comparison_id: str):
         """
         Delete a comparison in our database.
 
         Parameters
         ----------
-        project_id : str
         comparison_id : str
 
         Returns
