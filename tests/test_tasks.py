@@ -9,8 +9,6 @@ from projects import models
 from projects.controllers import TaskController
 from projects.api.main import app
 from projects.database import session_scope
-from projects.kfp import KF_PIPELINES_NAMESPACE
-from projects.kfp.volume import delete_volume_op
 import tests.util as util
 
 app.dependency_overrides[session_scope] = util.override_session_scope

@@ -5,6 +5,7 @@ import pytest
 from projects.kubernetes.kube_config import load_kube_config
 from projects.exceptions import InternalServerError
 
+
 class TestLoadKubeConfig(unittest.TestCase):
     @mock.patch("kubernetes.config.load_kube_config")
     def test_load_kube_config_success(self, mock_load_kube_config):

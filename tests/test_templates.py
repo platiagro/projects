@@ -294,7 +294,7 @@ class TestTemplates(unittest.TestCase):
         """
         Should return a http error 400 and a message 'inform at least one template'.
         """
-        rv = TEST_CLIENT.post(f"/templates/deletetemplates", json=[])
+        rv = TEST_CLIENT.post("/templates/deletetemplates", json=[])
         result = rv.json()
 
         expected = {
@@ -312,7 +312,7 @@ class TestTemplates(unittest.TestCase):
         template_id_2 = util.MOCK_UUID_2
 
         rv = TEST_CLIENT.post(
-            f"/templates/deletetemplates", json=[template_id_1, template_id_2]
+            "/templates/deletetemplates", json=[template_id_1, template_id_2]
         )
         result = rv.json()
 

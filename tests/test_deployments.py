@@ -178,7 +178,7 @@ class TestDeployments(unittest.TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,
@@ -288,7 +288,7 @@ class TestDeployments(unittest.TestCase):
         # mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         # mock_load_config.assert_any_call()
 
-    @mock.patch.object(TaskController, "background_tasks",new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
     @mock.patch(
         "kubernetes.client.CoreV1Api",
         return_value=util.MOCK_CORE_V1_API,

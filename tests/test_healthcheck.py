@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import unittest
-import unittest.mock as mock
 
 from fastapi.testclient import TestClient
 
@@ -30,6 +29,6 @@ class TestHealthCheck(unittest.TestCase):
 
     def test_health_success(self):
         rv = TEST_CLIENT.get(
-            f"/healthcheck"
+            "/healthcheck"
         )
         self.assertEqual(rv.status_code, 200)
