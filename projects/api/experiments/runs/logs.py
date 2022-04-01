@@ -45,6 +45,6 @@ async def handle_list_logs(
 
     log_controller = LogController()
     logs = log_controller.list_logs(
-        project_id=project_id, experiment_id=experiment_id, run_id=run_id
+        experiment_id=experiment_id, run_id=run_id
     )
     return logs
