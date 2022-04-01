@@ -351,7 +351,6 @@ class OperatorController:
                 raise INVALID_DEPENDENCIES
 
         self.raise_if_has_cycles(
-            project_id=project_id,
             experiment_id=experiment_id,
             deployment_id=deployment_id,
             operator_id=operator_id,
