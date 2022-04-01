@@ -173,7 +173,7 @@ class TaskList(BaseModel):
 class TaskListRequest(BaseModel):
     filters: Optional[dict] = {}
     page: Optional[int] = 1
-    page_size: Optional[int] = 10
+    page_size: Optional[int]
     order: Optional[str]
 
     @validator("filters")
