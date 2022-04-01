@@ -18,20 +18,17 @@ class DatasetController:
 
     def get_dataset(
         self,
-        project_id: str,
         experiment_id: str,
         run_id: str,
         operator_id: str,
         page: Optional[int] = 1,
         page_size: Optional[int] = 10,
-        accept: Optional[str] = None,
     ):
         """
         Get dataset records from a run. Supports pagination.
 
         Parameters
         ----------
-        project_id : str
         experiment_id : str
         run_id : str
             The run_id. If `run_id=latest`, then returns datasets from the latest run_id.
@@ -40,8 +37,6 @@ class DatasetController:
             The page number. First page is 1.
         page_size : int
             The page size. Default value is 10.
-        accept : str
-            Whether dataset should be returned as csv file. Default to None.
 
         Returns
         -------
