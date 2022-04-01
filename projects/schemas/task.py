@@ -8,13 +8,10 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, validator
 
 from projects import generic_validators
-from projects.utils import to_camel_case
+from projects.utils import to_camel_case, FORBIDDEN_CHARACTERS_REGEX, MAX_CHARS_ALLOWED, MAX_CHARS_ALLOWED_DESCRIPTION
 from projects.exceptions import BadRequest
 
 
-FORBIDDEN_CHARACTERS_REGEX = "[!*'():;@&=+$,\/?%#\[\]]"
-MAX_CHARS_ALLOWED = 50
-MAX_CHARS_ALLOWED_DESCRIPTION = 300
 MAX_CHARS_ALLOWED_DATA = 300
 MAX_TAGS_ALLOWED = 5
 
