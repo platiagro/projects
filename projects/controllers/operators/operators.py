@@ -54,7 +54,6 @@ class OperatorController:
 
     def list_operators(
         self,
-        project_id: str,
         experiment_id: Optional[str] = None,
         deployment_id: Optional[str] = None,
     ):
@@ -63,7 +62,6 @@ class OperatorController:
 
         Parameters
         ----------
-        project_id : str
         experiment_id : str or None
         deployment_id : str or None
 
@@ -362,7 +360,6 @@ class OperatorController:
 
     def raise_if_has_cycles(
         self,
-        project_id: str,
         operator_id: str,
         dependencies: List[str],
         experiment_id: Optional[str] = None,
@@ -373,7 +370,6 @@ class OperatorController:
 
         Parameters
         ----------
-        project_id : str
         operator_id : str
         dependencies : list or None
         experiment_id : str or None
