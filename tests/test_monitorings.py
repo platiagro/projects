@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import unittest
 import unittest.mock as mock
+import pytest
 
 from fastapi.testclient import TestClient
+from kubernetes.client.rest import ApiException as K8_ApiException
 
 from projects.api.main import app
 from projects.database import session_scope
-
+from projects.kfp.monitorings import create_monitoring_task_config_map, delete_monitoring_task_config_map
 import tests.util as util
 
 app.dependency_overrides[session_scope] = util.override_session_scope
@@ -270,3 +272,33 @@ class TestMonitorings(unittest.TestCase):
         mock_custom_objects_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_load_config.assert_any_call()
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_create_monitoring_task_config_map(self, mock_core_v1_api, mock_load_kube_config):
+        self.assertIsNone(create_monitoring_task_config_map("id", {"data": "data"}))
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_delete_monitoring_task_config_map_success(self, mock_core_v1_api, mock_load_kube_config):
+        self.assertIsNone(delete_monitoring_task_config_map("id"))
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API_NOT_BOUND,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_delete_monitoring_task_config_map_fail(self, mock_core_v1_api, mock_load_kube_config):
+        self.assertIsNone(delete_monitoring_task_config_map("id"))

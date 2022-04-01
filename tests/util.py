@@ -137,6 +137,8 @@ MOCK_POD.spec = mock.MagicMock(
 )
 
 MOCK_CORE_V1_API = mock.MagicMock(
+    create_namespaced_config_map=mock.MagicMock(),
+    delete_namespaced_config_map = mock.MagicMock(),
     read_namespaced_persistent_volume_claim=mock.MagicMock(
         side_effect=lambda name, namespace: mock.MagicMock(
             api_version="v1",
@@ -191,6 +193,8 @@ MOCK_CORE_V1_API = mock.MagicMock(
     ),
 )
 MOCK_CORE_V1_API_NOT_BOUND = mock.MagicMock(
+    create_namespaced_config_map=mock.MagicMock(),
+    delete_namespaced_config_map = mock.MagicMock(side_effect=K8_ApiException()),
     read_namespaced_persistent_volume_claim=mock.MagicMock(
         side_effect=lambda name, namespace: mock.MagicMock(
             api_version="v1",
