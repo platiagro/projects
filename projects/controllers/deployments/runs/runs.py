@@ -13,7 +13,7 @@ from projects.kubernetes.kube_config import load_kube_config
 from projects.kubernetes.seldon import get_seldon_deployment_url
 
 
-NOT_FOUND = NotFound("The specified run does not exist")
+NOT_FOUND = NotFound(code="RunNotFound", message="The specified run does not exist")
 
 
 class RunController:
@@ -34,8 +34,7 @@ class RunController:
         NotFound
         """
         try:
-            kfp_runs.get_run(experiment_id=deployment_id,
-                             run_id=run_id)
+            kfp_runs.get_run(experiment_id=deployment_id, run_id=run_id)
         except (ApiException, ValueError):
             raise NOT_FOUND
 
@@ -73,16 +72,19 @@ class RunController:
         """
         deployment = self.session.query(models.Deployment).get(deployment_id)
         url = get_seldon_deployment_url(deployment_id)
-        self.session.query(models.Deployment) \
-            .filter_by(uuid=deployment_id) \
-            .update({"url": url})
+        self.session.query(models.Deployment).filter_by(uuid=deployment_id).update(
+            {"url": url}
+        )
         self.session.commit()
 
         run = self.get_run(deployment_id)
 
         # Uses empty run if a deployment does not have a run
         if not run:
-            operators = dict((o.uuid, {"taskId": o.task.uuid, "parameters": {}}) for o in deployment.operators)
+            operators = dict(
+                (o.uuid, {"taskId": o.task.uuid, "parameters": {}})
+                for o in deployment.operators
+            )
             run = {
                 "uuid": "",
                 "operators": operators,
@@ -93,13 +95,13 @@ class RunController:
 
         return run
 
-    def deploy_run(self, deployment_id: str):
+    def deploy_run(self, deployment):
         """
         Starts a new run in Kubeflow Pipelines.
 
         Parameters
         ----------
-        deployment_id : str
+        deployment : projects.models.deployment.Deployment
 
         Returns
         -------
@@ -110,23 +112,28 @@ class RunController:
         NotFound
             When any of project_id, or deployment_id does not exist.
         """
-        deployment = self.session.query(models.Deployment).get(deployment_id)
-
         if deployment is None:
-            raise NotFound("The specified deployment does not exist")
+            raise NotFound(
+                code="DeploymentNotFound",
+                message="The specified deployment does not exist",
+            )
 
         # Removes operators that don't have a deployment_notebook (eg. Upload de Dados).
         # Then, fix dependencies in their children.
         operators = self.remove_non_deployable_operators(deployment.operators)
 
         try:
-            run = kfp_runs.start_run(operators=operators,
-                                     project_id=deployment.project_id,
-                                     experiment_id=deployment.experiment_id,
-                                     deployment_id=deployment_id,
-                                     deployment_name=deployment.name)
-        except ValueError as e:
-            raise BadRequest(str(e))
+            run = kfp_runs.start_run(
+                operators=operators,
+                project_id=deployment.project_id,
+                experiment_id=deployment.experiment_id,
+                deployment_id=deployment.uuid
+            )
+        except ValueError:
+            raise BadRequest(
+                code="MissingRequiredOperatorId",
+                message="Necessary at least one operator.",
+            )
 
         # Remove the object from the operator session in order not to update the database,
         # Just need to remove the dependencies for the runs.
@@ -179,7 +186,7 @@ class RunController:
             "machinelearning.seldon.io",
             "v1",
             KF_PIPELINES_NAMESPACE,
-            "seldondeployments"
+            "seldondeployments",
         )
         deployments_objects = custom_objects["items"]
 
@@ -195,7 +202,9 @@ class RunController:
         deployment_run = get_deployment_runs(deployment_id)
 
         if not deployment_run:
-            raise NotFound("Deployment run does not exist.")
+            raise NotFound(
+                code="RunNotFound", message="The specified run does not exist."
+            )
 
         kfp_client().runs.delete_run(deployment_run["runId"])
 
@@ -220,8 +229,12 @@ class RunController:
         If the non-deployable operator is dependent on another operator, it will be
         removed from that operator's dependency list.
         """
-        deployable_operators = [o for o in operators if o.task.deployment_notebook_path is not None]
-        non_deployable_operators = self.get_non_deployable_operators(operators, deployable_operators)
+        deployable_operators = [
+            o for o in operators if o.task.deployment_notebook_path is not None
+        ]
+        non_deployable_operators = self.get_non_deployable_operators(
+            operators, deployable_operators
+        )
 
         for operator in deployable_operators:
             dependencies = set(operator.dependencies)

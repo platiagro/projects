@@ -3,15 +3,15 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
+from projects import generic_validators
 from projects.schemas.deployment import Deployment
 from projects.schemas.experiment import Experiment
-from projects.utils import to_camel_case
+from projects.utils import to_camel_case, MAX_CHARS_ALLOWED, FORBIDDEN_CHARACTERS_REGEX, MAX_CHARS_ALLOWED_DESCRIPTION
 
 
 class ProjectBase(BaseModel):
-
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True
@@ -21,6 +21,17 @@ class ProjectBase(BaseModel):
 class ProjectCreate(ProjectBase):
     name: str
     description: Optional[str]
+
+    @validator("name")
+    def validate_name(cls, v):
+        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
+        generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, v)
+        return v
+
+    @validator("description")
+    def validate_description(cls, v):
+        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DESCRIPTION, v)
+        return v
 
 
 class ProjectUpdate(ProjectBase):
@@ -66,3 +77,19 @@ class ProjectList(BaseModel):
             projects=[Project.from_orm(model) for model in models],
             total=total,
         )
+
+
+class ProjectListRequest(BaseModel):
+    filters: Optional[dict] = {}
+    page: Optional[int] = 1
+    page_size: Optional[int] = 10
+    order: Optional[str]
+
+    @validator("filters")
+    def validate_name_in_filters(cls, v):
+        if v.get("name"):
+            name = v.get("name")
+            generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, name)
+            generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, name)
+            v["name"] = generic_validators.escaped_format(name)
+        return v

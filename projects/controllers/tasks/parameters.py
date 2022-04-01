@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Parameters controller."""
 from projects import models
-from projects.exceptions import NotFound
 
 
 class ParameterController:
@@ -27,7 +26,5 @@ class ParameterController:
             When task_id does not exist.
         """
         task = self.session.query(models.Task).get(task_id)
-        if task is None:
-            raise NotFound("The specified task does not exist")
 
         return task.parameters

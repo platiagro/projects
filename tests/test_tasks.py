@@ -1,578 +1,831 @@
 # -*- coding: utf-8 -*-
-from json import dumps, loads
-from unittest import TestCase
+from json import loads
+import unittest
+import unittest.mock as mock
 
-import requests
 from fastapi.testclient import TestClient
-from minio.error import BucketAlreadyOwnedByYou
 
+from projects import models
+from projects.controllers import TaskController
 from projects.api.main import app
-from projects.controllers.utils import uuid_alpha
-from projects.database import engine
-from projects.jupyter import COOKIES, HEADERS, JUPYTER_ENDPOINT
-from projects.object_storage import BUCKET_NAME, MINIO_CLIENT
+from projects.database import session_scope
+from projects.kfp import KF_PIPELINES_NAMESPACE
+from projects.kfp.volume import delete_volume_op
+import tests.util as util
 
+app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
 
-TASK_ID = str(uuid_alpha())
-NAME = "name foo"
-DESCRIPTION = "long foo"
-IMAGE = "platiagro/platiagro-experiment-image:0.2.0"
-COMMANDS = ["CMD"]
-COMMANDS_JSON = dumps(COMMANDS)
-ARGUMENTS = ["ARG"]
-ARGUMENTS_JSON = dumps(ARGUMENTS)
-CATEGORY = "DEFAULT"
-DATA_IN = ""
-DATA_OUT = ""
-DOCS = ""
-TAGS = ["PREDICTOR"]
-TAGS_JSON = dumps(TAGS)
-EXPERIMENT_NOTEBOOK_PATH = None
-DEPLOYMENT_NOTEBOOK_PATH = None
-IS_DEFAULT = False
-PARAMETERS = [{"default": True, "name": "shuffle", "type": "boolean"}]
-CREATED_AT = "2000-01-01 00:00:00"
-CREATED_AT_ISO = "2000-01-01T00:00:00"
-UPDATED_AT = "2000-01-01 00:00:00"
-UPDATED_AT_ISO = "2000-01-01T00:00:00"
-SAMPLE_NOTEBOOK = '{"cells":[{"cell_type":"code","execution_count":null,"metadata":{"tags":["parameters"]},"outputs":[],"source":["shuffle = True #@param {type: \\"boolean\\"}"]}],"metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.6.9"}},"nbformat":4,"nbformat_minor":4}'
+HOST_URL = "http://ml-pipeline.kubeflow:8888"
 
-TASK_ID_2 = str(uuid_alpha())
-
-PROJECT_ID = str(uuid_alpha())
-
-EXPERIMENT_ID = str(uuid_alpha())
-POSITION = 0
-
-OPERATOR_ID = str(uuid_alpha())
-PARAMETERS = {"coef": 0.1}
-PARAMETERS_JSON = dumps(PARAMETERS)
-POSITION_X = 0
-POSITION_Y = 0
-DEPENDENCIES_OP_ID = [OPERATOR_ID]
-DEPENDENCIES_OP_ID_JSON = dumps(DEPENDENCIES_OP_ID)
-
-EMAILS_TO_SEND = ["fictional.receiver.1661430@protonmail.com"]
-TENANT = "anonymous"
+TASK_ROUTE = "/tasks"
+EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
 
 
-class TestTasks(TestCase):
+class TestTasks(unittest.TestCase):
+    maxDiff = None
 
     def setUp(self):
-        self.maxDiff = None
-        conn = engine.connect()
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
-            f"tags, data_in, data_out, docs, parameters, experiment_notebook_path, "
-            f"deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID, NAME, DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, DATA_IN, DATA_OUT, DOCS, dumps([]),
-                            EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi", "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO tasks (uuid, name, description, image, commands, arguments, category, "
-            f"tags, data_in, data_out, docs, parameters, experiment_notebook_path, "
-            f"deployment_notebook_path, cpu_limit, cpu_request, memory_limit, memory_request, "
-            f"readiness_probe_initial_delay_seconds, is_default, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (TASK_ID_2, 'foo 2', DESCRIPTION, IMAGE, COMMANDS_JSON, ARGUMENTS_JSON, CATEGORY, TAGS_JSON, DATA_IN,
-                            DATA_OUT, DOCS, dumps([]), EXPERIMENT_NOTEBOOK_PATH, DEPLOYMENT_NOTEBOOK_PATH, "100m", "100m", "1Gi",
-                            "1Gi", 300, 0, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO projects (uuid, name, created_at, updated_at, tenant) "
-            f"VALUES (%s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (PROJECT_ID, NAME, CREATED_AT, UPDATED_AT, TENANT,))
-
-        text = (
-            f"INSERT INTO experiments (uuid, name, project_id, position, is_active, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (EXPERIMENT_ID, NAME, PROJECT_ID, POSITION, 1, CREATED_AT, UPDATED_AT,))
-
-        text = (
-            f"INSERT INTO operators (uuid, name, status, status_message, experiment_id, task_id, parameters, position_x, "
-            f"position_y, dependencies, created_at, updated_at) "
-            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        )
-        conn.execute(text, (OPERATOR_ID, None, "Unset", None, EXPERIMENT_ID, TASK_ID, PARAMETERS_JSON, POSITION_X,
-                            POSITION_Y, DEPENDENCIES_OP_ID_JSON, CREATED_AT, UPDATED_AT,))
-        conn.close()
+        """
+        Sets up the test before running it.
+        """
+        util.create_mocks()
 
     def tearDown(self):
-        conn = engine.connect()
-        text = f"DELETE FROM operators WHERE uuid = '{OPERATOR_ID}'"
-        conn.execute(text)
+        """
+        Deconstructs the test after running it.
+        """
+        util.delete_mocks()
 
-        conn = engine.connect()
-        text = f"DELETE FROM experiments WHERE uuid = '{EXPERIMENT_ID}'"
-        conn.execute(text)
-
-        conn = engine.connect()
-        text = f"DELETE FROM projects WHERE uuid = '{PROJECT_ID}'"
-        conn.execute(text)
-
-        conn = engine.connect()
-        text = f"DELETE FROM tasks WHERE uuid in ('{TASK_ID}', '{TASK_ID_2}')"
-        conn.execute(text)
-
-        conn = engine.connect()
-        text = "DELETE FROM tasks WHERE name LIKE '%%test%%'"
-        conn.execute(text)
-
-        conn.close()
-
-    def test_list_tasks(self):
-        rv = TEST_CLIENT.get("/tasks")
+    def test_list_tasks_no_args(self):
+        """
+        Should return an empty list.
+        """
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={})
         result = rv.json()
-        self.assertIsInstance(result["tasks"], list)
-        self.assertIsInstance(result["total"], int)
+
+        expected = util.MOCK_TASK_LIST
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.get("/tasks?order=uuid asc")
+    def test_list_tasks_filter_name(self):
+        """
+        Should return a list of tasks sorted by name descending.
+        """
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"filters": {"name": "task"}})
         result = rv.json()
-        self.assertIsInstance(result["tasks"], list)
-        self.assertIsInstance(result["total"], int)
+
+        expected = util.MOCK_TASK_LIST
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.get("/tasks?order=uuid desc")
-        result = rv.json()
-        self.assertIsInstance(result["tasks"], list)
-        self.assertIsInstance(result["total"], int)
-        self.assertEqual(rv.status_code, 200)
+    def test_list_tasks_with_forbidden_characters(self):
+        """
+        Should return http status 400 if task name contains any forbidden char
+        """
+        for char in util.FORBIDDEN_CHARACTERS_LIST:
+            rv = TEST_CLIENT.post(
+                "/tasks/list-tasks",
+                json={"filters": {"name": char}},
+            )
+            result = rv.json()
+            expected = {
+                "code": "NotAllowedChar",
+                "message": "Not allowed char",
+            }
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.get("/tasks?page=1&order=uuid asc")
-        result = rv.json()
-        self.assertIsInstance(result["tasks"], list)
-        self.assertIsInstance(result["total"], int)
-        self.assertEqual(rv.status_code, 200)
-
-        rv = TEST_CLIENT.get(f"/tasks?name={NAME}&page=1&order=uuid asc")
-        result = rv.json()
-        self.assertIsInstance(result["tasks"], list)
-        self.assertIsInstance(result["total"], int)
-        self.assertEqual(rv.status_code, 200)
-
-        rv = TEST_CLIENT.get(f"/tasks?name={NAME}&page=1&page_size=10&order=name desc")
-        result = rv.json()
-        self.assertIsInstance(result["tasks"], list)
-        self.assertIsInstance(result["total"], int)
-        self.assertEqual(rv.status_code, 200)
-
-        rv = TEST_CLIENT.get(f"/tasks?order=foo")
-        result = rv.json()
-        expected = {"message": "Invalid order argument"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        rv = TEST_CLIENT.get(f"/tasks?order=foo bar")
-        result = rv.json()
-        expected = {"message": "Invalid order argument"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-    def test_create_task(self):
-        # when invalid tag is sent
-        # should raise bad request
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test",
-            "description": "long test",
-            "category": CATEGORY,
-            "tags": ["UNK"],
-            "copyFrom": TASK_ID,
-        })
-        result = rv.json()
-        self.assertEqual(rv.status_code, 200)
-
-        # Passing the name null
-        rv = TEST_CLIENT.post("/tasks", json={
-            "description": "test with name null",
-            "category": CATEGORY
-        })
+    def test_list_tasks_exceeded_amount_characters(self):
+        """
+        Should return http status 400 when task name has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks/list-tasks",
+            json={
+                "filters": {
+                    "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                }
+            },
+        )
         result = rv.json()
         expected = {
-            "name": "Tarefa em branco - 1",
-            "description": "test with name null",
-            "image": IMAGE,
-            "category": CATEGORY,
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_list_tasks_order_name_asc(self):
+        """
+        Should return a list of tasks sorted by name descending.
+        """
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name asc"})
+        result = rv.json()
+
+        expected = util.MOCK_TASK_LIST
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_list_tasks_order_name_desc(self):
+        """
+        Should return a list of tasks sorted by name descending.
+        """
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name desc"})
+        result = rv.json()
+
+        expected = util.MOCK_TASK_LIST_SORTED_BY_NAME_DESC
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_list_tasks_invalid_order_argument(self):
+        """
+        Should return a http error 400 and a message 'invalid order argument'.
+        """
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name unk"})
+        result = rv.json()
+
+        expected = {
+            "message": "Invalid order argument",
+            "code": "InvalidOrderBy",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_list_tasks_page_size_1_page_3(self):
+        """
+        Should return a list of tasks with one element.
+        """
+        rv = TEST_CLIENT.post("/tasks/list-tasks", json={"page": 3, "page_size": 1})
+        result = rv.json()
+        total = util.TestingSessionLocal().query(models.Task).count()
+        expected = {"tasks": [util.MOCK_TASK_3], "total": total}
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    def test_create_task_empty_request_body_success(
+        self,
+        mock_background_tasks,
+    ):
+        """
+        Should create task successfully.
+        """
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={})
+        self.assertEqual(rv.status_code, 200)
+
+    def test_create_task_given_name_already_exists_error(self):
+        """
+        Should return http status 400 and a message 'a task with given name already exists'.
+        """
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={"name": util.MOCK_TASK_NAME_1})
+        result = rv.json()
+
+        expected = {
+            "message": "a task with that name already exists",
+            "code": "TaskNameExists",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_with_forbidden_characters(self):
+        """
+        Should return http status 400 if name contains any forbidden char.
+        """
+        for char in util.FORBIDDEN_CHARACTERS_LIST:
+            rv = TEST_CLIENT.post(
+                "/tasks",
+                json={"name": char},
+            )
+            result = rv.json()
+            expected = {
+                "code": "NotAllowedChar",
+                "message": "Not allowed char",
+            }
+            self.assertEqual(result, expected)
+            self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters(self):
+        """
+        Should return http status 400 when task name has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_description(self):
+        """
+        Should return http status 400 when task description has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "description": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_dataIn(self):
+        """
+        Should return http status 400 when task data_in has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_dataOut(self):
+        """
+        Should return http status 400 when task data_out has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_tags(self):
+        """
+        Should return http status 400 when task has more tags than maximum allowed.
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks", json={"tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]}
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededTagAmount",
+            "message": "Tag quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_tags_with_forbidden_char(self):
+        """
+        Should return http status 400 when task tag has any forbidden char.
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                    "tag@",
+                ]
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "NotAllowedChar",
+            "message": "Not allowed char",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_exceeded_amount_characters_in_tag(self):
+        """
+        Should return http status 400 when task tag has a exceeded amount of char .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                    "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc",
+                ]
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededACharAmount",
+            "message": "Char quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_docs_not_invalid_url(self):
+        """
+        Should return http status 400 when task doc is not a valid url .
+        """
+        rv = TEST_CLIENT.post(
+            "/tasks",
+            json={"docs": "notAValidUrl"},
+        )
+        result = rv.json()
+        expected = {"code": "NotValidUrl", "message": "Input is not a valid URL"}
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_notebook_or_task_id_error(self):
+        """
+        Should return http status 400 and a message 'Either provide notebooks or a task to copy from'.
+        """
+        task_id = util.MOCK_UUID_1
+        experiment_notebook = {
+            "cells": [],
+            "metadata": {},
+            "nbformat": 4,
+            "nbformat_minor": 4,
+        }
+        rv = TEST_CLIENT.post(
+            TASK_ROUTE,
+            json={
+                "copyFrom": task_id,
+                "experimentNotebook": experiment_notebook,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "Either provide notebooks or a task to copy from",
+            "code": "MissingRequiredNotebookOrTaskId",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_invalid_task_id_error(self):
+        """
+        Should return http status 400 and a message 'source task does not exist'.
+        """
+        task_id = "unk"
+        rv = TEST_CLIENT.post(
+            TASK_ROUTE,
+            json={
+                "copyFrom": task_id,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "source task does not exist",
+            "code": "InvalidTaskId",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_create_task_invalid_docker_image_error(self):
+        """
+        Should return http status 400 and a message 'invalid docker image name'.
+        """
+        docker_image = "unk"
+        rv = TEST_CLIENT.post(
+            TASK_ROUTE,
+            json={
+                "image": docker_image,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "invalid docker image name",
+            "code": "InvalidDockerImageName",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    def test_create_task_without_name_success(
+        self,
+        mock_background_tasks
+    ):
+        """
+        Should create and return a task successfully. A task name is auto generated.
+        """
+        task_category = "DEFAULT"
+
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={"category": task_category})
+        result = rv.json()
+
+        expected = {
+            "arguments": None,
+            "category": "DEFAULT",
+            "commands": None,
             "cpuLimit": "2000m",
             "cpuRequest": "100m",
-            "memoryLimit": "10Gi",
-            "memoryRequest": "2Gi",
-            "tags": [
-                "DEFAULT"
-            ],
+            "createdAt": mock.ANY,
             "dataIn": None,
             "dataOut": None,
-            "docs": None,
-        }
-        machine_generated = [
-            "uuid",
-            "hasNotebook",
-            "readinessProbeInitialDelaySeconds",
-            "commands",
-            "arguments",
-            "parameters",
-            "createdAt",
-            "updatedAt",
-        ]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertEqual(rv.status_code, 200)
-        self.assertDictEqual(expected, result)
-
-        rv = TEST_CLIENT.post("/tasks", json={
-            "category": CATEGORY
-        })
-        result = rv.json()
-        self.assertEqual(rv.status_code, 200)
-
-        # task name already exists
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "name foo",
-        })
-        result = rv.json()
-        expected = {"message": "a task with that name already exists"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        # when copyFrom and experimentNotebook/deploymentNotebook are sent
-        # should raise bad request
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test",
-            "description": "long test",
-            "tags": TAGS,
-            "copyFrom": TASK_ID,
-            "experimentNotebook": loads(SAMPLE_NOTEBOOK),
-            "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
-        })
-        result = rv.json()
-        expected = {"message": "Either provide notebooks or a task to copy from"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        # when copyFrom uuid does not exist
-        # should raise bad request
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test copyFrom uuid does not exist ",
-            "description": "long test",
-            "tags": TAGS,
-            "copyFrom": "unk",
-        })
-        result = rv.json()
-        expected = {"message": "source task does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        # when neither copyFrom nor experimentNotebook/deploymentNotebook are sent
-        # should create a task using an empty template notebook
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test create a task using an empty template notebook",
-            "description": "long test",
-            "category": CATEGORY,
-        })
-        result = rv.json()
-        expected = {
-            "name": "test create a task using an empty template notebook",
-            "description": "long test",
-            "category": CATEGORY,
-            "cpuLimit": "2000m",
-            "cpuRequest": "100m",
-            "tags": ["DEFAULT"],
-            "dataIn": None,
-            "dataOut": None,
-            "docs": None,
-            "hasNotebook": True,
-            "image": IMAGE,
-            "memoryLimit": "10Gi",
-            "memoryRequest": "2Gi",
-            "parameters": [],
-            "readinessProbeInitialDelaySeconds": "60",
-        }
-        # uuid, commands, experiment_notebook_path, deployment_notebook_path, created_at, updated_at
-        # are machine-generated we assert they exist, but we don't assert their values
-        machine_generated = [
-            "uuid",
-            "commands",
-            "arguments",
-            "createdAt",
-            "updatedAt",
-        ]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
-
-        # when copyFrom is sent
-        # should create a task copying notebooks from copyFrom
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test copy",
-            "description": "long test",
-            "category": CATEGORY,
-            "tags": TAGS,
-            "copyFrom": TASK_ID,
-        })
-        result = rv.json()
-        expected = {
-            "name": "test copy",
-            "description": "long test",
-            "category": CATEGORY,
-            "cpuLimit": "100m",
-            "cpuRequest": "100m",
-            "tags": TAGS,
-            "dataIn": None,
-            "dataOut": None,
-            "docs": None,
-            "hasNotebook": False,
-            "image": IMAGE,
-            "memoryLimit": "1Gi",
-            "memoryRequest": "1Gi",
-            "parameters": [],
-            "readinessProbeInitialDelaySeconds": "60",
-        }
-        machine_generated = [
-            "uuid",
-            "commands",
-            "arguments",
-            "createdAt",
-            "updatedAt",
-        ]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
-
-        # when experimentNotebook and deploymentNotebook are sent
-        # should create a task using their values as source
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test 02",
-            "description": "long test",
-            "category": CATEGORY,
-            "tags": TAGS,
-            "experimentNotebook": loads(SAMPLE_NOTEBOOK),
-            "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
-        })
-        result = rv.json()
-        expected = {
-            "name": "test 02",
-            "description": "long test",
-            "category": CATEGORY,
-            "cpuLimit": "2000m",
-            "cpuRequest": "100m",
-            "tags": TAGS,
-            "dataIn": None,
-            "dataOut": None,
-            "docs": None,
-            "hasNotebook": True,
-            "image": IMAGE,
-            "memoryLimit": "10Gi",
-            "memoryRequest": "2Gi",
-            "parameters": [],
-            "readinessProbeInitialDelaySeconds": "60",
-        }
-        machine_generated = [
-            "uuid",
-            "commands",
-            "arguments",
-            "createdAt",
-            "updatedAt",
-        ]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
-
-        # when image and commands are sent
-        # should create a task using their values as source
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test tasks with image and command",
-            "description": "long test",
-            "image": IMAGE,
-            "commands": COMMANDS,
-            "arguments": ARGUMENTS,
-            "category": CATEGORY,
-            "tags": TAGS
-        })
-        result = rv.json()
-        expected = {
-            "name": "test tasks with image and command",
-            "description": "long test",
-            "commands": COMMANDS,
-            "cpuLimit": "2000m",
-            "cpuRequest": "100m",
-            "arguments": ARGUMENTS,
-            "category": CATEGORY,
-            "tags": TAGS,
-            "dataIn": None,
-            "dataOut": None,
-            "docs": None,
-            "hasNotebook": False,
-            "image": IMAGE,
-            "memoryLimit": "10Gi",
-            "memoryRequest": "2Gi",
-            "parameters": [],
-            "readinessProbeInitialDelaySeconds": "60",
-        }
-        machine_generated = [
-            "uuid",
-            "createdAt",
-            "updatedAt",
-        ]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
-
-        # when image is invalid should receive bad request
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test invalid image name",
-            "image": "invalid name",
-        })
-        result = rv.json()
-        expected = {"message": "invalid docker image name"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
-
-        # dataset task that has null notebooks
-        rv = TEST_CLIENT.post("/tasks", json={
-            "name": "test fake dataset task",
-            "category": CATEGORY,
-            "tags": ["DATASETS"],
-            "image": IMAGE,
-        })
-        result = rv.json()
-        expected = {
-            "name": "test fake dataset task",
             "description": None,
-            "category": CATEGORY,
-            "cpuLimit": "2000m",
-            "cpuRequest": "100m",
-            "tags": ["DATASETS"],
-            "dataIn": None,
-            "dataOut": None,
             "docs": None,
-            "hasNotebook": False,
-            "image": IMAGE,
-            "memoryLimit": "10Gi",
-            "memoryRequest": "2Gi",
+            "hasNotebook": True,
+            "image": models.task.TASK_DEFAULT_EXPERIMENT_IMAGE,
+            "memoryLimit": models.task.TASK_DEFAULT_MEMORY_LIMIT,
+            "memoryRequest": models.task.TASK_DEFAULT_MEMORY_REQUEST,
+            "name": "Tarefa em branco - 1",
             "parameters": [],
-            "readinessProbeInitialDelaySeconds": "60",
+            "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
+            "tags": ["DEFAULT"],
+            "updatedAt": mock.ANY,
+            "uuid": mock.ANY,
         }
-        machine_generated = [
-            "uuid",
-            "createdAt",
-            "updatedAt",
-            "commands",
-            "arguments",
-        ]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
-    def test_get_task(self):
-        rv = TEST_CLIENT.get("/tasks/foo")
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    def test_create_task_with_name_success(
+        self,
+        mock_background_tasks
+    ):
+        """
+        Should create and return a task successfully.
+        """
+        task_name = "task_with_arbitrary_name"
+        task_category = "DEFAULT"
+
+        rv = TEST_CLIENT.post(
+            TASK_ROUTE, json={"name": task_name, "category": task_category}
+        )
         result = rv.json()
-        expected = {"message": "The specified task does not exist"}
+
+        expected = {
+            "arguments": None,
+            "category": "DEFAULT",
+            "commands": None,
+            "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
+            "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
+            "createdAt": mock.ANY,
+            "dataIn": None,
+            "dataOut": None,
+            "description": None,
+            "docs": None,
+            "hasNotebook": True,
+            "image": models.task.TASK_DEFAULT_EXPERIMENT_IMAGE,
+            "memoryLimit": models.task.TASK_DEFAULT_MEMORY_LIMIT,
+            "memoryRequest": models.task.TASK_DEFAULT_MEMORY_REQUEST,
+            "name": task_name,
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
+            "tags": ["DEFAULT"],
+            "updatedAt": mock.ANY,
+            "uuid": mock.ANY,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    def test_create_task_copy_from_success(
+        self,
+        mock_background_tasks
+    ):
+        """
+        Should create and return a task successfully. A task name is auto generated.
+        """
+        task_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.post(TASK_ROUTE, json={"copyFrom": task_id})
+        result = rv.json()
+
+        expected = {
+            "arguments": None,
+            "category": "DEFAULT",
+            "commands": None,
+            "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
+            "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
+            "createdAt": mock.ANY,
+            "dataIn": None,
+            "dataOut": None,
+            "description": None,
+            "docs": None,
+            "hasNotebook": True,
+            "image": models.task.TASK_DEFAULT_EXPERIMENT_IMAGE,
+            "memoryLimit": models.task.TASK_DEFAULT_MEMORY_LIMIT,
+            "memoryRequest": models.task.TASK_DEFAULT_MEMORY_REQUEST,
+            "name": f"{util.MOCK_TASK_NAME_1} - Cópia - 1",
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
+            "tags": ["DEFAULT"],
+            "updatedAt": mock.ANY,
+            "uuid": mock.ANY,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    def test_create_task_with_notebook_success(
+        self,
+        mock_background_tasks
+    ):
+        """
+        Should create and return a task successfully.
+        """
+        rv = TEST_CLIENT.post(
+            TASK_ROUTE,
+            json={
+                "experimentNotebook": util.MOCK_NOTEBOOK,
+                "deploymentNotebook": util.MOCK_NOTEBOOK,
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "arguments": None,
+            "category": "DEFAULT",
+            "commands": None,
+            "cpuLimit": models.task.TASK_DEFAULT_CPU_LIMIT,
+            "cpuRequest": models.task.TASK_DEFAULT_CPU_REQUEST,
+            "createdAt": mock.ANY,
+            "dataIn": None,
+            "dataOut": None,
+            "description": None,
+            "docs": None,
+            "hasNotebook": True,
+            "image": models.task.TASK_DEFAULT_EXPERIMENT_IMAGE,
+            "memoryLimit": models.task.TASK_DEFAULT_MEMORY_LIMIT,
+            "memoryRequest": models.task.TASK_DEFAULT_MEMORY_REQUEST,
+            "name": "Tarefa em branco - 1",
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": models.task.TASK_DEFAULT_READINESS_INITIAL_DELAY_SECONDS,
+            "tags": ["DEFAULT"],
+            "updatedAt": mock.ANY,
+            "uuid": mock.ANY,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_get_task_not_found(self):
+        """
+        Should return a http error 404 and a message 'specified task does not exist'.
+        """
+        task_id = "foo"
+
+        rv = TEST_CLIENT.get(f"/tasks/{task_id}")
+        result = rv.json()
+
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "TaskNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/tasks/{TASK_ID}")
+    def test_get_task_success(self):
+        """
+        Should return a task successfully.
+        """
+        task_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.get(f"/tasks/{task_id}")
         result = rv.json()
-        expected = {
-            "uuid": TASK_ID,
-            "name": "name foo",
-            "description": DESCRIPTION,
-            "commands": COMMANDS,
-            "cpuLimit": "100m",
-            "cpuRequest": "100m",
-            "arguments": ARGUMENTS,
-            "category": CATEGORY,
-            "tags": TAGS,
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
-            "hasNotebook": False,
-            "image": IMAGE,
-            "memoryLimit": "1Gi",
-            "memoryRequest": "1Gi",
-            "parameters": [],
-            "readinessProbeInitialDelaySeconds": "300",
-            "createdAt": CREATED_AT_ISO,
-            "updatedAt": UPDATED_AT_ISO,
-        }
-        self.assertDictEqual(expected, result)
+
+        expected = util.MOCK_TASK_1
+        self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
 
     def test_update_task(self):
-        # task none
-        rv = TEST_CLIENT.patch("/tasks/foo", json={
-            "name": "foo 2",
-        })
+        """
+        Should return a http error 404 and a message 'The specified task does not exist'.
+        """
+        rv = TEST_CLIENT.patch(
+            "/tasks/foo",
+            json={
+                "name": "foo 2",
+            },
+        )
         result = rv.json()
-        expected = {"message": "The specified task does not exist"}
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "TaskNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        # task name already exists
-        rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-            "name": "foo 2",
-        })
+    def test_update_task_exists(self):
+        """
+        Should return a http error 400 and a message 'The task with that name already exists'.
+        """
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "name": "task-5",
+            },
+        )
         result = rv.json()
-        expected = {"message": "a task with that name already exists"}
+        expected = {
+            "message": "a task with that name already exists",
+            "code": "TaskNameExists",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        # invalid tags
-        rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-            "tags": ["UNK"],
-        })
+    def test_update_task_invalid_category_error(self):
+        """
+        Should return a http error 400 and a message 'Invalid category. Choose any of {valid_str}'.
+        """
+        task_id = util.MOCK_UUID_4
+        category = "unk"
+
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "category": category,
+            },
+        )
         result = rv.json()
+        valid_str = "DEFAULT,DATASETS,DESCRIPTIVE_STATISTICS,FEATURE_ENGINEERING,PREDICTOR,COMPUTER_VISION,NLP,MONITORING"
+        expected = {
+            "message": f"Invalid category. Choose any of {valid_str}",
+            "code": "InvalidCategory",
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_unk_tags(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api
+    ):
+        """
+        Should return a successfully updated task.
+        """
+        task_id = util.MOCK_UUID_5
+
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "tags": ["UNK"],
+            },
+        )
+        result = rv.json()
+        expected = {
+            "arguments": None,
+            "category": "MONITORING",
+            "commands": None,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
+            "createdAt": mock.ANY,
+            "dataIn": None,
+            "dataOut": None,
+            "description": None,
+            "docs": None,
+            "hasNotebook": False,
+            "image": EXPERIMENT_IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
+            "name": "task-5",
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": 60,
+            "tags": ["UNK"],
+            "updatedAt": mock.ANY,
+            "uuid": "uuid-5",
+        }
+        self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        # update task using the same name
-        rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_name(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
+        """
+        Should return a successfully updated task.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "name": "name foo",
+            },
+        )
+        result = rv.json()
+        expected = {
+            "arguments": None,
+            "category": "MONITORING",
+            "commands": None,
+            "cpuLimit": "2000m",
+            "cpuRequest": "100m",
+            "createdAt": mock.ANY,
+            "dataIn": None,
+            "dataOut": None,
+            "description": None,
+            "docs": None,
+            "hasNotebook": False,
+            "image": EXPERIMENT_IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "name": "name foo",
-        })
-        result = rv.json()
+            "parameters": [],
+            "readinessProbeInitialDelaySeconds": 60,
+            "tags": [],
+            "updatedAt": mock.ANY,
+            "uuid": "uuid-5",
+        }
+        self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        # update task name
-        rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-            "name": "new name foo",
-        })
+        mock_core_v1_api.assert_any_call()
+        mock_custom_objects_api.assert_any_call(api_client=mock.ANY)
+        mock_config_load.assert_any_call()
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_tags(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api
+    ):
+        """
+        Should return a successfully updated task.
+        """
+        task_id = util.MOCK_UUID_5
+
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "tags": ["FEATURE_ENGINEERING"],
+            },
+        )
         result = rv.json()
         expected = {
-            "uuid": TASK_ID,
-            "name": "new name foo",
-            "description": DESCRIPTION,
-            "commands": COMMANDS,
-            "cpuLimit": "100m",
+            "uuid": "uuid-5",
+            "name": "task-5",
+            "description": None,
+            "commands": None,
+            "cpuLimit": "2000m",
             "cpuRequest": "100m",
-            "arguments": ARGUMENTS,
-            "category": CATEGORY,
-            "tags": ["UNK"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "arguments": None,
+            "category": "MONITORING",
+            "tags": ["FEATURE_ENGINEERING"],
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "hasNotebook": False,
-            "image": IMAGE,
-            "memoryLimit": "1Gi",
-            "memoryRequest": "1Gi",
+            "image": EXPERIMENT_IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
-            "readinessProbeInitialDelaySeconds": "300",
-            "createdAt": CREATED_AT_ISO,
+            "readinessProbeInitialDelaySeconds": 60,
+            "createdAt": mock.ANY,
         }
         machine_generated = ["updatedAt"]
         for attr in machine_generated:
@@ -581,64 +834,50 @@ class TestTasks(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        # update task tags
-        rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-            "tags": ["FEATURE_ENGINEERING"],
-        })
-        result = rv.json()
-        expected = {
-            "uuid": TASK_ID,
-            "name": "new name foo",
-            "description": DESCRIPTION,
-            "commands": COMMANDS,
-            "cpuLimit": "100m",
-            "cpuRequest": "100m",
-            "arguments": ARGUMENTS,
-            "category": CATEGORY,
-            "tags": ["FEATURE_ENGINEERING"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
-            "hasNotebook": False,
-            "image": IMAGE,
-            "memoryLimit": "1Gi",
-            "memoryRequest": "1Gi",
-            "parameters": [],
-            "readinessProbeInitialDelaySeconds": "300",
-            "createdAt": CREATED_AT_ISO,
-        }
-        machine_generated = ["updatedAt"]
-        for attr in machine_generated:
-            self.assertIn(attr, result)
-            del result[attr]
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_experiment_notebook(
+        self,
+        mock_config_load,
+        mock_core_v1_api,
+    ):
+        """
+        Should return a successfully updated task experiment notebook.
+        """
+        task_id = util.MOCK_UUID_5
 
-        # update task experiment notebook
-        rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-            "experimentNotebook": loads(SAMPLE_NOTEBOOK),
-        })
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "experimentNotebook": loads(util.SAMPLE_NOTEBOOK),
+            },
+        )
         result = rv.json()
         expected = {
-            "uuid": TASK_ID,
-            "name": "new name foo",
-            "description": DESCRIPTION,
-            "commands": COMMANDS,
-            "arguments": ARGUMENTS,
-            "cpuLimit": "100m",
+            "uuid": "uuid-5",
+            "name": "task-5",
+            "description": None,
+            "commands": None,
+            "arguments": None,
+            "cpuLimit": "2000m",
             "cpuRequest": "100m",
-            "category": CATEGORY,
-            "tags": ["FEATURE_ENGINEERING"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "category": "MONITORING",
+            "tags": [],
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "hasNotebook": True,
-            "image": IMAGE,
-            "memoryLimit": "1Gi",
-            "memoryRequest": "1Gi",
+            "image": EXPERIMENT_IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
-            "readinessProbeInitialDelaySeconds": "300",
-            "createdAt": CREATED_AT_ISO,
+            "readinessProbeInitialDelaySeconds": 60,
+            "createdAt": mock.ANY,
         }
         machine_generated = ["updatedAt"]
         for attr in machine_generated:
@@ -647,31 +886,49 @@ class TestTasks(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        # update task deployment notebook
-        rv = TEST_CLIENT.patch(f"/tasks/{TASK_ID}", json={
-            "deploymentNotebook": loads(SAMPLE_NOTEBOOK),
-        })
+        mock_core_v1_api.assert_any_call()
+        mock_config_load.assert_any_call()
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_deployment_notebook(self, mock_config_load, mock_core_v1_api):
+        """
+        Should return a successfully updated task deployment notebook.
+        """
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "deploymentNotebook": loads(util.SAMPLE_NOTEBOOK),
+            },
+        )
         result = rv.json()
         expected = {
-            "uuid": TASK_ID,
-            "name": "new name foo",
-            "description": DESCRIPTION,
-            "commands": COMMANDS,
-            "cpuLimit": "100m",
+            "uuid": "uuid-4",
+            "name": "task-4",
+            "description": None,
+            "commands": None,
+            "cpuLimit": "2000m",
             "cpuRequest": "100m",
-            "arguments": ARGUMENTS,
-            "category": CATEGORY,
-            "tags": ["FEATURE_ENGINEERING"],
-            "dataIn": DATA_IN,
-            "dataOut": DATA_OUT,
-            "docs": DOCS,
+            "arguments": None,
+            "category": "DEFAULT",
+            "tags": [],
+            "dataIn": None,
+            "dataOut": None,
+            "docs": None,
             "hasNotebook": True,
-            "image": IMAGE,
-            "memoryLimit": "1Gi",
-            "memoryRequest": "1Gi",
+            "image": EXPERIMENT_IMAGE,
+            "memoryLimit": "10Gi",
+            "memoryRequest": "2Gi",
             "parameters": [],
-            "readinessProbeInitialDelaySeconds": "300",
-            "createdAt": CREATED_AT_ISO,
+            "readinessProbeInitialDelaySeconds": 60,
+            "createdAt": mock.ANY,
         }
         machine_generated = ["updatedAt"]
         for attr in machine_generated:
@@ -680,51 +937,53 @@ class TestTasks(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-    def test_delete_task(self):
-        # task is none
-        rv = TEST_CLIENT.delete("/tasks/unk")
+        mock_core_v1_api.assert_any_call()
+        mock_config_load.assert_any_call()
+
+    def test_delete_task_not_found(self):
+        """
+        Should return a http error 404 and a message 'The specified task does not exist'.
+        """
+        task_id = "unk"
+
+        rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
         result = rv.json()
-        expected = {"message": "The specified task does not exist"}
+
+        expected = {
+            "message": "The specified task does not exist",
+            "code": "TaskNotFound",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        # task is related to an operator
-        rv = TEST_CLIENT.delete(f"/tasks/{TASK_ID}")
+    def test_delete_task_related_to_operator_error(self):
+        """
+        Should return a http error 403 and a message 'Task related to an operator'.
+        """
+        task_id = util.MOCK_UUID_1
+
+        rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
         result = rv.json()
-        expected = {"message": "Task related to an operator"}
+
+        expected = {
+            "message": "Task related to an operator",
+            "code": "TaskProtectedFromDeletion",
+        }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 403)
 
-        # jupyter file is none
-        rv = TEST_CLIENT.delete(f"/tasks/{TASK_ID_2}")
+    @mock.patch.object(TaskController, "background_tasks", new_callable=mock.PropertyMock, return_value=util.MOCK_BACKGROUND_TASKS)
+    def test_delete_task_success(
+        self,
+        mock_background_tasks
+    ):
+        """
+        Should delete task successfully.
+        """
+        task_id = util.MOCK_UUID_4
+
+        rv = TEST_CLIENT.delete(f"/tasks/{task_id}")
         result = rv.json()
+
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
-
-    def test_send_email(self):
-
-        # valid request
-        rv = TEST_CLIENT.post(f"/tasks/{TASK_ID}/emails", json={
-             "emails": EMAILS_TO_SEND
-         })
-        result = rv.json()
-        expected = {"message": "email has been sent"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
-
-        # string is not an email
-        rv = TEST_CLIENT.post(f"/tasks/{TASK_ID}/emails", json={
-             "emails":["notEmailString",]
-         })
-        result = rv.json()
-        self.assertEqual(rv.status_code, 422)
-
-        # task does not exist
-        rv = TEST_CLIENT.post(f"/tasks/foo/emails", json={
-             "emails": EMAILS_TO_SEND
-         })
-        result = rv.json()
-        expected = {"message": "The specified task does not exist"}
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 404)

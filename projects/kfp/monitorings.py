@@ -33,9 +33,7 @@ def create_monitoring_task_config_map(task_id, experiment_notebook_content):
         "metadata": {
             "name": config_map_name,
         },
-        "data": {
-            "Experiment.ipynb": experiment_notebook_content
-        }
+        "data": {"Experiment.ipynb": experiment_notebook_content},
     }
 
     v1.create_namespaced_config_map(
@@ -60,8 +58,7 @@ def delete_monitoring_task_config_map(task_id):
     v1 = client.CoreV1Api()
     try:
         v1.delete_namespaced_config_map(
-            name=config_map_name,
-            namespace=KF_PIPELINES_NAMESPACE
+            name=config_map_name, namespace=KF_PIPELINES_NAMESPACE
         )
 
         warnings.warn(f"ConfigMap of task {task_id} deleted!")
@@ -69,11 +66,7 @@ def delete_monitoring_task_config_map(task_id):
         warnings.warn(f"ConfigMap of task {task_id} not found, creating a new one.")
 
 
-def deploy_monitoring(deployment_id,
-                      experiment_id,
-                      run_id,
-                      task_id,
-                      monitoring_id):
+def deploy_monitoring(deployment_id, experiment_id, run_id, task_id, monitoring_id):
     """
     Deploy a service and trigger for monitoring.
 
@@ -90,18 +83,21 @@ def deploy_monitoring(deployment_id,
     dict
         The run attributes.
     """
+
     @dsl.pipeline(name="Monitoring")
     def monitoring():
         service_name = f"service-{monitoring_id}"
-        service = MONITORING_SERVICE.substitute({
-            "name": service_name,
-            "namespace": KF_PIPELINES_NAMESPACE,
-            "monitoringId": monitoring_id,
-            "experimentId": experiment_id,
-            "deploymentId": deployment_id,
-            "runId": run_id,
-            "configMap": f"configmap-{task_id}"
-        })
+        service = MONITORING_SERVICE.substitute(
+            {
+                "name": service_name,
+                "namespace": KF_PIPELINES_NAMESPACE,
+                "monitoringId": monitoring_id,
+                "experimentId": experiment_id,
+                "deploymentId": deployment_id,
+                "runId": run_id,
+                "configMap": f"configmap-{task_id}",
+            }
+        )
         service_resource = loads(service)
         monitoring_service = dsl.ResourceOp(
             name=service_name,
@@ -114,12 +110,14 @@ def deploy_monitoring(deployment_id,
         )
 
         trigger_name = f"trigger-{monitoring_id}"
-        trigger = MONITORING_TRIGGER.substitute({
-            "name": trigger_name,
-            "namespace": KF_PIPELINES_NAMESPACE,
-            "deploymentId": deployment_id,
-            "service": service_name,
-        })
+        trigger = MONITORING_TRIGGER.substitute(
+            {
+                "name": trigger_name,
+                "namespace": KF_PIPELINES_NAMESPACE,
+                "deploymentId": deployment_id,
+                "service": service_name,
+            }
+        )
         trigger_resource = loads(trigger)
         dsl.ResourceOp(
             name="monitoring_trigger",
@@ -159,10 +157,10 @@ def undeploy_monitoring(monitoring_id):
         service_name = f"service-{monitoring_id}"
         service_custom_object = api.get_namespaced_custom_object(
             group="serving.knative.dev",
-            version="v1alpha1",
+            version="v1",
             namespace=KF_PIPELINES_NAMESPACE,
             plural="services",
-            name=service_name
+            name=service_name,
         )
         undeploy_pipeline(
             name=service_custom_object["metadata"]["name"],
@@ -174,10 +172,10 @@ def undeploy_monitoring(monitoring_id):
         trigger_name = f"trigger-{monitoring_id}"
         trigger_custom_object = api.get_namespaced_custom_object(
             group="eventing.knative.dev",
-            version="v1alpha1",
+            version="v1",
             namespace=KF_PIPELINES_NAMESPACE,
             plural="triggers",
-            name=trigger_name
+            name=trigger_name,
         )
         undeploy_pipeline(
             name=trigger_custom_object["metadata"]["name"],
@@ -185,4 +183,7 @@ def undeploy_monitoring(monitoring_id):
             namespace=trigger_custom_object["metadata"]["namespace"],
         )
     except ApiException:
-        raise NotFound("Monitoring resources do not exist.")
+        raise NotFound(
+            code="MonitoringNotFound",
+            message="The specified monitoring does not exist.",
+        )

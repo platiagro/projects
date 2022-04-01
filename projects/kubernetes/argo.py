@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Argo Workflows utility functions."""
+
 from kubernetes import client
 
 from projects.kfp import KF_PIPELINES_NAMESPACE
 from projects.kubernetes.kube_config import load_kube_config
+EXCLUDE_CONTAINERS = ["istio-proxy", "wait"]
 
 
 def list_workflows(run_id):
@@ -27,11 +29,11 @@ def list_workflows(run_id):
     custom_api = client.CustomObjectsApi()
 
     workflows = custom_api.list_namespaced_custom_object(
-            group="argoproj.io",
-            version="v1alpha1",
-            namespace=KF_PIPELINES_NAMESPACE,
-            plural="workflows",
-            label_selector=f"pipeline/runid={run_id}",
+        group="argoproj.io",
+        version="v1alpha1",
+        namespace=KF_PIPELINES_NAMESPACE,
+        plural="workflows",
+        label_selector=f"pipeline/runid={run_id}",
     )["items"]
 
     return workflows

@@ -16,8 +16,10 @@ from kubernetes.stream import stream
 
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import InternalServerError
-from projects.kfp.monitorings import (create_monitoring_task_config_map,
-                                      delete_monitoring_task_config_map)
+from projects.kfp.monitorings import (
+    create_monitoring_task_config_map,
+    delete_monitoring_task_config_map,
+)
 from projects.kubernetes.kube_config import load_kube_config
 
 JUPYTER_WORKSPACE = "/home/jovyan/tasks"
@@ -28,21 +30,48 @@ NOTEBOOK_NAMESPACE = "anonymous"
 NOTEBOOK_POD_NAME = "server-0"
 NOTEBOOK_CONTAINER_NAME = "server"
 NOTEBOOK_WAITING_MSG = "Waiting for notebook server to be ready..."
-
 MAX_RETRY = 5
 
 
 class ApiClientForJsonPatch(client.ApiClient):
-    def call_api(self, resource_path, method,
-                 path_params=None, query_params=None, header_params=None,
-                 body=None, post_params=None, files=None,
-                 response_type=None, auth_settings=None, async_req=None,
-                 _return_http_data_only=None, collection_formats=None,
-                 _preload_content=True, _request_timeout=None):
-        header_params["Content-Type"] = self.select_header_content_type(["application/json-patch+json"])
-        return super().call_api(resource_path, method, path_params, query_params, header_params, body,
-                                post_params, files, response_type, auth_settings, async_req, _return_http_data_only,
-                                collection_formats, _preload_content, _request_timeout)
+    def call_api(
+        self,
+        resource_path,
+        method,
+        path_params=None,
+        query_params=None,
+        header_params=None,
+        body=None,
+        post_params=None,
+        files=None,
+        response_type=None,
+        auth_settings=None,
+        async_req=None,
+        _return_http_data_only=None,
+        collection_formats=None,
+        _preload_content=True,
+        _request_timeout=None,
+    ):
+        header_params["Content-Type"] = self.select_header_content_type(
+            ["application/json-patch+json"]
+        )
+        return super().call_api(
+            resource_path,
+            method,
+            path_params,
+            query_params,
+            header_params,
+            body,
+            post_params,
+            files,
+            response_type,
+            auth_settings,
+            async_req,
+            _return_http_data_only,
+            collection_formats,
+            _preload_content,
+            _request_timeout,
+        )
 
 
 def create_persistent_volume_claim(name, mount_path):
@@ -69,9 +98,9 @@ def create_persistent_volume_claim(name, mount_path):
                 ],
                 "resources": {
                     "requests": {
-                        "storage": "10Gi",
+                        "storage": "1Gi",
                     },
-                }
+                },
             },
         }
         v1.create_namespaced_persistent_volume_claim(
@@ -82,7 +111,10 @@ def create_persistent_volume_claim(name, mount_path):
     except ApiException as e:
         body = literal_eval(e.body)
         message = body["message"]
-        raise InternalServerError(f"Error while trying to create persistent volume claim: {message}")
+        raise InternalServerError(
+            code="CannotCreatePersistentVolumeClaim",
+            message=f"Error while trying to create persistent volume claim: {message}",
+        )
 
     try:
         notebook = custom_api.get_namespaced_custom_object(
@@ -95,19 +127,28 @@ def create_persistent_volume_claim(name, mount_path):
         )
 
         # Prevents the creation of duplicate mountPath
-        pod_vols = enumerate(notebook["spec"]["template"]["spec"]["containers"][0]["volumeMounts"])
+        pod_vols = enumerate(
+            notebook["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
+        )
         vol_index = next((i for i, v in pod_vols if v["mountPath"] == mount_path), -1)
         if vol_index > -1:
-            warnings.warn(f"Notebook server already has a task at: {mount_path}. Skipping the mount of volume {name}")
+            warnings.warn(
+                f"Notebook server already has a task at: {mount_path}. Skipping the mount of volume {name}"
+            )
             return
 
     except ApiException as e:
         if e.status == 404:
-            warnings.warn(f"Notebook server does not exist. Skipping the mount of volume {name}")
+            warnings.warn(
+                f"Notebook server does not exist. Skipping the mount of volume {name}"
+            )
             return
         body = literal_eval(e.body)
         message = body["message"]
-        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+        raise InternalServerError(
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
+        )
 
     try:
         body = [
@@ -148,10 +189,13 @@ def create_persistent_volume_claim(name, mount_path):
                     namespace=NOTEBOOK_NAMESPACE,
                     _request_timeout=5,
                 )
+                pod_is_running = pod.status.phase == "Running"
+                containers_are_running = all(
+                    [c.ready for c in pod.status.container_statuses]
+                )
+                volume_is_mounted = True
 
-                if pod.status.phase == "Running" \
-                   and all([c.state.running for c in pod.status.container_statuses]) \
-                   and any([v for v in pod.spec.volumes if v.name == f"{name}"]):
+                if pod_is_running and containers_are_running and volume_is_mounted:
                     warnings.warn(f"Mounted volume {name} in notebook server!")
                     break
             except ApiException:
@@ -163,7 +207,10 @@ def create_persistent_volume_claim(name, mount_path):
     except ApiException as e:
         body = literal_eval(e.body)
         message = body["message"]
-        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+        raise InternalServerError(
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
+        )
 
 
 def update_persistent_volume_claim(name, mount_path):
@@ -190,11 +237,16 @@ def update_persistent_volume_claim(name, mount_path):
         )
     except ApiException as e:
         if e.status == 404:
-            warnings.warn(f"Notebook server does not exist. Skipping update volume mount path {name}")
+            warnings.warn(
+                f"Notebook server does not exist. Skipping update volume mount path {name}"
+            )
             return
         body = literal_eval(e.body)
         message = body["message"]
-        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+        raise InternalServerError(
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
+        )
 
     try:
         pod_vols = enumerate(notebook["spec"]["template"]["spec"]["volumes"])
@@ -229,10 +281,20 @@ def update_persistent_volume_claim(name, mount_path):
                     _request_timeout=5,
                 )
                 pod_volume_mounts = pod.spec.containers[0].volume_mounts
-                if pod.status.phase == "Running" \
-                   and all([c.state.running for c in pod.status.container_statuses]) \
-                   and any([vm for vm in pod_volume_mounts if vm.mount_path == f"{mount_path}"]):
-                    warnings.warn(f"Updated volume mount path {name} in notebook server!")
+                if (
+                    pod.status.phase == "Running"
+                    and all([c.ready for c in pod.status.container_statuses])
+                    and any(
+                        [
+                            vm
+                            for vm in pod_volume_mounts
+                            if vm.mount_path == f"{mount_path}"
+                        ]
+                    )
+                ):
+                    warnings.warn(
+                        f"Updated volume mount path {name} in notebook server!"
+                    )
                     break
             except ApiException:
                 pass
@@ -243,16 +305,18 @@ def update_persistent_volume_claim(name, mount_path):
     except ApiException as e:
         body = literal_eval(e.body)
         message = body["message"]
-        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+        raise InternalServerError(
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
+        )
 
 
-def remove_persistent_volume_claim(name, mount_path):
+def remove_persistent_volume_claim(name):
     """
     Remove a persistent volume claim in the default notebook server.
     Parameters
     ----------
     name : str
-    mount_path : str
     """
     load_kube_config()
     v1 = client.CoreV1Api()
@@ -269,11 +333,16 @@ def remove_persistent_volume_claim(name, mount_path):
         )
     except ApiException as e:
         if e.status == 404:
-            warnings.warn(f"Notebook server does not exist. Skipping removing volume mount path {name}")
+            warnings.warn(
+                f"Notebook server does not exist. Skipping removing volume mount path {name}"
+            )
             return
         body = literal_eval(e.body)
         message = body["message"]
-        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+        raise InternalServerError(
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
+        )
 
     try:
         pod_vols = enumerate(notebook["spec"]["template"]["spec"]["volumes"])
@@ -315,9 +384,11 @@ def remove_persistent_volume_claim(name, mount_path):
                     namespace=NOTEBOOK_NAMESPACE,
                     _request_timeout=5,
                 )
-                if pod.status.phase == "Running" \
-                   and all([c.state.running for c in pod.status.container_statuses]) \
-                   and not [v for v in pod.spec.volumes if v.name == f"{name}"]:
+                if (
+                    pod.status.phase == "Running"
+                    and all([c.ready for c in pod.status.container_statuses])
+                    and not [v for v in pod.spec.volumes if v.name == f"{name}"]
+                ):
                     warnings.warn(f"Removed volume {name} in notebook server!")
                     break
             except ApiException:
@@ -329,14 +400,19 @@ def remove_persistent_volume_claim(name, mount_path):
     except ApiException as e:
         body = literal_eval(e.body)
         message = body["message"]
-        raise InternalServerError(f"Error while trying to patch notebook server: {message}")
+        raise InternalServerError(
+            code="CannotPatchNotebookServer",
+            message=f"Error while trying to patch notebook server: {message}",
+        )
 
 
-def handle_task_creation(task,
-                         task_id,
-                         experiment_notebook_path=None,
-                         deployment_notebook_path=None,
-                         copy_name=None):
+def handle_task_creation(
+    task,
+    task_id,
+    experiment_notebook_path=None,
+    deployment_notebook_path=None,
+    copy_name=None,
+):
     """
     Creates Kubernetes resources and set metadata for notebook objects.
 
@@ -350,8 +426,9 @@ def handle_task_creation(task,
         Name of the template to be copied from. Default to None.
     """
     # mounts a volume for the task in the notebook server
-    create_persistent_volume_claim(name=f"vol-task-{task_id}",
-                                   mount_path=f"{JUPYTER_WORKSPACE}/{task.name}")
+    create_persistent_volume_claim(
+        name=f"vol-task-{task_id}", mount_path=f"{JUPYTER_WORKSPACE}/{task.name}"
+    )
 
     experiment_path = None
     deployment_path = None
@@ -369,6 +446,7 @@ def handle_task_creation(task,
         destination_path = f"{JUPYTER_WORKSPACE}/{task.name}/"
         copy_files_in_pod(source_path, destination_path)
     else:
+        filepaths = list()
 
         if task.experiment_notebook:
             experiment_path = f"{task.name}/Experiment.ipynb"
@@ -377,8 +455,7 @@ def handle_task_creation(task,
                 json.dump(task.experiment_notebook, f)
 
             filepath = f.name
-            copy_file_to_pod(filepath, experiment_path)
-            os.remove(filepath)
+            filepaths.append((filepath, experiment_path))
 
         if task.deployment_notebook:
             deployment_path = f"{task.name}/Deployment.ipynb"
@@ -387,8 +464,11 @@ def handle_task_creation(task,
                 json.dump(task.deployment_notebook, f)
 
             filepath = f.name
-            copy_file_to_pod(filepath, deployment_path)
-            os.remove(filepath)
+            filepaths.append((filepath, deployment_path))
+
+        copy_files_to_pod(filepaths)
+        for path in filepaths:
+            os.remove(path[0])
 
     # create ConfigMap for monitoring tasks
     if MONITORING_TAG in task.tags:
@@ -427,9 +507,7 @@ def handle_task_creation(task,
         )
 
 
-def update_task_config_map(task_name,
-                           task_id,
-                           experiment_notebook_path):
+def update_task_config_map(task_name, task_id, experiment_notebook_path):
     """
     Update ConfigMap for task notebooks.
 
@@ -459,7 +537,7 @@ def get_file_from_pod(filepath):
     str
         File content.
     """
-    notebook_path = f"{JUPYTER_WORKSPACE}/{filepath}/"
+    notebook_path = f"{JUPYTER_WORKSPACE}/{filepath}"
 
     warnings.warn(f"Fetching {notebook_path} from pod...")
     load_kube_config()
@@ -591,7 +669,7 @@ def handle_container_stream(container_stream, buffer=None):
             warnings.warn("Kubernetes API Error: %s" % e.reason)
 
 
-def copy_file_to_pod(filepath, destination_path):
+def copy_files_to_pod(filepaths):
     """
     Copies a local file to a pod in notebook server.
     Based on this example:
@@ -599,41 +677,58 @@ def copy_file_to_pod(filepath, destination_path):
 
     Parameters
     ----------
-    filepath : str
-    destination_path : str
+    filepath : list
     """
-    warnings.warn(f"Copying '{filepath}' to '{destination_path}'...")
     load_kube_config()
     api_instance = client.CoreV1Api()
 
     # The following command extracts the contents of STDIN to /home/jovyan/tasks
-    exec_command = ["tar", "xvf", "-", "-C", "/home/jovyan/tasks"]
-
-    container_stream = stream(
-        api_instance.connect_get_namespaced_pod_exec,
-        name=NOTEBOOK_POD_NAME,
-        namespace=NOTEBOOK_NAMESPACE,
-        command=exec_command,
-        container=NOTEBOOK_CONTAINER_NAME,
-        stderr=True,
-        stdin=True,
-        stdout=True,
-        tty=False,
-        _preload_content=False,
-    )
+    exec_command = ["tar", "xvf", "-", "-C", JUPYTER_WORKSPACE]
+    while True:
+        try:
+            pod = api_instance.read_namespaced_pod(
+                name=NOTEBOOK_POD_NAME,
+                namespace=NOTEBOOK_NAMESPACE,
+                _request_timeout=5,
+            )
+            if not pod.status.container_statuses:
+                continue
+            pod_is_running = pod.status.phase == "Running"
+            containers_are_running = all(
+                [c.ready for c in pod.status.container_statuses]
+            )
+            if pod_is_running and containers_are_running:
+                break
+        except ApiException:
+            pass
+    while True:
+        try:
+            container_stream = stream(
+                api_instance.connect_get_namespaced_pod_exec,
+                name=NOTEBOOK_POD_NAME,
+                namespace=NOTEBOOK_NAMESPACE,
+                command=exec_command,
+                container=NOTEBOOK_CONTAINER_NAME,
+                stderr=True,
+                stdin=True,
+                stdout=True,
+                tty=False,
+                _preload_content=False,
+            )
+            break
+        except ApiException:
+            pass
 
     with TemporaryFile() as tar_buffer:
         # Prepares an uncompressed tarfile that will be written to STDIN
         with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
-            tar.add(filepath, arcname=destination_path)
+            for path in filepaths:
+                tar.add(path[0], arcname=path[1])
 
         # Rewinds to beggining of tarfile
         tar_buffer.seek(0)
 
-        handle_container_stream(container_stream=container_stream,
-                                buffer=tar_buffer)
-
-    warnings.warn(f"Copied '{filepath}' to '{destination_path}'!")
+        handle_container_stream(container_stream=container_stream, buffer=tar_buffer)
 
 
 def copy_files_in_pod(source_path, destination_path):

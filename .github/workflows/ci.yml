@@ -6,348 +6,123 @@ name: Projects - CI
 on:
   push:
     branches:
-    - master
-    - v*-branch
+      - master
+      - v*-branch
+      - develop
 
   pull_request:
     branches:
-    - master
-    - v*-branch
+      - master
+      - develop
+      - v*-branch
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: ["3.7"]
+        python-version: ["3.8"]
 
     steps:
-    - name: Checkout 🛎️
-      uses: actions/checkout@v2
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2
 
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Set output variables
-      id: vars
-      run: |
-        VERSION=$(python -c "import projects; print(projects.__version__)")
-        if [ ${{ github.ref }} = "refs/heads/master" ]; then
-          echo ::set-output name=TAG::${VERSION}-SNAPSHOT
-        elif [[ ${{ github.ref }} =~ ^refs/heads/v.*-branch$ ]]; then
-          echo ::set-output name=TAG::${VERSION}
-        else
-          echo ::set-output name=TAG::${VERSION}-${{ github.sha }}
-        fi
+      - name: Set output variables
+        id: vars
+        run: |
+          VERSION=$(python -c "import projects; print(projects.__version__)")
+          if [ ${{ github.ref }} = "refs/heads/master" ]; then
+            echo ::set-output name=TAG::${VERSION}
+            echo ::set-output name=COMMIT::${{ github.sha }}
+          elif [[ ${{ github.ref }} =~ ^refs/heads/v.*-branch$ ]]; then
+            echo ::set-output name=TAG::${VERSION}
+            echo ::set-output name=COMMIT::${{ github.sha }}
+          elif [ ${{ github.ref }} = "refs/heads/develop" ]; then
+            echo ::set-output name=TAG::DEVELOP
+            echo ::set-output name=COMMIT::${{ github.sha }}
+          else
+            echo ::set-output name=TAG::${VERSION}-${{ github.event.pull_request.head.sha }}
+            echo ::set-output name=COMMIT::${{ github.event.pull_request.head.sha }}
+          fi
 
-        echo ::set-output name=BRANCH::${{ github.ref }}
-        echo ::set-output name=COMMIT::${{ github.sha }}
+          echo ::set-output name=BRANCH::${{ github.ref }}
 
-    - name: Code review tips
-      uses: machine-learning-apps/pr-comment@master
-      if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        path: CODE-REVIEW.md
+      - name: Code review tips
+        uses: machine-learning-apps/pr-comment@master
+        if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          path: CODE-REVIEW.md
 
-    - name: Setup Minikube
-      uses: manusa/actions-setup-minikube@v2.4.2
-      with:
-        minikube version: 'v1.16.0'
-        kubernetes version: 'v1.19.2'
-        start args: --extra-config=apiserver.service-account-signing-key-file=/var/lib/minikube/certs/sa.key --extra-config=apiserver.service-account-issuer=kubernetes/serviceaccount --extra-config=apiserver.service-account-api-audiences=api
-        github token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[testing]
 
-    - name: Install Kustomize / Helm
-      run: |
-        curl -sL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+      - name: Test with pytest
+        env:
+          ENABLE_CORS: 1
+        run: |
+          coverage erase
+          coverage run --branch --source=projects -m pytest
+          coverage xml -i
 
-    - name: Create Persistent Volumes
-      run: |
-        for I in `seq 1 10`; do
-        cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: PersistentVolume
-          metadata:
-            name: pv000${I}
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            capacity:
-              storage: 20Gi
-            hostPath:
-              path: /data/pv000${I}/
-        EOF
-        done
+      - name: SonarCloud Scan
+        if: ${{ always() }}
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-    - name: Create load balancer
-      run: |
-        kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.3/manifests/metallb.yaml
-        MINIKUBE_IP=$(minikube ip)
-        cat <<EOF | kubectl apply -f -
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            namespace: metallb-system
-            name: config
-          data:
-            config: |
-              address-pools:
-              - name: default
-                protocol: layer2
-                addresses:
-                - ${MINIKUBE_IP}-${MINIKUBE_IP}
-        EOF
-        sleep 10
-        kubectl -n metallb-system wait --for=condition=Ready pods --all --timeout=60s
+      - name: Set up QEMU
+        if: ${{ always() }}
+        uses: docker/setup-qemu-action@v1
 
-    - name: Install Istio
-      run: |
-        # Cert-Manager
-        ./kustomize build "github.com/platiagro/manifests/common/cert-manager/cert-manager-kube-system-resources/base/?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/common/cert-manager/cert-manager-crds/base/?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/common/cert-manager/cert-manager/overlays/self-signed/?ref=$BRANCH" | kubectl apply -f -
+      - name: Set up Docker Buildx
+        if: ${{ always() }}
+        uses: docker/setup-buildx-action@v1
 
-        kubectl -n cert-manager wait --for=condition=Ready pods --all --timeout=300s
+      - name: Login to DockerHub
+        if: ${{ always() }}
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-        # Istio
-        ./kustomize build "github.com/platiagro/manifests/common/istio-1-9-0/istio-crds/base/?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/common/istio-1-9-0/istio-namespace/base/?ref=$BRANCH" | kubectl apply -f -
-        ./kustomize build "github.com/platiagro/manifests/common/istio-1-9-0/istio-install/base/?ref=$BRANCH" | kubectl apply -f -
+      - name: Build and push docker image (PROJECTS API) 📦
+        if: ${{ always() }}
+        id: docker_build_api
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: docker.io/platiagro/projects:${{ steps.vars.outputs.TAG }}
+          file: Dockerfile
+          build-args: |
+            COMMIT=${{ steps.vars.outputs.COMMIT }}
+            BRANCH=${{ steps.vars.outputs.BRANCH }}
 
-        kubectl -n istio-system wait --for=condition=Ready pods --all --timeout=300s
+      - name: Image digest
+        if: ${{ always() }}
+        run: echo ${{ steps.docker_build_api.outputs.digest }}
 
-        # Kubeflow namespace
-        ./kustomize build "github.com/platiagro/manifests/common/kubeflow-namespace/base/?ref=$BRANCH" | kubectl apply -f -
-        # Kubeflow Roles
-        ./kustomize build "github.com/platiagro/manifests/common/kubeflow-roles/base/?ref=$BRANCH" | kubectl apply -f -
-        # Kubeflow Istio Resources
-        ./kustomize build "github.com/platiagro/manifests/common/istio-1-9-0/kubeflow-istio-resources/base/?ref=$BRANCH" | kubectl apply -f -
-      env:
-        BRANCH: "v0.2.0-kubeflow-v1.3-branch"
+      - name: Build and push docker image (PERSISTENCE AGENT) 📦
+        if: ${{ always() }}
+        id: docker_build_agent
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: docker.io/platiagro/persistence-agent:${{ steps.vars.outputs.TAG }}
+          file: Dockerfile.persistenceagent
+          build-args: |
+            COMMIT=${{ steps.vars.outputs.COMMIT }}
+            BRANCH=${{ steps.vars.outputs.BRANCH }}
 
-    - name: Install JupyterLab
-      run: |
-        ./kustomize build "github.com/platiagro/manifests/apps/jupyter/notebook-controller/upstream/overlays/kubeflow/?ref=$BRANCH" | kubectl apply -f -
-        sleep 10
-        kubectl -n kubeflow wait --for=condition=Ready pods --all --timeout=120s
-
-        kubectl create namespace anonymous
-        kubectl label namespace anonymous istio-injection=enabled
-
-        cat <<EOF | kubectl apply -f -
-        apiVersion: v1
-        kind: PersistentVolumeClaim
-        metadata:
-          name: vol-tasks
-          namespace: anonymous
-        spec:
-          accessModes:
-          - ReadWriteOnce
-          resources:
-            requests:
-              storage: 10Gi
-        EOF
-
-        cat <<EOF | kubectl apply -f -
-        apiVersion: kubeflow.org/v1
-        kind: Notebook
-        metadata:
-          labels:
-            add-nvidia-visible-devices: "true"
-            app: server
-          name: server
-          namespace: anonymous
-        spec:
-          template:
-            spec:
-              containers:
-              - env:
-                - name: EXPERIMENT_ID
-                  value: notebook
-                - name: OPERATOR_ID
-                  value: notebook
-                image: public.ecr.aws/j1r0q0g6/notebooks/notebook-servers/jupyter:master-ebc0c4f0
-                name: server
-                volumeMounts:
-                - mountPath: /home/jovyan/tasks
-                  name: vol-tasks
-              volumes:
-              - name: vol-tasks
-                persistentVolumeClaim:
-                  claimName: vol-tasks
-        EOF
-
-        sleep 10
-        kubectl -n anonymous wait --for=condition=Ready pods --all --timeout=240s
-      env:
-        BRANCH: "v0.2.0-kubeflow-v1.3-branch"
-
-    - name: Start MySQL
-      id: mysql
-      run: |
-        docker run -d \
-        --name mysql \
-        --env MYSQL_ALLOW_EMPTY_PASSWORD=yes \
-        --env MYSQL_DATABASE=platiagro \
-        --env MYSQL_ROOT_HOST=% \
-        -p 3306:3306 \
-        mysql/mysql-server:8.0.3
-        sleep 60
-        docker logs mysql
-
-    - name: Start MinIO
-      id: minio
-      run: |
-        docker run -d \
-        --name minio \
-        --env MINIO_ACCESS_KEY=minio \
-        --env MINIO_SECRET_KEY=minio123 \
-        -p 9000:9000 \
-        bitnami/minio:latest
-        sleep 60
-        docker logs minio
-
-    - name: Verify MySQL connection from host
-      if: ${{ always() }}
-      run: |
-        echo "${{ toJson(job) }}"
-        sudo apt-get install -y mysql-client
-        mysql --host 127.0.0.1 --port 3306 -uroot -e "SHOW DATABASES"
-
-    - name: Install Seldon Core
-      run: |
-        helm install seldon-core seldon-core-operator \
-          --repo https://storage.googleapis.com/seldon-charts \
-          --set usageMetrics.enabled=false \
-          --namespace kubeflow \
-          --version v1.4.0 \
-          --set istio.enabled=true \
-          --set istio.gateway=kubeflow/kubeflow-gateway
-
-    - name: Install Kubeflow Pipelines
-      id: kfp
-      run: |
-        kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=admin --user=kubelet --group=system:serviceaccounts
-        # Need to do kustomize build (instead of kubectl apply -k) due to this error:
-        # https://github.com/kubernetes-sigs/kustomize/issues/2205
-        ./kustomize build "github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources/?ref=$BRANCH" | kubectl apply -f -
-        kubectl wait crd/applications.app.k8s.io --for condition=established --timeout=60s
-        ./kustomize build "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic/?ref=$BRANCH" | kubectl apply -f -
-        kubectl -n kubeflow wait --for=condition=Ready pods --all --timeout=240s
-        kubectl -n kubeflow patch svc ml-pipeline --patch \
-          '{ "spec": { "type": "NodePort", "ports": [ { "nodePort": 30000, "port": 8888, "protocol": "TCP", "targetPort": 8888 } ] } }'
-        MINIKUBE_IP=$(minikube ip)
-        echo ${MINIKUBE_IP}
-        echo ::set-output name=MINIKUBE_IP::${MINIKUBE_IP}
-      env:
-        BRANCH: "1.2.0"
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --no-cache-dir --upgrade pip
-        pip install --no-cache-dir -r requirements.txt
-        pip install --no-cache-dir .
-        pip install --no-cache-dir --force-reinstall "kubernetes==12.0.1"
-
-    - name: Test with pytest
-      run: |
-        pip install pytest pytest-cov
-        platiagro-init-db
-        coverage erase
-        coverage run --branch --source=projects -m pytest tests/test_api.py tests/test_comparisons.py tests/test_data.py tests/test_database.py tests/test_deployments_runs.py tests/test_deployments.py tests/test_experiments_runs.py tests/test_experiments.py tests/test_logs.py tests/test_monitorings.py tests/test_operators.py tests/test_parameters.py tests/test_results.py tests/test_projects.py tests/test_tasks.py tests/test_templates.py tests/test_watchers.py
-        coverage xml -i
-      env:
-        MINIO_ENDPOINT: localhost:9000
-        MINIO_ACCESS_KEY: minio
-        MINIO_SECRET_KEY: minio123
-        MYSQL_DB_HOST: localhost:3306
-        MYSQL_DB_NAME: platiagro
-        MYSQL_DB_USER: root
-        JUPYTER_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}/notebook/anonymous/server
-        KF_PIPELINES_ENDPOINT: http://${{ steps.kfp.outputs.MINIKUBE_IP }}:30000
-        KF_PIPELINES_NAMESPACE: kubeflow
-        MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
-        MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-        MAIL_SENDER_ADDRESS: ${{ secrets.MAIL_SENDER_ADDRESS }}
-        MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
-
-    - name: Debug workflows
-      if: ${{ always() }}
-      run: |
-        kubectl get pod -A
-        kubectl -n cert-manager describe pod
-        kubectl -n istio-system describe pod
-        kubectl -n kubeflow describe pod
-        kubectl -n kubeflow get pod
-        kubectl -n kubeflow logs -l app=notebook-controller --tail 1000
-        kubectl -n anonymous describe pod
-        kubectl -n anonymous get pod
-        kubectl -n kubeflow get workflows
-
-    - name: Make disk space available for docker build
-      if: ${{ always() }}
-      run: |
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /opt/ghc
-        sudo rm -rf "/usr/local/share/boost"
-        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-
-    - name: SonarCloud Scan
-      if: ${{ always() }}
-      uses: sonarsource/sonarcloud-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-    - name: Set up QEMU
-      if: ${{ always() }}
-      uses: docker/setup-qemu-action@v1
-
-    - name: Set up Docker Buildx
-      if: ${{ always() }}
-      uses: docker/setup-buildx-action@v1
-
-    - name: Login to DockerHub
-      if: ${{ always() }}
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Build and push docker image (PROJECTS API) 📦
-      if: ${{ always() }}
-      id: docker_build_api
-      uses: docker/build-push-action@v2
-      with:
-        push: true
-        tags: docker.io/platiagro/projects:${{ steps.vars.outputs.TAG }}
-        file: Dockerfile
-        build-args: |
-          COMMIT=${{ steps.vars.outputs.COMMIT }}
-          BRANCH=${{ steps.vars.outputs.BRANCH }}
-
-    - name: Image digest
-      if: ${{ always() }}
-      run: echo ${{ steps.docker_build_api.outputs.digest }}
-
-    - name: Build and push docker image (PERSISTENCE AGENT) 📦
-      if: ${{ always() }}
-      id: docker_build_agent
-      uses: docker/build-push-action@v2
-      with:
-        push: true
-        tags: docker.io/platiagro/persistence-agent:${{ steps.vars.outputs.TAG }}
-        file: Dockerfile.persistenceagent
-        build-args: |
-          COMMIT=${{ steps.vars.outputs.COMMIT }}
-          BRANCH=${{ steps.vars.outputs.BRANCH }}
-
-    - name: Image digest
-      if: ${{ always() }}
-      run: echo ${{ steps.docker_build_agent.outputs.digest }}
+      - name: Image digest
+        if: ${{ always() }}
+        run: echo ${{ steps.docker_build_agent.outputs.digest }}

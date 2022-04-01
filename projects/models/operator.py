@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """Operator model."""
-from datetime import datetime
-
-from sqlalchemy import Column, DateTime, Float, ForeignKey, JSON, String, Text
+from sqlalchemy import Column, Float, ForeignKey, JSON, String, Text
 from sqlalchemy.orm import backref, relationship
 
 from projects.database import Base
+from projects.utils import TimeStamp, now
 
 
 class Operator(Base):
@@ -21,6 +20,6 @@ class Operator(Base):
     status_message = Column(String(255), nullable=True)
     position_x = Column("position_x", Float, nullable=True)
     position_y = Column("position_y", Float, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(TimeStamp(), nullable=False, default=now())
+    updated_at = Column(TimeStamp(), nullable=False, default=now())
     task = relationship("Task", backref=backref("operator", uselist=False))

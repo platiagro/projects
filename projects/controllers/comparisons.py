@@ -6,8 +6,12 @@ from projects import models, schemas
 from projects.controllers.experiments import ExperimentController
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, NotFound
+from projects.utils import now
 
-NOT_FOUND = NotFound("The specified comparison does not exist")
+
+NOT_FOUND = NotFound(
+    code="ComparisonNotFound", message="The specified comparison does not exist"
+)
 
 
 class ComparisonController:
@@ -27,9 +31,12 @@ class ComparisonController:
         ------
         NotFound
         """
-        exists = self.session.query(models.Comparison.uuid) \
-            .filter_by(uuid=comparison_id) \
-            .scalar() is not None
+        exists = (
+            self.session.query(models.Comparison.uuid)
+            .filter_by(uuid=comparison_id)
+            .scalar()
+            is not None
+        )
 
         if not exists:
             raise NOT_FOUND
@@ -51,10 +58,12 @@ class ComparisonController:
         NotFound
             When project_id does not exist.
         """
-        comparisons = self.session.query(models.Comparison) \
-            .filter_by(project_id=project_id) \
-            .order_by(models.Comparison.created_at.asc()) \
+        comparisons = (
+            self.session.query(models.Comparison)
+            .filter_by(project_id=project_id)
+            .order_by(models.Comparison.created_at.asc())
             .all()
+        )
 
         return schemas.ComparisonList.from_orm(comparisons, len(comparisons))
 
@@ -70,21 +79,25 @@ class ComparisonController:
         -------
         projects.schemas.comparison.Comparison
         """
-        comparison = models.Comparison(uuid=uuid_alpha(), project_id=project_id)
+        comparison = models.Comparison(uuid=uuid_alpha(),
+                                       project_id=project_id,
+                                       created_at=now(),
+                                       updated_at=now())
         self.session.add(comparison)
         self.session.commit()
         self.session.refresh(comparison)
 
         return schemas.Comparison.from_orm(comparison)
 
-    def update_comparison(self, comparison: schemas.ComparisonUpdate, project_id: str, comparison_id: str):
+    def update_comparison(
+        self, comparison: schemas.ComparisonUpdate, comparison_id: str
+    ):
         """
         Updates a comparison in our database.
 
         Parameters
         ----------
         comparison: projects.schemas.comparison.ComparisonUpdate
-        project_id : str
         comparison_id : str
 
         Returns
@@ -101,27 +114,33 @@ class ComparisonController:
         self.raise_if_comparison_does_not_exist(comparison_id)
 
         if comparison.experiment_id:
-            stored_experiment = self.session.query(models.Experiment).get(comparison.experiment_id)
+            stored_experiment = self.session.query(models.Experiment).get(
+                comparison.experiment_id
+            )
             if stored_experiment is None:
-                raise BadRequest("The specified experiment does not exist")
+                raise BadRequest(
+                    code="InvalidExperimentId",
+                    message="source experiment does not exist",
+                )
 
         update_data = comparison.dict(exclude_unset=True)
         update_data.update({"updated_at": datetime.utcnow()})
 
-        self.session.query(models.Comparison).filter_by(uuid=comparison_id).update(update_data)
+        self.session.query(models.Comparison).filter_by(uuid=comparison_id).update(
+            update_data
+        )
         self.session.commit()
 
         comparison = self.session.query(models.Comparison).get(comparison_id)
 
         return schemas.Comparison.from_orm(comparison)
 
-    def delete_comparison(self, project_id: str, comparison_id: str):
+    def delete_comparison(self, comparison_id: str):
         """
         Delete a comparison in our database.
 
         Parameters
         ----------
-        project_id : str
         comparison_id : str
 
         Returns

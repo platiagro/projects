@@ -6,9 +6,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Header
 from sqlalchemy.orm import Session
 
 import projects.schemas.monitoring
-from projects.controllers import DeploymentController, MonitoringController, \
-    ProjectController
-from projects.database import session_scope
+from projects import database
+from projects.controllers import (
+    DeploymentController,
+    MonitoringController,
+    ProjectController,
+)
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/monitorings",
@@ -16,10 +19,12 @@ router = APIRouter(
 
 
 @router.get("", response_model=projects.schemas.monitoring.MonitoringList)
-async def handle_list_monitorings(project_id: str,
-                                  deployment_id: str,
-                                  session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_list_monitorings(
+    project_id: str,
+    deployment_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles GET requests to /.
 
@@ -46,12 +51,14 @@ async def handle_list_monitorings(project_id: str,
 
 
 @router.post("", response_model=projects.schemas.monitoring.Monitoring)
-async def handle_post_monitorings(project_id: str,
-                                  deployment_id: str,
-                                  monitoring: projects.schemas.monitoring.MonitoringCreate,
-                                  background_tasks: BackgroundTasks,
-                                  session: Session = Depends(session_scope),
-                                  kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_post_monitorings(
+    project_id: str,
+    deployment_id: str,
+    monitoring: projects.schemas.monitoring.MonitoringCreate,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles POST requests to /.
 
@@ -75,17 +82,20 @@ async def handle_post_monitorings(project_id: str,
     deployment_controller.raise_if_deployment_does_not_exist(deployment_id)
 
     monitoring_controller = MonitoringController(session, background_tasks)
-    monitoring = monitoring_controller.create_monitoring(deployment_id=deployment_id,
-                                                         monitoring=monitoring)
+    monitoring = monitoring_controller.create_monitoring(
+        deployment_id=deployment_id, monitoring=monitoring
+    )
     return monitoring
 
 
 @router.delete("/{monitoring_id}")
-async def handle_delete_monitorings(project_id: str,
-                                    deployment_id: str,
-                                    monitoring_id: str,
-                                    session: Session = Depends(session_scope),
-                                    kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_delete_monitorings(
+    project_id: str,
+    deployment_id: str,
+    monitoring_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles DELETE requests to /<monitoring_id>.
 

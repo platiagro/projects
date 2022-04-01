@@ -1,4 +1,4 @@
-FROM python:3.7-buster
+FROM python:3.8-buster
 
 LABEL maintainer="fabiol@cpqd.com.br"
 
@@ -17,8 +17,7 @@ RUN pip install -r /app/requirements.txt
 COPY ./projects /app/projects
 COPY ./setup.py /app/setup.py
 
-RUN pip install /app/ && \
-    pip install --force-reinstall "kubernetes==12.0.1"
+RUN pip install /app/
 
 WORKDIR /app/
 

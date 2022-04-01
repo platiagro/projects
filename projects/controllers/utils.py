@@ -3,7 +3,6 @@
 import base64
 import csv
 import random
-import re
 import uuid
 
 import filetype
@@ -25,27 +24,6 @@ def uuid_alpha():
     return uuid_
 
 
-def text_to_list(order):
-    """
-    Turn text into list.
-
-    Parameters
-    ----------
-    order : str
-        Column name and order.
-
-    Returns
-    -------
-    list
-    """
-    order_by = []
-    regex = re.compile(r"\[(.*?)\]|(\S+)")
-    matches = regex.finditer(order)
-    for match in matches:
-        order_by.append(match.group(2)) if match.group(1) is None else order_by.append(match.group(1))
-    return order_by
-
-
 def parse_dataframe_to_seldon_request(dataframe):
     """
     Parse a pandas dataframe to seldon request.
@@ -59,14 +37,13 @@ def parse_dataframe_to_seldon_request(dataframe):
     dict
         In seldon request format.
     """
-    dataframe = dataframe.to_dict('split')
-
+    dataframe = dataframe.to_dict("split")
     return {
-                "data": {
-                    "names": dataframe['columns'],
-                    "ndarray": dataframe['data'],
-                }
-            }
+        "data": {
+            "names": dataframe["columns"],
+            "ndarray": dataframe["data"],
+        }
+    }
 
 
 def parse_file_buffer_to_seldon_request(file):
@@ -84,7 +61,7 @@ def parse_file_buffer_to_seldon_request(file):
         Seldon API request
     """
     try:
-        df = pandas.read_csv(file, sep=None, engine='python')
+        df = pandas.read_csv(file, sep=None, engine="python")
 
         return parse_dataframe_to_seldon_request(df)
 
@@ -107,6 +84,4 @@ def parse_file_buffer_to_seldon_request(file):
 
     except csv.Error:
         file.seek(0)
-        return {
-            "strData": file.read().decode("utf-8")
-        }
+        return {"strData": file.read().decode("utf-8")}

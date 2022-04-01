@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """Template model."""
-from datetime import datetime
-
-from sqlalchemy import Column, DateTime, JSON, String, Text
+from sqlalchemy import Column, JSON, String, Text
 
 from projects.database import Base
+from projects.utils import TimeStamp, now
 
 
 class Template(Base):
@@ -14,6 +13,6 @@ class Template(Base):
     tasks = Column(JSON, nullable=False, default=[])
     experiment_id = Column(String(255), nullable=True)
     deployment_id = Column(String(255), nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(TimeStamp(), nullable=False, default=now())
+    updated_at = Column(TimeStamp(), nullable=False, default=now())
     tenant = Column(String(255), nullable=True)

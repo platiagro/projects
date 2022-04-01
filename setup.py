@@ -20,6 +20,8 @@ extras = {
         "pytest-xdist==1.31.0",
         "pytest-cov==2.8.1",
         "flake8==3.7.9",
+        "black==21.8b0",
+        "typing-extensions==3.10.0.2",
     ]
 }
 
@@ -33,24 +35,18 @@ setup(
     url="https://github.com/platiagro/projects",
     packages=find_packages(),
     package_data={
-        "projects": ["config/*.ipynb", "config/*.html" ],
+        "projects": ["config/*.ipynb", "config/*.html"],
     },
     install_requires=requirements,
     extras_require=extras,
-    python_requires=">=3.7.0",
+    python_requires=">=3.8.0",
     classifiers=[
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
-    entry_points={
-        "console_scripts": [
-            "platiagro-init-db = projects.database:init_db",
-        ]
-    },
 )

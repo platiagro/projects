@@ -9,20 +9,22 @@ import requests
 from projects import models
 from projects.controllers.utils import uuid_alpha
 
-BROKER_URL = os.getenv("BROKER_URL", "http://default-broker.anonymous.svc.cluster.local")
+DEFAULT_BROKER_URL = (
+    "http://broker-ingress.knative-eventing.svc.cluster.local/anonymous/default"
+)
+BROKER_URL = os.getenv("BROKER_URL", DEFAULT_BROKER_URL)
 
 
 class ResponseController:
     def __init__(self, session):
         self.session = session
 
-    def create_response(self, project_id: str, deployment_id: str, body: dict):
+    def create_response(self, deployment_id: str, body: dict):
         """
         Creates a response entry in logs file.
 
         Parameters
         ----------
-        project_id : str
         deployment_id : str
         body : dict
         """
@@ -50,10 +52,12 @@ class ResponseController:
         self.session.bulk_save_objects(responses)
         self.session.commit()
 
-        responses = self.session.query(models.Response) \
-            .filter_by(deployment_id=deployment_id) \
-            .order_by(models.Response.created_at.asc()) \
+        responses = (
+            self.session.query(models.Response)
+            .filter_by(deployment_id=deployment_id)
+            .order_by(models.Response.created_at.asc())
             .all()
+        )
 
         d = []
 

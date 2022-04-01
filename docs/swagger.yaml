@@ -1,75 +1,105 @@
 openapi: 3.0.0
 info:
   title: PlatIAgro Projects API
-  version: "0.2.0"
+  version: 0.3.0
   description: >
-    These are the docs for PlatIAgro Projects API.
-    The endpoints below are usually accessed by the PlatIAgro Web-UI.
+    These are the docs for PlatIAgro Projects API. The endpoints below are
+    usually accessed by the PlatIAgro Web-UI.
   license:
-    name: "Apache 2.0"
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
-  - url: http://localhost:8080
+  - url: 'http://localhost:8080'
+  - url: 'http://localhost:8000'
 security:
   - ApiKeyAuth: []
 tags:
-  - name: "Tasks"
+  - name: Healthcheck
+    description: |
+      Healthcheck indicates the current status of the API server.
+  - name: Tasks
     description: >
-      Tasks are tools and algorithms that a data-scientist writes in Jupyter Notebooks or in a Docker image.
-      You may use these tasks as a step of an experiment to perform model training or inference.
-  - name: "Projects"
+      Tasks are tools and algorithms that a data-scientist writes in Jupyter
+      Notebooks or in a Docker image. You may use these tasks as a step of an
+      experiment to perform model training or inference.
+  - name: Projects
     description: >
-      Projects are a way to organize the problems a data-scientist is trying to solve.
-      In a project, you may test different experiments (hypothesis/solutions/models) that address the business question you are trying to answer.
-  - name: "Experiments"
+      Projects are a way to organize the problems a data-scientist is trying to
+      solve. In a project, you may test different experiments
+      (hypothesis/solutions/models) that address the business question you are
+      trying to answer.
+  - name: Experiments
     description: >
       Experiments allow data-scientists to draw acyclic workflows using tasks.
       These workflows may describe the steps of data-preparation, data-modeling.
-  - name: "Experiment Operators"
+  - name: Experiment Operators
     description: >
-      An Operator is a single unit in an experiment flow.
-      When a data-scientist runs an experiment, the operator runs a Jupyter Notebook of its task.
-  - name: "Experiment Runs"
+      An Operator is a single unit in an experiment flow. When a data-scientist
+      runs an experiment, the operator runs a Jupyter Notebook of its task.
+  - name: Experiment Runs
     description: >
-      Runs are the executions of an experiment.
-      Each run start from the first step and generates its own results.
-  - name: "Deployments"
+      Runs are the executions of an experiment. Each run start from the first
+      step and generates its own results.
+  - name: Deployments
     description: >
       Deployments allow drawing sequential workflows for real-time inference.
       These workflows are accessible by HTTP via REST endpoints.
-  - name: "Deployment Operators"
+  - name: Deployment Operators
     description: >
-      An Operator is a single unit in a deployment flow.
-      When someone tests a deployment, the operator is a service that runs the Model.py of its task.
-  - name: "Deployment Runs"
+      An Operator is a single unit in a deployment flow. When someone tests a
+      deployment, the operator is a service that runs the Model.py of its task.
+  - name: Deployment Runs
     description: >
-      Runs are the executions of a deployment.
-      Each run start from the first step and generates its own results.
-  - name: "Predictions"
-    description: >
+      Runs are the executions of a deployment. Each run start from the first
+      step and generates its own results.
+  - name: Predictions
+    description: |
       Predictions send a request with file data to seldon deployment.
-  - name: "Results"
+  - name: Results
     description: >
-      Results are the outputs of experiment runs.
-      They are: figures, metrics, datasets and log messages.
-  - name: "Logs"
-    description: >
+      Results are the outputs of experiment runs. They are: figures, metrics,
+      datasets and log messages.
+  - name: Logs
+    description: |
       Output logs of runs.
-  - name: "Comparisons"
+  - name: Comparisons
     description: >
-      Comparisons organize results from different experiments for evaluation/comparision.
-  - name: "Templates"
+      Comparisons organize results from different experiments for
+      evaluation/comparision.
+  - name: Templates
     description: >
-      Templates are reusable workflows that a data-scientist may use to draw an experiment quickly.
-  - name: "Monitorings"
+      Templates are reusable workflows that a data-scientist may use to draw an
+      experiment quickly.
+  - name: Monitorings
     description: >
-      Monitorings allow to ensure that models are maintaining a predetermined desired level of performance.
+      Monitorings allow to ensure that models are maintaining a predetermined
+      desired level of performance.
 paths:
+  /healthcheck:
+    get:
+      summary: Check the connection with the database.
+      tags:
+        - Healthcheck
+      responses:
+        '200':
+          description: Successfully connected to database
+        '503':
+          description: >
+            Service Unavailable server error response code indicates that the
+            server is not ready to handle the request. A common cause is that
+            the database is not available or overloaded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceUnavailable'
+              examples:
+                CannotConnectToDatabase:
+                  $ref: '#/components/examples/CannotConnectToDatabase'
   /tasks:
     get:
-      summary: "List tasks. Supports pagination, and sorting."
+      summary: 'List tasks. Supports pagination, and sorting.'
       tags:
-        - "Tasks"
+        - Tasks
       parameters:
         - in: query
           name: name
@@ -92,32 +122,62 @@ paths:
             type: string
           example: uuid asc
       responses:
-        "200":
-          $ref: "#/components/responses/Tasks"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Tasks'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidOrderBy:
+                  $ref: '#/components/examples/InvalidOrderBy'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     post:
-      summary: "Create a new task."
+      summary: Create a new task.
       tags:
-        - "Tasks"
+        - Tasks
       requestBody:
-        $ref: "#/components/requestBodies/TaskPost"
+        $ref: '#/components/requestBodies/TaskPost'
       responses:
-        "200":
-          $ref: "#/components/responses/Task"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Task'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                MissingRequiredNotebookOrTaskId:
+                  $ref: '#/components/examples/MissingRequiredNotebookOrTaskId'
+                TaskNameExists:
+                  $ref: '#/components/examples/TaskNameExists'
+                InvalidTaskId:
+                  $ref: '#/components/examples/InvalidTaskId'
+                InvalidCategory:
+                  $ref: '#/components/examples/InvalidCategory'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /tasks/{taskId}:
     get:
-      summary: "Detail a specific task by ID."
+      summary: Detail a specific task by ID.
       tags:
-        - "Tasks"
+        - Tasks
       parameters:
         - name: taskId
           in: path
@@ -126,18 +186,28 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Task"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Task'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                TaskNotFound:
+                  $ref: '#/components/examples/TaskNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     patch:
-      summary: "Update a task by ID."
+      summary: Update a task by ID.
       tags:
-        - "Tasks"
+        - Tasks
       parameters:
         - name: taskId
           in: path
@@ -146,22 +216,45 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/TaskPatch"
+        $ref: '#/components/requestBodies/TaskPatch'
       responses:
-        "200":
-          $ref: "#/components/responses/Task"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Task'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                TaskNameExists:
+                  $ref: '#/components/examples/TaskNameExists'
+                InvalidCategory:
+                  $ref: '#/components/examples/InvalidCategory'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                TaskNotFound:
+                  $ref: '#/components/examples/TaskNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
-      summary: "Delete a task by ID."
+      summary: Delete a task by ID.
       tags:
-        - "Tasks"
+        - Tasks
       parameters:
         - name: taskId
           in: path
@@ -169,19 +262,40 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '403':
+          description: >
+            Forbidden client error status response code indicates that the
+            server understands the request but refuses to authorize it.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Forbidden'
+              examples:
+                TaskProtectedFromDeletion:
+                  $ref: '#/components/examples/TaskProtectedFromDeletion'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                TaskNotFound:
+                  $ref: '#/components/examples/TaskNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /tasks/{taskId}/parameters:
     get:
-      summary: "List all parameters."
+      summary: List all parameters.
       tags:
-        - "Tasks"
+        - Tasks
       parameters:
         - name: taskId
           in: path
@@ -190,90 +304,116 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Parameters"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Parameters'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                TaskNotFound:
+                  $ref: '#/components/examples/TaskNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /tasks/{taskId}/emails:
     post:
-      summary: "Send email with task folder content"
+      summary: Send email with task folder content
       tags:
-        - "Tasks"
+        - Tasks
       requestBody:
-        $ref: "#/components/requestBodies/TaskMailing"
+        $ref: '#/components/requestBodies/TaskMailing'
       parameters:
-      - name: taskId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/TaskMailing"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/TaskMailing'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                TaskNotFound:
+                  $ref: '#/components/examples/TaskNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects:
-    get:
-      summary: "List projects. Supports pagination, and sorting."
-      tags:
-        - "Projects"
-      parameters:
-        - in: query
-          name: name
-          schema:
-            type: string
-          description: Name filter
-        - in: query
-          name: page
-          schema:
-            type: integer
-          description: Page number
-        - in: query
-          name: page_size
-          schema:
-            type: integer
-          description: Page size
-        - in: query
-          name: order
-          schema:
-            type: string
-          example: name asc
-      responses:
-        "200":
-          $ref: "#/components/responses/Projects"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
     post:
-      summary: "Create a new project."
+      summary: Create a new project.
       tags:
-        - "Projects"
+        - Projects
       requestBody:
-        $ref: "#/components/requestBodies/Project"
+        $ref: '#/components/requestBodies/Project'
       responses:
-        "200":
-          $ref: "#/components/responses/Project"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Project'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                ProjectNameExists:
+                  $ref: '#/components/examples/ProjectNameExists'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/listprojects:
+    post:
+      summary: 'List projects. Supports pagination, and sorting.'
+      tags:
+        - Projects
+      requestBody:
+        $ref: '#/components/requestBodies/ListProjects'
+      responses:
+        '200':
+          $ref: '#/components/responses/Projects'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidOrderBy:
+                  $ref: '#/components/examples/InvalidOrderBy'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}:
     get:
-      summary: "Detail a specific project by ID."
+      summary: Detail a specific project by ID.
       tags:
-        - "Projects"
+        - Projects
       parameters:
         - name: projectId
           in: path
@@ -282,18 +422,28 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Project"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Project'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     patch:
-      summary: "Update a project by ID."
+      summary: Update a project by ID.
       tags:
-        - "Projects"
+        - Projects
       parameters:
         - name: projectId
           in: path
@@ -302,22 +452,43 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/Project"
+        $ref: '#/components/requestBodies/Project'
       responses:
-        "200":
-          $ref: "#/components/responses/Project"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Project'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                ProjectNameExists:
+                  $ref: '#/components/examples/ProjectNameExists'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
-      summary: "Delete a project by ID."
+      summary: Delete a project by ID.
       tags:
-        - "Projects"
+        - Projects
       parameters:
         - name: projectId
           in: path
@@ -326,35 +497,56 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/deleteprojects:
     post:
-      summary: "Delete multiple projects."
+      summary: Delete multiple projects.
       tags:
-        - "Projects"
+        - Projects
       requestBody:
-        $ref: "#/components/requestBodies/Deleteprojects"
+        $ref: '#/components/requestBodies/Deleteprojects'
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                MissingRequiredProjectId:
+                  $ref: '#/components/examples/MissingRequiredProjectId'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/comparisons:
     get:
-      summary: "List all comparisons sorted by created_at in ascending order."
+      summary: List all comparisons sorted by created_at in ascending order.
       tags:
-        - "Comparisons"
+        - Comparisons
       parameters:
         - name: projectId
           in: path
@@ -363,18 +555,28 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Comparisons"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Comparisons'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     post:
-      summary: "Create a new comparison."
+      summary: Create a new comparison.
       tags:
-        - "Comparisons"
+        - Comparisons
       parameters:
         - name: projectId
           in: path
@@ -383,21 +585,29 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Comparison"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Comparison'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/comparisons/{comparisonId}:
     patch:
-      summary: "Update a comparison by ID."
+      summary: Update a comparison by ID.
       tags:
-        - "Comparisons"
+        - Comparisons
       parameters:
         - name: projectId
           in: path
@@ -412,22 +622,45 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/ComparisonPatch"
+        $ref: '#/components/requestBodies/ComparisonPatch'
       responses:
-        "200":
-          $ref: "#/components/responses/Comparison"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Comparison'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidExperimentId:
+                  $ref: '#/components/examples/InvalidExperimentId'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ComparisonNotFound:
+                  $ref: '#/components/examples/ComparisonNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
-      summary: "Delete a comparison by ID."
+      summary: Delete a comparison by ID.
       tags:
-        - "Comparisons"
+        - Comparisons
       parameters:
         - name: projectId
           in: path
@@ -442,19 +675,31 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ComparisonNotFound:
+                  $ref: '#/components/examples/ComparisonNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments:
     get:
-      summary: "List all experiments sorted by position in ascending order."
+      summary: List all experiments sorted by position in ascending order.
       tags:
-        - "Experiments"
+        - Experiments
       parameters:
         - name: projectId
           in: path
@@ -463,18 +708,28 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Experiments"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Experiments'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     post:
-      summary: "Create a new experiment."
+      summary: Create a new experiment.
       tags:
-        - "Experiments"
+        - Experiments
       parameters:
         - name: projectId
           in: path
@@ -483,23 +738,44 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/ExperimentPost"
+        $ref: '#/components/requestBodies/ExperimentPost'
       responses:
-        "200":
-          $ref: "#/components/responses/Experiment"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Experiment'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                ExperimentNameExists:
+                  $ref: '#/components/examples/ExperimentNameExists'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}:
     get:
-      summary: "Detail a specific experiment by ID."
+      summary: Detail a specific experiment by ID.
       tags:
-        - "Experiments"
+        - Experiments
       parameters:
         - name: projectId
           in: path
@@ -514,18 +790,30 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Experiment"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Experiment'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     patch:
-      summary: "Update an experiment by ID."
+      summary: Update an experiment by ID.
       tags:
-        - "Experiments"
+        - Experiments
       parameters:
         - name: projectId
           in: path
@@ -540,22 +828,47 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/ExperimentPatch"
+        $ref: '#/components/requestBodies/ExperimentPatch'
       responses:
-        "200":
-          $ref: "#/components/responses/Experiment"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Experiment'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                ExperimentNameExists:
+                  $ref: '#/components/examples/ExperimentNameExists'
+                InvalidTemplateId:
+                  $ref: '#/components/examples/InvalidTemplateId'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
-      summary: "Delete an experiment by ID."
+      summary: Delete an experiment by ID.
       tags:
-        - "Experiments"
+        - Experiments
       parameters:
         - name: projectId
           in: path
@@ -570,19 +883,81 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/experiments/{experimentId}/logs/eventsource:
+    get:
+      summary: Server sent events of log stream of pods used in the given experiment.
+      tags:
+        - Logs
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns log stream
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotCreateLogStream:
+                  $ref: '#/components/examples/CannotCreateLogStream'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}/operators:
     get:
-      summary: "List all operators, unsorted."
+      summary: 'List all operators, unsorted.'
       tags:
-        - "Experiment Operators"
+        - Experiment Operators
       parameters:
         - name: projectId
           in: path
@@ -597,18 +972,30 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Operators"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Operators'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     post:
-      summary: "Create a new operator."
+      summary: Create a new operator.
       tags:
-        - "Experiment Operators"
+        - Experiment Operators
       parameters:
         - name: projectId
           in: path
@@ -623,23 +1010,104 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/OperatorPost"
+        $ref: '#/components/requestBodies/OperatorPost'
       responses:
-        "200":
-          $ref: "#/components/responses/Operator"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Operator'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                MissingRequiredTaskId:
+                  $ref: '#/components/examples/MissingRequiredTaskId'
+                InvalidTaskId:
+                  $ref: '#/components/examples/InvalidTaskId'
+                InvalidOperatorRequestBody:
+                  $ref: '#/components/examples/InvalidOperatorRequestBody'
+                InvalidParameters:
+                  $ref: '#/components/examples/InvalidParameters'
+                InvalidDependencies:
+                  $ref: '#/components/examples/InvalidDependencies'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/experiments/{experimentId}/operators/eventsource:
+    get:
+      summary: Server sent events of operator's status change stream.
+      tags:
+        - Experiment Operators
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns log stream
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotCreateLogStream:
+                  $ref: '#/components/examples/CannotCreateLogStream'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}:
     patch:
-      summary: "Update an operator by ID."
+      summary: Update an operator by ID.
       tags:
-        - "Experiment Operators"
+        - Experiment Operators
       parameters:
         - name: projectId
           in: path
@@ -660,22 +1128,51 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/OperatorPatch"
+        $ref: '#/components/requestBodies/OperatorPatch'
       responses:
-        "200":
-          $ref: "#/components/responses/Operator"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Operator'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidTaskId:
+                  $ref: '#/components/examples/InvalidTaskId'
+                InvalidParameters:
+                  $ref: '#/components/examples/InvalidParameters'
+                InvalidDependencies:
+                  $ref: '#/components/examples/InvalidDependencies'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                OperatorNotFound:
+                  $ref: '#/components/examples/OperatorNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
-      summary: "Delete an operator by ID."
+      summary: Delete an operator by ID.
       tags:
-        - "Experiment Operators"
+        - Experiment Operators
       parameters:
         - name: projectId
           in: path
@@ -696,19 +1193,33 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                OperatorNotFound:
+                  $ref: '#/components/examples/OperatorNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}/operators/{operatorId}/parameters/{name}:
     patch:
-      summary: "Update a parameter value."
+      summary: Update a parameter value.
       tags:
-        - "Experiment Operators"
+        - Experiment Operators
       parameters:
         - in: path
           name: projectId
@@ -728,27 +1239,41 @@ paths:
           schema:
             type: string
         - name: name
-          description: "Parameter name."
+          description: Parameter name.
           in: path
           required: true
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/ParameterPatch"
+        $ref: '#/components/requestBodies/ParameterPatch'
       responses:
-        "200":
-          $ref: "#/components/responses/AnyValue"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        '200':
+          $ref: '#/components/responses/AnyValue'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                OperatorNotFound:
+                  $ref: '#/components/examples/OperatorNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}/runs:
     get:
-      summary: "List all experiment runs sorted by created_at in ascending order."
+      summary: List all experiment runs sorted by created_at in ascending order.
       tags:
-        - "Experiment Runs"
+        - Experiment Runs
       parameters:
         - in: path
           name: projectId
@@ -763,18 +1288,41 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Run"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Run'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     post:
-      summary: "Create a new experiment run."
+      summary: Create a new experiment run.
       tags:
-        - "Experiment Runs"
+        - Experiment Runs
       parameters:
         - in: path
           name: projectId
@@ -789,21 +1337,44 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/RunPost"
+        $ref: '#/components/requestBodies/RunPost'
       responses:
-        "200":
-          $ref: "#/components/responses/Run"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Run'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}/runs/{runId}:
     get:
-      summary: "Detail a specific experiment run by ID."
+      summary: Detail a specific experiment run by ID.
       tags:
-        - "Experiment Runs"
+        - Experiment Runs
       parameters:
         - in: path
           name: projectId
@@ -823,18 +1394,43 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          $ref: "#/components/responses/Run"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Run'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
-      summary: "Terminate an experiment run."
+      summary: Terminate an experiment run.
       tags:
-        - "Experiment Runs"
+        - Experiment Runs
       parameters:
         - in: path
           name: projectId
@@ -854,19 +1450,44 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}/runs/{runId}/retry:
     put:
-      summary: "Re-initiate a failed or terminated experiment run."
+      summary: Re-initiate a failed or terminated experiment run.
       tags:
-        - "Experiment Runs"
+        - Experiment Runs
       parameters:
         - in: path
           name: projectId
@@ -886,19 +1507,44 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}/runs/{runId}/results:
     get:
-      summary: "Download a zip file with all results from run."
+      summary: Download a zip file with all results from run.
       tags:
-        - "Results"
+        - Results
       parameters:
         - in: path
           name: projectId
@@ -918,19 +1564,103 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          $ref: "#/components/responses/RunResults"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/RunResults'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/data:
+    get:
+      summary: Download a zip file with all data saved in a run.
+      tags:
+        - Results
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/RunResults'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotCreateNamespacedPod:
+                  $ref: '#/components/examples/CannotCreateNamespacedPod'
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/results:
     get:
-      summary: "Download a zip file with all results from operator."
+      summary: Download a zip file with all results from operator.
       tags:
-        - "Results"
+        - Results
       parameters:
         - in: path
           name: projectId
@@ -956,19 +1686,46 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/RunResults"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/RunResults'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+                OperatorNotFound:
+                  $ref: '#/components/examples/OperatorNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/datasets:
     get:
-      summary: "List datasets. Supports pagination."
+      summary: List datasets. Supports pagination.
       tags:
-        - "Results"
+        - Results
       parameters:
         - in: path
           name: projectId
@@ -1004,337 +1761,616 @@ paths:
             type: integer
           description: Page size
       responses:
-        "200":
-          $ref: "#/components/responses/Datasets"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/figures:
-    get:
-      summary: "List all figures"
-      tags:
-        - "Results"
-      parameters:
-        - in: path
-          name: projectId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: runId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/Figures"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/metrics:
-    get:
-      summary: "List all metrics"
-      tags:
-        - "Results"
-      parameters:
-        - in: path
-          name: projectId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: runId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/Metrics"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/logs:
-    get:
-      summary: "Get logs from an experiment run"
-      tags:
-        - "Logs"
-      parameters:
-        - in: path
-          name: projectId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: experimentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: runId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/Logs"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/deployments:
-    get:
-      summary: "List all deployments."
-      tags:
-        - "Deployments"
-      parameters:
-        - in: path
-          name: projectId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/Deployments"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    post:
-      summary: "Create a new deployment."
-      tags:
-        - "Deployments"
-      parameters:
-        - in: path
-          name: projectId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        $ref: "#/components/requestBodies/DeploymentPost"
-      responses:
-        "200":
-          $ref: "#/components/responses/Deployments"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/deployments/{deploymentId}:
-    get:
-      summary: "Detail a specific deployment by ID."
-      tags:
-        - "Deployments"
-      parameters:
-        - in: path
-          name: projectId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/Deployment"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    patch:
-      summary: "Update a deployment by ID."
-      tags:
-        - "Deployments"
-      parameters:
-        - in: path
-          name: projectId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        $ref: "#/components/requestBodies/DeploymentPatch"
-      responses:
-        "200":
-          $ref: "#/components/responses/Deployment"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    delete:
-      summary: "Delete a deployment by ID."
-      tags:
-        - "Deployments"
-      parameters:
-        - in: path
-          name: projectId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: deploymentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/deployments/{deploymentId}/operators:
-    get:
-      summary: "List all operators, unsorted."
-      tags:
-        - "Deployment Operators"
-      parameters:
-        - name: projectId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: deploymentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/Operators"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/deployments/{deploymentId}/operators/{operatorId}:
-    patch:
-      summary: "Update an operator by ID."
-      tags:
-        - "Deployment Operators"
-      parameters:
-        - name: projectId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: deploymentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: operatorId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        $ref: "#/components/requestBodies/OperatorPatch"
-      responses:
-        "200":
-          $ref: "#/components/responses/Operator"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-  /projects/{projectId}/deployments/{deploymentId}/monitorings:
-    get:
-      summary: "Lists all monitorings."
-      tags:
-        - "Monitorings"
-      parameters:
-        - in: path
-          name: projectId
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - in: path
-          name: deploymentId
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: ""
+        '200':
+          $ref: '#/components/responses/Datasets'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Monitorings"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-    post:
-      summary: "Create a monitoring."
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+                OperatorNotFound:
+                  $ref: '#/components/examples/OperatorNotFound'
+                DatasetNotFound:
+                  $ref: '#/components/examples/DatasetNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/figures:
+    get:
+      summary: List all figures
       tags:
-        - "Monitorings"
+        - Results
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/Figures'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+                OperatorNotFound:
+                  $ref: '#/components/examples/OperatorNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/operators/{operatorId}/metrics:
+    get:
+      summary: List all metrics
+      tags:
+        - Results
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/Metrics'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+                OperatorNotFound:
+                  $ref: '#/components/examples/OperatorNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/experiments/{experimentId}/runs/{runId}/logs:
+    get:
+      summary: Get logs from an experiment run
+      tags:
+        - Logs
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: experimentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Logs'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                ExperimentNotFound:
+                  $ref: '#/components/examples/ExperimentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+                CannotRetrieveContainerLogs:
+                  $ref: '#/components/examples/CannotRetrieveContainerLogs'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/deployments:
+    get:
+      summary: List all deployments.
+      tags:
+        - Deployments
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/Deployments'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      summary: Create a new deployment.
+      tags:
+        - Deployments
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: '#/components/requestBodies/DeploymentPost'
+      responses:
+        '200':
+          $ref: '#/components/responses/Deployments'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                MissingRequiredExperimentsOrTemplateIdOrCopyFrom:
+                  $ref: >-
+                    #/components/examples/MissingRequiredExperimentsOrTemplateIdOrCopyFrom
+                MissingRequiredDeploymentName:
+                  $ref: '#/components/examples/MissingRequiredDeploymentName'
+                DeploymentNameExists:
+                  $ref: '#/components/examples/DeploymentNameExists'
+                MissingRequiredOperatorId:
+                  $ref: '#/components/examples/MissingRequiredOperatorId'
+                MissingRequiredDataSourceOperatorId:
+                  $ref: '#/components/examples/MissingRequiredDataSourceOperatorId'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/deployments/{deploymentId}:
+    get:
+      summary: Detail a specific deployment by ID.
+      tags:
+        - Deployments
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/Deployment'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    patch:
+      summary: Update a deployment by ID.
+      tags:
+        - Deployments
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: '#/components/requestBodies/DeploymentPatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/Deployment'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                DeploymentNameExists:
+                  $ref: '#/components/examples/DeploymentNameExists'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      summary: Delete a deployment by ID.
+      tags:
+        - Deployments
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/deployments/{deploymentId}/logs/eventsource:
+    get:
+      summary: Server sent events of log stream of pods used in the given deployment.
+      tags:
+        - Logs
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns log stream
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/deployments/{deploymentId}/operators:
+    get:
+      summary: 'List all operators, unsorted.'
+      tags:
+        - Deployment Operators
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/Operators'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/deployments/{deploymentId}/operators/{operatorId}:
+    patch:
+      summary: Update an operator by ID.
+      tags:
+        - Deployment Operators
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: operatorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: '#/components/requestBodies/OperatorPatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/Operator'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidTaskId:
+                  $ref: '#/components/examples/InvalidTaskId'
+                InvalidParameters:
+                  $ref: '#/components/examples/InvalidParameters'
+                InvalidDependencies:
+                  $ref: '#/components/examples/InvalidDependencies'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+                OperatorNotFound:
+                  $ref: '#/components/examples/OperatorNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/deployments/{deploymentId}/monitorings:
+    get:
+      summary: Lists all monitorings.
+      tags:
+        - Monitorings
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Monitorings'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      summary: Create a monitoring.
+      tags:
+        - Monitorings
       parameters:
         - in: path
           name: projectId
@@ -1357,23 +2393,48 @@ paths:
                 taskId:
                   type: string
       responses:
-        "200":
-          description: ""
+        '200':
+          description: ''
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Monitoring"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+                $ref: '#/components/schemas/Monitoring'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidTaskId:
+                  $ref: '#/components/examples/InvalidTaskId'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/deployments/{deploymentId}/monitorings/{monitoringId}:
     delete:
-      summary: "Delete a monitoring by ID."
+      summary: Delete a monitoring by ID.
       tags:
-        - "Monitorings"
+        - Monitorings
       parameters:
         - in: path
           name: projectId
@@ -1394,17 +2455,33 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+                MonitoringNotFound:
+                  $ref: '#/components/examples/MonitoringNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/deployments/{deploymentId}/monitorings/{monitoringId}/figures:
     get:
-      summary: "List all figures"
+      summary: List all figures
       tags:
-        - "Monitorings"
+        - Monitorings
       parameters:
         - in: path
           name: projectId
@@ -1425,17 +2502,33 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Figures"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Figures'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+                MonitoringNotFound:
+                  $ref: '#/components/examples/MonitoringNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/deployments/{deploymentId}/runs:
     get:
-      summary: "List all experiment runs sorted by created_at in ascending order."
+      summary: List all experiment runs sorted by created_at in ascending order.
       tags:
-        - "Deployment Runs"
+        - Deployment Runs
       parameters:
         - in: path
           name: projectId
@@ -1450,18 +2543,41 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Run"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Run'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     post:
-      summary: "Create a new deployment run."
+      summary: Create a new deployment run.
       tags:
-        - "Deployment Runs"
+        - Deployment Runs
       parameters:
         - in: path
           name: projectId
@@ -1476,21 +2592,44 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/RunPost"
+        $ref: '#/components/requestBodies/RunPost'
       responses:
-        "200":
-          $ref: "#/components/responses/Run"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Run'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/deployments/{deploymentId}/runs/{runId}:
     get:
-      summary: "Detail a specific deployment run by ID."
+      summary: Detail a specific deployment run by ID.
       tags:
-        - "Deployment Runs"
+        - Deployment Runs
       parameters:
         - in: path
           name: projectId
@@ -1510,18 +2649,43 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          $ref: "#/components/responses/Run"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Run'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
-      summary: "Terminate a deployment run."
+      summary: Terminate a deployment run.
       tags:
-        - "Deployment Runs"
+        - Deployment Runs
       parameters:
         - in: path
           name: projectId
@@ -1541,21 +2705,46 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/deployments/{deploymentId}/predictions:
     post:
-      summary: "Create a new prediction sending a file."
+      summary: Create a new prediction sending a file.
       tags:
-        - "Predictions"
+        - Predictions
       requestBody:
-        $ref: "#/components/requestBodies/PredictionPost"
+        $ref: '#/components/requestBodies/PredictionPost'
       parameters:
         - in: path
           name: projectId
@@ -1570,19 +2759,102 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Prediction"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        '200':
+          $ref: '#/components/responses/Prediction'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidDataset:
+                  $ref: '#/components/examples/InvalidDataset'
+                MissingRequiredDatasetOrFile:
+                  $ref: '#/components/examples/MissingRequiredDatasetOrFile'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /projects/{projectId}/deployments/{deploymentId}/predictions/{predictionId}:
+    get:
+      summary: Gets prediciton object and returns as json
+      tags:
+        - Predictions
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: predictionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/PredictionInfo'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+                PredictionNotFound:
+                  $ref: '#/components/examples/PredictionNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /projects/{projectId}/deployments/{deploymentId}/runs/{runId}/logs:
     get:
-      summary: "Get logs from a deployment run"
+      summary: Get logs from a deployment run
       tags:
-        - "Logs"
+        - Logs
       parameters:
         - in: path
           name: projectId
@@ -1601,17 +2873,46 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          $ref: "#/components/responses/Logs"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Logs'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+                RunNotFound:
+                  $ref: '#/components/examples/RunNotFound'
+        '500':
+          description: >
+            Internal Server Error server error response code indicates that the
+            server encountered an unexpected condition that prevented it from
+            fulfilling the request. This error response is a generic "catch-all"
+            response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                CannotConnectToCluster:
+                  $ref: '#/components/examples/CannotConnectToCluster'
+                CannotRetrieveContainerLogs:
+                  $ref: '#/components/examples/CannotRetrieveContainerLogs'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /projects/{projectId}/deployments/{deploymentId}/responses:
     post:
-      summary: "Create a deployment response."
+      summary: Create a deployment response.
       tags:
-        - "Deployments"
+        - Deployments
       parameters:
         - in: path
           name: projectId
@@ -1626,46 +2927,80 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/ResponsePost"
+        $ref: '#/components/requestBodies/ResponsePost'
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                ProjectNotFound:
+                  $ref: '#/components/examples/ProjectNotFound'
+                DeploymentNotFound:
+                  $ref: '#/components/examples/DeploymentNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /templates:
     get:
-      summary: "List all templates sorted by name in natural sort order."
+      summary: List all templates sorted by name in natural sort order.
       tags:
-        - "Templates"
+        - Templates
       responses:
-        "200":
-          $ref: "#/components/responses/Templates"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Templates'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     post:
-      summary: "Create a new template from an experiment."
+      summary: Create a new template from an experiment.
       tags:
-        - "Templates"
+        - Templates
       requestBody:
-        $ref: "#/components/requestBodies/TemplatePost"
+        $ref: '#/components/requestBodies/TemplatePost'
       responses:
-        "200":
-          $ref: "#/components/responses/Template"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Template'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                MissingRequiredTemplateName:
+                  $ref: '#/components/examples/MissingRequiredTemplateName'
+                MissingRequiredExperimentIdOrDeploymentId:
+                  $ref: >-
+                    #/components/examples/MissingRequiredExperimentIdOrDeploymentId
+                InvalidExperimentId:
+                  $ref: '#/components/examples/InvalidExperimentId'
+                InvalidDeploymentId:
+                  $ref: '#/components/examples/InvalidDeploymentId'
+                TemplateNameExists:
+                  $ref: '#/components/examples/TemplateNameExists'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /templates/{templateId}:
     get:
-      summary: "Detail a specific template by ID."
+      summary: Detail a specific template by ID.
       tags:
-        - "Templates"
+        - Templates
       parameters:
         - name: templateId
           in: path
@@ -1674,18 +3009,28 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Template"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Template'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                TemplateNotFound:
+                  $ref: '#/components/examples/TemplateNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     patch:
-      summary: "Update a template by ID."
+      summary: Update a template by ID.
       tags:
-        - "Templates"
+        - Templates
       parameters:
         - name: templateId
           in: path
@@ -1694,22 +3039,43 @@ paths:
             type: string
             format: uuid
       requestBody:
-        $ref: "#/components/requestBodies/TemplatePatch"
+        $ref: '#/components/requestBodies/TemplatePatch'
       responses:
-        "200":
-          $ref: "#/components/responses/Template"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Template'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                TemplateNameExists:
+                  $ref: '#/components/examples/TemplateNameExists'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                TemplateNotFound:
+                  $ref: '#/components/examples/TemplateNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
-      summary: "Delete a template by ID."
+      summary: Delete a template by ID.
       tags:
-        - "Templates"
+        - Templates
       parameters:
         - name: templateId
           in: path
@@ -1718,30 +3084,51 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '404':
+          description: >
+            Not Found client error response code indicates that the server can't
+            find the requested resource. A common cause is that a provided ID
+            does not exist in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                TemplateNotFound:
+                  $ref: '#/components/examples/TemplateNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /templates/deletetemplates:
     post:
-      summary: "Delete multiple templates."
+      summary: Delete multiple templates.
       tags:
-        - "Templates"
+        - Templates
       requestBody:
-        $ref: "#/components/requestBodies/Deletetemplates"
+        $ref: '#/components/requestBodies/Deletetemplates'
       responses:
-        "200":
-          $ref: "#/components/responses/Message"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                MissingRequiredTemplateId:
+                  $ref: '#/components/examples/MissingRequiredTemplateId'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -1751,13 +3138,17 @@ components:
   schemas:
     AnyValue:
       nullable: true
-      description: Can be any value - string, number, boolean, array or object, including `null`.
+      description: >-
+        Can be any value - string, number, boolean, array or object, including
+        `null`.
     Comparison:
       type: object
       properties:
         uuid:
           type: string
           format: uuid
+        activeTab:
+          type: string
         projectId:
           type: string
           format: uuid
@@ -1790,7 +3181,7 @@ components:
     Comparisons:
       type: array
       items:
-        $ref: "#/components/schemas/Comparison"
+        $ref: '#/components/schemas/Comparison'
     Task:
       type: object
       properties:
@@ -1803,8 +3194,15 @@ components:
           type: string
         category:
           type: string
-          enum: ["DATASETS", "DEFAULT", "DESCRIPTIVE_STATISTICS", "FEATURE_ENGINEERING",
-                 "PREDICTOR", "COMPUTER_VISION", "NLP", "MONITORING"]
+          enum:
+            - DATASETS
+            - DEFAULT
+            - DESCRIPTIVE_STATISTICS
+            - FEATURE_ENGINEERING
+            - PREDICTOR
+            - COMPUTER_VISION
+            - NLP
+            - MONITORING
         tags:
           type: array
           items:
@@ -1840,7 +3238,7 @@ components:
         parameters:
           type: array
           items:
-            $ref: "#/components/schemas/Parameter"
+            $ref: '#/components/schemas/Parameter'
         createdAt:
           type: string
           format: date-time
@@ -1853,7 +3251,7 @@ components:
         tasks:
           type: array
           items:
-            $ref: "#/components/schemas/Task"
+            $ref: '#/components/schemas/Task'
         total:
           type: integer
     TaskEmpty:
@@ -1938,7 +3336,9 @@ components:
       properties:
         type:
           type: string
-          enum: [string, integer]
+          enum:
+            - string
+            - integer
         name:
           type: string
         default:
@@ -1946,7 +3346,7 @@ components:
     Parameters:
       type: array
       items:
-        $ref: "#/components/schemas/Parameter"
+        $ref: '#/components/schemas/Parameter'
     Project:
       type: object
       properties:
@@ -1960,11 +3360,11 @@ components:
         experiments:
           type: array
           items:
-            $ref: "#/components/schemas/Experiment"
+            $ref: '#/components/schemas/Experiment'
         deployments:
           type: array
           items:
-            $ref: "#/components/schemas/Deployment"
+            $ref: '#/components/schemas/Deployment'
         createdAt:
           type: string
           format: date-time
@@ -1983,7 +3383,7 @@ components:
         projects:
           type: array
           items:
-            $ref: "#/components/schemas/Project"
+            $ref: '#/components/schemas/Project'
         total:
           type: integer
     Experiment:
@@ -2002,7 +3402,7 @@ components:
           type: string
           format: uuid
         operators:
-          $ref: "#/components/schemas/Operators"
+          $ref: '#/components/schemas/Operators'
         createdAt:
           type: string
           format: date-time
@@ -2012,7 +3412,7 @@ components:
     Experiments:
       type: array
       items:
-        $ref: "#/components/schemas/Experiment"
+        $ref: '#/components/schemas/Experiment'
     Deployment:
       type: object
       properties:
@@ -2029,11 +3429,15 @@ components:
         operators:
           type: array
           items:
-            $ref: "#/components/schemas/Operator"
+            $ref: '#/components/schemas/Operator'
         position:
           type: integer
         status:
           type: string
+          enum:
+            - Pending
+            - Succeeded
+          example: Pending
         url:
           type: string
         deployedAt:
@@ -2048,14 +3452,51 @@ components:
         deployments:
           type: array
           items:
-            $ref: "#/components/schemas/Deployment"
+            $ref: '#/components/schemas/Deployment'
         total:
           type: integer
     Prediction:
-      oneOf:
-        - $ref: "#/components/schemas/Data"
-        - $ref: "#/components/schemas/BinData"
-        - $ref: "#/components/schemas/StrData"
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        deployment_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - not_started
+            - started
+            - done
+            - failed
+    PredictionInfo:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        deployment_id:
+          type: string
+          format: uuid
+        request_body:
+          type: string
+        response_body:
+          type: string
+        created_at:
+          type: string
+          format: date
+        updated_at:
+          type: string
+          format: date
+        status:
+          type: string
+          enum:
+            - not_started
+            - started
+            - done
+            - failed
     Data:
       type: object
       properties:
@@ -2093,7 +3534,7 @@ components:
           additionalProperties:
             description: 'Can be anything: string, number, array, object, etc.'
           example:
-            content-type: "image/jpg"
+            content-type: image/jpg
     SeldonDefaultData:
       type: object
       additionalProperties: false
@@ -2135,7 +3576,12 @@ components:
               pattern: '^.{1,2097152}'
               maxLength: 2097152
               format: int64
-              description: 'Size of the tensor in that dimension. This value must be >= -1, but values of -1 are reserved for "unknown" shapes (values of -1 mean "unknown" dimension).  Certain wrappers that work with TensorShapeProto may fail at runtime when deserializing a TensorShapeProto containing a dim value of -1.'
+              description: >-
+                Size of the tensor in that dimension. This value must be >= -1,
+                but values of -1 are reserved for "unknown" shapes (values of -1
+                mean "unknown" dimension).  Certain wrappers that work with
+                TensorShapeProto may fail at runtime when deserializing a
+                TensorShapeProto containing a dim value of -1.
             name:
               type: string
               pattern: '^.{1,2097152}'
@@ -2200,7 +3646,7 @@ components:
     Monitorings:
       type: array
       items:
-        $ref: "#/components/schemas/Monitoring"
+        $ref: '#/components/schemas/Monitoring'
     DeploymentTemplate:
       type: object
       properties:
@@ -2238,7 +3684,7 @@ components:
             parameters:
               type: array
               items:
-                $ref: "#/components/schemas/Parameter"
+                $ref: '#/components/schemas/Parameter'
         dependencies:
           type: array
           items:
@@ -2268,14 +3714,21 @@ components:
           format: date-time
         status:
           type: string
-          enum: [Unset, Setted up, Pending, Running, Failed, Succeeded, Terminated]
+          enum:
+            - Unset
+            - Setted up
+            - Pending
+            - Running
+            - Failed
+            - Succeeded
+            - Terminated
           example: Setted up
         statusMessage:
           type: string
     Operators:
       type: array
       items:
-        $ref: "#/components/schemas/Operator"
+        $ref: '#/components/schemas/Operator'
     Logs:
       type: object
       properties:
@@ -2289,14 +3742,20 @@ components:
             properties:
               level:
                 type: string
-                enum: [DEBUG, INFO, WARNING, ERROR]
+                enum:
+                  - DEBUG
+                  - INFO
+                  - WARNING
+                  - ERROR
                 example: INFO
               title:
                 type: string
                 example: Regressor Random Forest
               message:
                 type: string
-                example: seldon_core.microservice:load_annotations:114 Found annotation deployment_version
+                example: >-
+                  seldon_core.microservice:load_annotations:114 Found annotation
+                  deployment_version
               createdAt:
                 type: string
                 format: date-time
@@ -2310,9 +3769,9 @@ components:
             items:
               oneOf:
                 - type: string
-                  example: "SepalLengthCm"
+                  example: SepalLengthCm
                 - type: string
-                  example: "Species"
+                  example: Species
           data:
             type: array
             items:
@@ -2323,7 +3782,7 @@ components:
                       - type: number
                         example: 5.1
                       - type: string
-                        example: "Iris-setosa"
+                        example: Iris-setosa
           total:
             type: number
             example: 2
@@ -2331,7 +3790,8 @@ components:
       type: array
       items:
         type: string
-        example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAC6CAIAAAB3B9X3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAG6SURBVHhe7dIxAQAADMOg+TfdicgLGrhBIBCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhDB9ho69eEGiUHfAAAAAElFTkSuQmCC"
+        example: >-
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAC6CAIAAAB3B9X3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAG6SURBVHhe7dIxAQAADMOg+TfdicgLGrhBIBCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhCJQCQCkQhEIhDB9ho69eEGiUHfAAAAAElFTkSuQmCC
     Metrics:
       type: array
       items:
@@ -2370,12 +3830,12 @@ components:
               parameters:
                 type: object
                 example:
-                  dataset: "/tmp/data/iris.csv"
-                  target: "SepalLengthCm"
+                  dataset: /tmp/data/iris.csv
+                  target: SepalLengthCm
     Runs:
       type: array
       items:
-        $ref: "#/components/schemas/Run"
+        $ref: '#/components/schemas/Run'
     Template:
       type: object
       properties:
@@ -2421,7 +3881,7 @@ components:
     Templates:
       type: array
       items:
-        $ref: "#/components/schemas/Template"
+        $ref: '#/components/schemas/Template'
     TemplateExperiment:
       type: object
       properties:
@@ -2438,6 +3898,56 @@ components:
         deploymentId:
           type: string
           format: uuid
+    BadRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    Forbidden:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    NotFound:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    InternalServerError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    ServiceUnavailable:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
   requestBodies:
     ComparisonPatch:
       content:
@@ -2459,7 +3969,7 @@ components:
                 properties:
                   x:
                     type: number
-                  y:
+                  'y':
                     type: number
                   w:
                     type: number
@@ -2470,25 +3980,26 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/TaskEmpty"
-              - $ref: "#/components/schemas/TaskDocker"
-              - $ref: "#/components/schemas/TaskCopyFrom"
-              - $ref: "#/components/schemas/TaskNotebooks"
+              - $ref: '#/components/schemas/TaskEmpty'
+              - $ref: '#/components/schemas/TaskDocker'
+              - $ref: '#/components/schemas/TaskCopyFrom'
+              - $ref: '#/components/schemas/TaskNotebooks'
           examples:
             empty:
               summary: Empty notebooks
               value:
                 name: string
                 description: string
-                category: "DEFAULT"
-                tags: ["DEFAULT"]
+                category: DEFAULT
+                tags:
+                  - DEFAULT
                 dataIn: string
                 dataOut: string
                 docs: string
-                cpuLimit: "1000m"
-                cpuRequest: "1000m"
-                memoryLimit: "10G"
-                memoryRequest: "10G"
+                cpuLimit: 1000m
+                cpuRequest: 1000m
+                memoryLimit: 10G
+                memoryRequest: 10G
             unnamed_notebook:
               summary: Unnamed notebook
               value: {}
@@ -2497,24 +4008,28 @@ components:
               value:
                 name: string
                 description: string
-                category: "DEFAULT"
-                tags: ["DEFAULT"]
+                category: DEFAULT
+                tags:
+                  - DEFAULT
                 dataIn: string
                 dataOut: string
                 docs: string
-                commands: ["cmd"]
-                arguments: ["arg"]
-                image: your-custom-docker-image:tag
-                cpuLimit: "1000m"
-                cpuRequest: "1000m"
-                memoryLimit: "10G"
-                memoryRequest: "10G"
+                commands:
+                  - cmd
+                arguments:
+                  - arg
+                image: 'your-custom-docker-image:tag'
+                cpuLimit: 1000m
+                cpuRequest: 1000m
+                memoryLimit: 10G
+                memoryRequest: 10G
             copyFrom:
               summary: Copy another task
               value:
                 name: string
                 description: string
-                tags: ["DEFAULT"]
+                tags:
+                  - DEFAULT
                 copyFrom: 3fa85f64-5717-4562-b3fc-2c963f66afa6
             notebook:
               summary: Upload notebooks in request body
@@ -2522,182 +4037,144 @@ components:
                 name: string
                 description: string
                 category: DEFAULT
-                tags: ["DEFAULT"]
+                tags:
+                  - DEFAULT
                 dataIn: string
                 dataOut: string
                 docs: string
-                cpuLimit: "1000m"
-                cpuRequest: "1000m"
-                memoryLimit: "10G"
-                memoryRequest: "10G"
+                cpuLimit: 1000m
+                cpuRequest: 1000m
+                memoryLimit: 10G
+                memoryRequest: 10G
                 deploymentNotebook:
-                  {
-                    "cells":
-                      [
-                        {
-                          "cell_type": "code",
-                          "execution_count": null,
-                          "metadata": {},
-                          "outputs": [],
-                          "source": [],
-                        },
-                      ],
-                    "metadata":
-                      {
-                        "kernelspec":
-                          {
-                            "display_name": "Python 3",
-                            "language": "python",
-                            "name": "python3",
-                          },
-                        "language_info":
-                          {
-                            "codemirror_mode":
-                              { "name": "ipython", "version": 3 },
-                            "file_extension": ".py",
-                            "mimetype": "text/x-python",
-                            "name": "python",
-                            "nbconvert_exporter": "python",
-                            "pygments_lexer": "ipython3",
-                            "version": "3.6.9",
-                          },
-                      },
-                    "nbformat": 4,
-                    "nbformat_minor": 4,
-                  }
+                  cells:
+                    - cell_type: code
+                      execution_count: null
+                      metadata: {}
+                      outputs: []
+                      source: []
+                  metadata:
+                    kernelspec:
+                      display_name: Python 3
+                      language: python
+                      name: python3
+                    language_info:
+                      codemirror_mode:
+                        name: ipython
+                        version: 3
+                      file_extension: .py
+                      mimetype: text/x-python
+                      name: python
+                      nbconvert_exporter: python
+                      pygments_lexer: ipython3
+                      version: 3.6.9
+                  nbformat: 4
+                  nbformat_minor: 4
                 experimentNotebook:
-                  {
-                    "cells":
-                      [
-                        {
-                          "cell_type": "code",
-                          "execution_count": null,
-                          "metadata": {},
-                          "outputs": [],
-                          "source": [],
-                        },
-                      ],
-                    "metadata":
-                      {
-                        "kernelspec":
-                          {
-                            "display_name": "Python 3",
-                            "language": "python",
-                            "name": "python3",
-                          },
-                        "language_info":
-                          {
-                            "codemirror_mode":
-                              { "name": "ipython", "version": 3 },
-                            "file_extension": ".py",
-                            "mimetype": "text/x-python",
-                            "name": "python",
-                            "nbconvert_exporter": "python",
-                            "pygments_lexer": "ipython3",
-                            "version": "3.6.9",
-                          },
-                      },
-                    "nbformat": 4,
-                    "nbformat_minor": 4,
-                  }
+                  cells:
+                    - cell_type: code
+                      execution_count: null
+                      metadata: {}
+                      outputs: []
+                      source: []
+                  metadata:
+                    kernelspec:
+                      display_name: Python 3
+                      language: python
+                      name: python3
+                    language_info:
+                      codemirror_mode:
+                        name: ipython
+                        version: 3
+                      file_extension: .py
+                      mimetype: text/x-python
+                      name: python
+                      nbconvert_exporter: python
+                      pygments_lexer: ipython3
+                      version: 3.6.9
+                  nbformat: 4
+                  nbformat_minor: 4
     TaskPatch:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/TaskNotebooks"
+            $ref: '#/components/schemas/TaskNotebooks'
           example:
             name: string
             description: string
             category: DEFAULT
-            tags: ["DEFAULT"]
+            tags:
+              - DEFAULT
             dataIn: string
             dataOut: string
             docs: string
-            commands: ["cmd"]
-            arguments: ["arg"]
-            image: your-custom-docker-image:tag
-            cpuLimit: "1000m"
-            cpuRequest: "1000m"
-            memoryLimit: "10G"
-            memoryRequest: "10G"
+            commands:
+              - cmd
+            arguments:
+              - arg
+            image: 'your-custom-docker-image:tag'
+            cpuLimit: 1000m
+            cpuRequest: 1000m
+            memoryLimit: 10G
+            memoryRequest: 10G
             deploymentNotebook:
-              {
-                "cells":
-                  [
-                    {
-                      "cell_type": "code",
-                      "execution_count": null,
-                      "metadata": {},
-                      "outputs": [],
-                      "source": [],
-                    },
-                  ],
-                "metadata":
-                  {
-                    "kernelspec":
-                      {
-                        "display_name": "Python 3",
-                        "language": "python",
-                        "name": "python3",
-                      },
-                    "language_info":
-                      {
-                        "codemirror_mode": { "name": "ipython", "version": 3 },
-                        "file_extension": ".py",
-                        "mimetype": "text/x-python",
-                        "name": "python",
-                        "nbconvert_exporter": "python",
-                        "pygments_lexer": "ipython3",
-                        "version": "3.6.9",
-                      },
-                  },
-                "nbformat": 4,
-                "nbformat_minor": 4,
-              }
+              cells:
+                - cell_type: code
+                  execution_count: null
+                  metadata: {}
+                  outputs: []
+                  source: []
+              metadata:
+                kernelspec:
+                  display_name: Python 3
+                  language: python
+                  name: python3
+                language_info:
+                  codemirror_mode:
+                    name: ipython
+                    version: 3
+                  file_extension: .py
+                  mimetype: text/x-python
+                  name: python
+                  nbconvert_exporter: python
+                  pygments_lexer: ipython3
+                  version: 3.6.9
+              nbformat: 4
+              nbformat_minor: 4
             experimentNotebook:
-              {
-                "cells":
-                  [
-                    {
-                      "cell_type": "code",
-                      "execution_count": null,
-                      "metadata": {},
-                      "outputs": [],
-                      "source": [],
-                    },
-                  ],
-                "metadata":
-                  {
-                    "kernelspec":
-                      {
-                        "display_name": "Python 3",
-                        "language": "python",
-                        "name": "python3",
-                      },
-                    "language_info":
-                      {
-                        "codemirror_mode": { "name": "ipython", "version": 3 },
-                        "file_extension": ".py",
-                        "mimetype": "text/x-python",
-                        "name": "python",
-                        "nbconvert_exporter": "python",
-                        "pygments_lexer": "ipython3",
-                        "version": "3.6.9",
-                      },
-                  },
-                "nbformat": 4,
-                "nbformat_minor": 4,
-              }
+              cells:
+                - cell_type: code
+                  execution_count: null
+                  metadata: {}
+                  outputs: []
+                  source: []
+              metadata:
+                kernelspec:
+                  display_name: Python 3
+                  language: python
+                  name: python3
+                language_info:
+                  codemirror_mode:
+                    name: ipython
+                    version: 3
+                  file_extension: .py
+                  mimetype: text/x-python
+                  name: python
+                  nbconvert_exporter: python
+                  pygments_lexer: ipython3
+                  version: 3.6.9
+              nbformat: 4
+              nbformat_minor: 4
     TaskMailing:
       content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                emails:
-                  type: array
-                  items:
-                    type: string
+        application/json:
+          schema:
+            type: object
+            properties:
+              emails:
+                type: array
+                items:
+                  type: string
     Project:
       content:
         application/json:
@@ -2708,6 +4185,23 @@ components:
                 type: string
               description:
                 type: string
+    ListProjects:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              filters:
+                type: object
+                properties:
+                  name:
+                    type: string
+              order:
+                type: string
+              page:
+                type: integer
+              page_size:
+                type: integer
     Deleteprojects:
       content:
         application/json:
@@ -2746,22 +4240,23 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/DeploymentExperiments"
-              - $ref: "#/components/schemas/DeploymentTemplate"
-              - $ref: "#/components/schemas/DeploymentCopyFrom"
+              - $ref: '#/components/schemas/DeploymentExperiments'
+              - $ref: '#/components/schemas/DeploymentTemplate'
+              - $ref: '#/components/schemas/DeploymentCopyFrom'
           examples:
             experiments:
               summary: From a list of experiments
               value:
-                experiments: ["3fa85f64-5717-4562-b3fc-2c963f66afa6"]
+                experiments:
+                  - 3fa85f64-5717-4562-b3fc-2c963f66afa6
             template:
               summary: From a template
               value:
-                templateId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                templateId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
             copyFrom:
               summary: From an existing deployment
               value:
-                copyFrom: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                copyFrom: 3fa85f64-5717-4562-b3fc-2c963f66afa6
                 name: string
     DeploymentPatch:
       content:
@@ -2849,12 +4344,12 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/AnyValue"
+            $ref: '#/components/schemas/AnyValue'
     ResponsePost:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Prediction"
+            $ref: '#/components/schemas/Prediction'
     RunPost:
       content:
         application/json:
@@ -2866,20 +4361,19 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/TemplateExperiment"
-              - $ref: "#/components/schemas/TemplateDeployment"
+              - $ref: '#/components/schemas/TemplateExperiment'
+              - $ref: '#/components/schemas/TemplateDeployment'
           examples:
             experiment:
               summary: From a experimentId
               value:
                 name: string
-                experimentId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                experimentId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
             deployment:
               summary: From a deploymentId
               value:
                 name: string
-                deploymentId:
-                  "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                deploymentId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
     TemplatePatch:
       content:
         application/json:
@@ -2898,40 +4392,40 @@ components:
               format: uuid
   responses:
     AnyValue:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/AnyValue"
+            $ref: '#/components/schemas/AnyValue'
         text/plain:
           schema:
             type: string
     Comparison:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Comparison"
+            $ref: '#/components/schemas/Comparison'
     Comparisons:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Comparisons"
+            $ref: '#/components/schemas/Comparisons'
     Task:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Task"
+            $ref: '#/components/schemas/Task'
     Tasks:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Tasks"
+            $ref: '#/components/schemas/Tasks'
     TaskMailing:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
@@ -2940,91 +4434,79 @@ components:
               message:
                 type: string
     Parameters:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Parameters"
+            $ref: '#/components/schemas/Parameters'
     Project:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Project"
+            $ref: '#/components/schemas/Project'
     Projects:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Projects"
+            $ref: '#/components/schemas/Projects'
     Experiment:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Experiment"
+            $ref: '#/components/schemas/Experiment'
     Experiments:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Experiments"
+            $ref: '#/components/schemas/Experiments'
     Deployment:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Deployments"
+            $ref: '#/components/schemas/Deployments'
     Deployments:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Deployments"
+            $ref: '#/components/schemas/Deployments'
     Prediction:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Prediction"
-          examples:
-            data:
-              summary: Tabular data
-              value:
-                data:
-                  ndarray: [[1.0, 2.0, 3.0, 3.0]]
-                meta: {}
-            strData:
-              summary: String data
-              value:
-                strData: "The blue fox jumps over the lazy dog"
-                meta: {}
-            binData:
-              summary: Binary data
-              value:
-                binData: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-                meta:
-                  tags: {"content-type": "image/jpg"}
+            $ref: '#/components/schemas/Prediction'
+    PredictionInfo:
+      description: ''
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PredictionInfo'
     Operator:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Operator"
+            $ref: '#/components/schemas/Operator'
     Operators:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Operators"
+            $ref: '#/components/schemas/Operators'
     Logs:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Logs"
+            $ref: '#/components/schemas/Logs'
     RunResults:
-      description: ""
+      description: ''
       content:
         application/x-zip-compressed:
           schema:
@@ -3036,49 +4518,49 @@ components:
             type: string
             example: attachment; filename="results.zip"
     Datasets:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Datasets"
+            $ref: '#/components/schemas/Datasets'
     Figures:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Figures"
+            $ref: '#/components/schemas/Figures'
     Metrics:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Metrics"
+            $ref: '#/components/schemas/Metrics'
     Run:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Run"
+            $ref: '#/components/schemas/Run'
     Runs:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Runs"
+            $ref: '#/components/schemas/Runs'
     Template:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Template"
+            $ref: '#/components/schemas/Template'
     Templates:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Templates"
+            $ref: '#/components/schemas/Templates'
     Message:
-      description: ""
+      description: ''
       content:
         application/json:
           schema:
@@ -3089,49 +4571,293 @@ components:
             required:
               - message
     BadRequest:
-      description: ""
+      description: >
+        Bad Request response status code indicates that the server cannot or
+        will not process the request due to something that is perceived to be a
+        client error. A common cause is that the client has sent invalid request
+        values.
       content:
         application/json:
           schema:
             type: object
             properties:
+              code:
+                type: string
               message:
                 type: string
             required:
+              - code
+              - message
+    Forbidden:
+      description: >
+        Forbidden client error status response code indicates that the server
+        understands the request but refuses to authorize it.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+            required:
+              - code
               - message
     NotFound:
-      description: ""
+      description: >
+        Not Found client error response code indicates that the server can't
+        find the requested resource. A common cause is that a provided ID does
+        not exist in the database.
       content:
         application/json:
           schema:
             type: object
             properties:
+              code:
+                type: string
               message:
                 type: string
-                example: "The specified ... does not exist"
             required:
+              - code
               - message
     InternalServerError:
-      description: ""
+      description: >
+        Internal Server Error server error response code indicates that the
+        server encountered an unexpected condition that prevented it from
+        fulfilling the request. This error response is a generic "catch-all"
+        response.
       content:
         application/json:
           schema:
             type: object
             properties:
+              code:
+                type: string
               message:
                 type: string
-                example: "An internal failure occurred."
             required:
+              - code
               - message
     ServiceUnavailable:
-      description: ""
+      description: >
+        Service Unavailable server error response code indicates that the server
+        is not ready to handle the request. A common cause is that the database
+        is not available or overloaded.
       content:
         application/json:
           schema:
             type: object
             properties:
+              code:
+                type: string
               message:
                 type: string
-                example: "The service is unavailable. Try your call again."
             required:
+              - code
               - message
+  examples:
+    CannotConnectToDatabase:
+      value:
+        code: CannotConnectToDatabase
+        message: Could not connect to database
+    MissingRequiredFormDataOrJson:
+      value:
+        code: MissingRequiredFormDataOrJson
+        message: either form-data or json is required
+    InvalidDataset:
+      value:
+        code: InvalidDataset
+        message: a valid dataset is required
+    MissingRequiredDatasetOrFile:
+      value:
+        code: MissingRequiredDatasetOrFile
+        message: either dataset name or file is required
+    InvalidOrderBy:
+      value:
+        code: InvalidOrderBy
+        message: Invalid order argument
+    ProjectNameExists:
+      value:
+        code: ProjectNameExists
+        message: a project with that name already exists
+    MissingRequiredProjectId:
+      value:
+        code: MissingRequiredProjectId
+        message: inform at least one project
+    MissingRequiredTemplateName:
+      value:
+        code: MissingRequiredTemplateName
+        message: name is required
+    MissingRequiredExperimentIdOrDeploymentId:
+      value:
+        code: MissingRequiredExperimentIdOrDeploymentId
+        message: experimentId or deploymentId needed to create template.
+    TemplateNameExists:
+      value:
+        code: TemplateNameExists
+        message: a template with that name already exists
+    MissingRequiredTemplateId:
+      value:
+        code: MissingRequiredTemplateId
+        message: inform at least one template
+    MissingRequiredExperimentsOrTemplateIdOrCopyFrom:
+      value:
+        code: MissingRequiredExperimentsOrTemplateIdOrCopyFrom
+        message: 'either experiments, templateId or copyFrom is required'
+    MissingRequiredDeploymentName:
+      value:
+        code: MissingRequiredDeploymentName
+        message: name is required to duplicate deployment
+    MissingRequiredOperatorId:
+      value:
+        code: MissingRequiredOperatorId
+        message: Necessary at least one operator.
+    MissingRequiredDataSourceOperatorId:
+      value:
+        code: MissingRequiredDataSourceOperatorId
+        message: Necessary at least one operator that is not a data source.
+    InvalidExperiments:
+      value:
+        code: InvalidExperiments
+        message: some experiments do not exist
+    InvalidDeploymentId:
+      value:
+        code: InvalidDeploymentId
+        message: source deployment does not exist
+    InvalidRunId:
+      value:
+        code: InvalidRunId
+        message: Not a failed run
+    MissingRequiredExperimentName:
+      value:
+        code: MissingRequiredExperimentName
+        message: name is required
+    DeploymentNameExists:
+      value:
+        code: DeploymentNameExists
+        message: a deployment with that name already exists
+    ExperimentNameExists:
+      value:
+        code: ExperimentNameExists
+        message: an experiment with that name already exists
+    InvalidExperimentId:
+      value:
+        code: InvalidExperimentId
+        message: source experiment does not exist
+    InvalidTemplateId:
+      value:
+        code: InvalidTemplateId
+        message: The specified template does not exist
+    CannotCreateLogStream:
+      value:
+        code: CannotCreateLogStream
+        message: Unable to create log stream. No active pod available.
+    CannotCreateNamespacedPod:
+      value:
+        code: CannotCreateNamespacedPod
+        message: 'Error while trying to create pod: {message}'
+    MissingRequiredTaskId:
+      value:
+        code: MissingRequiredTaskId
+        message: taskId is required
+    InvalidOperatorRequestBody:
+      value:
+        code: InvalidOperatorRequestBody
+        message: Operator cannot contain an experiment and a deployment simultaneously
+    InvalidParameters:
+      value:
+        code: InvalidParameters
+        message: The specified parameters are not valid
+    InvalidDependencies:
+      value:
+        code: InvalidDependencies
+        message: The specified dependencies are not valid.
+    InvalidCyclicalDependencies:
+      value:
+        code: InvalidCyclicalDependencies
+        message: Cyclical dependencies.
+    MissingRequiredNotebookOrTaskId:
+      value:
+        code: MissingRequiredNotebookOrTaskId
+        message: Either provide notebooks or a task to copy from
+    TaskNameExists:
+      value:
+        code: TaskNameExists
+        message: a task with that name already exists
+    InvalidTaskId:
+      value:
+        code: InvalidTaskId
+        message: source task does not exist
+    InvalidCategory:
+      value:
+        code: InvalidCategory
+        message: 'Invalid category. Choose any of {valid_categories}'
+    InvalidDockerImageName:
+      value:
+        code: InvalidDockerImageName
+        message: invalid docker image name
+    TaskProtectedFromDeletion:
+      value:
+        code: TaskProtectedFromDeletion
+        message: Task related to an operator
+    CannotConnectToCluster:
+      value:
+        code: CannotConnectToCluster
+        message: Failed to connect to cluster.
+    CannotCreatePersistentVolumeClaim:
+      value:
+        code: CannotCreatePersistentVolumeClaim
+        message: 'Error while trying to create persistent volume claim: {message}'
+    CannotPatchNotebookServer:
+      value:
+        code: CannotPatchNotebookServer
+        message: 'Error while trying to patch notebook server: {message}'
+    CannotRetrieveContainerLogs:
+      value:
+        code: CannotRetrieveContainerLogs
+        message: 'Error while trying to retrieve container''s log: {message}'
+    ComparisonNotFound:
+      value:
+        code: ComparisonNotFound
+        message: The specified comparison does not exist.
+    DeploymentNotFound:
+      value:
+        code: DeploymentNotFound
+        message: The specified deployment does not exist.
+    ExperimentNotFound:
+      value:
+        code: ExperimentNotFound
+        message: The specified experiment does not exist.
+    MonitoringNotFound:
+      value:
+        code: MonitoringNotFound
+        message: The specified monitoring does not exist.
+    OperatorNotFound:
+      value:
+        code: OperatorNotFound
+        message: The specified operator does not exist.
+    PredictionNotFound:
+      value:
+        code: PredictionNotFound
+        message: The specified prediction does not exist.
+    ProjectNotFound:
+      value:
+        code: ProjectNotFound
+        message: The specified project does not exist.
+    RunNotFound:
+      value:
+        code: RunNotFound
+        message: The specified run does not exist.
+    TaskNotFound:
+      value:
+        code: TaskNotFound
+        message: The specified task does not exist.
+    TemplateNotFound:
+      value:
+        code: TemplateNotFound
+        message: The specified template does not exist.
+    DatasetNotFound:
+      value:
+        code: DatasetNotFound
+        message: The specified run does not contain dataset.

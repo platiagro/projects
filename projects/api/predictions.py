@@ -3,26 +3,42 @@
 from json.decoder import JSONDecodeError
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Header, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Header,
+    Request,
+    UploadFile,
+)
 from sqlalchemy.orm import Session
 
-from projects.controllers import DeploymentController, PredictionController, \
-    ProjectController
-from projects.exceptions import BadRequest
+from projects.controllers import (
+    DeploymentController,
+    PredictionController,
+    ProjectController,
+)
+
 from projects.database import session_scope
+from projects.exceptions import BadRequest
+from projects.schemas import Prediction, PredictionBase
 
 router = APIRouter(
     prefix="/projects/{project_id}/deployments/{deployment_id}/predictions",
 )
 
 
-@router.post("")
-async def handle_post_prediction(project_id: str,
-                                 deployment_id: str,
-                                 request: Request,
-                                 file: Optional[UploadFile] = File(None),
-                                 session: Session = Depends(session_scope),
-                                 kubeflow_userid: Optional[str] = Header("anonymous")):
+@router.post("", response_model=PredictionBase)
+async def handle_post_prediction(
+    project_id: str,
+    deployment_id: str,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: Optional[UploadFile] = File(None),
+    session: Session = Depends(session_scope),
+    kubeflow_userid: Optional[str] = Header("anonymous"),
+):
     """
     Handles POST request to /.
 
@@ -37,7 +53,7 @@ async def handle_post_prediction(project_id: str,
 
     Returns
     -------
-    dict
+    Prediction: projects.schemas.prediction.Prediction
     """
     project_controller = ProjectController(session, kubeflow_userid=kubeflow_userid)
     project_controller.raise_if_project_does_not_exist(project_id)
@@ -53,9 +69,35 @@ async def handle_post_prediction(project_id: str,
         try:
             kwargs = await request.json()
         except JSONDecodeError:
-            raise BadRequest("either form-data or json is required")
+            raise BadRequest(
+                code="MissingRequiredFormDataOrJson",
+                message="either form-data or json is required",
+            )
+
+    prediction_controller = PredictionController(session, background_tasks)
+    prediction = prediction_controller.create_prediction(
+        deployment_id=deployment_id, **kwargs
+    )
+    return prediction
+
+
+@router.get("/{prediction_id}", response_model=Prediction)
+async def handle_get_prediction(
+    prediction_id: str, session: Session = Depends(session_scope)
+):
+    """
+    Handles GET requests to /<prediction_id>.
+
+    Parameters
+    ----------
+    prediction_id : str
+    session : sqlalchemy.orm.session.Session
+
+    Returns
+    -------
+    dict
+    """
 
     prediction_controller = PredictionController(session)
-    return prediction_controller.create_prediction(project_id=project_id,
-                                                   deployment_id=deployment_id,
-                                                   **kwargs)
+    prediction = prediction_controller.get_prediction(prediction_id=prediction_id)
+    return prediction

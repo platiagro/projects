@@ -5,10 +5,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
-from projects.controllers import ExperimentController, MetricController, \
-    ProjectController
+from projects import database
+from projects.controllers import (
+    ExperimentController,
+    MetricController,
+    ProjectController,
+)
 from projects.controllers.experiments.runs import RunController
-from projects.database import session_scope
 
 router = APIRouter(
     prefix="/projects/{project_id}/experiments/{experiment_id}/runs/{run_id}/operators/{operator_id}/metrics",
@@ -16,12 +19,14 @@ router = APIRouter(
 
 
 @router.get("")
-async def handle_list_metrics(project_id: str,
-                              experiment_id: str,
-                              run_id: str,
-                              operator_id: str,
-                              session: Session = Depends(session_scope),
-                              kubeflow_userid: Optional[str] = Header("anonymous")):
+async def handle_list_metrics(
+    project_id: str,
+    experiment_id: str,
+    run_id: str,
+    operator_id: str,
+    session: Session = Depends(database.session_scope),
+    kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
+):
     """
     Handles GET requests to /.
 
@@ -48,8 +53,9 @@ async def handle_list_metrics(project_id: str,
     run_controller.raise_if_run_does_not_exist(run_id, experiment_id)
 
     metric_controller = MetricController(session)
-    metrics = metric_controller.list_metrics(project_id=project_id,
-                                             experiment_id=experiment_id,
-                                             operator_id=operator_id,
-                                             run_id=run_id)
+    metrics = metric_controller.list_metrics(
+        experiment_id=experiment_id,
+        operator_id=operator_id,
+        run_id=run_id,
+    )
     return metrics

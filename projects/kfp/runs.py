@@ -3,6 +3,8 @@
 import json
 import os
 from datetime import datetime
+from kfp_server_api.rest import ApiException
+from projects.exceptions import NotFound
 
 from projects.exceptions import BadRequest
 from projects.kfp import kfp_client
@@ -40,14 +42,15 @@ def list_runs(experiment_id):
     runs = []
     for kfp_run in kfp_runs.runs:
         run_id = kfp_run.id
-        run = get_run(experiment_id=experiment_id,
-                      run_id=run_id)
+        run = get_run(experiment_id=experiment_id, run_id=run_id)
         runs.append(run)
 
     return runs
 
 
-def start_run(operators, project_id, experiment_id, deployment_id=None, deployment_name=None):
+def start_run(
+    operators, project_id, experiment_id, deployment_id=None
+):
     """
     Start a new run in Kubeflow Pipelines.
 
@@ -57,7 +60,6 @@ def start_run(operators, project_id, experiment_id, deployment_id=None, deployme
     project_id : str
     experiment_id : str
     deployment_id : str or None
-    deployment_name : str or None
 
     Returns
     -------
@@ -72,15 +74,13 @@ def start_run(operators, project_id, experiment_id, deployment_id=None, deployme
     else:
         name = f"deployment-{deployment_id}"
 
-    if not deployment_name:
-        deployment_name = deployment_id
-
-    compile_pipeline(name=name,
-                     operators=operators,
-                     project_id=project_id,
-                     experiment_id=experiment_id,
-                     deployment_id=deployment_id,
-                     deployment_name=deployment_name)
+    compile_pipeline(
+        name=name,
+        operators=operators,
+        project_id=project_id,
+        experiment_id=experiment_id,
+        deployment_id=deployment_id,
+    )
 
     if deployment_id is not None:
         kfp_experiment = kfp_client().create_experiment(name=deployment_id)
@@ -122,9 +122,12 @@ def get_run(run_id, experiment_id):
     if run_id == "latest":
         run_id = get_latest_run_id(experiment_id)
 
-    kfp_run = kfp_client().get_run(
-        run_id=run_id,
-    )
+    try:
+        kfp_run = kfp_client().get_run(
+            run_id=run_id,
+        )
+    except (ApiException, ValueError):
+        raise NotFound(code="RunNotFound", message="The specified run does not exist")
 
     workflow_manifest = json.loads(kfp_run.pipeline_runtime.workflow_manifest)
 
@@ -139,8 +142,12 @@ def get_run(run_id, experiment_id):
 
     # initializes all operators with status=Pending and parameters={}
     template = next(t for t in workflow_manifest["spec"]["templates"] if "dag" in t)
-    tasks = (tsk for tsk in template["dag"]["tasks"] if not tsk["name"].startswith("vol-"))
-    operators = dict((t["name"], {"status": default_node_status, "parameters": {}}) for t in tasks)
+    tasks = (
+        tsk for tsk in template["dag"]["tasks"] if not tsk["name"].startswith("vol-")
+    )
+    operators = dict(
+        (t["name"], {"status": default_node_status, "parameters": {}}) for t in tasks
+    )
 
     # set status for each operator
     for node in workflow_manifest["status"].get("nodes", {}).values():
@@ -214,9 +221,12 @@ def terminate_run(run_id, experiment_id):
     ------
     ApiException
     """
-    if run_id == "latest":
-        run_id = get_latest_run_id(experiment_id)
-    kfp_client().runs.terminate_run(run_id=run_id)
+    try:
+        if run_id == "latest":
+            run_id = get_latest_run_id(experiment_id)
+        kfp_client().runs.terminate_run(run_id=run_id)
+    except (ApiException, ValueError):
+        raise NotFound(code="RunNotFound", message="The specified run does not exist")
 
     return {"message": "Run terminated"}
 
@@ -250,7 +260,7 @@ def retry_run(run_id, experiment_id):
     if kfp_run.run.status == "Failed":
         kfp_client().runs.retry_run(run_id=kfp_run.run.id)
     else:
-        raise BadRequest("Not a failed run")
+        raise BadRequest(code="InvalidRunId", message="Not a failed run")
 
     return {"message": "Run re-initiated successfully"}
 
@@ -273,7 +283,7 @@ def get_task_id(template):
     for var in template["inputs"]["parameters"]:
         name = var["name"]
         if name.startswith(prefix):
-            return name[len(prefix):len(name)-len(suffix)]
+            return name[len(prefix): len(name) - len(suffix)]
 
 
 def get_parameters(template):

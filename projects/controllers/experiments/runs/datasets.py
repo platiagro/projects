@@ -16,14 +16,19 @@ class DatasetController:
     def __init__(self, session):
         self.session = session
 
-    def get_dataset(self, project_id: str, experiment_id: str, run_id: str, operator_id: str,
-                    page: Optional[int] = 1, page_size: Optional[int] = 10, accept: Optional[str] = None):
+    def get_dataset(
+        self,
+        experiment_id: str,
+        run_id: str,
+        operator_id: str,
+        page: Optional[int] = 1,
+        page_size: Optional[int] = 10,
+    ):
         """
         Get dataset records from a run. Supports pagination.
 
         Parameters
         ----------
-        project_id : str
         experiment_id : str
         run_id : str
             The run_id. If `run_id=latest`, then returns datasets from the latest run_id.
@@ -32,8 +37,6 @@ class DatasetController:
             The page number. First page is 1.
         page_size : int
             The page size. Default value is 10.
-        accept : str
-            Whether dataset should be returned as csv file. Default to None.
 
         Returns
         -------
@@ -53,7 +56,10 @@ class DatasetController:
         try:
             metadata = stat_dataset(name=name, operator_id=operator_id, run_id=run_id)
         except FileNotFoundError:
-            raise NotFound("The specified run does not contain dataset")
+            raise NotFound(
+                code="DatasetNotFound",
+                message="The specified run does not contain dataset",
+            )
 
         dataset = load_dataset(
             name=name,
@@ -97,10 +103,12 @@ class DatasetController:
         dataset_name = operator.parameters.get("dataset")
 
         if dataset_name is None:
-            operators = self.session.query(models.Operator) \
-                .filter_by(experiment_id=experiment_id) \
-                .filter(models.Operator.uuid != operator_id) \
+            operators = (
+                self.session.query(models.Operator)
+                .filter_by(experiment_id=experiment_id)
+                .filter(models.Operator.uuid != operator_id)
                 .all()
+            )
 
             for operator in operators:
                 dataset_name = operator.parameters.get("dataset")
@@ -108,6 +116,8 @@ class DatasetController:
                     break
 
             if dataset_name is None:
-                raise NotFound("No dataset assigned to the run")
+                raise NotFound(
+                    code="DatasetNotFound", message="No dataset assigned to the run"
+                )
 
         return dataset_name
