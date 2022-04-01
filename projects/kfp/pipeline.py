@@ -29,7 +29,7 @@ SELDON_LOGGER_ENDPOINT = getenv(
 )
 
 
-def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, deployment_name):
+def compile_pipeline(name, operators, project_id, experiment_id, deployment_id):
     """
     Compile the pipeline in a .yaml file.
 
@@ -40,7 +40,6 @@ def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, 
     project_id : str
     experiment_id : str
     deployment_id : str or None
-    deployment_name : str
     """
     @dsl.pipeline(name=name)
     def pipeline_func():
@@ -71,7 +70,7 @@ def compile_pipeline(name, operators, project_id, experiment_id, deployment_id, 
                                              project_id=project_id,
                                              experiment_id=experiment_id,
                                              deployment_id=deployment_id,
-                                             deployment_name=deployment_name)
+                                             )
 
         # Sets dependencies for each container_op
         for operator, container_op in containers.values():
@@ -163,37 +162,37 @@ def create_container_op(operator, experiment_id, **kwargs):
                 name="EXPERIMENT_ID",
                 value=experiment_id,
             ),
-        ) \
+    ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="OPERATOR_ID",
                 value=operator.uuid,
             ),
-        ) \
+    ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="RUN_ID",
                 value=dsl.RUN_ID_PLACEHOLDER,
             ),
-        ) \
+    ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="TASK_NAME",
                 value=operator.task.name,
             ),
-        ) \
+    ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="NOTEBOOK_PATH",
                 value=notebook_path,
             ),
-        ) \
+    ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="MINIO_ENDPOINT",
                 value=MINIO_ENDPOINT,
             ),
-        ) \
+    ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="MINIO_ACCESS_KEY",
@@ -204,7 +203,7 @@ def create_container_op(operator, experiment_id, **kwargs):
                     ),
                 ),
             ),
-        ) \
+    ) \
         .add_env_variable(
             k8s_client.V1EnvVar(
                 name="MINIO_SECRET_KEY",
@@ -215,7 +214,7 @@ def create_container_op(operator, experiment_id, **kwargs):
                     ),
                 ),
             ),
-        )
+    )
 
     if dataset is not None:
         dataset = dumps(dataset)
@@ -256,7 +255,7 @@ def create_container_op(operator, experiment_id, **kwargs):
     return container_op
 
 
-def create_resource_op(operators, project_id, experiment_id, deployment_id, deployment_name):
+def create_resource_op(operators, project_id, experiment_id, deployment_id):
     """
     Create kfp.dsl.ResourceOp container from an operator list.
 
@@ -266,7 +265,6 @@ def create_resource_op(operators, project_id, experiment_id, deployment_id, depl
     project_id : str
     experiment_id : str
     deployment_id : str
-    deployment_name : str
 
     Returns
     -------
