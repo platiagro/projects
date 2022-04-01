@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import unittest
 import unittest.mock as mock
-import pytest
 
 from fastapi.testclient import TestClient
-from kubernetes.client.rest import ApiException as K8_ApiException
 
 from projects.api.main import app
 from projects.database import session_scope

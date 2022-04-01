@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
 import unittest.mock as mock
-import requests
-import json
-from io import BytesIO
 
 from fastapi.testclient import TestClient
 
