@@ -309,7 +309,7 @@ class ExperimentController:
                 position_y=stored_operator.position_y,
             )
             operator = self.operator_controller.create_operator(
-                operator=operator, project_id=project_id, experiment_id=experiment.uuid
+                operator=operator, experiment_id=experiment.uuid
             )
 
             copies_map[stored_operator.uuid] = {
@@ -325,7 +325,6 @@ class ExperimentController:
                 ],
             )
             self.operator_controller.update_operator(
-                project_id=project_id,
                 experiment_id=experiment.uuid,
                 operator_id=value["copy_uuid"],
                 operator=operator,
