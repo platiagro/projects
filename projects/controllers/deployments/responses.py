@@ -19,13 +19,12 @@ class ResponseController:
     def __init__(self, session):
         self.session = session
 
-    def create_response(self, project_id: str, deployment_id: str, body: dict):
+    def create_response(self, deployment_id: str, body: dict):
         """
         Creates a response entry in logs file.
 
         Parameters
         ----------
-        project_id : str
         deployment_id : str
         body : dict
         """
