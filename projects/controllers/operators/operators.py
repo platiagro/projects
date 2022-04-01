@@ -117,7 +117,6 @@ class OperatorController:
 
         if experiment_id:
             self.raise_if_dependencies_are_invalid(
-                project_id=project_id,
                 experiment_id=experiment_id,
                 deployment_id=deployment_id,
                 dependencies=operator.dependencies,
@@ -191,7 +190,6 @@ class OperatorController:
 
         if operator.dependencies is not None:
             self.raise_if_dependencies_are_invalid(
-                project_id=project_id,
                 experiment_id=experiment_id,
                 deployment_id=deployment_id,
                 dependencies=operator.dependencies,
@@ -309,7 +307,6 @@ class OperatorController:
 
     def raise_if_dependencies_are_invalid(
         self,
-        project_id: str,
         dependencies: List,
         experiment_id: Optional[str] = None,
         deployment_id: Optional[str] = None,
@@ -323,7 +320,6 @@ class OperatorController:
 
         Parameters
         ----------
-        project_id : str
         dependencies : list
         experiment_id : str or None
         deployment_id : str or None
