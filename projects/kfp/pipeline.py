@@ -114,7 +114,7 @@ def create_volume_op(name):
             "accessModes": ["ReadWriteOnce"],
             "resources": {
                 "requests": {
-                    "storage": "10Gi",
+                    "storage": "1Gi",
                 },
             },
         },
