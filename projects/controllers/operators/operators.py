@@ -54,7 +54,6 @@ class OperatorController:
 
     def list_operators(
         self,
-        project_id: str,
         experiment_id: Optional[str] = None,
         deployment_id: Optional[str] = None,
     ):
@@ -63,7 +62,6 @@ class OperatorController:
 
         Parameters
         ----------
-        project_id : str
         experiment_id : str or None
         deployment_id : str or None
 
@@ -353,7 +351,6 @@ class OperatorController:
                 raise INVALID_DEPENDENCIES
 
         self.raise_if_has_cycles(
-            project_id=project_id,
             experiment_id=experiment_id,
             deployment_id=deployment_id,
             operator_id=operator_id,
@@ -362,7 +359,6 @@ class OperatorController:
 
     def raise_if_has_cycles(
         self,
-        project_id: str,
         operator_id: str,
         dependencies: List[str],
         experiment_id: Optional[str] = None,
@@ -373,7 +369,6 @@ class OperatorController:
 
         Parameters
         ----------
-        project_id : str
         operator_id : str
         dependencies : list or None
         experiment_id : str or None

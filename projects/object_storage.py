@@ -32,7 +32,7 @@ def make_bucket(name):
     try:
         MINIO_CLIENT.make_bucket(name)
     except S3Error as err:
-        if not err.code == "BucketAlreadyOwnedByYou":
+        if err.code != "BucketAlreadyOwnedByYou":
             raise
 
 

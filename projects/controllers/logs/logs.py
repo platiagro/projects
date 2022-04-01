@@ -43,7 +43,6 @@ class LogController:
 
     def list_logs(
         self,
-        project_id: str,
         run_id: str,
         experiment_id: Optional[str] = None,
         deployment_id: Optional[str] = None,
@@ -53,7 +52,6 @@ class LogController:
 
         Parameters
         ----------
-        project_id : str
         run_id : str
             The run_id. If `run_id=latest`, then returns logs from the latest run_id.
         experiment_id : str or None

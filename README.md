@@ -128,46 +128,6 @@ docker run -it \
   --env "MYSQL_DB_PASSWORD=$MYSQL_DB_PASSWORD" \
   platiagro/persistence-agent:0.3.0-SNAPSHOT
 ```
-## Share Task
-
-Start the Task sharing Job (share by email):
-
-```bash
-python -m projects.share_task.main:app
-```
-
-Arguments:
-
-```bash
-usage: main.py [-h] [--source SOURCE] [--emails EMAILS [EMAILS ...]] [--log-level [{NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}]]
-
-Share Task Job
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --source SOURCE       Source directory
-  --emails EMAILS [EMAILS ...]
-                        List of emails
-  --log-level [{NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}]
-                        Log level
-```
-
-**Using Docker**
-
-```bash
-docker build -t platiagro/share-task:0.3.0-SNAPSHOT -f Dockerfile.sharetask .
-```
-
-Example:
-
-```bash
-docker run -it \
-  -v $(pwd)/source:/app/source \
-  --name init-task \
-  platiagro/share-task:0.3.0-SNAPSHOT \
-  --source /app/source \
-  --emails myemail@example.com anotheremail@example.com
-```
 
 ## Testing
 

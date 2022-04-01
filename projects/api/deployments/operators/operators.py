@@ -47,7 +47,7 @@ async def handle_list_operators(
 
     operator_controller = OperatorController(session)
     operators = operator_controller.list_operators(
-        project_id=project_id, deployment_id=deployment_id
+        deployment_id=deployment_id
     )
     return operators
 

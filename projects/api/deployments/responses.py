@@ -43,7 +43,7 @@ async def handle_post_responses(
 
     response_controller = ResponseController(session)
     response_controller.create_response(
-        project_id=project_id, deployment_id=deployment_id, body=body
+        deployment_id=deployment_id, body=body
     )
 
     return JSONResponse(

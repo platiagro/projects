@@ -49,7 +49,7 @@ def list_runs(experiment_id):
 
 
 def start_run(
-    operators, project_id, experiment_id, deployment_id=None, deployment_name=None
+    operators, project_id, experiment_id, deployment_id=None
 ):
     """
     Start a new run in Kubeflow Pipelines.
@@ -60,7 +60,6 @@ def start_run(
     project_id : str
     experiment_id : str
     deployment_id : str or None
-    deployment_name : str or None
 
     Returns
     -------
@@ -75,16 +74,12 @@ def start_run(
     else:
         name = f"deployment-{deployment_id}"
 
-    if not deployment_name:
-        deployment_name = deployment_id
-
     compile_pipeline(
         name=name,
         operators=operators,
         project_id=project_id,
         experiment_id=experiment_id,
         deployment_id=deployment_id,
-        deployment_name=deployment_name,
     )
 
     if deployment_id is not None:

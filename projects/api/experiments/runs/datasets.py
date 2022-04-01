@@ -61,12 +61,10 @@ async def handle_get_dataset(
 
     dataset_controller = DatasetController(session)
     datasets = dataset_controller.get_dataset(
-        project_id=project_id,
         experiment_id=experiment_id,
         run_id=run_id,
         operator_id=operator_id,
         page=page,
         page_size=page_size,
-        accept=accept,
     )
     return datasets

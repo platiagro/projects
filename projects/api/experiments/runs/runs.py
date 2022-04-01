@@ -43,7 +43,7 @@ async def handle_list_runs(
     experiment_controller.raise_if_experiment_does_not_exist(experiment_id)
 
     run_controller = RunController(session)
-    runs = run_controller.list_runs(project_id=project_id, experiment_id=experiment_id)
+    runs = run_controller.list_runs(experiment_id=experiment_id)
     return runs
 
 
@@ -110,7 +110,7 @@ async def handle_get_run(
 
     run_controller = RunController(session)
     run = run_controller.get_run(
-        project_id=project_id, experiment_id=experiment_id, run_id=run_id
+        experiment_id=experiment_id, run_id=run_id
     )
     return run
 
@@ -180,6 +180,6 @@ async def handle_post_retry_run(
 
     run_controller = RunController(session)
     run = run_controller.retry_run(
-        project_id=project_id, experiment_id=experiment_id, run_id=run_id
+        experiment_id=experiment_id, run_id=run_id
     )
     return run

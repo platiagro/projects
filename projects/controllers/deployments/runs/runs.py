@@ -127,8 +127,7 @@ class RunController:
                 operators=operators,
                 project_id=deployment.project_id,
                 experiment_id=deployment.experiment_id,
-                deployment_id=deployment.uuid,
-                deployment_name=deployment.name,
+                deployment_id=deployment.uuid
             )
         except ValueError:
             raise BadRequest(

@@ -240,6 +240,10 @@ class TestResults(unittest.TestCase):
         with pytest.raises(S3Error):
             make_bucket("name")
 
+    @mock.patch.object(MINIO_CLIENT, "make_bucket", side_effect=S3Error("BucketAlreadyOwnedByYou", "test", "resource", 0, 10, "response"))
+    def test_make_bucket_s3error_BucketAlreadyOwnedByYou(self, mock_make_bucket):
+        self.assertIsNone(make_bucket("name"))
+
     @mock.patch.object(MINIO_CLIENT, "make_bucket")
     @mock.patch.object(
         MINIO_CLIENT,

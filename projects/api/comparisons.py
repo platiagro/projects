@@ -97,7 +97,6 @@ async def handle_patch_comparisons(
     comparison_controller = ComparisonController(session)
     comparison = comparison_controller.update_comparison(
         comparison_id=comparison_id,
-        project_id=project_id,
         comparison=comparison,
     )
     return comparison
@@ -130,6 +129,5 @@ async def handle_delete_comparisons(
     comparison_controller = ComparisonController(session)
     comparison = comparison_controller.delete_comparison(
         comparison_id=comparison_id,
-        project_id=project_id,
     )
     return comparison

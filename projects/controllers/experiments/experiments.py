@@ -130,13 +130,12 @@ class ExperimentController:
 
         return schemas.Experiment.from_orm(experiment)
 
-    def get_experiment(self, project_id: str, experiment_id: str):
+    def get_experiment(self, experiment_id: str):
         """
         Details an experiment from our database.
 
         Parameters
         ----------
-        project_id : str
         experiment_id : str
 
         Returns
