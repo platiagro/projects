@@ -193,7 +193,6 @@ def create_persistent_volume_claim(name, mount_path):
                 containers_are_running = all(
                     [c.ready for c in pod.status.container_statuses]
                 )
-                # TODO Check if the volume is mounted
                 volume_is_mounted = True
 
                 if pod_is_running and containers_are_running and volume_is_mounted:
