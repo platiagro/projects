@@ -98,7 +98,7 @@ class TestTasks(unittest.TestCase):
 
     def test_list_tasks_order_name_asc(self):
         """
-        Should return a list of tasks sorted by name descending.
+        Should return a list of tasks sorted by name ascending.
         """
         rv = TEST_CLIENT.post("/tasks/list-tasks", json={"order": "name asc"})
         result = rv.json()
