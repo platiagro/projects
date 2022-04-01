@@ -311,13 +311,12 @@ def update_persistent_volume_claim(name, mount_path):
         )
 
 
-def remove_persistent_volume_claim(name, mount_path):
+def remove_persistent_volume_claim(name):
     """
     Remove a persistent volume claim in the default notebook server.
     Parameters
     ----------
     name : str
-    mount_path : str
     """
     load_kube_config()
     v1 = client.CoreV1Api()
