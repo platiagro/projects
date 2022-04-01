@@ -100,7 +100,7 @@ async def handle_get_experiment(
 
     experiment_controller = ExperimentController(session)
     experiment = experiment_controller.get_experiment(
-        experiment_id=experiment_id, project_id=project_id
+        experiment_id=experiment_id
     )
     return experiment
 
