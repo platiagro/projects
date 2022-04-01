@@ -8,14 +8,13 @@ class MetricController:
         self.session = session
 
     def list_metrics(
-        self, project_id: str, experiment_id: str, run_id: str, operator_id: str
+        self, experiment_id: str, run_id: str, operator_id: str
     ):
         """
         Lists all metrics from object storage.
 
         Parameters
         ----------
-        project_id : str
         experiment_id : str
         run_id : str
             The run_id. If `run_id=latest`, then returns metrics from the latest run_id.
