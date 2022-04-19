@@ -1004,7 +1004,7 @@ class TestTasks(unittest.TestCase):
         mock_core_v1_api,
     ):
         """
-        Should return a successfully updated task.
+        Should return a bad request exception.
         """
         task_id = util.MOCK_UUID_5
         rv = TEST_CLIENT.patch(
