@@ -12,7 +12,13 @@ import tests.util as util
 
 app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
-
+BF_DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
 
 class TestProjects(unittest.TestCase):
     maxDiff = None
@@ -191,13 +197,7 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.post(
             "/projects",
             json={
-                "description": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                "description": BF_DESCRIPTION
             },
         )
         result = rv.json()
@@ -433,3 +433,35 @@ class TestProjects(unittest.TestCase):
         mock_custom_objects_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_config_load.assert_any_call()
+
+    def test_update_project_invalid_name(self):
+        """
+        Should return http status 400.
+        """
+        project_id = util.MOCK_UUID_1
+        project_name = "*teste*"
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"name": project_name})
+        rv.json()
+
+        self.assertEqual(rv.status_code, 400)
+    
+    def test_update_project_invalid_name_size(self):
+        """
+        Should return http status 400.
+        """
+        project_id = util.MOCK_UUID_1
+        project_name = "projectprojectprojectprojectprojectprojectprojectprojectproject"
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"name": project_name})
+        rv.json()
+
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_project_invalid_description_size(self):
+        """
+        Should return http status 400.
+        """
+        project_id = util.MOCK_UUID_1
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"description": BF_DESCRIPTION})
+        rv.json()
+
+        self.assertEqual(rv.status_code, 400)
