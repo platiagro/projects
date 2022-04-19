@@ -18,7 +18,13 @@ HOST_URL = "http://ml-pipeline.kubeflow:8888"
 
 TASK_ROUTE = "/tasks"
 EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
-
+BF_DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
 
 class TestTasks(unittest.TestCase):
     maxDiff = None
@@ -208,13 +214,7 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.post(
             "/tasks",
             json={
-                "description": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                "description": BF_DESCRIPTION
             },
         )
         result = rv.json()
@@ -232,13 +232,7 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.post(
             "/tasks",
             json={
-                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                "dataIn": BF_DESCRIPTION
             },
         )
         result = rv.json()
@@ -256,13 +250,7 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.post(
             "/tasks",
             json={
-                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                "dataIn": BF_DESCRIPTION
             },
         )
         result = rv.json()
@@ -1017,3 +1005,35 @@ class TestTasks(unittest.TestCase):
 
         self.assertEqual(rv.status_code, 400)
         self.assertEqual(result["code"], "NotAllowedChar")
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_invalid_description(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
+        """
+        Should return a bad request exception.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "description": BF_DESCRIPTION,
+            },
+        )
+        result = rv.json()
+
+        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(result["code"], "ExceededACharAmount")
