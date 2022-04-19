@@ -985,3 +985,35 @@ class TestTasks(unittest.TestCase):
 
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_invalid_name(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
+        """
+        Should return a successfully updated task.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "name": "name * foo",
+            },
+        )
+        result = rv.json()
+
+        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(result["code"], "NotAllowedChar")
