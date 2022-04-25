@@ -39,7 +39,7 @@ class TestProjects(unittest.TestCase):
         """
         Should return an empty list.
         """
-        rv = TEST_CLIENT.post("/projects/listprojects", json={})
+        rv = TEST_CLIENT.post("/projects/list-projects", json={})
         result = rv.json()
 
         expected = util.MOCK_PROJECT_LIST
@@ -50,7 +50,7 @@ class TestProjects(unittest.TestCase):
         """
         Should return a list of projects sorted by name descending.
         """
-        rv = TEST_CLIENT.post("/projects/listprojects", json={"order": "name desc"})
+        rv = TEST_CLIENT.post("/projects/list-projects", json={"order": "name desc"})
         result = rv.json()
 
         expected = util.MOCK_PROJECT_LIST_SORTED_BY_NAME_DESC
@@ -61,7 +61,7 @@ class TestProjects(unittest.TestCase):
         """
         Should return a http error 400 and a message 'invalid order argument'.
         """
-        rv = TEST_CLIENT.post("/projects/listprojects", json={"order": "name foo"})
+        rv = TEST_CLIENT.post("/projects/list-projects", json={"order": "name foo"})
         result = rv.json()
 
         expected = {
@@ -76,7 +76,7 @@ class TestProjects(unittest.TestCase):
         Should return a list of projects with one element.
         """
         rv = TEST_CLIENT.post(
-            "/projects/listprojects", json={"page_size": 1, "page": 3}
+            "/projects/list-projects", json={"page_size": 1, "page": 3}
         )
         result = rv.json()
         total = util.TestingSessionLocal().query(models.Project).count()
@@ -89,7 +89,7 @@ class TestProjects(unittest.TestCase):
         Should return a list of projects compatible with some filter.
         """
         rv = TEST_CLIENT.post(
-            "/projects/listprojects",
+            "/projects/list-projects",
             json={"filters": {"name": util.MOCK_PROJECT_TO_BE_FILTERED_NAME}},
         )
         result = rv.json()
@@ -103,7 +103,7 @@ class TestProjects(unittest.TestCase):
         """
         for char in util.FORBIDDEN_CHARACTERS_LIST:
             rv = TEST_CLIENT.post(
-                "/projects/listprojects",
+                "/projects/list-projects",
                 json={"filters": {"name": char}},
             )
             result = rv.json()
@@ -119,7 +119,7 @@ class TestProjects(unittest.TestCase):
         Should return http status 400 when project name has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
-            "/projects/listprojects",
+            "/projects/list-projects",
             json={
                 "filters": {
                     "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
