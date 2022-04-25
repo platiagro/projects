@@ -69,7 +69,7 @@ class TestTasks(unittest.TestCase):
             result = rv.json()
             expected = {
                 "code": "NotAllowedChar",
-                "message": "Not allowed char",
+                "message": "Not allowed character used",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
@@ -178,7 +178,7 @@ class TestTasks(unittest.TestCase):
             result = rv.json()
             expected = {
                 "code": "NotAllowedChar",
-                "message": "Not allowed char",
+                "message": "Not allowed character used",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
@@ -307,7 +307,7 @@ class TestTasks(unittest.TestCase):
         result = rv.json()
         expected = {
             "code": "NotAllowedChar",
-            "message": "Not allowed char",
+            "message": "Not allowed character used",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)

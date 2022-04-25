@@ -38,7 +38,7 @@ def raise_if_forbidden_character(forbidden_char_regex, value):
     if re.findall(forbidden_char_regex, value):
         raise BadRequest(
             code="NotAllowedChar",
-            message="Not allowed char",
+            message="Not allowed character used",
         )
 
 
