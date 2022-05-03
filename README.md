@@ -55,7 +55,6 @@ environment variables:
   MAIL_SERVER                   hostname of a smtp service (default: ).
   MAIL_USERNAME                 username of a smtp service (default: ).
   MAIL_PASSWORD                 password of a smtp service (default: ).
-  SHARE_TASK_CONTAINER_IMAGE    docker image used in task sharing jobs (default: platiagro/share-task:0.3.0-SNAPSHOT).
   MAIL_SENDER_ADDRESS           sender address for emails sent by the smtp service (default: ).
   SELDON_REST_TIMEOUT           response timeout in milliseconds for seldondeployments (default: 60000)
   SELDON_LOGGER_ENDPOINT        logger service URL that receives seldondeployment responses (default: http://projects.platiagro:8080)
@@ -71,7 +70,7 @@ environment variables:
 **Using Docker**
 
 ```bash
-docker build -t platiagro/projects:0.3.0-SNAPSHOT -f Dockerfile .
+docker build -t platiagro/projects:0.3.1-SNAPSHOT -f Dockerfile .
 ```
 
 Example:
@@ -87,7 +86,7 @@ docker run -it -p 8080:8080 \
   --env "MYSQL_DB_USER=$MYSQL_DB_USER" \
   --env "MYSQL_DB_PASSWORD=$MYSQL_DB_PASSWORD" \
   --env "KF_PIPELINES_ENDPOINT=$KF_PIPELINES_ENDPOINT" \
-  platiagro/projects:0.3.0-SNAPSHOT
+  platiagro/projects:0.3.1-SNAPSHOT
 ```
 
 ## Persistence Agent
@@ -115,7 +114,7 @@ optional arguments:
 **Using Docker**
 
 ```bash
-docker build -t platiagro/persistence-agent:0.3.0-SNAPSHOT -f Dockerfile.persistenceagent .
+docker build -t platiagro/persistence-agent:0.3.1-SNAPSHOT -f Dockerfile.persistenceagent .
 ```
 
 ```bash
@@ -126,7 +125,7 @@ docker run -it \
   --env "MYSQL_DB_NAME=$MYSQL_DB_NAME" \
   --env "MYSQL_DB_USER=$MYSQL_DB_USER" \
   --env "MYSQL_DB_PASSWORD=$MYSQL_DB_PASSWORD" \
-  platiagro/persistence-agent:0.3.0-SNAPSHOT
+  platiagro/persistence-agent:0.3.1-SNAPSHOT
 ```
 
 ## Testing
