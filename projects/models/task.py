@@ -8,13 +8,12 @@ from sqlalchemy.sql import expression
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from projects import __version__
 from projects.database import Base
 from projects.utils import TimeStamp
 
 TASK_DEFAULT_EXPERIMENT_IMAGE = os.getenv(
     "TASK_DEFAULT_EXPERIMENT_IMAGE",
-    f"platiagro/platiagro-experiment-image:{__version__}",
+    "platiagro/platiagro-experiment-image:0.3.0",
 )
 TASK_DEFAULT_CPU_LIMIT = os.getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
 TASK_DEFAULT_CPU_REQUEST = os.getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
