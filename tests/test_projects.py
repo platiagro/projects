@@ -12,7 +12,7 @@ import tests.util as util
 
 app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
-BF_DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
@@ -197,7 +197,7 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.post(
             "/projects",
             json={
-                "description": BF_DESCRIPTION
+                "description": DESCRIPTION
             },
         )
         result = rv.json()
@@ -461,7 +461,7 @@ class TestProjects(unittest.TestCase):
         Should return http status 400.
         """
         project_id = util.MOCK_UUID_1
-        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"description": BF_DESCRIPTION})
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"description": DESCRIPTION})
         rv.json()
 
         self.assertEqual(rv.status_code, 400)
