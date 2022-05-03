@@ -622,7 +622,7 @@
                         "value":"[\"Vibracao1\"]"
                      }
                   ],
-                  "image":"platiagro/platiagro-experiment-image:0.3.0",
+                  "image":"platiagro/platiagro-experiment-image:0.3.1",
                   "imagePullPolicy":"IfNotPresent",
                   "name":"",
                   "resources":{
