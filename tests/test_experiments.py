@@ -497,8 +497,8 @@ class TestExperiments(unittest.TestCase):
         result = rv.json()
 
         expected = {
-            'code': 'ExceededACharAmount',
-            'message': 'Char quantity exceeded maximum allowed'
+            'code': 'ExceededCharAmount',
+            'message': 'Exceeded maximum character quantity allowed'
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)

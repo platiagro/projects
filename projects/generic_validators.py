@@ -17,8 +17,8 @@ def raise_if_exceeded(max_chars_allowed, value):
     """
     if len(value) > max_chars_allowed:
         raise BadRequest(
-            code="ExceededACharAmount",
-            message="Char quantity exceeded maximum allowed",
+            code="ExceededCharAmount",
+            message="Exceeded maximum character quantity allowed",
         )
 
 
