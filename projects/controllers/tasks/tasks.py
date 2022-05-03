@@ -465,7 +465,7 @@ class TaskController:
         BadRequest
             When a given image is a invalid one.
         """
-        pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+){0,1}$")
+        pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+)?$")
 
         if image and pattern.match(image) is None:
             raise BadRequest(
