@@ -18,7 +18,7 @@ HOST_URL = "http://ml-pipeline.kubeflow:8888"
 
 TASK_ROUTE = "/tasks"
 EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
-BF_DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
@@ -215,7 +215,7 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.post(
             "/tasks",
             json={
-                "description": BF_DESCRIPTION
+                "description": DESCRIPTION
             },
         )
         result = rv.json()
@@ -233,7 +233,7 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.post(
             "/tasks",
             json={
-                "dataIn": BF_DESCRIPTION
+                "dataIn": DESCRIPTION
             },
         )
         result = rv.json()
@@ -251,7 +251,7 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.post(
             "/tasks",
             json={
-                "dataIn": BF_DESCRIPTION
+                "dataIn": DESCRIPTION
             },
         )
         result = rv.json()
@@ -1031,7 +1031,7 @@ class TestTasks(unittest.TestCase):
         rv = TEST_CLIENT.patch(
             f"/tasks/{task_id}",
             json={
-                "description": BF_DESCRIPTION,
+                "description": DESCRIPTION,
             },
         )
         result = rv.json()
