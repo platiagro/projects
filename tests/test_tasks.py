@@ -26,6 +26,7 @@ BF_DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
 
+
 class TestTasks(unittest.TestCase):
     maxDiff = None
 
@@ -75,7 +76,7 @@ class TestTasks(unittest.TestCase):
             result = rv.json()
             expected = {
                 "code": "NotAllowedChar",
-                "message": "Not allowed char",
+                "message": "Character not Allowed",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
@@ -184,7 +185,7 @@ class TestTasks(unittest.TestCase):
             result = rv.json()
             expected = {
                 "code": "NotAllowedChar",
-                "message": "Not allowed char",
+                "message": "Character not Allowed",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
@@ -295,7 +296,7 @@ class TestTasks(unittest.TestCase):
         result = rv.json()
         expected = {
             "code": "NotAllowedChar",
-            "message": "Not allowed char",
+            "message": "Character not Allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)

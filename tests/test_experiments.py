@@ -476,7 +476,7 @@ class TestExperiments(unittest.TestCase):
 
         expected = {
             "code": "NotAllowedChar",
-            "message": "Not allowed char"
+            "message": "Character not Allowed"
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)

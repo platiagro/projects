@@ -4683,7 +4683,7 @@ components:
     NotAllowedCharacter:
       value:
         code: NotAllowedChar
-        message: Not allowed char
+        message: Character not Allowed
     ExceededCharacterAmount:
       value:
         code: ExceededCharQuantity
