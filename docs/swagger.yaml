@@ -4677,6 +4677,14 @@ components:
       value:
         code: InvalidOrderBy
         message: Invalid order argument
+    NotAllowedCharacter:
+      value:
+        code: NotAllowedChar
+        message: Not allowed char
+    ExceededCharacterAmount:
+      value:
+        code: ExceededCharAmount
+        message: Exceeded maximum character quantity allowed
     ProjectNameExists:
       value:
         code: ProjectNameExists
