@@ -94,7 +94,7 @@ class TestTasks(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededCharAmount",
+            "code": "ExceededCharQuantity",
             "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
@@ -201,7 +201,7 @@ class TestTasks(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededCharAmount",
+            "code": "ExceededCharQuantity",
             "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
@@ -219,7 +219,7 @@ class TestTasks(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededCharAmount",
+            "code": "ExceededCharQuantity",
             "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
@@ -237,7 +237,7 @@ class TestTasks(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededCharAmount",
+            "code": "ExceededCharQuantity",
             "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
@@ -255,7 +255,7 @@ class TestTasks(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededCharAmount",
+            "code": "ExceededCharQuantity",
             "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
@@ -318,7 +318,7 @@ class TestTasks(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededCharAmount",
+            "code": "ExceededCharQuantity",
             "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
@@ -1036,4 +1036,4 @@ class TestTasks(unittest.TestCase):
         result = rv.json()
 
         self.assertEqual(rv.status_code, 400)
-        self.assertEqual(result["code"], "ExceededCharAmount")
+        self.assertEqual(result["code"], "ExceededCharQuantity")
