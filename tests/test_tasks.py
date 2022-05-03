@@ -17,7 +17,7 @@ TEST_CLIENT = TestClient(app)
 HOST_URL = "http://ml-pipeline.kubeflow:8888"
 
 TASK_ROUTE = "/tasks"
-EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.1"
+EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
 
 
 class TestTasks(unittest.TestCase):

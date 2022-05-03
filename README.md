@@ -59,7 +59,7 @@ environment variables:
   SELDON_REST_TIMEOUT           response timeout in milliseconds for seldondeployments (default: 60000)
   SELDON_LOGGER_ENDPOINT        logger service URL that receives seldondeployment responses (default: http://projects.platiagro:8080)
   BROKER_URL                    monitoring broker service URL (default: http://broker-ingress.knative-eventing.svc.cluster.local/anonymous/default)
-  TASK_DEFAULT_EXPERIMENT_IMAGE docker image used in a new task when none is specified (default: platiagro/platiagro-experiment-image:0.3.1)
+  TASK_DEFAULT_EXPERIMENT_IMAGE docker image used in a new task when none is specified (default: platiagro/platiagro-experiment-image:0.3.0)
   TASK_DEFAULT_MEMORY_REQUEST   amount of memory a new task requests when none is specified (default: 2Gi)
   TASK_DEFAULT_MEMORY_LIMIT     amount of memory a new task is limited to when none is specified (default: 2Gi)
   TASK_DEFAULT_CPU_REQUEST      amount of CPU a new task requests when none is specified (default: 100Mi)

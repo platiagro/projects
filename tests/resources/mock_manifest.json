@@ -557,7 +557,7 @@
                         "value":"\"/tmp/data/\""
                      }
                   ],
-                  "image":"platiagro/platiagro-experiment-image:0.3.1",
+                  "image":"platiagro/platiagro-experiment-image:0.3.0",
                   "imagePullPolicy":"IfNotPresent",
                   "name":"",
                   "resources":{
@@ -765,7 +765,7 @@
                         "value":"\"\""
                      }
                   ],
-                  "image":"platiagro/platiagro-experiment-image:0.3.1",
+                  "image":"platiagro/platiagro-experiment-image:0.3.0",
                   "imagePullPolicy":"IfNotPresent",
                   "name":"",
                   "resources":{
@@ -1767,7 +1767,7 @@
                         "value":"\"/tmp/data/\""
                      }
                   ],
-                  "image":"platiagro/platiagro-experiment-image:0.3.1",
+                  "image":"platiagro/platiagro-experiment-image:0.3.0",
                   "imagePullPolicy":"IfNotPresent",
                   "name":"",
                   "resources":{
@@ -1975,7 +1975,7 @@
                         "value":"\"\""
                      }
                   ],
-                  "image":"platiagro/platiagro-experiment-image:0.3.1",
+                  "image":"platiagro/platiagro-experiment-image:0.3.0",
                   "imagePullPolicy":"IfNotPresent",
                   "name":"",
                   "resources":{
