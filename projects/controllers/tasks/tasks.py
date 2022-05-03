@@ -55,7 +55,7 @@ EXPERIMENT_NOTEBOOK = json.loads(
 
 TASK_DEFAULT_EXPERIMENT_IMAGE = os.getenv(
     "TASK_DEFAULT_EXPERIMENT_IMAGE",
-    f"platiagro/platiagro-experiment-image:{__version__}",
+    "platiagro/platiagro-experiment-image:0.3.0",
 )
 TASK_DEFAULT_CPU_LIMIT = os.getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
 TASK_DEFAULT_CPU_REQUEST = os.getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
@@ -465,7 +465,7 @@ class TaskController:
         BadRequest
             When a given image is a invalid one.
         """
-        pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+){0,1}$")
+        pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+)?$")
 
         if image and pattern.match(image) is None:
             raise BadRequest(
