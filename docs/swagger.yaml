@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: PlatIAgro Projects API
-  version: 0.3.0
+  version: 0.3.1
   description: >
     These are the docs for PlatIAgro Projects API. The endpoints below are
     usually accessed by the PlatIAgro Web-UI.
