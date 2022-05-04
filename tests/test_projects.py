@@ -103,7 +103,7 @@ class TestProjects(unittest.TestCase):
             result = rv.json()
             expected = {
                 "code": "NotAllowedChar",
-                "message": "Not allowed char",
+                "message": "Character not Allowed",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
@@ -122,8 +122,8 @@ class TestProjects(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededACharAmount",
-            "message": "Char quantity exceeded maximum allowed",
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
@@ -161,7 +161,7 @@ class TestProjects(unittest.TestCase):
             result = rv.json()
             expected = {
                 "code": "NotAllowedChar",
-                "message": "Not allowed char",
+                "message": "Character not Allowed",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
@@ -178,8 +178,8 @@ class TestProjects(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededACharAmount",
-            "message": "Char quantity exceeded maximum allowed",
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
@@ -202,8 +202,8 @@ class TestProjects(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededACharAmount",
-            "message": "Char quantity exceeded maximum allowed",
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
