@@ -17,8 +17,8 @@ def raise_if_exceeded(max_chars_allowed, value):
     """
     if len(value) > max_chars_allowed:
         raise BadRequest(
-            code="ExceededACharAmount",
-            message="Char quantity exceeded maximum allowed",
+            code="ExceededCharQuantity",
+            message="Exceeded maximum character quantity allowed",
         )
 
 
@@ -38,7 +38,7 @@ def raise_if_forbidden_character(forbidden_char_regex, value):
     if re.findall(forbidden_char_regex, value):
         raise BadRequest(
             code="NotAllowedChar",
-            message="Not allowed character used",
+            message="Character not Allowed",
         )
 
 
