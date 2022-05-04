@@ -465,3 +465,13 @@ class TestProjects(unittest.TestCase):
         rv.json()
 
         self.assertEqual(rv.status_code, 400)
+    
+    def test_update_project_description_success(self):
+        """
+        Should return http status 200.
+        """
+        project_id = util.MOCK_UUID_1
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"description": "DESCRIPTION"})
+        rv.json()
+
+        self.assertEqual(rv.status_code, 200)
