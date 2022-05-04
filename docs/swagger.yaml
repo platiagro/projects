@@ -391,6 +391,10 @@ paths:
               examples:
                 InvalidOrderBy:
                   $ref: '#/components/examples/InvalidOrderBy'
+                NotAllowedCharacter:
+                  $ref: '#/components/examples/NotAllowedCharacter'
+                ExceededCharacterAmount:
+                  $ref: '#/components/examples/ExceededCharacterAmount'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
