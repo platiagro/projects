@@ -700,6 +700,23 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Experiments'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidOrderBy:
+                  $ref: '#/components/examples/InvalidOrderBy'
+                NotAllowedCharacter:
+                  $ref: '#/components/examples/NotAllowedCharacter'
+                ExceededCharacterAmount:
+                  $ref: '#/components/examples/ExceededCharacterAmount'
         '404':
           description: >
             Not Found client error response code indicates that the server can't
