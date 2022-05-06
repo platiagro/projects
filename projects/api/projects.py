@@ -14,14 +14,14 @@ router = APIRouter(
 )
 
 
-@router.post("/listprojects", response_model=projects.schemas.project.ProjectList)
+@router.post("/list-projects", response_model=projects.schemas.project.ProjectList)
 async def handle_list_projects(
     request_schema: projects.schemas.project.ProjectListRequest,
     session: Session = Depends(database.session_scope),
     kubeflow_userid: Optional[str] = Header(database.DB_TENANT),
 ):
     """
-    Handles POST requests to /listprojects.
+    Handles POST requests to /list-projects.
     Parameters
     ----------
     request_schema : projects.schemas.project.ProjectListRequest

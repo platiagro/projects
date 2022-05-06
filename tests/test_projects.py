@@ -12,7 +12,13 @@ import tests.util as util
 
 app.dependency_overrides[session_scope] = util.override_session_scope
 TEST_CLIENT = TestClient(app)
-
+DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
 
 class TestProjects(unittest.TestCase):
     maxDiff = None
@@ -33,7 +39,7 @@ class TestProjects(unittest.TestCase):
         """
         Should return an empty list.
         """
-        rv = TEST_CLIENT.post("/projects/listprojects", json={})
+        rv = TEST_CLIENT.post("/projects/list-projects", json={})
         result = rv.json()
 
         expected = util.MOCK_PROJECT_LIST
@@ -44,7 +50,7 @@ class TestProjects(unittest.TestCase):
         """
         Should return a list of projects sorted by name descending.
         """
-        rv = TEST_CLIENT.post("/projects/listprojects", json={"order": "name desc"})
+        rv = TEST_CLIENT.post("/projects/list-projects", json={"order": "name desc"})
         result = rv.json()
 
         expected = util.MOCK_PROJECT_LIST_SORTED_BY_NAME_DESC
@@ -55,7 +61,7 @@ class TestProjects(unittest.TestCase):
         """
         Should return a http error 400 and a message 'invalid order argument'.
         """
-        rv = TEST_CLIENT.post("/projects/listprojects", json={"order": "name foo"})
+        rv = TEST_CLIENT.post("/projects/list-projects", json={"order": "name foo"})
         result = rv.json()
 
         expected = {
@@ -70,7 +76,7 @@ class TestProjects(unittest.TestCase):
         Should return a list of projects with one element.
         """
         rv = TEST_CLIENT.post(
-            "/projects/listprojects", json={"page_size": 1, "page": 3}
+            "/projects/list-projects", json={"page_size": 1, "page": 3}
         )
         result = rv.json()
         total = util.TestingSessionLocal().query(models.Project).count()
@@ -83,7 +89,7 @@ class TestProjects(unittest.TestCase):
         Should return a list of projects compatible with some filter.
         """
         rv = TEST_CLIENT.post(
-            "/projects/listprojects",
+            "/projects/list-projects",
             json={"filters": {"name": util.MOCK_PROJECT_TO_BE_FILTERED_NAME}},
         )
         result = rv.json()
@@ -97,7 +103,7 @@ class TestProjects(unittest.TestCase):
         """
         for char in util.FORBIDDEN_CHARACTERS_LIST:
             rv = TEST_CLIENT.post(
-                "/projects/listprojects",
+                "/projects/list-projects",
                 json={"filters": {"name": char}},
             )
             result = rv.json()
@@ -113,7 +119,7 @@ class TestProjects(unittest.TestCase):
         Should return http status 400 when project name has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
-            "/projects/listprojects",
+            "/projects/list-projects",
             json={
                 "filters": {
                     "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
@@ -191,13 +197,7 @@ class TestProjects(unittest.TestCase):
         rv = TEST_CLIENT.post(
             "/projects",
             json={
-                "description": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                "description": DESCRIPTION
             },
         )
         result = rv.json()
@@ -433,3 +433,45 @@ class TestProjects(unittest.TestCase):
         mock_custom_objects_api.assert_any_call()
         mock_kfp_client.assert_any_call(host="http://ml-pipeline.kubeflow:8888")
         mock_config_load.assert_any_call()
+
+    def test_update_project_invalid_name(self):
+        """
+        Should return http status 400.
+        """
+        project_id = util.MOCK_UUID_1
+        project_name = "*teste*"
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"name": project_name})
+        rv.json()
+
+        self.assertEqual(rv.status_code, 400)
+    
+    def test_update_project_invalid_name_size(self):
+        """
+        Should return http status 400.
+        """
+        project_id = util.MOCK_UUID_1
+        project_name = "projectprojectprojectprojectprojectprojectprojectprojectproject"
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"name": project_name})
+        rv.json()
+
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_project_invalid_description_size(self):
+        """
+        Should return http status 400.
+        """
+        project_id = util.MOCK_UUID_1
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"description": DESCRIPTION})
+        rv.json()
+
+        self.assertEqual(rv.status_code, 400)
+    
+    def test_update_project_description_success(self):
+        """
+        Should return http status 200.
+        """
+        project_id = util.MOCK_UUID_1
+        rv = TEST_CLIENT.patch(f"/projects/{project_id}", json={"description": "DESCRIPTION"})
+        rv.json()
+
+        self.assertEqual(rv.status_code, 200)
