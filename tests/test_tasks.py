@@ -179,7 +179,7 @@ class TestTasks(unittest.TestCase):
         """
         for char in util.FORBIDDEN_CHARACTERS_LIST:
             rv = TEST_CLIENT.post(
-                "/tasks",
+                TASK_ROUTE,
                 json={"name": char},
             )
             result = rv.json()
@@ -195,7 +195,7 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task name has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
             },
@@ -213,7 +213,7 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task description has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "description": DESCRIPTION
             },
@@ -231,7 +231,7 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task data_in has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "dataIn": DESCRIPTION
             },
@@ -249,7 +249,7 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task data_out has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "dataIn": DESCRIPTION
             },
@@ -267,7 +267,8 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task has more tags than maximum allowed.
         """
         rv = TEST_CLIENT.post(
-            "/tasks", json={"tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]}
+            TASK_ROUTE,
+            json={"tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]}
         )
         result = rv.json()
         expected = {
@@ -282,7 +283,7 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task tag has any forbidden char.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "tags": [
                     "tag1",
@@ -306,7 +307,7 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task tag has a exceeded amount of char .
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "tags": [
                     "tag1",
@@ -330,7 +331,7 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task doc is not a valid url .
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={"docs": "notAValidUrl"},
         )
         result = rv.json()
@@ -1068,8 +1069,6 @@ class TestTasks(unittest.TestCase):
         )
 
         self.assertEqual(rv.status_code, 200)
-
-
 
     def test_update_task_exceeded_amount_characters_in_dataIn(self):
         """
