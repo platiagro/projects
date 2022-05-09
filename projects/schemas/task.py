@@ -119,7 +119,35 @@ class TaskUpdate(TaskBase):
     def validate_description(cls, v):
         generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DESCRIPTION, v)
         return v
+    @validator("tags")
+    def validate_tags(cls, v):
+        if len(v) > MAX_TAGS_ALLOWED:
+            raise BadRequest(
+                code="ExceededTagAmount",
+                message="Tag quantity exceeded maximum allowed",
+            )
 
+        for tag in v:
+            generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, tag)
+            generic_validators.raise_if_forbidden_character(
+                FORBIDDEN_CHARACTERS_REGEX, tag
+            )
+
+        return v
+
+    @validator("data_in", "data_out", each_item=True)
+    def validate_data_in_out(cls, v):
+        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DATA, v)
+        return v
+
+    @validator("docs")
+    def validate_data_out(cls, v):
+        if not validators.url(v):
+            raise BadRequest(
+                code="NotValidUrl",
+                message="Input is not a valid URL",
+            )
+        return v
 
 class Task(TaskBase):
     uuid: str
