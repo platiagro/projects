@@ -1089,6 +1089,30 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_dataIn_success(self, mock_api, mock_custom_objects_api, mock_kube_config):
+        """
+        Should return http status 200.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "dataIn": "description"
+            },
+        )
+        self.assertEqual(rv.status_code, 200)
+
     def test_update_task_exceeded_amount_characters_in_dataOut(self):
         """
         Should return http status 400 when task data_out has a exceeded amount of char .
@@ -1107,6 +1131,30 @@ class TestTasks(unittest.TestCase):
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_dataOut_success(self, mock_api, mock_custom_objects_api, mock_kube_config):
+        """
+        Should return http status 200.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "dataOut": "description"
+            },
+        )
+        self.assertEqual(rv.status_code, 200)
 
     def test_update_task_exceeded_amount_tags(self):
         """
@@ -1175,6 +1223,35 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_tag(self, mock_api, mock_custom_objects_api, mock_kube_config):
+        """
+        Should return http status 400 when task tag has a exceeded amount of char .
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                ]
+            },
+        )
+        self.assertEqual(rv.status_code, 200)
+
     def test_update_task_docs_not_invalid_url(self):
         """
         Should return http status 400 when task doc is not a valid url .
@@ -1188,3 +1265,25 @@ class TestTasks(unittest.TestCase):
         expected = {"code": "NotValidUrl", "message": "Input is not a valid URL"}
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_docs(self, mock_api, mock_custom_objects_api, mock_kube_config):
+        """
+        Should return http status 200.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={"docs": "https://www.google.com.br"},
+        )
+        self.assertEqual(rv.status_code, 200)
