@@ -88,67 +88,6 @@ class TaskCreate(TaskBase):
         return v
 
 
-class TaskUpdate(TaskBase):
-    name: Optional[str]
-    description: Optional[str]
-    category: Optional[str]
-    tags: Optional[List[str]]
-    data_in: Optional[str]
-    data_out: Optional[str]
-    docs: Optional[str]
-    image: Optional[str]
-    commands: Optional[List[str]]
-    arguments: Optional[List[str]]
-    parameters: Optional[List]
-    experiment_notebook: Optional[Dict]
-    deployment_notebook: Optional[Dict]
-    experiment_notebook_path: Optional[str]
-    deployment_notebook_path: Optional[str]
-    cpu_limit: Optional[str]
-    cpu_request: Optional[str]
-    memory_limit: Optional[str]
-    memory_request: Optional[str]
-
-    @validator("name")
-    def validate_name(cls, v):
-        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)
-        generic_validators.raise_if_forbidden_character(FORBIDDEN_CHARACTERS_REGEX, v)
-        return v
-
-    @validator("description")
-    def validate_description(cls, v):
-        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DESCRIPTION, v)
-        return v
-    @validator("tags")
-    def validate_tags(cls, v):
-        if len(v) > MAX_TAGS_ALLOWED:
-            raise BadRequest(
-                code="ExceededTagAmount",
-                message="Tag quantity exceeded maximum allowed",
-            )
-
-        for tag in v:
-            generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, tag)
-            generic_validators.raise_if_forbidden_character(
-                FORBIDDEN_CHARACTERS_REGEX, tag
-            )
-
-        return v
-
-    @validator("data_in", "data_out", each_item=True)
-    def validate_data_in_out(cls, v):
-        generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED_DATA, v)
-        return v
-
-    @validator("docs")
-    def validate_data_out(cls, v):
-        if not validators.url(v):
-            raise BadRequest(
-                code="NotValidUrl",
-                message="Input is not a valid URL",
-            )
-        return v
-
 class Task(TaskBase):
     uuid: str
     name: str
