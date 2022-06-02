@@ -312,13 +312,13 @@ class TaskController:
 
         return schemas.Task.from_orm(task)
 
-    def update_task(self, task: schemas.TaskUpdate, task_id: str):
+    def update_task(self, task: schemas.TaskCreate, task_id: str):
         """
         Updates a task in our database/object storage.
 
         Parameters
         ----------
-        task: projects.schemas.task.TaskUpdate
+        task: projects.schemas.task.TaskCreate
         task_id : str
 
         Returns
@@ -474,11 +474,11 @@ class TaskController:
 
     def copy_notebooks_to_pod(self, task, stored_task):
         """
-        Copies the notebook contents to the pod (if it was sent on TaskUpdate).
+        Copies the notebook contents to the pod (if it was sent on TaskCreate).
 
         Parameters
         ----------
-        task : projects.schemas.task.TaskUpdate
+        task : projects.schemas.task.TaskCreate
         stored_task : projects.models.task.Task
         """
         filepaths = list()

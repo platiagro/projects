@@ -94,7 +94,7 @@ async def handle_get_task(
 @router.patch("/{task_id}", response_model=projects.schemas.task.Task)
 async def handle_patch_task(
     task_id: str,
-    task: projects.schemas.task.TaskUpdate,
+    task: projects.schemas.task.TaskCreate,
     background_tasks: BackgroundTasks,
     session: Session = Depends(database.session_scope),
 ):
@@ -104,7 +104,7 @@ async def handle_patch_task(
     Parameters
     ----------
     task_id : str
-    task : projects.schemas.task.TaskUpdate
+    task : projects.schemas.task.TaskCreate
     background_tasks : fastapi.BackgroundTasks
     session : sqlalchemy.orm.session.Session
 
