@@ -476,7 +476,7 @@ class TestExperiments(unittest.TestCase):
 
         expected = {
             "code": "NotAllowedChar",
-            "message": "Not allowed char"
+            "message": "Character not Allowed"
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
@@ -497,8 +497,38 @@ class TestExperiments(unittest.TestCase):
         result = rv.json()
 
         expected = {
-            'code': 'ExceededACharAmount',
-            'message': 'Char quantity exceeded maximum allowed'
+            'code': 'ExceededCharQuantity',
+            'message': 'Exceeded maximum character quantity allowed'
         }
         self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_experiment_invalid_name(self):
+        """
+        Should return http status 400.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        experiment_name = "*qsad"
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}",
+            json={"name": experiment_name},
+        )
+        rv.json()
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_experiment_invalid_name_size(self):
+        """
+        Should return http status 400.
+        """
+        project_id = util.MOCK_UUID_1
+        experiment_id = util.MOCK_UUID_1
+        experiment_name = "experimentexperimentexperimentexperimentexperimentexperimentexperiment"
+
+        rv = TEST_CLIENT.patch(
+            f"/projects/{project_id}/experiments/{experiment_id}",
+            json={"name": experiment_name},
+        )
+        rv.json()
         self.assertEqual(rv.status_code, 400)

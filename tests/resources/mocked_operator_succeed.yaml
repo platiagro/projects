@@ -47,7 +47,7 @@ spec:
                     value: efe1dd49-9b2b-4dc4-8876-9567d092c056
                   - name: PARAMETERS
                     value: '[]'
-                  image: platiagro/platiagro-deployment-image:0.2.0
+                  image: platiagro/platiagro-deployment-image:0.3.0
                   name: efe1dd49-9b2b-4dc4-8876-9567d092c056
                   securityContext:
                     allowPrivilegeEscalation: false
@@ -136,7 +136,7 @@ spec:
               value: e75ba6d1-3a70-4158-bdca-85eb13311576
             - name: OPERATOR_ID
               value: efe1dd49-9b2b-4dc4-8876-9567d092c056
-            image: platiagro/platiagro-experiment-image:0.2.0
+            image: platiagro/platiagro-experiment-image:0.3.0
             name: export-notebook
             resources:
               requests:

@@ -12,7 +12,7 @@ from fastapi_mail import FastMail, MessageSchema
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
-from projects import __version__, models, schemas
+from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import (
@@ -55,7 +55,7 @@ EXPERIMENT_NOTEBOOK = json.loads(
 
 TASK_DEFAULT_EXPERIMENT_IMAGE = os.getenv(
     "TASK_DEFAULT_EXPERIMENT_IMAGE",
-    f"platiagro/platiagro-experiment-image:{__version__}",
+    "platiagro/platiagro-experiment-image:0.3.0",
 )
 TASK_DEFAULT_CPU_LIMIT = os.getenv("TASK_DEFAULT_CPU_LIMIT", "2000m")
 TASK_DEFAULT_CPU_REQUEST = os.getenv("TASK_DEFAULT_CPU_REQUEST", "100m")
@@ -312,13 +312,13 @@ class TaskController:
 
         return schemas.Task.from_orm(task)
 
-    def update_task(self, task: schemas.TaskUpdate, task_id: str):
+    def update_task(self, task: schemas.TaskCreate, task_id: str):
         """
         Updates a task in our database/object storage.
 
         Parameters
         ----------
-        task: projects.schemas.task.TaskUpdate
+        task: projects.schemas.task.TaskCreate
         task_id : str
 
         Returns
@@ -465,7 +465,7 @@ class TaskController:
         BadRequest
             When a given image is a invalid one.
         """
-        pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+){0,1}$")
+        pattern = re.compile("[a-z0-9.-]+([/]{1}[a-z0-9.-]+)+([:]{1}[a-z0-9.-]+)?$")
 
         if image and pattern.match(image) is None:
             raise BadRequest(
@@ -474,11 +474,11 @@ class TaskController:
 
     def copy_notebooks_to_pod(self, task, stored_task):
         """
-        Copies the notebook contents to the pod (if it was sent on TaskUpdate).
+        Copies the notebook contents to the pod (if it was sent on TaskCreate).
 
         Parameters
         ----------
-        task : projects.schemas.task.TaskUpdate
+        task : projects.schemas.task.TaskCreate
         stored_task : projects.models.task.Task
         """
         filepaths = list()

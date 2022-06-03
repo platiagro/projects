@@ -10,7 +10,6 @@ from kfp.dsl._resource_op import kubernetes_resource_delete_op
 from kubernetes import client as k8s_client
 from kubernetes.client.models import V1PersistentVolumeClaim
 
-from projects import __version__
 from projects.kfp import KF_PIPELINES_NAMESPACE, kfp_client
 from projects.kfp.templates import COMPONENT_SPEC, GRAPH, SELDON_DEPLOYMENT
 from projects.kubernetes.utils import volume_exists
@@ -18,7 +17,7 @@ from projects.object_storage import MINIO_ENDPOINT
 
 TASK_DEFAULT_DEPLOYMENT_IMAGE = getenv(
     "TASK_DEFAULT_DEPLOYMENT_IMAGE",
-    f"platiagro/platiagro-deployment-image:{__version__}",
+    "platiagro/platiagro-deployment-image:0.3.0",
 )
 TASK_NVIDIA_VISIBLE_DEVICES = getenv("TASK_NVIDIA_VISIBLE_DEVICES", "none")
 SELDON_REST_TIMEOUT = getenv("SELDON_REST_TIMEOUT", "60000")

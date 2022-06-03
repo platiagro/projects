@@ -5,9 +5,10 @@ import logging
 from typing import Optional
 
 import requests
+from sqlalchemy.exc import DataError
 from platiagro import load_dataset
 
-from projects import models, schemas
+from projects import models, schemas, exceptions
 from projects.controllers.utils import (
     parse_dataframe_to_seldon_request,
     parse_file_buffer_to_seldon_request,
@@ -121,7 +122,10 @@ class PredictionController:
         )
 
         self.session.add(prediction)
-        self.session.commit()
+        try:
+            self.session.commit()
+        except DataError:
+            raise(exceptions.BadRequest("400", "File too large"))
         return prediction
 
     def start_and_save_seldon_prediction(self, request_body, prediction_object, url):

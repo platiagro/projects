@@ -18,6 +18,13 @@ HOST_URL = "http://ml-pipeline.kubeflow:8888"
 
 TASK_ROUTE = "/tasks"
 EXPERIMENT_IMAGE = "platiagro/platiagro-experiment-image:0.3.0"
+DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
+                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
 
 
 class TestTasks(unittest.TestCase):
@@ -69,14 +76,14 @@ class TestTasks(unittest.TestCase):
             result = rv.json()
             expected = {
                 "code": "NotAllowedChar",
-                "message": "Not allowed char",
+                "message": "Character not Allowed",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
 
     def test_list_tasks_exceeded_amount_characters(self):
         """
-        Should return http status 400 when task name has a exceeded amount of char .
+        Should return http status 400 when task name has a exceeded amount of char.
         """
         rv = TEST_CLIENT.post(
             "/tasks/list-tasks",
@@ -88,8 +95,8 @@ class TestTasks(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededACharAmount",
-            "message": "Char quantity exceeded maximum allowed",
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
@@ -172,103 +179,85 @@ class TestTasks(unittest.TestCase):
         """
         for char in util.FORBIDDEN_CHARACTERS_LIST:
             rv = TEST_CLIENT.post(
-                "/tasks",
+                TASK_ROUTE,
                 json={"name": char},
             )
             result = rv.json()
             expected = {
                 "code": "NotAllowedChar",
-                "message": "Not allowed char",
+                "message": "Character not Allowed",
             }
             self.assertEqual(result, expected)
             self.assertEqual(rv.status_code, 400)
 
     def test_create_task_exceeded_amount_characters(self):
         """
-        Should return http status 400 when task name has a exceeded amount of char .
+        Should return http status 400 when task name has a exceeded amount of char.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "name": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
             },
         )
         result = rv.json()
         expected = {
-            "code": "ExceededACharAmount",
-            "message": "Char quantity exceeded maximum allowed",
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task_exceeded_amount_characters_in_description(self):
         """
-        Should return http status 400 when task description has a exceeded amount of char .
+        Should return http status 400 when task description has a exceeded amount of char.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
-                "description": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                "description": DESCRIPTION
             },
         )
         result = rv.json()
         expected = {
-            "code": "ExceededACharAmount",
-            "message": "Char quantity exceeded maximum allowed",
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task_exceeded_amount_characters_in_dataIn(self):
         """
-        Should return http status 400 when task data_in has a exceeded amount of char .
+        Should return http status 400 when task data_in has a exceeded amount of char.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
-                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                "dataIn": DESCRIPTION
             },
         )
         result = rv.json()
         expected = {
-            "code": "ExceededACharAmount",
-            "message": "Char quantity exceeded maximum allowed",
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task_exceeded_amount_characters_in_dataOut(self):
         """
-        Should return http status 400 when task data_out has a exceeded amount of char .
+        Should return http status 400 when task data_out has a exceeded amount of char.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
-                "dataIn": "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
-                LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
+                "dataIn": DESCRIPTION
             },
         )
         result = rv.json()
         expected = {
-            "code": "ExceededACharAmount",
-            "message": "Char quantity exceeded maximum allowed",
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
@@ -278,7 +267,8 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task has more tags than maximum allowed.
         """
         rv = TEST_CLIENT.post(
-            "/tasks", json={"tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]}
+            TASK_ROUTE,
+            json={"tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]}
         )
         result = rv.json()
         expected = {
@@ -293,7 +283,7 @@ class TestTasks(unittest.TestCase):
         Should return http status 400 when task tag has any forbidden char.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "tags": [
                     "tag1",
@@ -307,17 +297,17 @@ class TestTasks(unittest.TestCase):
         result = rv.json()
         expected = {
             "code": "NotAllowedChar",
-            "message": "Not allowed char",
+            "message": "Character not Allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task_exceeded_amount_characters_in_tag(self):
         """
-        Should return http status 400 when task tag has a exceeded amount of char .
+        Should return http status 400 when task tag has a exceeded amount of char.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={
                 "tags": [
                     "tag1",
@@ -330,18 +320,18 @@ class TestTasks(unittest.TestCase):
         )
         result = rv.json()
         expected = {
-            "code": "ExceededACharAmount",
-            "message": "Char quantity exceeded maximum allowed",
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
     def test_create_task_docs_not_invalid_url(self):
         """
-        Should return http status 400 when task doc is not a valid url .
+        Should return http status 400 when task doc is not a valid url.
         """
         rv = TEST_CLIENT.post(
-            "/tasks",
+            TASK_ROUTE,
             json={"docs": "notAValidUrl"},
         )
         result = rv.json()
@@ -985,3 +975,315 @@ class TestTasks(unittest.TestCase):
 
         expected = {"message": "Task deleted"}
         self.assertDictEqual(expected, result)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_invalid_name(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
+        """
+        Should return a bad request exception.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "name": "name * foo",
+            },
+        )
+        result = rv.json()
+
+        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(result["code"], "NotAllowedChar")
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_invalid_description(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
+        """
+        Should return a bad request exception.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "description": DESCRIPTION,
+            },
+        )
+        result = rv.json()
+
+        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(result["code"], "ExceededCharQuantity")
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_description(
+        self,
+        mock_config_load,
+        mock_custom_objects_api,
+        mock_core_v1_api,
+    ):
+        """
+        Should return a bad request exception.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "description": "valid description",
+            },
+        )
+
+        self.assertEqual(rv.status_code, 200)
+
+    def test_update_task_exceeded_amount_characters_in_dataIn(self):
+        """
+        Should return http status 400 when task data_in has a exceeded amount of char.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "dataIn": DESCRIPTION
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_dataIn_success(self, mock_api, mock_custom_objects_api, mock_kube_config):
+        """
+        Should return http status 200.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "dataIn": "description"
+            },
+        )
+        self.assertEqual(rv.status_code, 200)
+
+    def test_update_task_exceeded_amount_characters_in_dataOut(self):
+        """
+        Should return http status 400 when task data_out has a exceeded amount of char.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "dataIn": DESCRIPTION
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_dataOut_success(self, mock_api, mock_custom_objects_api, mock_kube_config):
+        """
+        Should return http status 200.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "dataOut": "description"
+            },
+        )
+        self.assertEqual(rv.status_code, 200)
+
+    def test_update_task_exceeded_amount_tags(self):
+        """
+        Should return http status 400 when task has more tags than maximum allowed.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={"tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]}
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededTagAmount",
+            "message": "Tag quantity exceeded maximum allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_task_tags_with_forbidden_char(self):
+        """
+        Should return http status 400 when task tag has any forbidden char.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                    "tag@",
+                ]
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "NotAllowedChar",
+            "message": "Character not Allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    def test_update_task_exceeded_amount_characters_in_tag(self):
+        """
+        Should return http status 400 when task tag has a exceeded amount of char.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                    "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc",
+                ]
+            },
+        )
+        result = rv.json()
+        expected = {
+            "code": "ExceededCharQuantity",
+            "message": "Exceeded maximum character quantity allowed",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_tag(self, mock_api, mock_custom_objects_api, mock_kube_config):
+        """
+        Should return http status 200.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={
+                "tags": [
+                    "tag1",
+                    "tag2",
+                    "tag3",
+                    "tag4",
+                ]
+            },
+        )
+        self.assertEqual(rv.status_code, 200)
+
+    def test_update_task_docs_not_invalid_url(self):
+        """
+        Should return http status 400 when task doc is not a valid url.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={"docs": "notAValidUrl"},
+        )
+        result = rv.json()
+        expected = {"code": "NotValidUrl", "message": "Input is not a valid URL"}
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
+    @mock.patch(
+        "kubernetes.client.CoreV1Api",
+        return_value=util.MOCK_CORE_V1_API,
+    )
+    @mock.patch(
+        "kubernetes.client.CustomObjectsApi",
+        return_value=util.MOCK_CUSTOM_OBJECTS_API,
+    )
+    @mock.patch(
+        "kubernetes.config.load_kube_config",
+    )
+    def test_update_task_docs(self, mock_api, mock_custom_objects_api, mock_kube_config):
+        """
+        Should return http status 200.
+        """
+        task_id = util.MOCK_UUID_5
+        rv = TEST_CLIENT.patch(
+            f"/tasks/{task_id}",
+            json={"docs": "https://www.google.com.br"},
+        )
+        self.assertEqual(rv.status_code, 200)

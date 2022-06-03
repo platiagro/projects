@@ -88,28 +88,6 @@ class TaskCreate(TaskBase):
         return v
 
 
-class TaskUpdate(TaskBase):
-    name: Optional[str]
-    description: Optional[str]
-    category: Optional[str]
-    tags: Optional[List[str]]
-    data_in: Optional[str]
-    data_out: Optional[str]
-    docs: Optional[str]
-    image: Optional[str]
-    commands: Optional[List[str]]
-    arguments: Optional[List[str]]
-    parameters: Optional[List]
-    experiment_notebook: Optional[Dict]
-    deployment_notebook: Optional[Dict]
-    experiment_notebook_path: Optional[str]
-    deployment_notebook_path: Optional[str]
-    cpu_limit: Optional[str]
-    cpu_request: Optional[str]
-    memory_limit: Optional[str]
-    memory_request: Optional[str]
-
-
 class Task(TaskBase):
     uuid: str
     name: str

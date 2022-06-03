@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: PlatIAgro Projects API
-  version: 0.3.0
+  version: 0.3.1
   description: >
     These are the docs for PlatIAgro Projects API. The endpoints below are
     usually accessed by the PlatIAgro Web-UI.
@@ -96,51 +96,6 @@ paths:
                 CannotConnectToDatabase:
                   $ref: '#/components/examples/CannotConnectToDatabase'
   /tasks:
-    get:
-      summary: 'List tasks. Supports pagination, and sorting.'
-      tags:
-        - Tasks
-      parameters:
-        - in: query
-          name: name
-          schema:
-            type: string
-          description: Name filter
-        - in: query
-          name: page
-          schema:
-            type: integer
-          description: Page number
-        - in: query
-          name: page_size
-          schema:
-            type: integer
-          description: Page size
-        - in: query
-          name: order
-          schema:
-            type: string
-          example: uuid asc
-      responses:
-        '200':
-          $ref: '#/components/responses/Tasks'
-        '400':
-          description: >
-            Bad Request response status code indicates that the server cannot or
-            will not process the request due to something that is perceived to
-            be a client error. A common cause is that the client has sent
-            invalid request values.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BadRequest'
-              examples:
-                InvalidOrderBy:
-                  $ref: '#/components/examples/InvalidOrderBy'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
     post:
       summary: Create a new task.
       tags:
@@ -169,6 +124,37 @@ paths:
                   $ref: '#/components/examples/InvalidTaskId'
                 InvalidCategory:
                   $ref: '#/components/examples/InvalidCategory'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /tasks/list-tasks:
+    post:
+      summary: 'List tasks. Supports pagination, and sorting.'
+      tags:
+        - Tasks
+      requestBody:
+        $ref: '#/components/requestBodies/ListTasks'
+      responses:
+        '200':
+          $ref: '#/components/responses/Tasks'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidOrderBy:
+                  $ref: '#/components/examples/InvalidOrderBy'
+                NotAllowedCharacter:
+                  $ref: '#/components/examples/NotAllowedCharacter'
+                ExceededCharacterAmount:
+                  $ref: '#/components/examples/ExceededCharacterAmount'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
@@ -382,7 +368,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /projects/listprojects:
+  /projects/list-projects:
     post:
       summary: 'List projects. Supports pagination, and sorting.'
       tags:
@@ -405,6 +391,10 @@ paths:
               examples:
                 InvalidOrderBy:
                   $ref: '#/components/examples/InvalidOrderBy'
+                NotAllowedCharacter:
+                  $ref: '#/components/examples/NotAllowedCharacter'
+                ExceededCharacterAmount:
+                  $ref: '#/components/examples/ExceededCharacterAmount'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
@@ -710,6 +700,23 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Experiments'
+        '400':
+          description: >
+            Bad Request response status code indicates that the server cannot or
+            will not process the request due to something that is perceived to
+            be a client error. A common cause is that the client has sent
+            invalid request values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                InvalidOrderBy:
+                  $ref: '#/components/examples/InvalidOrderBy'
+                NotAllowedCharacter:
+                  $ref: '#/components/examples/NotAllowedCharacter'
+                ExceededCharacterAmount:
+                  $ref: '#/components/examples/ExceededCharacterAmount'
         '404':
           description: >
             Not Found client error response code indicates that the server can't
@@ -3975,6 +3982,23 @@ components:
                     type: number
                   h:
                     type: number
+    ListTasks:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              filters:
+                type: object
+                properties:
+                  name:
+                    type: string
+              order:
+                type: string
+              page:
+                type: integer
+              page_size:
+                type: integer
     TaskPost:
       content:
         application/json:
@@ -4677,6 +4701,14 @@ components:
       value:
         code: InvalidOrderBy
         message: Invalid order argument
+    NotAllowedCharacter:
+      value:
+        code: NotAllowedChar
+        message: Character not Allowed
+    ExceededCharacterAmount:
+      value:
+        code: ExceededCharQuantity
+        message: Exceeded maximum character quantity allowed
     ProjectNameExists:
       value:
         code: ProjectNameExists
