@@ -12,7 +12,7 @@ from fastapi_mail import FastMail, MessageSchema
 from jinja2 import Template
 from sqlalchemy import asc, desc, func
 
-from projects import __version__, models, schemas
+from projects import models, schemas
 from projects.controllers.utils import uuid_alpha
 from projects.exceptions import BadRequest, Forbidden, NotFound
 from projects.kubernetes.notebook import (
