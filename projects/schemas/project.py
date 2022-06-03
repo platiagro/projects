@@ -37,6 +37,7 @@ class ProjectCreate(ProjectBase):
 class ProjectUpdate(ProjectBase):
     name: Optional[str]
     description: Optional[str]
+
     @validator("name")
     def validate_name(cls, v):
         generic_validators.raise_if_exceeded(MAX_CHARS_ALLOWED, v)

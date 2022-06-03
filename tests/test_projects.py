@@ -20,6 +20,7 @@ DESCRIPTION = "LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc\
                 LoremipsumdolorsitametconsecteturadipiscingelitInteerelitexauc"
 
+
 class TestProjects(unittest.TestCase):
     maxDiff = None
 
@@ -444,7 +445,7 @@ class TestProjects(unittest.TestCase):
         rv.json()
 
         self.assertEqual(rv.status_code, 400)
-    
+
     def test_update_project_invalid_name_size(self):
         """
         Should return http status 400.
@@ -465,7 +466,7 @@ class TestProjects(unittest.TestCase):
         rv.json()
 
         self.assertEqual(rv.status_code, 400)
-    
+
     def test_update_project_description_success(self):
         """
         Should return http status 200.

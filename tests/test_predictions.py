@@ -3,6 +3,7 @@ import unittest
 import unittest.mock as mock
 
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import DataError
 
 from projects.api.main import app
 from projects.database import session_scope
@@ -228,3 +229,33 @@ class TestPredictions(unittest.TestCase):
                 }
             },
         )
+
+    @mock.patch(
+        "projects.controllers.predictions.load_dataset",
+        return_value=util.IRIS_DATAFRAME,
+    )
+    @mock.patch(
+        "requests.post",
+        return_value=util.MOCK_POST_PREDICTION,
+    )
+    @mock.patch("projects.api.predictions.Session.commit", side_effect=DataError("statement", "params", "orig"))
+    def test_create_prediction_fail(
+        self,
+        mock_requests_post,
+        mock_load_dataset,
+        mock_data_error
+    ):
+        """
+        Should return 400 error because the used dataset file is too large.
+        """
+        project_id = util.MOCK_UUID_1
+        deployment_id = util.MOCK_UUID_1
+        dataset_name = util.IRIS_DATASET_NAME
+
+        rv = TEST_CLIENT.post(
+            f"/projects/{project_id}/deployments/{deployment_id}/predictions",
+            json={"dataset": dataset_name},
+        )
+        result = rv.json()
+        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(result["message"], "File too large")

@@ -517,7 +517,7 @@ class TestExperiments(unittest.TestCase):
         )
         rv.json()
         self.assertEqual(rv.status_code, 400)
-    
+
     def test_update_experiment_invalid_name_size(self):
         """
         Should return http status 400.
