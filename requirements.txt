@@ -16,7 +16,7 @@ kubernetes==12.0.1
 # package to infer file type and MIME type
 filetype==1.0.7
 # HTTP library
-requests==2.25.1
+requests==2.31.0
 # HTTP library
 urllib3==1.26.5
 # FastAPI mailing library
